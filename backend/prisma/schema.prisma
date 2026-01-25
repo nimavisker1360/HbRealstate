@@ -1,0 +1,200 @@
+generator client {
+    provider = "prisma-client-js"
+}
+datasource db {
+    provider = "mongodb"
+    url      = env("DATABASE_URL")
+}
+model User {
+    id String @id @default(auto()) @map("_id") @db.ObjectId
+    name String?
+    email String @unique
+    image String?
+    phone String?
+    address String?
+    profileComplete Boolean @default(false)
+    isAdmin Boolean @default(false)
+    bookedVisits Json[]
+    favResidenciesID String[] @db.ObjectId
+  
+    ownedResidencies Residency[] @relation("Owner") 
+  
+    createdAt DateTime? @default(now())
+    updatedAt DateTime? @updatedAt
+}
+model Residency {
+    id String @id @default(auto()) @map("_id") @db.ObjectId
+    title String
+    description String?
+    description_en String?
+    description_tr String?
+    price Int
+    currency String @default("USD")
+    address String?
+    addressDetails Json? // { city, district, neighborhood }
+    city String?
+    country String?
+    image String?
+    images String[]
+    videos String[]
+    facilities Json?
+    propertyType String @default("sale") // "sale" or "rent"
+    category String @default("residential") // residential, commercial, land, building, timeshare, tourist-facility
+    
+    // Turkish real estate fields
+    listingNo String?
+    listingDate DateTime?
+    area Json? // { gross, net }
+    rooms String?
+    buildingAge Int?
+    floor Int?
+    totalFloors Int?
+    heating String?
+    bathrooms Int?
+    kitchen String?
+    balcony Boolean?
+    elevator Boolean?
+    parking String?
+    furnished Boolean?
+    usageStatus String?
+    siteName String?
+    dues Int?
+    mortgageEligible Boolean?
+    deedStatus String?
+    
+    // Property Features
+    interiorFeatures String[] // İç Özellikler
+    exteriorFeatures String[] // Dış Özellikler
+    muhitFeatures String[] // Muhit (Neighborhood)
+    
+    // Land/Arsa Features
+    imarDurumu String? // İmar Durumu (Zoning Status)
+    altyapiFeatures String[] // Altyapı (Infrastructure)
+    konumFeatures String[] // Konum (Location)
+    genelOzellikler String[] // Genel Özellikler (General Features)
+    manzaraFeatures String[] // Manzara (View)
+    
+    // Yurt İçi Proje (Local Project) specific fields
+    projectName String? // Proje adı (Project name)
+    ilanNo String? // İlan numarası (Listing number for projects)
+    kampanya String? // Kampanya bilgisi
+    deliveryDate String? // Teslim tarihi
+    projectStatus String? // Proje durumu
+    mapImage String? // Harita görseli URL
+    projeHakkinda Json? // { projeAlani, yesilAlan, konutSayisi, aciklama, description }
+    dairePlanlari Json? // Array of { tip, fiyatMin, fiyatMax, images, image }
+    vaziyetPlani String? // Site plan image URL
+    iletisim Json? // { telefonlar[], satisOfisiAdresi, webSitesi, calismaSaatleri, koordinatlar }
+    ozellikler Json? // { binaOzellikleri, disOzellikler, engelliUygun, eglenceAlisveris, guvenlik, manzara, muhit }
+    
+    userEmail String?
+    owner User? @relation("Owner",fields: [userEmail],references: [email])
+    
+    consultantId String? @db.ObjectId
+    consultant Consultant? @relation(fields: [consultantId], references: [id])
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model Consultant {
+    id String @id @default(auto()) @map("_id") @db.ObjectId
+    name String
+    title String
+    title_en String?
+    title_tr String?
+    specialty String
+    specialty_en String?
+    specialty_tr String?
+    experience String
+    languages String[]
+    rating Float @default(5.0)
+    reviews Int @default(0)
+    deals Int @default(0)
+    phone String
+    whatsapp String
+    email String
+    linkedin String?
+    image String
+    bio String
+    bio_en String?
+    bio_tr String?
+    available Boolean @default(true)
+    order Int @default(0)
+    
+    residencies Residency[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model ContactMessage {
+    id String @id @default(auto()) @map("_id") @db.ObjectId
+    name String
+    email String
+    phone String?
+    subject String?
+    message String
+    propertyId String?
+    propertyTitle String?
+    read Boolean @default(false)
+    
+    createdAt DateTime @default(now())
+}
+
+model Blog {
+    id String @id @default(auto()) @map("_id") @db.ObjectId
+    title String
+    title_en String?
+    title_tr String?
+    slug String? // SEO-friendly URL slug (will be unique after migration)
+    category String
+    category_en String?
+    category_tr String?
+    content String
+    content_en String?
+    content_tr String?
+    summary String?
+    summary_en String?
+    summary_tr String?
+    metaDescription String? // SEO meta description (max 160 chars)
+    metaDescription_en String?
+    metaDescription_tr String?
+    image String?
+    images String[] // Multiple images for blog gallery
+    published Boolean @default(true)
+    order Int @default(0)
+    
+    // SEO and structured content
+    faqSection Json? // Array of {question, answer} objects
+    faqSection_en Json? // English FAQ
+    faqSection_tr Json? // Turkish FAQ
+    internalLinks String[] // Suggested internal links
+    
+    // Market data used for generation
+    marketData Json? // Stores the input data used to generate the blog
+    
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@unique([slug])
+}
+
+model HousingSales {
+    id String @id @default(auto()) @map("_id") @db.ObjectId
+    year Int
+    province String // İl
+    district String // İlçe
+    totalSales Int // Toplam
+    mortgagedSales Int // İpotekli satış
+    otherSales Int // Diğer satış
+    firstHandSales Int // İlk el satış
+    secondHandSales Int // İkinci el satış
+    
+    createdAt DateTime @default(now())
+    
+    @@unique([year, province, district])
+    @@index([year])
+    @@index([province])
+    @@index([district])
+}

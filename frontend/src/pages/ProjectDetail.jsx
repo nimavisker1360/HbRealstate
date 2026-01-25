@@ -1,0 +1,1211 @@
+import { useState, useMemo } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { useQuery } from "react-query";
+import { toast } from "react-toastify";
+import {
+  Container,
+  Grid,
+  Paper,
+  Button,
+  TextInput,
+  Textarea,
+  Modal,
+  Loader,
+} from "@mantine/core";
+import {
+  MdLocationOn,
+  MdImage,
+  MdPlayCircle,
+  MdDescription,
+  MdArrowBack,
+  MdZoomIn,
+  MdCampaign,
+  MdPlayCircleOutline,
+  MdVideocam,
+  MdCheck,
+  MdClose,
+} from "react-icons/md";
+import { FaKey } from "react-icons/fa";
+import { 
+  BsHouseDoor, 
+  BsTree, 
+  BsPeople, 
+  BsCart4, 
+  BsShieldCheck, 
+  BsEye, 
+  BsGeoAlt 
+} from "react-icons/bs";
+import { getProperty, sendEmail } from "../utils/api";
+
+// All possible Bina Özellikleri (Building Features)
+const ALL_BINA_OZELLIKLERI = [
+  "Akıllı Ev",
+  "Alarm (Yangın)",
+  "Buzdolabı",
+  "Fiber İnternet",
+  "Intercom Sistemi",
+  "Kablo TV",
+  "Uydu",
+  "Jeneratör",
+  "Isı Yalıtımı",
+  "Ses Yalıtımı",
+  "Su Deposu",
+];
+
+// All possible Dış Özellikler (Exterior Features)
+const ALL_DIS_OZELLIKLER = [
+  "Bahçe",
+  "Buhar Odası",
+  "Garaj",
+  "Otopark",
+  "Havuz",
+  "Çocuk Parkı",
+  "Spor Alanı",
+  "Yürüyüş Yolu",
+  "Bisiklet Yolu",
+  "Peyzaj",
+  "Kapıcı Dairesi",
+  "Kreş",
+  "Siding",
+];
+
+// All possible Engelli/Yaşlı Uygun (Accessibility Features)
+const ALL_ENGELLI_UYGUN = [
+  "Engelli Asansörü",
+  "Engelli Rampası",
+  "Engelli WC",
+  "Yaşlı Dostu Tasarım",
+  "Görme Engelli Yardımcıları",
+];
+
+// All possible Eğlence & Alışveriş (Entertainment/Shopping)
+const ALL_EGLENCE_ALISVERIS = [
+  "AVM",
+  "Restoran",
+  "Cafe",
+  "Sinema",
+  "Fitness Salonu",
+  "SPA",
+  "Sauna",
+  "Türk Hamamı",
+  "Çocuk Kulübü",
+  "Hobi Odası",
+];
+
+// All possible Güvenlik (Security Features)
+const ALL_GUVENLIK = [
+  "24 Saat Güvenlik",
+  "Güvenlik Kamerası",
+  "Kapalı Devre TV",
+  "Kartlı Giriş Sistemi",
+  "Site İçi Güvenlik",
+  "Yangın Merdiveni",
+  "Yangın Söndürme Sistemi",
+];
+
+// All possible Manzara (View Features)
+const ALL_MANZARA = [
+  "Şehir Manzarası",
+  "Deniz Manzarası",
+  "Doğa Manzarası",
+  "Göl Manzarası",
+  "Orman Manzarası",
+  "Dağ Manzarası",
+  "Havuz Manzarası",
+  "Bahçe Manzarası",
+];
+
+// All possible Muhit (Neighborhood Features)
+const ALL_MUHIT = [
+  "Metro",
+  "Metrobüs",
+  "Otobüs Durağı",
+  "Okul",
+  "Hastane",
+  "Market",
+  "Eczane",
+  "Banka",
+  "Park",
+  "Cami",
+  "Üniversite",
+  "Alışveriş Merkezi",
+  "Cemevi",
+  "Fuar",
+  "İlkokul-Ortaokul",
+  "Sağlık Ocağı",
+];
+
+// Feature translations (Turkish to English)
+const FEATURE_TRANSLATIONS = {
+  // Bina Özellikleri
+  "Akıllı Ev": "Smart Home",
+  "Alarm (Yangın)": "Fire Alarm",
+  "Fiber İnternet": "Fiber Internet",
+  "Intercom Sistemi": "Intercom System",
+  "Kablo TV": "Cable TV",
+  "Uydu": "Satellite",
+  "Jeneratör": "Generator",
+  "Isı Yalıtımı": "Thermal Insulation",
+  "Ses Yalıtımı": "Sound Insulation",
+  "Su Deposu": "Water Tank",
+  "Buzdolabı": "Refrigerator",
+  // Dış Özellikler
+  "Bahçe": "Garden",
+  "Buhar Odası": "Steam Room",
+  "Garaj": "Garage",
+  "Otopark": "Parking",
+  "Havuz": "Pool",
+  "Çocuk Parkı": "Playground",
+  "Spor Alanı": "Sports Area",
+  "Yürüyüş Yolu": "Walking Path",
+  "Bisiklet Yolu": "Bicycle Path",
+  "Peyzaj": "Landscaping",
+  "Kapıcı Dairesi": "Doorman Apartment",
+  "Kreş": "Nursery",
+  "Siding": "Siding",
+  // Engelli/Yaşlı Uygun
+  "Engelli Asansörü": "Disabled Elevator",
+  "Engelli Rampası": "Disabled Ramp",
+  "Engelli WC": "Disabled WC",
+  "Yaşlı Dostu Tasarım": "Elderly Friendly Design",
+  "Görme Engelli Yardımcıları": "Visually Impaired Aids",
+  // Eğlence/Alışveriş
+  "AVM": "Shopping Mall",
+  "Restoran": "Restaurant",
+  "Cafe": "Cafe",
+  "Sinema": "Cinema",
+  "Fitness Salonu": "Fitness Center",
+  "SPA": "SPA",
+  "Sauna": "Sauna",
+  "Türk Hamamı": "Turkish Bath",
+  "Çocuk Kulübü": "Kids Club",
+  "Hobi Odası": "Hobby Room",
+  // Güvenlik
+  "24 Saat Güvenlik": "24/7 Security",
+  "Güvenlik Kamerası": "Security Camera",
+  "Kapalı Devre TV": "CCTV",
+  "Kartlı Giriş Sistemi": "Card Access System",
+  "Site İçi Güvenlik": "On-site Security",
+  "Yangın Merdiveni": "Fire Escape",
+  "Yangın Söndürme Sistemi": "Fire Suppression System",
+  // Manzara
+  "Şehir Manzarası": "City View",
+  "Deniz Manzarası": "Sea View",
+  "Doğa Manzarası": "Nature View",
+  "Göl Manzarası": "Lake View",
+  "Orman Manzarası": "Forest View",
+  "Dağ Manzarası": "Mountain View",
+  "Havuz Manzarası": "Pool View",
+  "Bahçe Manzarası": "Garden View",
+  // Muhit
+  "Metro": "Metro",
+  "Metrobüs": "Metrobus",
+  "Otobüs Durağı": "Bus Stop",
+  "Okul": "School",
+  "Hastane": "Hospital",
+  "Market": "Market",
+  "Eczane": "Pharmacy",
+  "Banka": "Bank",
+  "Park": "Park",
+  "Cami": "Mosque",
+  "Üniversite": "University",
+  "Alışveriş Merkezi": "Shopping Center",
+  "Cemevi": "Cemevi",
+  "Fuar": "Fair",
+  "İlkokul-Ortaokul": "Primary-Middle School",
+  "Sağlık Ocağı": "Health Center",
+};
+
+// Helper function to get translated feature
+const getTranslatedFeature = (feature, language) => {
+  // Check if feature is bilingual format (e.g., "Havuz / Pool")
+  if (feature && feature.includes(" / ")) {
+    const parts = feature.split(" / ");
+    if (language === "en") {
+      return parts[1] || parts[0]; // Return English part
+    }
+    return parts[0]; // Return Turkish part
+  }
+  
+  // Fallback to translation dictionary
+  if (language === "en") {
+    return FEATURE_TRANSLATIONS[feature] || feature;
+  }
+  return feature;
+};
+
+const ProjectDetail = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+  
+  const [activeTab, setActiveTab] = useState("all");
+  const [featuresTab, setFeaturesTab] = useState("binaOzellikleri");
+  const [selectedImage, setSelectedImage] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [floorPlanModal, setFloorPlanModal] = useState({ open: false, plan: null });
+  const [sitePlanModalOpen, setSitePlanModalOpen] = useState(false);
+  const [videoModalOpen, setVideoModalOpen] = useState(false);
+  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
+  const [contactForm, setContactForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    message: "",
+  });
+
+  // Fetch project data from API
+  const { data: propertyData, isLoading, isError } = useQuery(
+    ["project", id],
+    () => getProperty(id),
+    { enabled: !!id }
+  );
+
+  // Transform property data to project format
+  const project = useMemo(() => {
+    if (!propertyData) return null;
+    
+    // Combine images and videos into a single gallery array
+    const images = propertyData.images || [];
+    const videos = propertyData.videos || [];
+    
+    // Create gallery items with type indicator
+    const galleryItems = [
+      ...videos.map(url => ({ url, type: 'video' })),  // Videos first
+      ...images.map(url => ({ url, type: 'image' })),
+    ];
+    
+    // Build ozellikler from individual fields or existing ozellikler object
+    const ozellikler = {
+      binaOzellikleri: propertyData.binaOzellikleri || propertyData.ozellikler?.binaOzellikleri || [],
+      disOzellikler: propertyData.disOzellikler || propertyData.ozellikler?.disOzellikler || [],
+      engelliUygun: propertyData.engelliYasliUygun || propertyData.ozellikler?.engelliUygun || [],
+      eglenceAlisveris: propertyData.eglenceAlisveris || propertyData.ozellikler?.eglenceAlisveris || [],
+      guvenlik: propertyData.guvenlik || propertyData.ozellikler?.guvenlik || [],
+      manzara: propertyData.manzara || propertyData.ozellikler?.manzara || [],
+      muhit: propertyData.muhit || propertyData.ozellikler?.muhit || [],
+    };
+    
+    return {
+      id: propertyData.id,
+      name: propertyData.title,
+      projectName: propertyData.projectName || "",
+      city: propertyData.city,
+      district: propertyData.address?.split(",")[0]?.trim() || "",
+      price: propertyData.price,
+      deliveryDate: propertyData.deliveryDate || "",
+      images: propertyData.images || [],
+      videos: propertyData.videos || [],
+      galleryItems, // Combined gallery
+      projeHakkinda: propertyData.projeHakkinda,
+      dairePlanlari: propertyData.dairePlanlari || [],
+      vaziyetPlani: propertyData.vaziyetPlani,
+      ozellikler,
+      kampanya: propertyData.kampanya,
+      mapImage: propertyData.mapImage,
+      ilanNo: propertyData.ilanNo || "",
+    };
+  }, [propertyData]);
+
+  // Filter floor plans by room type
+  const filteredPlans = useMemo(() => {
+    if (!project?.dairePlanlari) return [];
+    if (activeTab === "all") return project.dairePlanlari;
+    return project.dairePlanlari.filter((plan) => plan.tip === activeTab);
+  }, [project, activeTab]);
+
+  // Get unique room types for tabs
+  const roomTypes = useMemo(() => {
+    if (!project?.dairePlanlari) return [];
+    return [...new Set(project.dairePlanlari.map((plan) => plan.tip))];
+  }, [project]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen pt-24 flex items-center justify-center">
+        <Loader size="xl" />
+      </div>
+    );
+  }
+
+  if (isError || !project) {
+    return (
+      <div className="min-h-screen pt-24 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-500 mb-4">{t("localProjects.noProjectsFound")}</p>
+          <Button onClick={() => navigate("/projects")}>{t("common.back")}</Button>
+        </div>
+      </div>
+    );
+  }
+
+  const handleContactSubmit = async (e) => {
+    e.preventDefault();
+
+    // Validation
+    if (!contactForm.name.trim()) {
+      toast.error(t("projectDetail.errorName"));
+      return;
+    }
+    if (!contactForm.email.trim()) {
+      toast.error(t("projectDetail.errorEmail"));
+      return;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(contactForm.email)) {
+      toast.error(t("projectDetail.errorEmailInvalid"));
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const emailData = {
+        name: contactForm.name,
+        email: contactForm.email,
+        phone: contactForm.phone || "",
+        subject: `Project Inquiry: ${project.name}`,
+        message: contactForm.message || `I am interested in the ${project.name} project located in ${project.city}, ${project.district}. Please contact me with more information.`,
+        propertyId: project.id,
+        propertyTitle: project.name,
+      };
+
+      await sendEmail(emailData);
+      toast.success(t("projectDetail.contactSuccess"));
+      
+      // Reset form
+      setContactForm({
+        name: "",
+        email: "",
+        phone: "",
+        message: "",
+      });
+    } catch (error) {
+      toast.error(t("projectDetail.contactError"));
+      console.error("Error sending email:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen pt-20 bg-white">
+      {/* Header */}
+      <div className="bg-white border-b">
+        <Container size="lg" className="py-4">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <MdArrowBack size={24} />
+            </button>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                {project.projectName && (
+                  <span className="text-xl font-bold text-gray-900">
+                    {project.projectName}
+                  </span>
+                )}
+                {project.ilanNo && (
+                  <span className="text-sm font-medium text-gray-500">{project.ilanNo}</span>
+                )}
+              </div>
+              <div className="flex items-center gap-1 text-gray-600 text-sm">
+                <MdLocationOn className="text-gray-400" />
+                <span>{project.city} / {project.district}</span>
+              </div>
+            </div>
+          </div>
+        </Container>
+      </div>
+
+      <Container size="lg" className="py-6">
+        <Grid gutter="xl">
+          {/* Left Column - Main Content */}
+          <Grid.Col span={{ base: 12, md: 8 }}>
+            {/* Image Gallery */}
+            <div className="mb-6">
+              <div className="flex flex-col md:flex-row gap-2">
+                {/* Main Image/Video */}
+                <div 
+                  className="flex-1 relative cursor-pointer group"
+                  onClick={() => {
+                    if (project.galleryItems[selectedImage]?.type === 'video') {
+                      setCurrentVideoIndex(selectedImage);
+                      setVideoModalOpen(true);
+                    } else {
+                      setLightboxOpen(true);
+                    }
+                  }}
+                >
+                  {project.galleryItems[selectedImage]?.type === 'video' ? (
+                    <>
+                      <video
+                        src={project.galleryItems[selectedImage]?.url}
+                        className="w-full h-[300px] md:h-[400px] object-cover rounded-lg"
+                        muted
+                        onMouseEnter={(e) => e.target.play()}
+                        onMouseLeave={(e) => {
+                          e.target.pause();
+                          e.target.currentTime = 0;
+                        }}
+                      />
+                      {/* Video Play Button Overlay */}
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="bg-black/50 rounded-full p-4 group-hover:bg-black/70 transition-colors">
+                          <MdPlayCircle className="text-white" size={64} />
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <img
+                        src={project.galleryItems[selectedImage]?.url || project.images[0]}
+                        alt={project.name}
+                        className="w-full h-[300px] md:h-[400px] object-cover rounded-lg"
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors rounded-lg flex items-center justify-center">
+                        <MdZoomIn className="text-white opacity-0 group-hover:opacity-100 transition-opacity" size={48} />
+                      </div>
+                    </>
+                  )}
+                </div>
+                
+                {/* Thumbnails */}
+                <div className="flex md:flex-col gap-2 md:w-[120px] h-auto md:h-[400px]">
+                  {project.galleryItems.slice(0, 5).map((item, index) => (
+                    <div
+                      key={index}
+                      className={`relative cursor-pointer rounded-lg overflow-hidden flex-1 min-h-[60px] ${
+                        selectedImage === index ? "ring-2 ring-blue-500" : ""
+                      }`}
+                      onClick={() => setSelectedImage(index)}
+                    >
+                      {item.type === 'video' ? (
+                        <>
+                          <video
+                            src={item.url}
+                            className="w-full h-full object-cover absolute inset-0"
+                            muted
+                          />
+                          <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                            <MdPlayCircleOutline className="text-white" size={24} />
+                          </div>
+                        </>
+                      ) : (
+                        <img
+                          src={item.url}
+                          alt={`${project.name} ${index + 1}`}
+                          className="w-full h-full object-cover absolute inset-0"
+                        />
+                      )}
+                      {index === 4 && project.galleryItems.length > 5 && (
+                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white font-medium text-center">
+                          +{project.galleryItems.length - 5}
+                          <br />
+                          <span className="text-xs">{t("projectDetail.morePhotos")}</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Gallery/Video/Brochure + Price + Delivery Row */}
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between mt-4 border-t border-b py-4 gap-4">
+                {/* Left: Gallery/Video/Brochure Tabs */}
+                <div className="flex items-center gap-4 md:gap-6">
+                  <button 
+                    onClick={() => setLightboxOpen(true)}
+                    className="flex items-center gap-2 text-blue-600 hover:text-blue-700"
+                  >
+                    <MdImage size={18} />
+                    <span className="text-sm">{t("projectDetail.gallery")}</span>
+                    <span className="text-xs text-gray-500">
+                      ({project.images.length}{project.videos.length > 0 ? ` + ${project.videos.length} video` : ''})
+                    </span>
+                  </button>
+                  <span className="text-gray-300">|</span>
+                  <button className="flex items-center gap-2 text-gray-600 hover:text-gray-700">
+                    <MdDescription size={18} />
+                    <span className="text-sm">{t("projectDetail.brochure")}</span>
+                  </button>
+                </div>
+
+                {/* Right: Price and Delivery */}
+                <div className="flex items-center gap-6 md:gap-10">
+                  {/* Price - Only show if greater than 0 */}
+                  {project.price > 0 && (
+                    <div className="text-right">
+                      <div className="text-xl md:text-2xl font-bold text-blue-600">
+                        {project.price.toLocaleString("tr-TR")} TL
+                      </div>
+                      <div className="text-xs text-gray-500">{t("projectDetail.startingFrom")}</div>
+                    </div>
+                  )}
+
+                  {/* Delivery Date */}
+                  <div className="flex items-center gap-2">
+                    <FaKey className="text-gray-400" size={18} />
+                    <div>
+                      <div className="text-xs text-gray-500">{t("projectDetail.deliveryDate")}</div>
+                      <div className="font-semibold text-sm">{project.deliveryDate}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* About Project */}
+            <section className="mb-8">
+              <h2 className="text-xl font-bold text-gray-900 mb-6">{t("projectDetail.aboutProject")}</h2>
+              
+              {/* Project Stats */}
+              {project.projeHakkinda && (
+                <div className="flex flex-wrap items-center gap-8 md:gap-16 mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-5 h-5 border-2 border-gray-300 rounded"></div>
+                    <div>
+                      <div className="text-sm text-gray-500">{t("projectDetail.projectArea")}</div>
+                      <div className="font-bold text-gray-900">{project.projeHakkinda.projeAlani?.toLocaleString("tr-TR")} m<sup>2</sup></div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-5 h-5 border-2 border-gray-300 rounded"></div>
+                    <div>
+                      <div className="text-sm text-gray-500">{t("projectDetail.greenArea")}</div>
+                      <div className="font-bold text-gray-900">{project.projeHakkinda.yesilAlan?.toLocaleString("tr-TR")} m<sup>2</sup></div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-5 h-5 border-2 border-gray-300 rounded"></div>
+                    <div>
+                      <div className="text-sm text-gray-500">{t("projectDetail.unitCount")}</div>
+                      <div className="font-bold text-gray-900">{project.projeHakkinda.konutSayisi?.toLocaleString("tr-TR")}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Campaign Banner */}
+              {project.kampanya && (
+                <div className="bg-gray-600 rounded p-4 mb-6 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <MdCampaign className="text-yellow-400 text-xl" />
+                    <span className="text-sm text-white">{project.kampanya}</span>
+                  </div>
+                  <button className="text-blue-400 text-sm hover:underline">{t("projectDetail.details")}</button>
+                </div>
+              )}
+
+              {/* Description - Bilingual */}
+              {(() => {
+                const description = i18n.language === "en" 
+                  ? (project.projeHakkinda?.description_en || project.projeHakkinda?.description)
+                  : (project.projeHakkinda?.description_tr || project.projeHakkinda?.description);
+                
+                if (!description) return null;
+                
+                return (
+                  <div className="mb-6 text-sm text-gray-700 leading-relaxed">
+                    {description.split('\n\n').map((paragraph, index) => {
+                      // Check if paragraph starts with a bold-like text
+                      const isBoldStart = paragraph.includes('!') || paragraph.includes('...') || paragraph.startsWith('Siz') || paragraph.startsWith('Hayallerini') || paragraph.startsWith('Ayrıca') || paragraph.startsWith('Kartal');
+                      if (isBoldStart && index < 6) {
+                        const lines = paragraph.split('\n');
+                        return (
+                          <div key={index} className="mb-4">
+                            {lines.map((line, lineIndex) => {
+                              if (lineIndex === 0 && (line.includes('!') || line.includes('...'))) {
+                                return <p key={lineIndex} className="font-bold text-gray-900 mb-1">{line}</p>;
+                              }
+                              return <p key={lineIndex} className="mb-1">{line}</p>;
+                            })}
+                          </div>
+                        );
+                      }
+                      return <p key={index} className="mb-4">{paragraph}</p>;
+                    })}
+                  </div>
+                );
+              })()}
+
+              {/* Nearby Distances */}
+              {project.projeHakkinda?.yakinMesafeler && (
+                <div className="mt-4">
+                  {project.projeHakkinda.yakinMesafeler.map((item, index) => (
+                    <div key={index} className="text-sm text-gray-700 mb-1">
+                      {item.yer} <span className="text-blue-600">{item.mesafe}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            {/* Floor Plans */}
+            {project.dairePlanlari && project.dairePlanlari.length > 0 && (
+              <section className="mb-8">
+                {/* Room Type Tabs */}
+                <div className="flex items-center gap-6 mb-4 border-b">
+                  <button
+                    className={`px-2 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                      activeTab === "all"
+                        ? "border-blue-500 text-blue-600"
+                        : "border-transparent text-gray-500 hover:text-gray-700"
+                    }`}
+                    onClick={() => setActiveTab("all")}
+                  >
+                    Hepsi
+                  </button>
+                  {roomTypes.map((type) => (
+                    <button
+                      key={type}
+                      className={`px-2 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                        activeTab === type
+                          ? "border-blue-500 text-blue-600"
+                          : "border-transparent text-gray-500 hover:text-gray-700"
+                      }`}
+                      onClick={() => setActiveTab(type)}
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
+
+
+                {/* Floor Plan Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredPlans.map((plan) => (
+                    <div key={plan.id} className="border border-gray-200 rounded-lg p-4">
+                      <h3 className="font-bold text-gray-900 text-lg mb-2">
+                        {plan.tip} - {plan.varyant}
+                      </h3>
+                      {plan.fiyat > 0 && (
+                        <div className="mb-3">
+                          <span className="text-blue-600 font-medium">
+                            {plan.fiyat.toLocaleString("tr-TR")} TL
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2 text-gray-600">
+                          <span className="w-4 h-4 border border-gray-400 rounded-sm inline-block"></span>
+                          <span>{plan.metrekare} m²</span>
+                        </div>
+                        <button 
+                          className="text-blue-600 hover:underline"
+                          onClick={() => setFloorPlanModal({ open: true, plan })}
+                        >
+                          {t("projectDetail.details")}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Site Plan */}
+            {project.vaziyetPlani && (
+              <section className="mb-8">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">{t("projectDetail.sitePlan")}</h2>
+                <div 
+                  className="relative cursor-pointer group"
+                  onClick={() => setSitePlanModalOpen(true)}
+                >
+                  <img
+                    src={project.vaziyetPlani}
+                    alt={t("projectDetail.sitePlan")}
+                    className="w-full h-auto max-h-[500px] object-contain rounded-lg border bg-gray-50"
+                  />
+                  {/* Zoom overlay on hover */}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-lg flex items-center justify-center">
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 px-4 py-2 rounded-lg flex items-center gap-2 shadow-lg">
+                      <MdZoomIn size={20} className="text-purple-600" />
+                      <span className="text-sm font-medium text-gray-700">{t("projectDetail.clickToEnlarge") || "Büyütmek için tıklayın"}</span>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {/* Location / Map Section */}
+            <section className="mb-8">
+              <h2 className="text-xl font-bold text-gray-900 mb-6">{t("projectDetail.location")}</h2>
+              <div className="relative">
+                {project.mapImage ? (
+                  <img
+                    src={project.mapImage}
+                    alt={`${project.name} - ${t("projectDetail.location")}`}
+                    className="w-full h-[350px] object-cover rounded-lg border"
+                  />
+                ) : (
+                  <div className="w-full h-[350px] bg-gray-100 rounded-lg border flex items-center justify-center">
+                    <div className="text-center text-gray-400">
+                      <MdLocationOn size={48} className="mx-auto mb-2" />
+                      <p className="text-sm">{project.city} / {project.district}</p>
+                      <p className="text-xs mt-1">Harita görüntüsü eklenecek</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            {/* Features Section - Below Location - Comprehensive Display */}
+            <section className="mb-8">
+              <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <span className="text-lg">📋</span>
+                {t("projectDetail.features")}
+              </h2>
+              
+              {/* Feature Category Tabs with Icons */}
+              <div className="flex items-center gap-1 mb-4 overflow-x-auto pb-2 border-b">
+                <button
+                  className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
+                    featuresTab === "binaOzellikleri"
+                      ? "border-b-2 border-gray-900 text-gray-900"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                  onClick={() => setFeaturesTab("binaOzellikleri")}
+                >
+                  <BsHouseDoor />
+                  {t("projectDetail.buildingFeatures")}
+                </button>
+                <button
+                  className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
+                    featuresTab === "disOzellikler"
+                      ? "border-b-2 border-gray-900 text-gray-900"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                  onClick={() => setFeaturesTab("disOzellikler")}
+                >
+                  <BsTree />
+                  {t("projectDetail.exteriorFeatures")}
+                </button>
+                <button
+                  className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
+                    featuresTab === "engelliUygun"
+                      ? "border-b-2 border-gray-900 text-gray-900"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                  onClick={() => setFeaturesTab("engelliUygun")}
+                >
+                  <BsPeople />
+                  {t("projectDetail.accessibility")}
+                </button>
+                <button
+                  className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
+                    featuresTab === "eglenceAlisveris"
+                      ? "border-b-2 border-gray-900 text-gray-900"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                  onClick={() => setFeaturesTab("eglenceAlisveris")}
+                >
+                  <BsCart4 />
+                  {t("projectDetail.entertainment")}
+                </button>
+                <button
+                  className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
+                    featuresTab === "guvenlik"
+                      ? "border-b-2 border-gray-900 text-gray-900"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                  onClick={() => setFeaturesTab("guvenlik")}
+                >
+                  <BsShieldCheck />
+                  {t("projectDetail.security")}
+                </button>
+                <button
+                  className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
+                    featuresTab === "manzara"
+                      ? "border-b-2 border-gray-900 text-gray-900"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                  onClick={() => setFeaturesTab("manzara")}
+                >
+                  <BsEye />
+                  {t("projectDetail.view")}
+                </button>
+                <button
+                  className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
+                    featuresTab === "muhit"
+                      ? "border-b-2 border-gray-900 text-gray-900"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                  onClick={() => setFeaturesTab("muhit")}
+                >
+                  <BsGeoAlt />
+                  {t("projectDetail.neighborhood")}
+                </button>
+              </div>
+
+              {/* Features Grid - Show all possible features with check/uncheck */}
+              <div className="p-5 bg-white border border-gray-100 rounded-xl">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {/* Bina Özellikleri */}
+                  {featuresTab === "binaOzellikleri" && ALL_BINA_OZELLIKLERI.map((feature, index) => {
+                    const hasFeature = project.ozellikler?.binaOzellikleri?.some(f => 
+                      f === feature || f.includes(feature) || feature.includes(f.split(" / ")[0])
+                    );
+                    return (
+                      <div
+                        key={index}
+                        className={`flex items-center gap-2 text-sm ${!hasFeature ? "opacity-50" : ""}`}
+                      >
+                        {hasFeature ? (
+                          <MdCheck className="text-green-500 flex-shrink-0" size={18} />
+                        ) : (
+                          <MdClose className="text-red-400 flex-shrink-0" size={18} />
+                        )}
+                        <span className={hasFeature ? "text-gray-700 font-medium" : "text-gray-400"}>
+                          {getTranslatedFeature(feature, i18n.language)}
+                        </span>
+                      </div>
+                    );
+                  })}
+
+                  {/* Dış Özellikler */}
+                  {featuresTab === "disOzellikler" && ALL_DIS_OZELLIKLER.map((feature, index) => {
+                    const hasFeature = project.ozellikler?.disOzellikler?.some(f => 
+                      f === feature || f.includes(feature) || feature.includes(f.split(" / ")[0])
+                    );
+                    return (
+                      <div
+                        key={index}
+                        className={`flex items-center gap-2 text-sm ${!hasFeature ? "opacity-50" : ""}`}
+                      >
+                        {hasFeature ? (
+                          <MdCheck className="text-green-500 flex-shrink-0" size={18} />
+                        ) : (
+                          <MdClose className="text-red-400 flex-shrink-0" size={18} />
+                        )}
+                        <span className={hasFeature ? "text-gray-700 font-medium" : "text-gray-400"}>
+                          {getTranslatedFeature(feature, i18n.language)}
+                        </span>
+                      </div>
+                    );
+                  })}
+
+                  {/* Engelli/Yaşlı Uygun */}
+                  {featuresTab === "engelliUygun" && ALL_ENGELLI_UYGUN.map((feature, index) => {
+                    const hasFeature = project.ozellikler?.engelliUygun?.some(f => 
+                      f === feature || f.includes(feature) || feature.includes(f.split(" / ")[0])
+                    );
+                    return (
+                      <div
+                        key={index}
+                        className={`flex items-center gap-2 text-sm ${!hasFeature ? "opacity-50" : ""}`}
+                      >
+                        {hasFeature ? (
+                          <MdCheck className="text-green-500 flex-shrink-0" size={18} />
+                        ) : (
+                          <MdClose className="text-red-400 flex-shrink-0" size={18} />
+                        )}
+                        <span className={hasFeature ? "text-gray-700 font-medium" : "text-gray-400"}>
+                          {getTranslatedFeature(feature, i18n.language)}
+                        </span>
+                      </div>
+                    );
+                  })}
+
+                  {/* Eğlence & Alışveriş */}
+                  {featuresTab === "eglenceAlisveris" && ALL_EGLENCE_ALISVERIS.map((feature, index) => {
+                    const hasFeature = project.ozellikler?.eglenceAlisveris?.some(f => 
+                      f === feature || f.includes(feature) || feature.includes(f.split(" / ")[0])
+                    );
+                    return (
+                      <div
+                        key={index}
+                        className={`flex items-center gap-2 text-sm ${!hasFeature ? "opacity-50" : ""}`}
+                      >
+                        {hasFeature ? (
+                          <MdCheck className="text-green-500 flex-shrink-0" size={18} />
+                        ) : (
+                          <MdClose className="text-red-400 flex-shrink-0" size={18} />
+                        )}
+                        <span className={hasFeature ? "text-gray-700 font-medium" : "text-gray-400"}>
+                          {getTranslatedFeature(feature, i18n.language)}
+                        </span>
+                      </div>
+                    );
+                  })}
+
+                  {/* Güvenlik */}
+                  {featuresTab === "guvenlik" && ALL_GUVENLIK.map((feature, index) => {
+                    const hasFeature = project.ozellikler?.guvenlik?.some(f => 
+                      f === feature || f.includes(feature) || feature.includes(f.split(" / ")[0])
+                    );
+                    return (
+                      <div
+                        key={index}
+                        className={`flex items-center gap-2 text-sm ${!hasFeature ? "opacity-50" : ""}`}
+                      >
+                        {hasFeature ? (
+                          <MdCheck className="text-green-500 flex-shrink-0" size={18} />
+                        ) : (
+                          <MdClose className="text-red-400 flex-shrink-0" size={18} />
+                        )}
+                        <span className={hasFeature ? "text-gray-700 font-medium" : "text-gray-400"}>
+                          {getTranslatedFeature(feature, i18n.language)}
+                        </span>
+                      </div>
+                    );
+                  })}
+
+                  {/* Manzara */}
+                  {featuresTab === "manzara" && ALL_MANZARA.map((feature, index) => {
+                    const hasFeature = project.ozellikler?.manzara?.some(f => 
+                      f === feature || f.includes(feature) || feature.includes(f.split(" / ")[0])
+                    );
+                    return (
+                      <div
+                        key={index}
+                        className={`flex items-center gap-2 text-sm ${!hasFeature ? "opacity-50" : ""}`}
+                      >
+                        {hasFeature ? (
+                          <MdCheck className="text-green-500 flex-shrink-0" size={18} />
+                        ) : (
+                          <MdClose className="text-red-400 flex-shrink-0" size={18} />
+                        )}
+                        <span className={hasFeature ? "text-gray-700 font-medium" : "text-gray-400"}>
+                          {getTranslatedFeature(feature, i18n.language)}
+                        </span>
+                      </div>
+                    );
+                  })}
+
+                  {/* Muhit */}
+                  {featuresTab === "muhit" && ALL_MUHIT.map((feature, index) => {
+                    const hasFeature = project.ozellikler?.muhit?.some(f => 
+                      f === feature || f.includes(feature) || feature.includes(f.split(" / ")[0])
+                    );
+                    return (
+                      <div
+                        key={index}
+                        className={`flex items-center gap-2 text-sm ${!hasFeature ? "opacity-50" : ""}`}
+                      >
+                        {hasFeature ? (
+                          <MdCheck className="text-green-500 flex-shrink-0" size={18} />
+                        ) : (
+                          <MdClose className="text-red-400 flex-shrink-0" size={18} />
+                        )}
+                        <span className={hasFeature ? "text-gray-700 font-medium" : "text-gray-400"}>
+                          {getTranslatedFeature(feature, i18n.language)}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </section>
+          </Grid.Col>
+
+          {/* Right Column - Contact Form */}
+          <Grid.Col span={{ base: 12, md: 4 }}>
+            <Paper shadow="sm" className="sticky top-24 p-6 border">
+              <h3 className="text-lg font-bold text-gray-900 mb-2">{t("projectDetail.contactUs")}</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                {project.name} {t("projectDetail.contactDescription")}
+              </p>
+
+              <form onSubmit={handleContactSubmit}>
+                <div className="space-y-4">
+                  <TextInput
+                    placeholder={t("projectDetail.name")}
+                    value={contactForm.name}
+                    onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+                    required
+                  />
+                  <TextInput
+                    type="email"
+                    placeholder={t("projectDetail.email")}
+                    value={contactForm.email}
+                    onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                    required
+                  />
+                  <TextInput
+                    placeholder={t("projectDetail.phone")}
+                    value={contactForm.phone}
+                    onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
+                    rightSection={<span className="text-xs text-gray-400">ⓘ</span>}
+                  />
+                  <Textarea
+                    placeholder={t("projectDetail.messagePlaceholder")}
+                    value={contactForm.message}
+                    onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
+                    rows={4}
+                    maxLength={250}
+                  />
+                  <div className="text-right text-xs text-gray-400">
+                    {contactForm.message.length} / 250
+                  </div>
+                </div>
+
+                <p className="text-xs text-gray-500 my-4">
+                  {t("projectDetail.privacyNotice")}
+                </p>
+
+                <Button 
+                  type="submit" 
+                  fullWidth 
+                  color="orange" 
+                  size="md"
+                  loading={loading}
+                  disabled={loading}
+                >
+                  {t("projectDetail.requestInfo")}
+                </Button>
+              </form>
+            </Paper>
+          </Grid.Col>
+        </Grid>
+      </Container>
+
+      {/* Image/Video Lightbox */}
+      <Modal
+        opened={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+        size="xl"
+        centered
+        withCloseButton
+      >
+        {project.galleryItems[selectedImage]?.type === 'video' ? (
+          <video
+            src={project.galleryItems[selectedImage]?.url}
+            className="w-full h-auto rounded-lg"
+            controls
+            autoPlay
+          />
+        ) : (
+          <img
+            src={project.galleryItems[selectedImage]?.url || project.images[0]}
+            alt={project.name}
+            className="w-full h-auto"
+          />
+        )}
+        <div className="flex justify-center gap-2 mt-4 flex-wrap">
+          {project.galleryItems.map((item, index) => (
+            <button
+              key={index}
+              className={`w-16 h-12 rounded overflow-hidden relative ${
+                selectedImage === index ? "ring-2 ring-blue-500" : ""
+              }`}
+              onClick={() => setSelectedImage(index)}
+            >
+              {item.type === 'video' ? (
+                <>
+                  <video src={item.url} className="w-full h-full object-cover" muted />
+                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                    <MdPlayCircleOutline className="text-white" size={16} />
+                  </div>
+                </>
+              ) : (
+                <img src={item.url} alt="" className="w-full h-full object-cover" />
+              )}
+            </button>
+          ))}
+        </div>
+      </Modal>
+
+      {/* Floor Plan Modal */}
+      <Modal
+        opened={floorPlanModal.open}
+        onClose={() => setFloorPlanModal({ open: false, plan: null })}
+        size="lg"
+        centered
+        withCloseButton
+        title={
+          floorPlanModal.plan && (
+            <div className="font-bold text-lg">
+              {floorPlanModal.plan.tip} - {floorPlanModal.plan.varyant}
+            </div>
+          )
+        }
+      >
+        {floorPlanModal.plan && (
+          <div className="space-y-4">
+            {floorPlanModal.plan.image ? (
+              <img
+                src={floorPlanModal.plan.image}
+                alt={`${floorPlanModal.plan.tip} - ${floorPlanModal.plan.varyant}`}
+                className="w-full h-auto rounded-lg"
+              />
+            ) : (
+              <div className="flex items-center justify-center h-64 bg-gray-100 rounded-lg">
+                <p className="text-gray-500">{t("projectDetail.noFloorPlanImage") || "Görsel mevcut değil"}</p>
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+              {floorPlanModal.plan.fiyat > 0 && (
+                <div>
+                  <p className="text-sm text-gray-500">{t("projectDetail.price") || "Fiyat"}</p>
+                  <p className="font-bold text-blue-600 text-lg">
+                    {floorPlanModal.plan.fiyat?.toLocaleString("tr-TR")} TL
+                  </p>
+                </div>
+              )}
+              <div>
+                <p className="text-sm text-gray-500">{t("projectDetail.area") || "Alan"}</p>
+                <p className="font-bold text-gray-900 text-lg">
+                  {floorPlanModal.plan.metrekare} m²
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Site Plan Modal */}
+      <Modal
+        opened={sitePlanModalOpen}
+        onClose={() => setSitePlanModalOpen(false)}
+        size="xl"
+        centered
+        withCloseButton
+        title={<span className="font-bold text-lg">{t("projectDetail.sitePlan")}</span>}
+      >
+        {project?.vaziyetPlani && (
+          <img
+            src={project.vaziyetPlani}
+            alt={t("projectDetail.sitePlan")}
+            className="w-full h-auto rounded-lg"
+          />
+        )}
+      </Modal>
+
+      {/* Video Modal - Full Screen */}
+      {videoModalOpen && project?.galleryItems[currentVideoIndex]?.type === 'video' && (
+        <div className="fixed inset-0 bg-black/95 z-[300] flex items-center justify-center">
+          {/* Close Button */}
+          <button
+            onClick={() => setVideoModalOpen(false)}
+            className="absolute top-4 right-4 w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white text-2xl z-10"
+          >
+            ×
+          </button>
+
+          {/* Video Info */}
+          <div className="absolute top-4 left-4 text-white/80 text-sm flex items-center gap-2">
+            <MdVideocam />
+            Video
+          </div>
+
+          {/* Main Video */}
+          <video
+            key={currentVideoIndex}
+            src={project.galleryItems[currentVideoIndex]?.url}
+            className="max-h-[85vh] max-w-[90vw] rounded-lg"
+            controls
+            autoPlay
+          />
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ProjectDetail;
