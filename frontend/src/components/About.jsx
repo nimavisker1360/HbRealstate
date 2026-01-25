@@ -1,16 +1,80 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import CountUp from "react-countup";
 import photoTest from "../assets/phototst.jpg";
+
+const StepCountUp = ({
+  end,
+  isActive,
+  step = 30,
+  duration = 10,
+  delay = 3,
+  className,
+  formatValue,
+}) => {
+  const [value, setValue] = useState(0);
+
+  useEffect(() => {
+    if (!isActive) {
+      setValue(0);
+      return;
+    }
+
+    let timeoutId;
+    let intervalId;
+
+    const totalSteps = Math.ceil(end / step);
+    const intervalMs = totalSteps > 1 ? (duration * 1000) / totalSteps : 0;
+
+    timeoutId = setTimeout(() => {
+      if (totalSteps <= 1) {
+        setValue(end);
+        return;
+      }
+
+      let current = 0;
+      intervalId = setInterval(() => {
+        current = Math.min(current + step, end);
+        setValue(current);
+
+        if (current >= end) {
+          clearInterval(intervalId);
+        }
+      }, intervalMs);
+    }, delay * 1000);
+
+    return () => {
+      clearTimeout(timeoutId);
+      clearInterval(intervalId);
+    };
+  }, [end, isActive, step, duration, delay]);
+
+  const displayValue = formatValue ? formatValue(value) : value;
+
+  return <h3 className={className}>{displayValue}</h3>;
+};
 
 const About = () => {
   const { t } = useTranslation();
 
   // Define the statistics with translations
   const statistics = [
-    { label: t("about.happyClients"), value: 12 },
-    { label: t("about.differentCities"), value: 3 },
-    { label: t("about.projectCompleted"), value: 45 },
+    {
+      label: t("about.happyClients"),
+      value: 5000,
+      step: 500,
+      prefix: "+",
+      suffix: "",
+      formatValue: (val) => Math.round(val).toLocaleString("en-US"),
+    },
+    {
+      label: t("about.differentCities"),
+      value: 5,
+      step: 1,
+      prefix: "+",
+      suffix: "",
+      formatValue: (val) => Math.round(val),
+    },
+    { label: t("about.projectCompleted"), value: 470, prefix: "+", suffix: "" },
   ];
 
   const [isVisible, setIsVisible] = useState(false);
@@ -193,33 +257,35 @@ const About = () => {
           </p>
           {/* Statistics Container */}
           <div className="flex flex-wrap gap-4">
-            {statistics.map((statistic, index) => (
-              <div
-                key={index}
-                className={`bg-primary p-4 rounded-lg ${
-                  isVisible ? "animate-about-pop" : "opacity-0"
-                }`}
-                style={{ animationDelay: `${0.4 + index * 0.1}s` }}
-              >
-                <div className="flex items-center gap-1">
-                  <CountUp
-                    start={isVisible ? 0 : null}
-                    end={statistic.value}
-                    duration={10}
-                    delay={3}
-                  >
-                    {({ countUpRef }) => (
-                      <h3
-                        ref={countUpRef}
-                        className="text-2xl font-semibold "
-                      ></h3>
-                    )}
-                  </CountUp>
-                  <h4 className="bold-22">k+</h4>
+            {statistics.map((statistic, index) => {
+              const prefix = statistic.prefix ?? "+";
+              const suffix = statistic.suffix ?? "k";
+
+              return (
+                <div
+                  key={index}
+                  className={`bg-primary p-4 rounded-lg ${
+                    isVisible ? "animate-about-pop" : "opacity-0"
+                  }`}
+                  style={{ animationDelay: `${0.4 + index * 0.1}s` }}
+                >
+                  <div className="flex items-center gap-1">
+                    {prefix && <h4 className="bold-22">{prefix}</h4>}
+                    <StepCountUp
+                      end={statistic.value}
+                      isActive={isVisible}
+                      step={statistic.step ?? 30}
+                      duration={6}
+                      delay={1}
+                      className="text-2xl font-semibold "
+                      formatValue={statistic.formatValue}
+                    />
+                    {suffix && <h4 className="bold-22">{suffix}</h4>}
+                  </div>
+                  <p className="text-gray-600">{statistic.label}</p>
                 </div>
-                <p className="text-gray-600">{statistic.label}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

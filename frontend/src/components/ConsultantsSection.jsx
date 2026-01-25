@@ -5,6 +5,9 @@ import { MdArrowForward, MdLocationOn } from "react-icons/md";
 import { Loader } from "@mantine/core";
 import { useEffect, useState, useRef } from "react";
 import PropTypes from "prop-types";
+import iconAudience from "../assets/p.png";
+import iconProspects from "../assets/p03.png";
+import iconOpportunity from "../assets/p04.png";
 
 // Animated element with IntersectionObserver
 const AnimatedElement = ({ children, delay = 0, className = "" }) => {
@@ -94,7 +97,7 @@ const ConsultantsSection = () => {
             </span>
           </div>
 
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
+          <h2 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight mb-3">
             {t("consultantsSection.findExpert")}
           </h2>
 
@@ -210,90 +213,65 @@ const ConsultantsSection = () => {
 
       {/* Listings Lease or Sell Faster Section */}
       <AnimatedElement delay={100} className="mt-16">
-        <div className="relative overflow-hidden rounded-2xl bg-[#1e2a38]">
+        <div className="relative isolate overflow-hidden rounded-3xl bg-gradient-to-br from-[#0c1422] via-[#18263a] to-[#20334a] shadow-2xl ring-1 ring-white/10">
+          <div className="pointer-events-none absolute -top-24 -left-24 h-56 w-56 rounded-full bg-emerald-400/15 blur-3xl"></div>
+          <div className="pointer-events-none absolute -bottom-28 right-10 h-72 w-72 rounded-full bg-sky-500/10 blur-3xl"></div>
           <div className="flex flex-col lg:flex-row">
             {/* Left Content */}
-            <div className="flex-1 p-8 lg:p-12 xl:p-16">
-              <h2 className="text-2xl md:text-3xl font-bold text-white mb-10">
+            <div className="flex-1 p-8 lg:p-12 xl:p-14">
+              <h2 className="text-2xl md:text-3xl font-bold text-white leading-tight mb-8 max-w-xl">
                 {t("consultantsSection.listingsFaster")}
               </h2>
 
               {/* Features Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-10">
+              <div className="grid grid-cols-1 gap-4 mb-8 max-w-2xl">
                 {/* Right Audience */}
-                <div>
-                  <div className="w-10 h-10 mb-4 text-white/80">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      className="w-10 h-10"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
-                      />
-                    </svg>
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition hover:bg-white/10 min-h-[190px]">
+                  <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10">
+                    <img
+                      src={iconAudience}
+                      alt={t("consultantsSection.rightAudience")}
+                      className="h-7 w-7 object-contain"
+                    />
                   </div>
-                  <h3 className="text-white font-bold mb-2">
+                  <h3 className="text-white font-semibold mb-2">
                     {t("consultantsSection.rightAudience")}
                   </h3>
-                  <p className="text-white/60 text-sm">
+                  <p className="text-white/65 text-sm leading-relaxed">
                     {t("consultantsSection.rightAudienceDesc")}
                   </p>
                 </div>
 
                 {/* Engage Prospects */}
-                <div>
-                  <div className="w-10 h-10 mb-4 text-white/80">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      className="w-10 h-10"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                      />
-                    </svg>
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition hover:bg-white/10 min-h-[190px]">
+                  <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10">
+                    <img
+                      src={iconProspects}
+                      alt={t("consultantsSection.engageProspects")}
+                      className="h-7 w-7 object-contain"
+                    />
                   </div>
-                  <h3 className="text-white font-bold mb-2">
+                  <h3 className="text-white font-semibold mb-2">
                     {t("consultantsSection.engageProspects")}
                   </h3>
-                  <p className="text-white/60 text-sm">
+                  <p className="text-white/65 text-sm leading-relaxed">
                     {t("consultantsSection.engageProspectsDesc")}
                   </p>
                 </div>
 
                 {/* More Opportunity */}
-                <div>
-                  <div className="w-10 h-10 mb-4 text-white/80">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      className="w-10 h-10"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                      />
-                    </svg>
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition hover:bg-white/10 min-h-[190px]">
+                  <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10">
+                    <img
+                      src={iconOpportunity}
+                      alt={t("consultantsSection.moreOpportunity")}
+                      className="h-7 w-7 object-contain"
+                    />
                   </div>
-                  <h3 className="text-white font-bold mb-2">
+                  <h3 className="text-white font-semibold mb-2">
                     {t("consultantsSection.moreOpportunity")}
                   </h3>
-                  <p className="text-white/60 text-sm">
+                  <p className="text-white/65 text-sm leading-relaxed">
                     {t("consultantsSection.moreOpportunityDesc")}
                   </p>
                 </div>
@@ -302,24 +280,25 @@ const ConsultantsSection = () => {
               {/* CTA Button */}
               <button
                 onClick={() => navigate("/listing")}
-                className="bg-[#06a84e] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#058a41] transition-colors mb-8"
+                className="inline-flex items-center gap-2 rounded-full bg-emerald-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/25 transition hover:bg-emerald-400 mb-6"
               >
                 {t("consultantsSection.exploreMarketing")}
               </button>
 
               {/* Disclaimer */}
-              <p className="text-white/40 text-xs">
+              <p className="text-white/40 text-xs leading-relaxed">
                 {t("consultantsSection.disclaimer")}
               </p>
             </div>
 
             {/* Right Image */}
-            <div className="lg:w-[45%] h-[300px] lg:h-auto">
+            <div className="relative lg:w-[45%] h-[280px] sm:h-[320px] lg:h-auto">
               <img
                 src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&auto=format&fit=crop&q=60"
                 alt="Modern building at night"
                 className="w-full h-full object-cover"
               />
+              <div className="absolute inset-0 bg-gradient-to-l from-transparent via-[#0c1422]/10 to-[#0c1422]/80"></div>
             </div>
           </div>
         </div>
