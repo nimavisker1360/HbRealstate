@@ -23,6 +23,13 @@ const getLocalizedField = (consultant, field, language) => {
 const Consultants = () => {
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language === "tr" ? "tr" : "en";
+  const yearSuffix = currentLang === "tr" ? "yıl" : "years";
+  const formatExperience = (value) => {
+    const raw = value?.toString().trim();
+    if (!raw) return `0 ${yearSuffix}`;
+    if (/\b(years?|yıl)\b/i.test(raw)) return raw;
+    return `${raw} ${yearSuffix}`;
+  };
   const [selectedConsultant, setSelectedConsultant] = useState(null);
   const [contactModalOpen, setContactModalOpen] = useState(false);
   const { data: consultants, isLoading, isError } = useConsultants();
@@ -102,7 +109,9 @@ const Consultants = () => {
             <FaBriefcase className="text-white text-xl" />
           </div>
           <div>
-            <h3 className="bold-20 text-tertiary">{avgExperience}+</h3>
+            <h3 className="bold-20 text-tertiary">
+              {formatExperience(`${avgExperience}+`)}
+            </h3>
             <p className="text-gray-30 text-xs sm:text-sm">
               {currentLang === "tr" ? "Yıllık Deneyim" : "Years Experience"}
             </p>
@@ -190,7 +199,9 @@ const Consultants = () => {
                   {/* Stats */}
                   <div className="flex items-center justify-between mb-5 py-3 px-4 bg-primary rounded-xl">
                     <div className="text-center">
-                      <p className="font-bold text-tertiary">{consultant.experience}</p>
+                      <p className="font-bold text-tertiary">
+                        {formatExperience(consultant.experience)}
+                      </p>
                       <p className="text-xs text-gray-30">{t("consultants.experience")}</p>
                     </div>
                     <div className="w-px h-8 bg-gray-200"></div>
@@ -345,7 +356,9 @@ const Consultants = () => {
             {/* Stats Grid */}
             <div className="grid grid-cols-2 gap-3 px-6 pb-6">
               <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 text-center border border-white/10">
-                <p className="text-2xl font-bold text-white">{selectedConsultant.experience}</p>
+                <p className="text-2xl font-bold text-white">
+                  {formatExperience(selectedConsultant.experience)}
+                </p>
                 <p className="text-xs text-white/50 uppercase tracking-wider">{t("consultants.experience")}</p>
               </div>
               <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 text-center border border-white/10">

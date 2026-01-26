@@ -62,6 +62,13 @@ const getLocalizedField = (consultant, field, language) => {
 const ConsultantsSection = () => {
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language === "tr" ? "tr" : "en";
+  const yearSuffix = currentLang === "tr" ? "yıl" : "years";
+  const formatExperience = (value) => {
+    const raw = value?.toString().trim();
+    if (!raw) return `0 ${yearSuffix}`;
+    if (/\b(years?|yıl)\b/i.test(raw)) return raw;
+    return `${raw} ${yearSuffix}`;
+  };
   const { data: consultants, isLoading, isError } = useConsultants();
   const navigate = useNavigate();
   const [contactModalOpen, setContactModalOpen] = useState(false);
@@ -156,7 +163,7 @@ const ConsultantsSection = () => {
                   <div className="flex gap-6 justify-center">
                     <div className="text-center">
                       <p className="font-bold text-gray-900">
-                        {consultant.experience}
+                        {formatExperience(consultant.experience)}
                       </p>
                       <p className="text-gray-400 text-xs">
                         {t("consultants.experience")}
