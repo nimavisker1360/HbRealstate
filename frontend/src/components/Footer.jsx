@@ -18,7 +18,6 @@ const Footer = () => {
         { key: "aboutUs", label: t('footer.aboutUs'), isAbout: true },
         { key: "latestItems", label: t('footer.latestItems') },
         { key: "hotOffers", label: t('footer.hotOffers') },
-        { key: "popularDesigns", label: t('footer.popularDesigns') },
       ],
     },
     {

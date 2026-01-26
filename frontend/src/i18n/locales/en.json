@@ -50,7 +50,7 @@
     "touristFacility": "Tourist Facility"
   },
   "hero": {
-    "title": "Right Location. Right Time.  Right Investment",
+    "title": "Right Location, Right Time, Right Investment",
     "subtitle": "Discover premium real estate opportunities with HB International",
     "searchPlaceholder": "Search by city, address or property name...",
     "exploreBtn": "Explore Properties"
@@ -272,6 +272,19 @@
     "subtitle": "Stay Updated with the Latest News!",
     "readMore": "Read More",
     "continueReading": "continue reading"
+  },
+  "testimonials": {
+    "subtitle": "Real Experiences",
+    "title": "What Visitors Say About Us",
+    "description": "Reviews about our team's behavior and service quality.",
+    "staffBehavior": "Staff behavior",
+    "ratingLabel": "Rating",
+    "cta": "See all testimonials",
+    "emptyTitle": "No testimonials yet",
+    "emptyText": "Add your first review from the admin panel.",
+    "pageTitle": "Testimonials",
+    "pageSubtitle": "Real stories from investors and visitors",
+    "testPageTitle": "Testimonials Preview"
   },
   "consultantsSection": {
     "selling": "Selling",

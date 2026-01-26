@@ -50,7 +50,7 @@
     "touristFacility": "Turistik Tesis"
   },
   "hero": {
-    "title": "Doğru Lokasyon. Doğru Zaman. Doğru Yatırım",
+    "title": "Doğru Lokasyon, Doğru Zaman, Doğru Yatırım",
     "subtitle": "HB International ile premium gayrimenkul fırsatlarını keşfedin",
     "searchPlaceholder": "Şehir, adres veya mülk adı ile arayın...",
     "exploreBtn": "Mülkleri Keşfet"
@@ -272,6 +272,19 @@
     "subtitle": "En Son Haberlerden Haberdar Olun!",
     "readMore": "Devamını Oku",
     "continueReading": "devamını oku"
+  },
+  "testimonials": {
+    "subtitle": "Gerçek Deneyimler",
+    "title": "Ziyaretçilerimiz Ne Diyor?",
+    "description": "Ekip davranışı ve hizmet kalitesi hakkındaki yorumlar.",
+    "staffBehavior": "Ekip davranışı",
+    "ratingLabel": "Puan",
+    "cta": "Tüm yorumları gör",
+    "emptyTitle": "Henüz yorum yok",
+    "emptyText": "İlk yorumu yönetim panelinden ekleyin.",
+    "pageTitle": "Müşteri Yorumları",
+    "pageSubtitle": "Yatırımcılarımızdan ve ziyaretçilerden gerçek deneyimler",
+    "testPageTitle": "Testimonial Önizleme"
   },
   "consultantsSection": {
     "selling": "Satış",

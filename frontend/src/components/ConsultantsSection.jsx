@@ -92,12 +92,10 @@ const ConsultantsSection = () => {
         <AnimatedElement delay={0} className="lg:w-[400px] flex-shrink-0">
           <div className="mb-2">
             <span className="text-red-500 font-semibold">HB Gayrimenkul </span>
-            <span className="text-gray-900 font-semibold">
-              INTERNATIONAL™ {t("consultantsSection.selling")}
-            </span>
+            <span className="text-gray-900 font-semibold">INTERNATIONAL™</span>
           </div>
 
-          <h2 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight mb-3">
+          <h2 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight mb-3 whitespace-pre-line">
             {t("consultantsSection.findExpert")}
           </h2>
 

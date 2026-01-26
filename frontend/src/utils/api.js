@@ -703,6 +703,133 @@ export const generateMultipleAIBlogs = async (marketDataArray, autoPublish, toke
   }
 };
 
+// ============ TESTIMONIAL API FUNCTIONS ============
+
+// Get all testimonials (public)
+export const getAllTestimonials = async () => {
+  try {
+    const response = await api.get("/testimonial/all", {
+      timeout: 10 * 1000,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching testimonials:", error);
+    toast.error("Error loading testimonials");
+    throw error;
+  }
+};
+
+// Get all testimonials for admin
+export const getAllTestimonialsAdmin = async (token) => {
+  try {
+    const response = await api.get("/testimonial/admin/all", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching testimonials (admin):", error);
+    return { totalTestimonials: 0, testimonials: [] };
+  }
+};
+
+// Create testimonial (admin)
+export const createTestimonial = async (data, token) => {
+  try {
+    const response = await api.post(
+      `/testimonial/create`,
+      { data },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error creating testimonial:", error);
+    toast.error("Error creating testimonial");
+    throw error;
+  }
+};
+
+// Update testimonial (admin)
+export const updateTestimonial = async (id, data, token) => {
+  try {
+    const response = await api.put(
+      `/testimonial/update/${id}`,
+      { data },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating testimonial:", error);
+    toast.error("Error updating testimonial");
+    throw error;
+  }
+};
+
+// Delete testimonial (admin)
+export const deleteTestimonial = async (id, token) => {
+  try {
+    const response = await api.delete(`/testimonial/delete/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting testimonial:", error);
+    toast.error("Error deleting testimonial");
+    throw error;
+  }
+};
+
+// Toggle testimonial publish (admin)
+export const toggleTestimonialPublish = async (id, token) => {
+  try {
+    const response = await api.patch(
+      `/testimonial/toggle/${id}`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error toggling testimonial status:", error);
+    toast.error("Error updating testimonial status");
+    throw error;
+  }
+};
+
+// Reorder testimonials (admin)
+export const reorderTestimonials = async (orderedIds, token) => {
+  try {
+    const response = await api.put(
+      `/testimonial/reorder`,
+      { orderedIds },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error reordering testimonials:", error);
+    toast.error("Error reordering testimonials");
+    throw error;
+  }
+};
+
 // ============ HOUSING SALES API FUNCTIONS ============
 
 // Get housing sales summary (yearly totals)

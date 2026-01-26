@@ -180,6 +180,22 @@ model Blog {
     @@unique([slug])
 }
 
+model Testimonial {
+    id String @id @default(auto()) @map("_id") @db.ObjectId
+    name String
+    role String?
+    company String?
+    image String?
+    rating Int @default(5)
+    comment String
+    staffBehavior String?
+    published Boolean @default(true)
+    order Int @default(0)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
 model HousingSales {
     id String @id @default(auto()) @map("_id") @db.ObjectId
     year Int

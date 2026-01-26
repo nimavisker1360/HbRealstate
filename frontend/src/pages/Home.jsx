@@ -3,6 +3,7 @@ import Hero from '../components/Hero'
 import About from '../components/About'
 import Properties from '../components/Properties'
 import ConsultantsSection from '../components/ConsultantsSection'
+import TestimonialsSection from '../components/TestimonialsSection'
 import Blogs from '../components/Blogs'
 
 
@@ -17,6 +18,7 @@ const Home = () => {
             {/* Divider Line */}
             <div className="w-full border-t border-gray-300"></div>
             <ConsultantsSection />
+            <TestimonialsSection autoScroll />
             <Blogs/>
         </main>
     )

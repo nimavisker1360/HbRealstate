@@ -19,8 +19,13 @@ const Layout = () => {
   const tokenRefreshIntervalRef = useRef(null);
   const hasRegisteredRef = useRef(false);
 
-  // Hide footer on listing page, admin panel, addresses page, projects pages, and blog pages
-  const hideFooter = location.pathname === "/listing" || location.pathname === "/admin" || location.pathname === "/addresses" || location.pathname.startsWith("/projects") || location.pathname.startsWith("/blog");
+  // Hide footer on listing, admin, addresses, projects, and blog pages
+  const hideFooter =
+    location.pathname === "/listing" ||
+    location.pathname === "/admin" ||
+    location.pathname === "/addresses" ||
+    location.pathname.startsWith("/projects") ||
+    location.pathname.startsWith("/blog");
 
   const { mutate } = useMutation({
     mutationKey: [user?.email],

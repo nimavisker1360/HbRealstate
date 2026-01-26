@@ -6,6 +6,8 @@ import blog1 from "../assets/blog1.jpg";
 import blog2 from "../assets/blog2.jpg";
 import blog3 from "../assets/blog3.jpg";
 import blog4 from "../assets/blog4.jpg";
+import { MdChevronLeft, MdChevronRight } from "react-icons/md";
+import { useRef } from "react";
 
 // Default placeholder image for blogs without images
 const placeholderImages = [blog1, blog2, blog3, blog4];
@@ -15,6 +17,8 @@ const Blogs = () => {
   const { t, i18n } = useTranslation();
   const { data: blogs, isLoading } = useBlogs();
   const currentLang = i18n.language;
+  const viewportRef = useRef(null);
+  const trackRef = useRef(null);
 
   // Use API data if available, otherwise fall back to static data
   const displayBlogs = Array.isArray(blogs) && blogs.length > 0 ? blogs : BLOGS;
@@ -43,6 +47,20 @@ const Blogs = () => {
     if (currentLang === "tr" && blog.category_tr) return blog.category_tr;
     if (currentLang === "en" && blog.category_en) return blog.category_en;
     return blog.category;
+  };
+
+  const handleScroll = (direction) => {
+    const viewport = viewportRef.current;
+    const track = trackRef.current;
+    if (!viewport || !track) return;
+    const card = track.querySelector("[data-blog-card]");
+    const cardWidth = card ? card.getBoundingClientRect().width : 300;
+    const gap = 20;
+    const next =
+      viewport.scrollLeft + direction * (cardWidth + gap);
+    const maxScroll = viewport.scrollWidth - viewport.clientWidth;
+    const target = Math.max(0, Math.min(maxScroll, next));
+    viewport.scrollTo({ left: target, behavior: "smooth" });
   };
 
   return (

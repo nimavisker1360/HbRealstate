@@ -48,6 +48,11 @@ import {
   updateBlog,
   deleteBlog,
   toggleBlogPublish,
+  getAllTestimonialsAdmin,
+  createTestimonial,
+  updateTestimonial,
+  deleteTestimonial,
+  toggleTestimonialPublish,
   generateAIBlog,
 } from "../utils/api";
 import { toast } from "react-toastify";
@@ -73,6 +78,7 @@ import {
   MdAdd,
   MdBlock,
   MdCheckCircle,
+  MdRateReview,
 } from "react-icons/md";
 import { FaStar } from "react-icons/fa6";
 import { useRef } from "react";
@@ -251,6 +257,30 @@ const AdminPanel = () => {
   const [aiGenerateModalOpened, setAiGenerateModalOpened] = useState(false);
   const [aiGenerating, setAiGenerating] = useState(false);
 
+  // Testimonials state
+  const [testimonials, setTestimonials] = useState([]);
+  const [testimonialsLoading, setTestimonialsLoading] = useState(true);
+  const [totalTestimonials, setTotalTestimonials] = useState(0);
+  const [testimonialModalOpened, setTestimonialModalOpened] = useState(false);
+  const [editTestimonialModalOpened, setEditTestimonialModalOpened] =
+    useState(false);
+  const [selectedTestimonial, setSelectedTestimonial] = useState(null);
+  const [deleteTestimonialModalOpened, setDeleteTestimonialModalOpened] =
+    useState(false);
+  const [testimonialToDelete, setTestimonialToDelete] = useState(null);
+  const [testimonialLoading, setTestimonialLoading] = useState(false);
+
+  const [testimonialForm, setTestimonialForm] = useState({
+    name: "",
+    role: "",
+    company: "",
+    comment: "",
+    staffBehavior: "",
+    rating: 5,
+    image: "",
+    published: true,
+  });
+
   const [blogForm, setBlogForm] = useState({
     title: "",
     category: "",
@@ -312,6 +342,9 @@ const AdminPanel = () => {
   const cloudinaryRef = useRef();
   const consultantWidgetRef = useRef();
   const [imageUploading, setImageUploading] = useState(false);
+  const testimonialWidgetRef = useRef();
+  const [testimonialImageUploading, setTestimonialImageUploading] =
+    useState(false);
 
   // Helper function to build cropped Cloudinary URL
   const buildCroppedUrl = (info) => {
@@ -377,6 +410,51 @@ const AdminPanel = () => {
         }
       }
     );
+
+    testimonialWidgetRef.current = cloudinaryRef.current?.createUploadWidget(
+      {
+        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
+        uploadPreset:
+          import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
+        maxFiles: 1,
+        multiple: false,
+        cropping: true,
+        croppingAspectRatio: 1,
+        croppingShowDimensions: true,
+        croppingCoordinatesMode: "custom",
+        showSkipCropButton: false,
+        resourceType: "image",
+        clientAllowedFormats: [
+          "jpg",
+          "jpeg",
+          "png",
+          "gif",
+          "webp",
+          "bmp",
+          "tiff",
+          "svg",
+          "heic",
+          "heif",
+          "avif",
+          "ico",
+          "raw",
+        ],
+        sources: ["local", "url", "camera"],
+      },
+      (err, result) => {
+        if (result.event === "success") {
+          const croppedUrl = buildCroppedUrl(result.info);
+          setTestimonialForm((prev) => ({
+            ...prev,
+            image: croppedUrl,
+          }));
+          setTestimonialImageUploading(false);
+        }
+        if (result.event === "close") {
+          setTestimonialImageUploading(false);
+        }
+      }
+    );
   }, []);
 
   const openConsultantImageUpload = () => {
@@ -386,6 +464,15 @@ const AdminPanel = () => {
 
   const removeConsultantImage = () => {
     setConsultantForm((prev) => ({ ...prev, image: "" }));
+  };
+
+  const openTestimonialImageUpload = () => {
+    setTestimonialImageUploading(true);
+    testimonialWidgetRef.current?.open();
+  };
+
+  const removeTestimonialImage = () => {
+    setTestimonialForm((prev) => ({ ...prev, image: "" }));
   };
 
   // Cloudinary widget for blog image upload (main image)
@@ -625,6 +712,27 @@ const AdminPanel = () => {
     }
   }, [token, isAdmin, fetchBlogs]);
 
+  // Fetch all testimonials
+  const fetchTestimonials = useCallback(async () => {
+    if (!token) return;
+    setTestimonialsLoading(true);
+    try {
+      const data = await getAllTestimonialsAdmin(token);
+      setTestimonials(data.testimonials || []);
+      setTotalTestimonials(data.totalTestimonials || 0);
+    } catch (error) {
+      console.error("Error fetching testimonials:", error);
+    } finally {
+      setTestimonialsLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (token && isAdmin) {
+      fetchTestimonials();
+    }
+  }, [token, isAdmin, fetchTestimonials]);
+
   // Blog functions
   const resetBlogForm = () => {
     setBlogForm({
@@ -784,6 +892,119 @@ const AdminPanel = () => {
       // Error toast is handled by the API function
     } finally {
       setAiGenerating(false);
+    }
+  };
+
+  // Testimonial functions
+  const resetTestimonialForm = () => {
+    setTestimonialForm({
+      name: "",
+      role: "",
+      company: "",
+      comment: "",
+      staffBehavior: "",
+      rating: 5,
+      image: "",
+      published: true,
+    });
+  };
+
+  const handleCreateTestimonial = async () => {
+    if (!token) return;
+    if (!testimonialForm.name || !testimonialForm.comment) {
+      toast.error("Please fill required fields (Name, Comment)", {
+        position: "bottom-right",
+      });
+      return;
+    }
+
+    setTestimonialLoading(true);
+    try {
+      await createTestimonial(testimonialForm, token);
+      toast.success("Testimonial created successfully!", {
+        position: "bottom-right",
+      });
+      setTestimonialModalOpened(false);
+      resetTestimonialForm();
+      fetchTestimonials();
+    } catch (error) {
+      console.error("Create testimonial error:", error);
+    } finally {
+      setTestimonialLoading(false);
+    }
+  };
+
+  const handleEditTestimonial = (testimonial) => {
+    setSelectedTestimonial(testimonial);
+    setTestimonialForm({
+      name: testimonial.name || "",
+      role: testimonial.role || "",
+      company: testimonial.company || "",
+      comment: testimonial.comment || "",
+      staffBehavior: testimonial.staffBehavior || "",
+      rating: testimonial.rating || 5,
+      image: testimonial.image || "",
+      published:
+        testimonial.published !== undefined ? testimonial.published : true,
+    });
+    setEditTestimonialModalOpened(true);
+  };
+
+  const handleUpdateTestimonial = async () => {
+    if (!selectedTestimonial || !token) return;
+
+    setTestimonialLoading(true);
+    try {
+      await updateTestimonial(
+        selectedTestimonial.id,
+        testimonialForm,
+        token
+      );
+      toast.success("Testimonial updated successfully!", {
+        position: "bottom-right",
+      });
+      setEditTestimonialModalOpened(false);
+      setSelectedTestimonial(null);
+      resetTestimonialForm();
+      fetchTestimonials();
+    } catch (error) {
+      console.error("Update testimonial error:", error);
+    } finally {
+      setTestimonialLoading(false);
+    }
+  };
+
+  const handleDeleteTestimonialClick = (testimonial) => {
+    setTestimonialToDelete(testimonial);
+    setDeleteTestimonialModalOpened(true);
+  };
+
+  const confirmDeleteTestimonial = async () => {
+    if (!testimonialToDelete || !token) return;
+
+    setTestimonialLoading(true);
+    try {
+      await deleteTestimonial(testimonialToDelete.id, token);
+      toast.success("Testimonial deleted successfully!", {
+        position: "bottom-right",
+      });
+      setDeleteTestimonialModalOpened(false);
+      setTestimonialToDelete(null);
+      fetchTestimonials();
+    } catch (error) {
+      console.error("Delete testimonial error:", error);
+    } finally {
+      setTestimonialLoading(false);
+    }
+  };
+
+  const handleToggleTestimonialPublish = async (testimonial) => {
+    if (!token) return;
+    try {
+      await toggleTestimonialPublish(testimonial.id, token);
+      fetchTestimonials();
+    } catch (error) {
+      console.error("Toggle testimonial publish error:", error);
     }
   };
 
@@ -1229,6 +1450,28 @@ const AdminPanel = () => {
                 <Text fw={600}>Blogs</Text>
                 <Text size="sm" color="dimmed">
                   {totalBlogs} blog posts
+                </Text>
+              </div>
+            </Group>
+          </Paper>
+
+          <Paper
+            shadow="sm"
+            p="lg"
+            radius="md"
+            className={`cursor-pointer hover:shadow-md transition-shadow ${
+              activeTab === "testimonials" ? "border-2 border-pink-500" : ""
+            }`}
+            onClick={() => setActiveTab("testimonials")}
+          >
+            <Group>
+              <div className="bg-pink-100 text-pink-600 p-3 rounded-full">
+                <MdRateReview size={24} />
+              </div>
+              <div>
+                <Text fw={600}>Testimonials</Text>
+                <Text size="sm" color="dimmed">
+                  {totalTestimonials} reviews
                 </Text>
               </div>
             </Group>
@@ -2029,6 +2272,205 @@ const AdminPanel = () => {
                     </Text>
                     <Text size="sm" color="dimmed">
                       Draft: {blogs.filter((b) => !b.published).length}
+                    </Text>
+                  </div>
+                </div>
+              </div>
+            )}
+          </Paper>
+        )}
+
+        {/* Testimonials Section */}
+        {activeTab === "testimonials" && (
+          <Paper shadow="sm" p="xl" radius="md" className="mb-6">
+            <div className="flexBetween mb-6">
+              <div>
+                <Title
+                  order={3}
+                  className="flex items-center gap-2 text-gray-800"
+                >
+                  <MdRateReview className="text-pink-500" />
+                  Testimonials
+                </Title>
+                <Text size="sm" color="dimmed" className="mt-1">
+                  Manage customer reviews and ratings
+                </Text>
+              </div>
+              <Group>
+                <Button
+                  variant="light"
+                  color="pink"
+                  leftSection={<MdRefresh size={18} />}
+                  onClick={() => fetchTestimonials()}
+                  loading={testimonialsLoading}
+                >
+                  Refresh
+                </Button>
+                <Button
+                  color="pink"
+                  leftSection={<MdAdd size={18} />}
+                  onClick={() => setTestimonialModalOpened(true)}
+                >
+                  Add Testimonial
+                </Button>
+              </Group>
+            </div>
+
+            <Divider className="mb-6" />
+
+            {testimonialsLoading ? (
+              <div className="flexCenter py-12">
+                <Loader color="pink" />
+              </div>
+            ) : testimonials.length === 0 ? (
+              <div className="text-center py-12">
+                <MdRateReview size={64} className="text-gray-300 mx-auto mb-4" />
+                <Text color="dimmed">No testimonials yet</Text>
+                <Button
+                  color="pink"
+                  className="mt-4"
+                  leftSection={<MdAdd size={18} />}
+                  onClick={() => setTestimonialModalOpened(true)}
+                >
+                  Create First Testimonial
+                </Button>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table striped highlightOnHover>
+                  <Table.Thead>
+                    <Table.Tr>
+                      <Table.Th>Customer</Table.Th>
+                      <Table.Th>Rating</Table.Th>
+                      <Table.Th>Staff Behavior</Table.Th>
+                      <Table.Th>Status</Table.Th>
+                      <Table.Th>Date</Table.Th>
+                      <Table.Th>Actions</Table.Th>
+                    </Table.Tr>
+                  </Table.Thead>
+                  <Table.Tbody>
+                    {testimonials.map((testimonial) => (
+                      <Table.Tr key={testimonial.id}>
+                        <Table.Td>
+                          <div className="flex items-start gap-3">
+                            <Avatar
+                              src={testimonial.image}
+                              size="md"
+                              radius="xl"
+                              color="pink"
+                            >
+                              {testimonial.name?.[0]?.toUpperCase() || "?"}
+                            </Avatar>
+                            <div>
+                              <Text size="sm" fw={500}>
+                                {testimonial.name}
+                              </Text>
+                              {(testimonial.role || testimonial.company) && (
+                                <Text size="xs" color="dimmed">
+                                  {[testimonial.role, testimonial.company]
+                                    .filter(Boolean)
+                                    .join(" • ")}
+                                </Text>
+                              )}
+                              <Text size="xs" color="dimmed" lineClamp={2}>
+                                {testimonial.comment}
+                              </Text>
+                            </div>
+                          </div>
+                        </Table.Td>
+                        <Table.Td>
+                          <div className="flex items-center gap-1">
+                            {[...Array(5)].map((_, index) => (
+                              <FaStar
+                                key={index}
+                                className={`text-xs ${
+                                  index < Math.round(testimonial.rating || 0)
+                                    ? "text-amber-500"
+                                    : "text-gray-300"
+                                }`}
+                              />
+                            ))}
+                            <Text size="xs" color="dimmed" className="ml-1">
+                              {testimonial.rating || 0}/5
+                            </Text>
+                          </div>
+                        </Table.Td>
+                        <Table.Td>
+                          {testimonial.staffBehavior ? (
+                            <Badge color="pink" variant="light">
+                              {testimonial.staffBehavior}
+                            </Badge>
+                          ) : (
+                            <Badge color="gray" variant="light">
+                              -
+                            </Badge>
+                          )}
+                        </Table.Td>
+                        <Table.Td>
+                          <Badge
+                            color={testimonial.published ? "green" : "gray"}
+                            variant="light"
+                            className="cursor-pointer"
+                            onClick={() =>
+                              handleToggleTestimonialPublish(testimonial)
+                            }
+                          >
+                            {testimonial.published ? "Published" : "Draft"}
+                          </Badge>
+                        </Table.Td>
+                        <Table.Td>
+                          <Text size="xs" color="dimmed">
+                            {testimonial.createdAt
+                              ? new Date(
+                                  testimonial.createdAt
+                                ).toLocaleDateString("tr-TR")
+                              : "-"}
+                          </Text>
+                        </Table.Td>
+                        <Table.Td>
+                          <Group gap="xs">
+                            <ActionIcon
+                              variant="light"
+                              color="blue"
+                              size="lg"
+                              onClick={() => handleEditTestimonial(testimonial)}
+                              title="Edit"
+                            >
+                              <MdEdit size={18} />
+                            </ActionIcon>
+                            <ActionIcon
+                              variant="light"
+                              color="red"
+                              size="lg"
+                              onClick={() =>
+                                handleDeleteTestimonialClick(testimonial)
+                              }
+                              title="Delete"
+                            >
+                              <MdDelete size={18} />
+                            </ActionIcon>
+                          </Group>
+                        </Table.Td>
+                      </Table.Tr>
+                    ))}
+                  </Table.Tbody>
+                </Table>
+              </div>
+            )}
+
+            {testimonials.length > 0 && (
+              <div className="mt-6 pt-4 border-t border-gray-200">
+                <div className="flex items-center justify-between">
+                  <Text size="sm" color="dimmed">
+                    Total: {testimonials.length} testimonials
+                  </Text>
+                  <div className="flex gap-4">
+                    <Text size="sm" color="dimmed">
+                      Published:{" "}
+                      {testimonials.filter((t) => t.published).length}
+                    </Text>
+                    <Text size="sm" color="dimmed">
+                      Draft: {testimonials.filter((t) => !t.published).length}
                     </Text>
                   </div>
                 </div>
@@ -2894,6 +3336,402 @@ const AdminPanel = () => {
                 loading={consultantLoading}
               >
                 Sil
+              </Button>
+            </Group>
+          </div>
+        </Modal>
+
+        {/* Add Testimonial Modal */}
+        <Modal
+          opened={testimonialModalOpened}
+          onClose={() => {
+            setTestimonialModalOpened(false);
+            resetTestimonialForm();
+          }}
+          title={
+            <Text fw={600} color="pink">
+              <div className="flex items-center gap-2">
+                <MdAdd />
+                Add Testimonial
+              </div>
+            </Text>
+          }
+          size="lg"
+          centered
+        >
+          <div className="space-y-4 py-2">
+            <div>
+              <Text size="sm" fw={500} mb={4}>
+                Customer Photo
+              </Text>
+              {testimonialForm.image ? (
+                <div className="relative inline-block">
+                  <img
+                    src={testimonialForm.image}
+                    alt={testimonialForm.name}
+                    className="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
+                  />
+                  <ActionIcon
+                    variant="filled"
+                    color="red"
+                    size="sm"
+                    radius="xl"
+                    className="absolute -top-1 -right-1"
+                    onClick={removeTestimonialImage}
+                  >
+                    <MdClose size={14} />
+                  </ActionIcon>
+                </div>
+              ) : (
+                <div
+                  onClick={openTestimonialImageUpload}
+                  className="w-24 h-24 rounded-full border-2 border-dashed border-gray-300 flexCenter flex-col cursor-pointer hover:border-pink-400 hover:bg-gray-50 transition-colors"
+                >
+                  <MdOutlineCloudUpload size={24} className="text-gray-400" />
+                  <span className="text-[10px] text-gray-400 mt-1">Upload</span>
+                </div>
+              )}
+              {testimonialForm.image && (
+                <Button
+                  variant="subtle"
+                  size="xs"
+                  mt="xs"
+                  onClick={openTestimonialImageUpload}
+                  loading={testimonialImageUploading}
+                >
+                  Change Photo
+                </Button>
+              )}
+            </div>
+
+            <TextInput
+              label="Name"
+              placeholder="Customer name"
+              required
+              value={testimonialForm.name}
+              onChange={(e) =>
+                setTestimonialForm({ ...testimonialForm, name: e.target.value })
+              }
+            />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <TextInput
+                label="Role"
+                placeholder="Investor, Buyer, etc."
+                value={testimonialForm.role}
+                onChange={(e) =>
+                  setTestimonialForm({
+                    ...testimonialForm,
+                    role: e.target.value,
+                  })
+                }
+              />
+              <TextInput
+                label="Company"
+                placeholder="Optional"
+                value={testimonialForm.company}
+                onChange={(e) =>
+                  setTestimonialForm({
+                    ...testimonialForm,
+                    company: e.target.value,
+                  })
+                }
+              />
+            </div>
+
+            <TextInput
+              label="Staff Behavior"
+              placeholder="Friendly, Professional, etc."
+              value={testimonialForm.staffBehavior}
+              onChange={(e) =>
+                setTestimonialForm({
+                  ...testimonialForm,
+                  staffBehavior: e.target.value,
+                })
+              }
+            />
+
+            <NumberInput
+              label="Rating (1-5)"
+              min={1}
+              max={5}
+              step={1}
+              value={testimonialForm.rating}
+              onChange={(value) =>
+                setTestimonialForm({ ...testimonialForm, rating: value })
+              }
+            />
+
+            <Textarea
+              label="Comment"
+              placeholder="Customer review..."
+              required
+              rows={4}
+              value={testimonialForm.comment}
+              onChange={(e) =>
+                setTestimonialForm({
+                  ...testimonialForm,
+                  comment: e.target.value,
+                })
+              }
+            />
+
+            <Switch
+              label="Publish immediately"
+              checked={testimonialForm.published}
+              onChange={(e) =>
+                setTestimonialForm({
+                  ...testimonialForm,
+                  published: e.currentTarget.checked,
+                })
+              }
+            />
+
+            <Group justify="flex-end" mt="xl">
+              <Button
+                variant="default"
+                onClick={() => {
+                  setTestimonialModalOpened(false);
+                  resetTestimonialForm();
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                color="pink"
+                onClick={handleCreateTestimonial}
+                loading={testimonialLoading}
+              >
+                Create
+              </Button>
+            </Group>
+          </div>
+        </Modal>
+
+        {/* Edit Testimonial Modal */}
+        <Modal
+          opened={editTestimonialModalOpened}
+          onClose={() => {
+            setEditTestimonialModalOpened(false);
+            setSelectedTestimonial(null);
+            resetTestimonialForm();
+          }}
+          title={
+            <Text fw={600} color="pink">
+              <div className="flex items-center gap-2">
+                <MdEdit />
+                Edit Testimonial
+              </div>
+            </Text>
+          }
+          size="lg"
+          centered
+        >
+          <div className="space-y-4 py-2">
+            <div>
+              <Text size="sm" fw={500} mb={4}>
+                Customer Photo
+              </Text>
+              {testimonialForm.image ? (
+                <div className="relative inline-block">
+                  <img
+                    src={testimonialForm.image}
+                    alt={testimonialForm.name}
+                    className="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
+                  />
+                  <ActionIcon
+                    variant="filled"
+                    color="red"
+                    size="sm"
+                    radius="xl"
+                    className="absolute -top-1 -right-1"
+                    onClick={removeTestimonialImage}
+                  >
+                    <MdClose size={14} />
+                  </ActionIcon>
+                </div>
+              ) : (
+                <div
+                  onClick={openTestimonialImageUpload}
+                  className="w-24 h-24 rounded-full border-2 border-dashed border-gray-300 flexCenter flex-col cursor-pointer hover:border-pink-400 hover:bg-gray-50 transition-colors"
+                >
+                  <MdOutlineCloudUpload size={24} className="text-gray-400" />
+                  <span className="text-[10px] text-gray-400 mt-1">Upload</span>
+                </div>
+              )}
+              {testimonialForm.image && (
+                <Button
+                  variant="subtle"
+                  size="xs"
+                  mt="xs"
+                  onClick={openTestimonialImageUpload}
+                  loading={testimonialImageUploading}
+                >
+                  Change Photo
+                </Button>
+              )}
+            </div>
+
+            <TextInput
+              label="Name"
+              placeholder="Customer name"
+              required
+              value={testimonialForm.name}
+              onChange={(e) =>
+                setTestimonialForm({ ...testimonialForm, name: e.target.value })
+              }
+            />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <TextInput
+                label="Role"
+                placeholder="Investor, Buyer, etc."
+                value={testimonialForm.role}
+                onChange={(e) =>
+                  setTestimonialForm({
+                    ...testimonialForm,
+                    role: e.target.value,
+                  })
+                }
+              />
+              <TextInput
+                label="Company"
+                placeholder="Optional"
+                value={testimonialForm.company}
+                onChange={(e) =>
+                  setTestimonialForm({
+                    ...testimonialForm,
+                    company: e.target.value,
+                  })
+                }
+              />
+            </div>
+
+            <TextInput
+              label="Staff Behavior"
+              placeholder="Friendly, Professional, etc."
+              value={testimonialForm.staffBehavior}
+              onChange={(e) =>
+                setTestimonialForm({
+                  ...testimonialForm,
+                  staffBehavior: e.target.value,
+                })
+              }
+            />
+
+            <NumberInput
+              label="Rating (1-5)"
+              min={1}
+              max={5}
+              step={1}
+              value={testimonialForm.rating}
+              onChange={(value) =>
+                setTestimonialForm({ ...testimonialForm, rating: value })
+              }
+            />
+
+            <Textarea
+              label="Comment"
+              placeholder="Customer review..."
+              required
+              rows={4}
+              value={testimonialForm.comment}
+              onChange={(e) =>
+                setTestimonialForm({
+                  ...testimonialForm,
+                  comment: e.target.value,
+                })
+              }
+            />
+
+            <Switch
+              label="Published"
+              checked={testimonialForm.published}
+              onChange={(e) =>
+                setTestimonialForm({
+                  ...testimonialForm,
+                  published: e.currentTarget.checked,
+                })
+              }
+            />
+
+            <Group justify="flex-end" mt="xl">
+              <Button
+                variant="default"
+                onClick={() => {
+                  setEditTestimonialModalOpened(false);
+                  setSelectedTestimonial(null);
+                  resetTestimonialForm();
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                color="pink"
+                onClick={handleUpdateTestimonial}
+                loading={testimonialLoading}
+              >
+                Update
+              </Button>
+            </Group>
+          </div>
+        </Modal>
+
+        {/* Delete Testimonial Confirmation Modal */}
+        <Modal
+          opened={deleteTestimonialModalOpened}
+          onClose={() => {
+            setDeleteTestimonialModalOpened(false);
+            setTestimonialToDelete(null);
+          }}
+          title={
+            <Text fw={600} color="red">
+              Delete Testimonial
+            </Text>
+          }
+          centered
+        >
+          <div className="py-4">
+            <Text size="sm" color="dimmed" mb="md">
+              Are you sure you want to delete this testimonial? This action
+              cannot be undone.
+            </Text>
+            {testimonialToDelete && (
+              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg mb-4">
+                {testimonialToDelete.image && (
+                  <Avatar
+                    src={testimonialToDelete.image}
+                    alt={testimonialToDelete.name}
+                    size="lg"
+                    radius="xl"
+                  />
+                )}
+                <div>
+                  <Text size="sm" fw={500}>
+                    {testimonialToDelete.name}
+                  </Text>
+                  <Text size="xs" color="dimmed" lineClamp={2}>
+                    {testimonialToDelete.comment}
+                  </Text>
+                </div>
+              </div>
+            )}
+            <Group justify="flex-end" mt="xl">
+              <Button
+                variant="default"
+                onClick={() => {
+                  setDeleteTestimonialModalOpened(false);
+                  setTestimonialToDelete(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                color="red"
+                onClick={confirmDeleteTestimonial}
+                loading={testimonialLoading}
+              >
+                Delete
               </Button>
             </Group>
           </div>
