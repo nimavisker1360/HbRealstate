@@ -15,7 +15,18 @@ const createTransporter = () => {
 
 // Send email and save to database
 export const sendEmail = asyncHandler(async (req, res) => {
-  const { name, email, phone, subject, message, propertyId, propertyTitle } = req.body;
+  const {
+    name,
+    email,
+    phone,
+    subject,
+    message,
+    propertyId,
+    propertyTitle,
+    consultantId,
+    consultantName,
+    consultantEmail,
+  } = req.body;
 
   // Validate required fields
   if (!name || !email || !message) {
@@ -36,6 +47,9 @@ export const sendEmail = asyncHandler(async (req, res) => {
         message,
         propertyId: propertyId || null,
         propertyTitle: propertyTitle || null,
+        consultantId: consultantId || null,
+        consultantName: consultantName || null,
+        consultantEmail: consultantEmail || null,
       },
     });
 
@@ -97,6 +111,17 @@ export const sendEmail = asyncHandler(async (req, res) => {
                     ${subject || 'Property Inquiry'}
                   </td>
                 </tr>
+                ${(consultantName || consultantEmail) ? `
+                <tr>
+                  <td style="padding: 10px 0; border-bottom: 1px solid #e0e0e0;">
+                    <strong style="color: #333;">Consultant:</strong>
+                  </td>
+                  <td style="padding: 10px 0; border-bottom: 1px solid #e0e0e0; color: #555;">
+                    ${consultantName || "Selected consultant"}
+                    ${consultantEmail ? `<div><a href="mailto:${consultantEmail}" style="color: #06a84e;">${consultantEmail}</a></div>` : ""}
+                  </td>
+                </tr>
+                ` : ''}
               </table>
               <div style="margin-top: 20px;">
                 <strong style="color: #333;">Message:</strong>

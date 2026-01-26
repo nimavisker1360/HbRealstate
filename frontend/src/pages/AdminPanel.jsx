@@ -1989,6 +1989,7 @@ const AdminPanel = () => {
                       <Table.Th>İletişim</Table.Th>
                       <Table.Th>ملک</Table.Th>
                       <Table.Th>Konu</Table.Th>
+                      <Table.Th>Danışman</Table.Th>
                       <Table.Th>Mesaj</Table.Th>
                       <Table.Th>Tarih</Table.Th>
                       <Table.Th>Aksiyon</Table.Th>
@@ -2063,6 +2064,24 @@ const AdminPanel = () => {
                           <Text size="sm" fw={500}>
                             {m.subject || "Property Inquiry"}
                           </Text>
+                        </Table.Td>
+                        <Table.Td>
+                          {m.consultantName ? (
+                            <div className="max-w-[180px]">
+                              <Text size="xs" fw={500} className="text-emerald-600">
+                                {m.consultantName}
+                              </Text>
+                              {m.consultantEmail && (
+                                <Text size="xs" color="dimmed" lineClamp={1}>
+                                  {m.consultantEmail}
+                                </Text>
+                              )}
+                            </div>
+                          ) : (
+                            <Badge color="gray" variant="light" size="sm">
+                              -
+                            </Badge>
+                          )}
                         </Table.Td>
                         <Table.Td>
                           <Text size="xs" color="dimmed" lineClamp={2}>

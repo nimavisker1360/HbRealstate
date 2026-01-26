@@ -137,6 +137,9 @@ model ContactMessage {
     message String
     propertyId String?
     propertyTitle String?
+    consultantId String?
+    consultantName String?
+    consultantEmail String?
     read Boolean @default(false)
     
     createdAt DateTime @default(now())

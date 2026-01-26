@@ -1,13 +1,14 @@
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import useConsultants from "../hooks/useConsultants";
-import { MdArrowForward, MdLocationOn } from "react-icons/md";
+import { MdEmail } from "react-icons/md";
 import { Loader } from "@mantine/core";
 import { useEffect, useState, useRef } from "react";
 import PropTypes from "prop-types";
 import iconAudience from "../assets/p.png";
 import iconProspects from "../assets/p03.png";
 import iconOpportunity from "../assets/p04.png";
+import ContactModal from "./ContactModal";
 
 // Animated element with IntersectionObserver
 const AnimatedElement = ({ children, delay = 0, className = "" }) => {
@@ -63,6 +64,7 @@ const ConsultantsSection = () => {
   const currentLang = i18n.language === "tr" ? "tr" : "en";
   const { data: consultants, isLoading, isError } = useConsultants();
   const navigate = useNavigate();
+  const [contactModalOpen, setContactModalOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -99,26 +101,18 @@ const ConsultantsSection = () => {
             {t("consultantsSection.findExpert")}
           </h2>
 
-          <p className="text-gray-600 mb-2">
+          <p className="text-gray-600 mb-8">
             {t("consultantsSection.matchedAgents", {
               count: consultants.length,
-            })}{" "}
-            <span className="inline-flex items-center gap-1">
-              <MdLocationOn className="text-gray-500" />
-              <span>{t("consultantsSection.yourArea")}</span>
-            </span>
-          </p>
-
-          <p className="text-gray-500 text-sm mb-8">
-            {t("consultantsSection.enterAddress")}
+            })}
           </p>
 
           <button
-            onClick={() => navigate("/consultants")}
-            className="inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-full font-medium hover:bg-gray-800 transition-colors group"
+            onClick={() => setContactModalOpen(true)}
+            className="inline-flex items-center gap-3 rounded-full bg-[#7aac3f] px-8 py-3 text-white shadow-lg shadow-[#7aac3f]/30 transition hover:bg-[#6d9a38]"
           >
-            {t("consultantsSection.compareAgents")}
-            <MdArrowForward className="group-hover:translate-x-1 transition-transform" />
+            <MdEmail className="text-xl" />
+            <span className="font-semibold">{t("contactModal.sendMessage")}</span>
           </button>
         </AnimatedElement>
 
@@ -301,6 +295,10 @@ const ConsultantsSection = () => {
           </div>
         </div>
       </AnimatedElement>
+      <ContactModal
+        opened={contactModalOpen}
+        onClose={() => setContactModalOpen(false)}
+      />
     </section>
   );
 };
