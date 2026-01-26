@@ -143,6 +143,12 @@
     "subjectDefault": "Property Inquiry",
     "yourMessage": "Your Message",
     "messagePlaceholder": "Tell us about your inquiry...",
+    "messageTab": "Message",
+    "reviewTab": "Review",
+    "ratingLabel": "Rating",
+    "reviewComment": "Your Review",
+    "reviewPlaceholder": "Share your experience...",
+    "submitReview": "Submit Review",
     "chooseConsultant": "Choose a consultant (optional)",
     "selectedConsultant": "Selected consultant",
     "clearSelection": "Clear selection",
@@ -152,9 +158,12 @@
     "errorName": "Please enter your name",
     "errorEmail": "Please enter your email",
     "errorMessage": "Please enter your message",
+    "errorRating": "Please select a rating",
     "errorEmailInvalid": "Please enter a valid email address",
     "successMessage": "Your message has been sent successfully! We will contact you soon.",
-    "errorSending": "Failed to send message. Please try again."
+    "errorSending": "Failed to send message. Please try again.",
+    "reviewSuccess": "Thank you for your review! It will appear after approval.",
+    "reviewErrorSending": "Failed to submit review. Please try again."
   },
   "footer": {
     "learnMore": "Learn More",
@@ -293,7 +302,7 @@
   "consultantsSection": {
     "selling": "Selling",
     "findExpert": "Ready to invest?\nProfit starts with the right expert.",
-    "matchedAgents": "Enter your address to review and compare experts in your area. We matched {{count}} experts",
+    "matchedAgents": "We matched {{count}} experts for you. Enter your address to review and compare experts in your area",
     "compareAgents": "Compare agents",
     "moreAgents": "more agents",
     "listingsFaster": "With the right strategy, our listings deliver results 20% faster",

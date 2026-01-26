@@ -2,6 +2,7 @@ import express from "express";
 import jwtCheck from "../config/authOConfig.js";
 import {
   getAllTestimonials,
+  submitTestimonial,
   getAllTestimonialsAdmin,
   createTestimonial,
   updateTestimonial,
@@ -14,6 +15,7 @@ const router = express.Router();
 
 // Public
 router.get("/all", getAllTestimonials);
+router.post("/submit", submitTestimonial);
 
 // Admin (protected)
 router.get("/admin/all", jwtCheck, getAllTestimonialsAdmin);

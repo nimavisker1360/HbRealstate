@@ -143,6 +143,12 @@
     "subjectDefault": "Mülk Talebi",
     "yourMessage": "Mesajınız",
     "messagePlaceholder": "Talebiniz hakkında bilgi verin...",
+    "messageTab": "Mesaj",
+    "reviewTab": "Yorum",
+    "ratingLabel": "Puan",
+    "reviewComment": "Yorumunuz",
+    "reviewPlaceholder": "Deneyiminizi paylaşın...",
+    "submitReview": "Yorum Gönder",
     "chooseConsultant": "Danışman seçin (isteğe bağlı)",
     "selectedConsultant": "Seçilen danışman",
     "clearSelection": "Seçimi kaldır",
@@ -152,9 +158,12 @@
     "errorName": "Lütfen adınızı girin",
     "errorEmail": "Lütfen e-posta adresinizi girin",
     "errorMessage": "Lütfen mesajınızı girin",
+    "errorRating": "Lütfen bir puan seçin",
     "errorEmailInvalid": "Lütfen geçerli bir e-posta adresi girin",
     "successMessage": "Mesajınız başarıyla gönderildi! En kısa sürede sizinle iletişime geçeceğiz.",
-    "errorSending": "Mesaj gönderilemedi. Lütfen tekrar deneyin."
+    "errorSending": "Mesaj gönderilemedi. Lütfen tekrar deneyin.",
+    "reviewSuccess": "Yorumunuz alındı. Onaydan sonra yayınlanacaktır.",
+    "reviewErrorSending": "Yorum gönderilemedi. Lütfen tekrar deneyin."
   },
   "footer": {
     "learnMore": "Daha Fazla Bilgi",
@@ -293,7 +302,7 @@
   "consultantsSection": {
     "selling": "Satış",
     "findExpert": "Yatırıma hazır mısınız?\nDoğru uzmanla kazanç başlar.",
-    "matchedAgents": "Bölgeninin uzmanını incelemek ve karşılaştırmak için adresinizi girin. {{count}} uzman eşleştirdik",
+    "matchedAgents": "Sizin için {{count}} uzman eşleştirdik. Bölgeninin uzmanını incelemek ve karşılaştırmak için adresinizi girin",
    
     "compareAgents": "Danışmanları karşılaştır",
     "moreAgents": "daha fazla uzmanını",

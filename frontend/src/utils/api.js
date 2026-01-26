@@ -754,6 +754,17 @@ export const createTestimonial = async (data, token) => {
   }
 };
 
+// Submit testimonial (public)
+export const submitTestimonial = async (data) => {
+  try {
+    const response = await api.post("/testimonial/submit", data);
+    return response.data;
+  } catch (error) {
+    console.error("Error submitting testimonial:", error);
+    throw error;
+  }
+};
+
 // Update testimonial (admin)
 export const updateTestimonial = async (id, data, token) => {
   try {

@@ -1,10 +1,21 @@
 import asyncHandler from "express-async-handler";
+import nodemailer from "nodemailer";
 import { prisma } from "../config/prismaConfig.js";
 
 const clampRating = (value) => {
   const parsed = Number(value);
   if (Number.isNaN(parsed)) return 5;
   return Math.max(1, Math.min(5, Math.round(parsed)));
+};
+
+const createTransporter = () => {
+  return nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
 };
 
 // Public: get all published testimonials
@@ -18,6 +29,90 @@ export const getAllTestimonials = asyncHandler(async (req, res) => {
   } catch (err) {
     console.error("Error fetching testimonials:", err);
     res.status(500).send({ message: "Error fetching testimonials" });
+  }
+});
+
+// Public: submit testimonial (unpublished)
+export const submitTestimonial = asyncHandler(async (req, res) => {
+  const {
+    name,
+    email,
+    rating,
+    comment,
+    comment_tr,
+    comment_en,
+    role,
+    company,
+    staffBehavior,
+  } = req.body;
+
+  const baseComment = comment || comment_tr || comment_en || "";
+  if (!name || !email || !baseComment) {
+    return res
+      .status(400)
+      .send({ message: "Name, email and comment are required" });
+  }
+
+  try {
+    const maxOrder = await prisma.testimonial.findFirst({
+      orderBy: { order: "desc" },
+      select: { order: true },
+    });
+
+    const testimonial = await prisma.testimonial.create({
+      data: {
+        name,
+        role: role || "",
+        company: company || "",
+        image: "",
+        rating: clampRating(rating),
+        comment: baseComment,
+        comment_en: comment_en || null,
+        comment_tr: comment_tr || null,
+        staffBehavior: staffBehavior || "",
+        published: false,
+        order: (maxOrder?.order || 0) + 1,
+      },
+    });
+
+    try {
+      const transporter = createTransporter();
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: process.env.EMAIL_TO || process.env.EMAIL_USER,
+        replyTo: email,
+        subject: `New Testimonial from ${name}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: #0f172a; padding: 24px; border-radius: 10px 10px 0 0;">
+              <h2 style="color: white; margin: 0;">New Testimonial Submitted</h2>
+            </div>
+            <div style="background: #f9f9f9; padding: 24px; border-radius: 0 0 10px 10px; border: 1px solid #e0e0e0; border-top: none;">
+              <p style="margin: 0 0 12px; color: #333;"><strong>Name:</strong> ${name}</p>
+              <p style="margin: 0 0 12px; color: #333;"><strong>Email:</strong> <a href="mailto:${email}" style="color:#06a84e;">${email}</a></p>
+              <p style="margin: 0 0 12px; color: #333;"><strong>Rating:</strong> ${clampRating(rating)}/5</p>
+              ${role || company ? `<p style="margin: 0 0 12px; color: #333;"><strong>Role/Company:</strong> ${[role, company].filter(Boolean).join(" | ")}</p>` : ""}
+              ${staffBehavior ? `<p style="margin: 0 0 12px; color: #333;"><strong>Staff Behavior:</strong> ${staffBehavior}</p>` : ""}
+              <div style="margin-top: 16px;">
+                <strong style="color: #333;">Comment:</strong>
+                <div style="background: white; padding: 12px; border-radius: 6px; margin-top: 8px; border: 1px solid #e0e0e0; color: #555; line-height: 1.6;">
+                  ${baseComment.replace(/\n/g, "<br>")}
+                </div>
+              </div>
+            </div>
+          </div>
+        `,
+      };
+
+      await transporter.sendMail(mailOptions);
+    } catch (emailError) {
+      console.error("Testimonial email sending failed:", emailError);
+    }
+
+    res.status(201).send({ message: "Testimonial submitted", testimonial });
+  } catch (err) {
+    console.error("Error submitting testimonial:", err);
+    res.status(500).send({ message: "Error submitting testimonial" });
   }
 });
 
