@@ -20,7 +20,8 @@ const TestimonialsSection = ({
   autoScrollSpeed = 12,
   className = "",
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const currentLang = i18n.language === "tr" ? "tr" : "en";
   const useRemote = !Array.isArray(testimonials);
   const { data, isLoading } = useTestimonials({ enabled: useRemote });
 
@@ -36,6 +37,10 @@ const TestimonialsSection = ({
       staffBehavior: "Professional",
       comment:
         "Clear guidance and fast communication. The team supported every step and closed early.",
+      comment_en:
+        "Clear guidance and fast communication. The team supported every step and closed early.",
+      comment_tr:
+        "Açık yönlendirme ve hızlı iletişim. Ekip her adımda destek oldu ve erken kapattık.",
       image: sampleOne,
     },
     {
@@ -47,6 +52,10 @@ const TestimonialsSection = ({
       staffBehavior: "Friendly",
       comment:
         "They listened to our priorities and brought us real options instead of random listings.",
+      comment_en:
+        "They listened to our priorities and brought us real options instead of random listings.",
+      comment_tr:
+        "Önceliklerimizi dinlediler ve rastgele ilanlar yerine bize gerçekten uygun seçenekler sundular.",
       image: sampleTwo,
     },
     {
@@ -58,6 +67,10 @@ const TestimonialsSection = ({
       staffBehavior: "Responsive",
       comment:
         "Strong marketing plan, transparent process, and fast feedback on every question.",
+      comment_en:
+        "Strong marketing plan, transparent process, and fast feedback on every question.",
+      comment_tr:
+        "Güçlü pazarlama planı, şeffaf süreç ve her soruya hızlı geri dönüş.",
       image: "",
     },
     {
@@ -69,6 +82,10 @@ const TestimonialsSection = ({
       staffBehavior: "Helpful",
       comment:
         "Viewings were easy to schedule and the team was respectful and helpful.",
+      comment_en:
+        "Viewings were easy to schedule and the team was respectful and helpful.",
+      comment_tr:
+        "Görüntüleme randevuları kolaydı; ekip saygılı ve yardımcıydı.",
       image: "",
     },
     {
@@ -80,6 +97,10 @@ const TestimonialsSection = ({
       staffBehavior: "Professional",
       comment:
         "Clear pricing guidance and honest feedback. We felt confident throughout the process.",
+      comment_en:
+        "Clear pricing guidance and honest feedback. We felt confident throughout the process.",
+      comment_tr:
+        "Net fiyatlandırma yönlendirmesi ve dürüst geri bildirim. Süreç boyunca kendimizi güvende hissettik.",
       image: "",
     },
     {
@@ -91,6 +112,10 @@ const TestimonialsSection = ({
       staffBehavior: "Responsive",
       comment:
         "Fast responses, solid market insight, and smooth paperwork support.",
+      comment_en:
+        "Fast responses, solid market insight, and smooth paperwork support.",
+      comment_tr:
+        "Hızlı dönüşler, güçlü piyasa bilgisi ve sorunsuz evrak desteği.",
       image: "",
     },
     {
@@ -102,6 +127,10 @@ const TestimonialsSection = ({
       staffBehavior: "Friendly",
       comment:
         "They helped us find a great place quickly and made the viewing schedule easy.",
+      comment_en:
+        "They helped us find a great place quickly and made the viewing schedule easy.",
+      comment_tr:
+        "Hızlıca güzel bir yer bulmamıza yardımcı oldular ve randevu planı çok kolaydı.",
       image: "",
     },
     {
@@ -113,6 +142,10 @@ const TestimonialsSection = ({
       staffBehavior: "Professional",
       comment:
         "We appreciated the clear explanations and fast follow-ups after each visit.",
+      comment_en:
+        "We appreciated the clear explanations and fast follow-ups after each visit.",
+      comment_tr:
+        "Her ziyaret sonrası net açıklamalar ve hızlı geri dönüşleri takdir ettik.",
       image: "",
     },
     {
@@ -124,6 +157,10 @@ const TestimonialsSection = ({
       staffBehavior: "Responsive",
       comment:
         "Excellent market knowledge and smooth closing support. Very reliable team.",
+      comment_en:
+        "Excellent market knowledge and smooth closing support. Very reliable team.",
+      comment_tr:
+        "Mükemmel piyasa bilgisi ve sorunsuz kapanış desteği. Çok güvenilir bir ekip.",
       image: "",
     },
     {
@@ -135,6 +172,10 @@ const TestimonialsSection = ({
       staffBehavior: "Helpful",
       comment:
         "The process was organized and transparent. Scheduling was easy and quick.",
+      comment_en:
+        "The process was organized and transparent. Scheduling was easy and quick.",
+      comment_tr:
+        "Süreç düzenli ve şeffaftı. Randevu ayarlamak hızlı ve kolaydı.",
       image: "",
     },
   ];
@@ -167,6 +208,23 @@ const TestimonialsSection = ({
           10
       ) / 10
     : 0;
+
+  const resolveComment = (testimonial) => {
+    if (currentLang === "tr") {
+      return (
+        testimonial.comment_tr ||
+        testimonial.comment ||
+        testimonial.comment_en ||
+        ""
+      );
+    }
+    return (
+      testimonial.comment_en ||
+      testimonial.comment ||
+      testimonial.comment_tr ||
+      ""
+    );
+  };
 
   const trackRef = useRef(null);
   const viewportRef = useRef(null);
@@ -417,7 +475,7 @@ const TestimonialsSection = ({
                       </div>
 
                       <p className="mt-4 text-sm text-white/70 leading-relaxed">
-                        {testimonial.comment}
+                        {resolveComment(testimonial)}
                       </p>
 
                       <div className="mt-4 flex flex-wrap items-center gap-3">

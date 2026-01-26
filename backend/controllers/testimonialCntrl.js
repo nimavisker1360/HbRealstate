@@ -38,7 +38,10 @@ export const getAllTestimonialsAdmin = asyncHandler(async (req, res) => {
 export const createTestimonial = asyncHandler(async (req, res) => {
   const { data } = req.body;
 
-  if (!data?.name || !data?.comment) {
+  const fallbackComment =
+    data?.comment || data?.comment_tr || data?.comment_en || "";
+
+  if (!data?.name || !fallbackComment) {
     return res
       .status(400)
       .send({ message: "Name and comment are required" });
@@ -57,7 +60,9 @@ export const createTestimonial = asyncHandler(async (req, res) => {
         company: data.company || "",
         image: data.image || "",
         rating: clampRating(data.rating),
-        comment: data.comment,
+        comment: fallbackComment,
+        comment_en: data.comment_en || null,
+        comment_tr: data.comment_tr || null,
         staffBehavior: data.staffBehavior || "",
         published: data.published !== undefined ? data.published : true,
         order: (maxOrder?.order || 0) + 1,
@@ -75,6 +80,10 @@ export const createTestimonial = asyncHandler(async (req, res) => {
 export const updateTestimonial = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { data } = req.body;
+  const hasLocalizedComment = data?.comment_tr || data?.comment_en;
+  const commentValue =
+    data?.comment ||
+    (hasLocalizedComment ? data?.comment_tr || data?.comment_en : undefined);
 
   try {
     const testimonial = await prisma.testimonial.update({
@@ -85,7 +94,9 @@ export const updateTestimonial = asyncHandler(async (req, res) => {
         company: data.company,
         image: data.image,
         rating: clampRating(data.rating),
-        comment: data.comment,
+        comment: commentValue,
+        comment_en: data.comment_en,
+        comment_tr: data.comment_tr,
         staffBehavior: data.staffBehavior,
         published: data.published,
       },

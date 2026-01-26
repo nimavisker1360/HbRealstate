@@ -13,6 +13,10 @@ const mockTestimonials = [
     staffBehavior: "Professional",
     comment:
       "The team guided us with clarity and speed. Every step felt transparent and we closed earlier than expected.",
+    comment_en:
+      "The team guided us with clarity and speed. Every step felt transparent and we closed earlier than expected.",
+    comment_tr:
+      "Ekip bizi net ve hızlı şekilde yönlendirdi. Her adım şeffaftı ve beklenenden erken kapattık.",
     image: sampleOne,
   },
   {
@@ -24,6 +28,10 @@ const mockTestimonials = [
     staffBehavior: "Friendly",
     comment:
       "They listened to our priorities and matched us with options we actually wanted to see. Great experience overall.",
+    comment_en:
+      "They listened to our priorities and matched us with options we actually wanted to see. Great experience overall.",
+    comment_tr:
+      "Önceliklerimizi dinlediler ve gerçekten görmek istediğimiz seçeneklerle eşleştirdiler. Genel deneyim çok iyiydi.",
     image: sampleTwo,
   },
   {
@@ -35,6 +43,10 @@ const mockTestimonials = [
     staffBehavior: "Responsive",
     comment:
       "Fast responses, strong negotiation support, and a clear marketing plan. We felt supported throughout.",
+    comment_en:
+      "Fast responses, strong negotiation support, and a clear marketing plan. We felt supported throughout.",
+    comment_tr:
+      "Hızlı dönüşler, güçlü pazarlık desteği ve net bir pazarlama planı. Süreç boyunca desteklendiğimizi hissettik.",
     image: "",
   },
   {
@@ -46,6 +58,10 @@ const mockTestimonials = [
     staffBehavior: "Helpful",
     comment:
       "Scheduling viewings was easy and the team was respectful. They helped us finalize quickly.",
+    comment_en:
+      "Scheduling viewings was easy and the team was respectful. They helped us finalize quickly.",
+    comment_tr:
+      "Görüntüleme randevuları kolaydı ve ekip saygılıydı. Hızlıca sonuçlandırmamıza yardımcı oldular.",
     image: "",
   },
 ];

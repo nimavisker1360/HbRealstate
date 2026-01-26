@@ -191,6 +191,8 @@ model Testimonial {
     image String?
     rating Int @default(5)
     comment String
+    comment_en String?
+    comment_tr String?
     staffBehavior String?
     published Boolean @default(true)
     order Int @default(0)

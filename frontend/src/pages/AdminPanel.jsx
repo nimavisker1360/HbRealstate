@@ -274,7 +274,8 @@ const AdminPanel = () => {
     name: "",
     role: "",
     company: "",
-    comment: "",
+    comment_tr: "",
+    comment_en: "",
     staffBehavior: "",
     rating: 5,
     image: "",
@@ -901,7 +902,8 @@ const AdminPanel = () => {
       name: "",
       role: "",
       company: "",
-      comment: "",
+      comment_tr: "",
+      comment_en: "",
       staffBehavior: "",
       rating: 5,
       image: "",
@@ -911,8 +913,12 @@ const AdminPanel = () => {
 
   const handleCreateTestimonial = async () => {
     if (!token) return;
-    if (!testimonialForm.name || !testimonialForm.comment) {
-      toast.error("Please fill required fields (Name, Comment)", {
+    if (
+      !testimonialForm.name ||
+      !testimonialForm.comment_tr ||
+      !testimonialForm.comment_en
+    ) {
+      toast.error("Please fill required fields (Name, Comment TR, Comment EN)", {
         position: "bottom-right",
       });
       return;
@@ -920,7 +926,14 @@ const AdminPanel = () => {
 
     setTestimonialLoading(true);
     try {
-      await createTestimonial(testimonialForm, token);
+      const payload = {
+        ...testimonialForm,
+        comment:
+          testimonialForm.comment_tr ||
+          testimonialForm.comment_en ||
+          "",
+      };
+      await createTestimonial(payload, token);
       toast.success("Testimonial created successfully!", {
         position: "bottom-right",
       });
@@ -936,11 +949,13 @@ const AdminPanel = () => {
 
   const handleEditTestimonial = (testimonial) => {
     setSelectedTestimonial(testimonial);
+    const fallbackComment = testimonial.comment || "";
     setTestimonialForm({
       name: testimonial.name || "",
       role: testimonial.role || "",
       company: testimonial.company || "",
-      comment: testimonial.comment || "",
+      comment_tr: testimonial.comment_tr || fallbackComment,
+      comment_en: testimonial.comment_en || fallbackComment,
       staffBehavior: testimonial.staffBehavior || "",
       rating: testimonial.rating || 5,
       image: testimonial.image || "",
@@ -952,12 +967,29 @@ const AdminPanel = () => {
 
   const handleUpdateTestimonial = async () => {
     if (!selectedTestimonial || !token) return;
+    if (
+      !testimonialForm.name ||
+      !testimonialForm.comment_tr ||
+      !testimonialForm.comment_en
+    ) {
+      toast.error("Please fill required fields (Name, Comment TR, Comment EN)", {
+        position: "bottom-right",
+      });
+      return;
+    }
 
     setTestimonialLoading(true);
     try {
+      const payload = {
+        ...testimonialForm,
+        comment:
+          testimonialForm.comment_tr ||
+          testimonialForm.comment_en ||
+          "",
+      };
       await updateTestimonial(
         selectedTestimonial.id,
-        testimonialForm,
+        payload,
         token
       );
       toast.success("Testimonial updated successfully!", {
@@ -2392,7 +2424,9 @@ const AdminPanel = () => {
                                 </Text>
                               )}
                               <Text size="xs" color="dimmed" lineClamp={2}>
-                                {testimonial.comment}
+                                {testimonial.comment_tr ||
+                                  testimonial.comment_en ||
+                                  testimonial.comment}
                               </Text>
                             </div>
                           </div>
@@ -3482,15 +3516,29 @@ const AdminPanel = () => {
             />
 
             <Textarea
-              label="Comment"
-              placeholder="Customer review..."
+              label="Comment (TR)"
+              placeholder="Customer review (Turkish)..."
               required
               rows={4}
-              value={testimonialForm.comment}
+              value={testimonialForm.comment_tr}
               onChange={(e) =>
                 setTestimonialForm({
                   ...testimonialForm,
-                  comment: e.target.value,
+                  comment_tr: e.target.value,
+                })
+              }
+            />
+
+            <Textarea
+              label="Comment (EN)"
+              placeholder="Customer review (English)..."
+              required
+              rows={4}
+              value={testimonialForm.comment_en}
+              onChange={(e) =>
+                setTestimonialForm({
+                  ...testimonialForm,
+                  comment_en: e.target.value,
                 })
               }
             />
@@ -3650,15 +3698,29 @@ const AdminPanel = () => {
             />
 
             <Textarea
-              label="Comment"
-              placeholder="Customer review..."
+              label="Comment (TR)"
+              placeholder="Customer review (Turkish)..."
               required
               rows={4}
-              value={testimonialForm.comment}
+              value={testimonialForm.comment_tr}
               onChange={(e) =>
                 setTestimonialForm({
                   ...testimonialForm,
-                  comment: e.target.value,
+                  comment_tr: e.target.value,
+                })
+              }
+            />
+
+            <Textarea
+              label="Comment (EN)"
+              placeholder="Customer review (English)..."
+              required
+              rows={4}
+              value={testimonialForm.comment_en}
+              onChange={(e) =>
+                setTestimonialForm({
+                  ...testimonialForm,
+                  comment_en: e.target.value,
                 })
               }
             />
@@ -3730,7 +3792,9 @@ const AdminPanel = () => {
                     {testimonialToDelete.name}
                   </Text>
                   <Text size="xs" color="dimmed" lineClamp={2}>
-                    {testimonialToDelete.comment}
+                    {testimonialToDelete.comment_tr ||
+                      testimonialToDelete.comment_en ||
+                      testimonialToDelete.comment}
                   </Text>
                 </div>
               </div>
