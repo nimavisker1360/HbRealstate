@@ -132,8 +132,15 @@ const BlogPost = () => {
   const readingTime = calculateReadingTime(getLocalizedContent("content"));
 
   return (
-    <div className={`min-h-screen pt-24 pb-16 ${(isHousingStatsBlog || isForeignSalesBlog) ? 'bg-slate-900' : 'bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50'}`}>
-      <div className="max-padd-container">
+    <div className={`min-h-screen pt-24 pb-16 relative overflow-hidden ${(isHousingStatsBlog || isForeignSalesBlog) ? 'bg-slate-900' : 'bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50'}`}>
+      {!isHousingStatsBlog && !isForeignSalesBlog && (
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute -top-32 -left-16 h-72 w-72 rounded-full bg-indigo-200/40 blur-3xl"></div>
+          <div className="absolute top-24 -right-24 h-80 w-80 rounded-full bg-amber-200/40 blur-3xl"></div>
+          <div className="absolute bottom-0 left-1/3 h-96 w-96 rounded-full bg-blue-200/30 blur-3xl"></div>
+        </div>
+      )}
+      <div className="max-padd-container relative z-10">
         {/* Top Bar with Back & Language Switcher */}
         <div className="flex items-center justify-between mb-8">
           <button
@@ -235,10 +242,10 @@ const BlogPost = () => {
         )}
 
         {/* Main Article Card */}
-        <article className={`rounded-3xl overflow-hidden ${
+        <article className={`rounded-3xl overflow-hidden relative ${
           (isHousingStatsBlog || isForeignSalesBlog) 
-            ? 'bg-slate-800 shadow-2xl shadow-slate-900/50' 
-            : 'bg-white shadow-2xl shadow-gray-200/50 border border-gray-100'
+            ? 'bg-slate-800 shadow-2xl shadow-slate-900/50 ring-1 ring-white/5' 
+            : 'bg-white shadow-2xl shadow-gray-200/50 border border-white/60 ring-1 ring-black/5'
         }`}>
           {/* Hero Image Section - Smaller */}
           {blog.image && (
@@ -302,7 +309,7 @@ const BlogPost = () => {
 
           {/* Image Gallery Thumbnails */}
           {blog.images && blog.images.length > 1 && (
-            <div className="px-4 md:px-8 py-4 bg-gray-50 border-b border-gray-100">
+            <div className="px-4 md:px-8 py-4 bg-white/70 backdrop-blur-md border-b border-gray-100">
               <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300">
                 {blog.images.map((img, index) => (
                   <button
@@ -372,7 +379,7 @@ const BlogPost = () => {
               <div className="flex justify-end mb-8">
                 <button
                   onClick={handleShare}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors duration-300 text-gray-700 font-medium"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-white/80 hover:bg-white rounded-xl transition-all duration-300 text-gray-700 font-medium shadow-sm hover:shadow-md border border-gray-200"
                 >
                   <MdShare size={18} />
                   <span>{language === "tr" ? "Paylaş" : "Share"}</span>
@@ -400,6 +407,8 @@ const BlogPost = () => {
                   [&_li]:pl-2 [&_li]:text-base [&_li]:md:text-lg
                   [&_strong]:text-gray-900 [&_strong]:font-semibold
                   [&_a]:text-indigo-600 [&_a]:hover:text-indigo-800 [&_a]:underline [&_a]:decoration-indigo-300 [&_a]:hover:decoration-indigo-600 [&_a]:transition-colors
+                  [&_div.not-prose]:rounded-2xl [&_div.not-prose]:border [&_div.not-prose]:border-slate-100 [&_div.not-prose]:bg-slate-50/80 [&_div.not-prose]:p-6 [&_div.not-prose]:shadow-sm
+                  [&_div.not-prose_img]:rounded-2xl [&_div.not-prose_img]:shadow-md
                   `}
                   dangerouslySetInnerHTML={{ __html: getLocalizedContent("content") }}
                 />
