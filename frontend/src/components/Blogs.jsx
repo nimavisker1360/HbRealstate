@@ -6,8 +6,6 @@ import blog1 from "../assets/blog1.jpg";
 import blog2 from "../assets/blog2.jpg";
 import blog3 from "../assets/blog3.jpg";
 import blog4 from "../assets/blog4.jpg";
-import { MdChevronLeft, MdChevronRight } from "react-icons/md";
-import { useRef } from "react";
 
 // Default placeholder image for blogs without images
 const placeholderImages = [blog1, blog2, blog3, blog4];
@@ -17,8 +15,6 @@ const Blogs = () => {
   const { t, i18n } = useTranslation();
   const { data: blogs, isLoading } = useBlogs();
   const currentLang = i18n.language;
-  const viewportRef = useRef(null);
-  const trackRef = useRef(null);
 
   // Use API data if available, otherwise fall back to static data
   const displayBlogs = Array.isArray(blogs) && blogs.length > 0 ? blogs : BLOGS;
@@ -49,20 +45,6 @@ const Blogs = () => {
     return blog.category;
   };
 
-  const handleScroll = (direction) => {
-    const viewport = viewportRef.current;
-    const track = trackRef.current;
-    if (!viewport || !track) return;
-    const card = track.querySelector("[data-blog-card]");
-    const cardWidth = card ? card.getBoundingClientRect().width : 300;
-    const gap = 20;
-    const next =
-      viewport.scrollLeft + direction * (cardWidth + gap);
-    const maxScroll = viewport.scrollWidth - viewport.clientWidth;
-    const target = Math.max(0, Math.min(maxScroll, next));
-    viewport.scrollTo({ left: target, behavior: "smooth" });
-  };
-
   return (
     <section className="max-padd-container overflow-x-hidden">
       <div className="py-16 xl:py-28 rounded-3xl">
@@ -76,36 +58,38 @@ const Blogs = () => {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-secondary"></div>
           </div>
         ) : (
-          <div
-            className="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3
-             xl:grid-cols-4 mt-24"
-          >
+          <div className="grid gap-8 sm:gap-10 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 mt-20 justify-items-center">
             {displayBlogs.map((blog, index) => (
               <div
                 key={blog.id || blog.title}
-                className="rounded-3xl border-8 border-primary shadow-sm overflow-hidden relative group cursor-pointer"
+                className="group flex flex-col items-center text-center cursor-pointer"
                 onClick={() => handleContinueReading(blog)}
               >
-                <img 
-                  src={getBlogImage(blog, index)} 
-                  alt={getLocalizedTitle(blog)}
-                  className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-                {/* overlay */}
-                <div className="absolute top-0 left-0 h-full w-full bg-black/25 group-hover:bg-black/40 transition-colors"></div>
-                <div className="absolute bottom-3 left-3 text-white text-[15px]">
-                  <h3 className="font-[600] text-[16px] pr-4 leading-5">{getLocalizedTitle(blog)}</h3>
-                  <h4 className="medium-14 pb-3 pt-1">{getLocalizedCategory(blog)}</h4>
-                  <button 
-                    className="bg-white rounded-xl font-[500] text-[15px] text-tertiary px-3 py-1 hover:bg-secondary hover:text-white transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleContinueReading(blog);
-                    }}
-                  >
-                    {t('blogs.continueReading', 'continue reading')}
-                  </button>
+                <div className="relative w-36 h-36 sm:w-44 sm:h-44 lg:w-48 lg:h-48 rounded-full p-[6px] bg-white shadow-lg ring-1 ring-black/5 transition-transform duration-300 group-hover:-translate-y-1 group-hover:shadow-xl">
+                  <div className="w-full h-full rounded-full overflow-hidden bg-gray-100">
+                    <img
+                      src={getBlogImage(blog, index)}
+                      alt={getLocalizedTitle(blog)}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  </div>
                 </div>
+
+                <h3 className="mt-4 text-sm sm:text-base font-semibold text-gray-800 max-w-[220px]">
+                  {getLocalizedTitle(blog)}
+                </h3>
+                <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                  {getLocalizedCategory(blog)}
+                </p>
+                <button
+                  className="mt-3 bg-white rounded-full font-[500] text-[13px] sm:text-[14px] text-tertiary px-4 py-1.5 border border-gray-200 hover:bg-secondary hover:text-white hover:border-secondary transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleContinueReading(blog);
+                  }}
+                >
+                  {t("blogs.continueReading", "continue reading")}
+                </button>
               </div>
             ))}
           </div>
