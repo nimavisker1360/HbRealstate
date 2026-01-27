@@ -9,7 +9,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon index.js",
-    "postinstall": "chmod +x node_modules/.bin/prisma && prisma generate"
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^6.19.1",
