@@ -256,6 +256,7 @@ const AdminPanel = () => {
   const [blogLoading, setBlogLoading] = useState(false);
   const [aiGenerateModalOpened, setAiGenerateModalOpened] = useState(false);
   const [aiGenerating, setAiGenerating] = useState(false);
+  const [contentEditorLang, setContentEditorLang] = useState("en");
 
   // Testimonials state
   const [testimonials, setTestimonials] = useState([]);
@@ -284,10 +285,18 @@ const AdminPanel = () => {
 
   const [blogForm, setBlogForm] = useState({
     title: "",
+    title_en: "",
+    title_tr: "",
     category: "",
     content: "",
+    content_en: "",
+    content_tr: "",
     contentBlocks: [],
+    contentBlocks_en: [],
+    contentBlocks_tr: [],
     summary: "",
+    summary_en: "",
+    summary_tr: "",
     image: "",
     images: [], // Multiple images for gallery
     published: true,
@@ -486,6 +495,7 @@ const AdminPanel = () => {
   const [blogGalleryUploading, setBlogGalleryUploading] = useState(false);
   const blogBlockWidgetRef = useRef();
   const activeBlockIndexRef = useRef(null);
+  const activeBlockLangRef = useRef("en");
   const [blockImageUploadingIndex, setBlockImageUploadingIndex] = useState(null);
 
   useEffect(() => {
@@ -604,12 +614,14 @@ const AdminPanel = () => {
         if (result.event === "success") {
           const croppedUrl = buildCroppedUrl(result.info);
           const index = activeBlockIndexRef.current;
+          const lang = activeBlockLangRef.current || "en";
           if (index !== null) {
             setBlogForm((prev) => {
-              const blocks = [...(prev.contentBlocks || [])];
+              const field = getBlocksField(lang);
+              const blocks = [...(prev[field] || [])];
               const target = blocks[index] || {};
               blocks[index] = { ...target, image: croppedUrl };
-              return { ...prev, contentBlocks: blocks };
+              return { ...prev, [field]: blocks };
             });
           }
           setBlockImageUploadingIndex(null);
@@ -649,11 +661,13 @@ const AdminPanel = () => {
     }));
   };
 
-  const addContentBlock = () => {
+  const getBlocksField = (lang) => (lang === "tr" ? "contentBlocks_tr" : "contentBlocks_en");
+
+  const addContentBlock = (lang = contentEditorLang) => {
     setBlogForm((prev) => ({
       ...prev,
-      contentBlocks: [
-        ...(prev.contentBlocks || []),
+      [getBlocksField(lang)]: [
+        ...(prev[getBlocksField(lang)] || []),
         { image: "", lines: [{ text: "", icon: "•", bold: false }] },
       ],
     }));
@@ -672,51 +686,54 @@ const AdminPanel = () => {
     return { ...block, lines: [{ text: "", icon: "•", bold: false }] };
   };
 
-  const updateContentBlockLine = (blockIndex, lineIndex, data) => {
+  const updateContentBlockLine = (blockIndex, lineIndex, data, lang = contentEditorLang) => {
     setBlogForm((prev) => {
-      const blocks = [...(prev.contentBlocks || [])];
+      const blocks = [...(prev[getBlocksField(lang)] || [])];
       const block = ensureBlockLines(blocks[blockIndex] || {});
       const lines = [...(block.lines || [])];
       lines[lineIndex] = { ...(lines[lineIndex] || {}), ...data };
       blocks[blockIndex] = { ...block, lines };
-      return { ...prev, contentBlocks: blocks };
+      return { ...prev, [getBlocksField(lang)]: blocks };
     });
   };
 
-  const addContentBlockLine = (blockIndex) => {
+  const addContentBlockLine = (blockIndex, lang = contentEditorLang) => {
     setBlogForm((prev) => {
-      const blocks = [...(prev.contentBlocks || [])];
+      const blocks = [...(prev[getBlocksField(lang)] || [])];
       const block = ensureBlockLines(blocks[blockIndex] || {});
       blocks[blockIndex] = {
         ...block,
         lines: [...(block.lines || []), { text: "", icon: "•", bold: false }],
       };
-      return { ...prev, contentBlocks: blocks };
+      return { ...prev, [getBlocksField(lang)]: blocks };
     });
   };
 
-  const removeContentBlockLine = (blockIndex, lineIndex) => {
+  const removeContentBlockLine = (blockIndex, lineIndex, lang = contentEditorLang) => {
     setBlogForm((prev) => {
-      const blocks = [...(prev.contentBlocks || [])];
+      const blocks = [...(prev[getBlocksField(lang)] || [])];
       const block = ensureBlockLines(blocks[blockIndex] || {});
       const lines = block.lines.filter((_, idx) => idx !== lineIndex);
       blocks[blockIndex] = {
         ...block,
         lines: lines.length ? lines : [{ text: "", icon: "•", bold: false }],
       };
-      return { ...prev, contentBlocks: blocks };
+      return { ...prev, [getBlocksField(lang)]: blocks };
     });
   };
 
-  const removeContentBlock = (index) => {
+  const removeContentBlock = (index, lang = contentEditorLang) => {
     setBlogForm((prev) => ({
       ...prev,
-      contentBlocks: prev.contentBlocks.filter((_, idx) => idx !== index),
+      [getBlocksField(lang)]: (prev[getBlocksField(lang)] || []).filter(
+        (_, idx) => idx !== index
+      ),
     }));
   };
 
-  const openContentBlockImageUpload = (index) => {
+  const openContentBlockImageUpload = (index, lang = contentEditorLang) => {
     activeBlockIndexRef.current = index;
+    activeBlockLangRef.current = lang;
     setBlockImageUploadingIndex(index);
     blogBlockWidgetRef.current?.open();
   };
@@ -932,14 +949,23 @@ const AdminPanel = () => {
   const resetBlogForm = () => {
     setBlogForm({
       title: "",
+      title_en: "",
+      title_tr: "",
       category: "",
       content: "",
+      content_en: "",
+      content_tr: "",
       contentBlocks: [],
+      contentBlocks_en: [],
+      contentBlocks_tr: [],
       summary: "",
+      summary_en: "",
+      summary_tr: "",
       image: "",
       images: [],
       published: true,
     });
+    setContentEditorLang("en");
   };
 
   const buildContentWithBlocks = (content, blocks = []) => {
@@ -982,27 +1008,62 @@ const AdminPanel = () => {
 
   const handleCreateBlog = async () => {
     if (!token) return;
-    const hasBlocks = blogForm.contentBlocks?.some((block) => {
+    const hasBlocksEn = (blogForm.contentBlocks_en || []).some((block) => {
       const lines = ensureBlockLines(block || {}).lines || [];
       return lines.some((line) => line.text?.trim()) || block?.image;
     });
-    if (!blogForm.title || !blogForm.category || (!blogForm.content && !hasBlocks)) {
-      toast.error("Please fill required fields (Title, Category, Content)", {
-        position: "bottom-right",
-      });
+    const hasBlocksTr = (blogForm.contentBlocks_tr || []).some((block) => {
+      const lines = ensureBlockLines(block || {}).lines || [];
+      return lines.some((line) => line.text?.trim()) || block?.image;
+    });
+    const hasAnyContent =
+      blogForm.content_en?.trim() ||
+      blogForm.content_tr?.trim() ||
+      blogForm.content?.trim() ||
+      hasBlocksEn ||
+      hasBlocksTr;
+
+    const hasRequiredSummary = blogForm.summary_en?.trim() && blogForm.summary_tr?.trim();
+    if (
+      !blogForm.title_en ||
+      !blogForm.title_tr ||
+      !blogForm.category ||
+      !hasAnyContent ||
+      !hasRequiredSummary
+    ) {
+      toast.error(
+        "Please fill required fields (Title EN/TR, Summary EN/TR, Category, Content)",
+        {
+          position: "bottom-right",
+        }
+      );
       return;
     }
 
     setBlogLoading(true);
     try {
+      const content_en = buildContentWithBlocks(
+        blogForm.content_en,
+        blogForm.contentBlocks_en
+      );
+      const content_tr = buildContentWithBlocks(
+        blogForm.content_tr,
+        blogForm.contentBlocks_tr
+      );
       const payload = {
         ...blogForm,
-        content: buildContentWithBlocks(blogForm.content, blogForm.contentBlocks),
+        title: blogForm.title_en || blogForm.title_tr || blogForm.title,
+        summary: blogForm.summary_en || blogForm.summary_tr || blogForm.summary,
+        content: content_en || content_tr || blogForm.content,
+        content_en,
+        content_tr,
       };
       if (!payload.image && payload.images?.length) {
         payload.image = payload.images[0];
       }
       delete payload.contentBlocks;
+      delete payload.contentBlocks_en;
+      delete payload.contentBlocks_tr;
       await createBlog(payload, token);
       toast.success("Blog created successfully!", {
         position: "bottom-right",
@@ -1020,34 +1081,94 @@ const AdminPanel = () => {
   const handleEditBlog = (blog) => {
     const fallbackImage =
       !blog.image && blog.images?.length ? blog.images[0] : blog.image;
-    const { baseContent, blocks } = extractBlocksFromContent(blog.content || "");
+    const { baseContent: baseEn, blocks: blocksEn } = extractBlocksFromContent(
+      blog.content_en || blog.content || ""
+    );
+    const { baseContent: baseTr, blocks: blocksTr } = extractBlocksFromContent(
+      blog.content_tr || ""
+    );
     setSelectedBlog(blog);
     setBlogForm({
       title: blog.title || "",
+      title_en: blog.title_en || blog.title || "",
+      title_tr: blog.title_tr || "",
       category: blog.category || "",
-      content: baseContent,
-      contentBlocks: blocks || [],
+      content: blog.content || baseEn || "",
+      content_en: baseEn,
+      content_tr: baseTr,
+      contentBlocks: [],
+      contentBlocks_en: blocksEn || [],
+      contentBlocks_tr: blocksTr || [],
       summary: blog.summary || "",
+      summary_en: blog.summary_en || blog.summary || "",
+      summary_tr: blog.summary_tr || "",
       image: fallbackImage || "",
       images: blog.images || [],
       published: blog.published !== undefined ? blog.published : true,
     });
+    setContentEditorLang("en");
     setEditBlogModalOpened(true);
   };
 
   const handleUpdateBlog = async () => {
     if (!selectedBlog || !token) return;
 
+    const hasBlocksEn = (blogForm.contentBlocks_en || []).some((block) => {
+      const lines = ensureBlockLines(block || {}).lines || [];
+      return lines.some((line) => line.text?.trim()) || block?.image;
+    });
+    const hasBlocksTr = (blogForm.contentBlocks_tr || []).some((block) => {
+      const lines = ensureBlockLines(block || {}).lines || [];
+      return lines.some((line) => line.text?.trim()) || block?.image;
+    });
+    const hasAnyContent =
+      blogForm.content_en?.trim() ||
+      blogForm.content_tr?.trim() ||
+      blogForm.content?.trim() ||
+      hasBlocksEn ||
+      hasBlocksTr;
+    const hasRequiredSummary = blogForm.summary_en?.trim() && blogForm.summary_tr?.trim();
+
+    if (
+      !blogForm.title_en ||
+      !blogForm.title_tr ||
+      !blogForm.category ||
+      !hasAnyContent ||
+      !hasRequiredSummary
+    ) {
+      toast.error(
+        "Please fill required fields (Title EN/TR, Summary EN/TR, Category, Content)",
+        {
+          position: "bottom-right",
+        }
+      );
+      return;
+    }
+
     setBlogLoading(true);
     try {
+      const content_en = buildContentWithBlocks(
+        blogForm.content_en,
+        blogForm.contentBlocks_en
+      );
+      const content_tr = buildContentWithBlocks(
+        blogForm.content_tr,
+        blogForm.contentBlocks_tr
+      );
       const payload = {
         ...blogForm,
-        content: buildContentWithBlocks(blogForm.content, blogForm.contentBlocks),
+        title: blogForm.title_en || blogForm.title_tr || blogForm.title,
+        summary: blogForm.summary_en || blogForm.summary_tr || blogForm.summary,
+        content: content_en || content_tr || blogForm.content,
+        content_en,
+        content_tr,
       };
       if (!payload.image && payload.images?.length) {
         payload.image = payload.images[0];
       }
       delete payload.contentBlocks;
+      delete payload.contentBlocks_en;
+      delete payload.contentBlocks_tr;
       await updateBlog(selectedBlog.id, payload, token);
       toast.success("Blog updated successfully!", {
         position: "bottom-right",
@@ -4096,15 +4217,26 @@ const AdminPanel = () => {
           centered
         >
           <div className="space-y-4 py-2">
-            <TextInput
-              label="Title"
-              placeholder="Blog title"
-              required
-              value={blogForm.title}
-              onChange={(e) =>
-                setBlogForm({ ...blogForm, title: e.target.value })
-              }
-            />
+            <div className="grid gap-3 md:grid-cols-2">
+              <TextInput
+                label="Title (English)"
+                placeholder="Blog title in English"
+                required
+                value={blogForm.title_en}
+                onChange={(e) =>
+                  setBlogForm({ ...blogForm, title_en: e.target.value })
+                }
+              />
+              <TextInput
+                label="Title (Turkish)"
+                placeholder="Blog title in Turkish"
+                required
+                value={blogForm.title_tr}
+                onChange={(e) =>
+                  setBlogForm({ ...blogForm, title_tr: e.target.value })
+                }
+              />
+            </div>
 
             <TextInput
               label="Category"
@@ -4116,44 +4248,85 @@ const AdminPanel = () => {
               }
             />
 
-            <Textarea
-              label="Summary"
-              placeholder="Brief summary of the blog post"
-              rows={2}
-              value={blogForm.summary}
-              onChange={(e) =>
-                setBlogForm({ ...blogForm, summary: e.target.value })
-              }
-            />
-
-            <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="grid gap-3 md:grid-cols-2">
               <Textarea
-                label="Content"
-                placeholder="Full blog content..."
-                rows={12}
-                value={blogForm.content}
+                label="Summary (English)"
+                placeholder="Brief summary in English"
+                rows={3}
+                value={blogForm.summary_en}
                 onChange={(e) =>
-                  setBlogForm({ ...blogForm, content: e.target.value })
+                  setBlogForm({ ...blogForm, summary_en: e.target.value })
                 }
               />
+              <Textarea
+                label="Summary (Turkish)"
+                placeholder="Brief summary in Turkish"
+                rows={3}
+                value={blogForm.summary_tr}
+                onChange={(e) =>
+                  setBlogForm({ ...blogForm, summary_tr: e.target.value })
+                }
+              />
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+              <div className="space-y-4">
+                <Textarea
+                  label="Content (English)"
+                  placeholder="Full blog content in English..."
+                  rows={10}
+                  value={blogForm.content_en}
+                  onChange={(e) =>
+                    setBlogForm({ ...blogForm, content_en: e.target.value })
+                  }
+                />
+                <Textarea
+                  label="Content (Turkish)"
+                  placeholder="Full blog content in Turkish..."
+                  rows={10}
+                  value={blogForm.content_tr}
+                  onChange={(e) =>
+                    setBlogForm({ ...blogForm, content_tr: e.target.value })
+                  }
+                />
+              </div>
 
               <div className="rounded-2xl border border-slate-200 bg-white p-4 space-y-4">
                 <div className="flex items-center justify-between">
-                  <Text size="sm" fw={600}>
-                    Content Blocks (Text + Image)
-                  </Text>
+                  <div className="space-y-1">
+                    <Text size="sm" fw={600}>
+                      Content Blocks (Text + Image)
+                    </Text>
+                    <div className="flex items-center gap-2 text-[11px] text-slate-500">
+                      <span>Blocks language:</span>
+                      <button
+                        type="button"
+                        className={`px-2 py-1 rounded-full border ${contentEditorLang === "en" ? "bg-indigo-600 text-white border-indigo-600" : "border-slate-200 text-slate-600"}`}
+                        onClick={() => setContentEditorLang("en")}
+                      >
+                        English
+                      </button>
+                      <button
+                        type="button"
+                        className={`px-2 py-1 rounded-full border ${contentEditorLang === "tr" ? "bg-red-600 text-white border-red-600" : "border-slate-200 text-slate-600"}`}
+                        onClick={() => setContentEditorLang("tr")}
+                      >
+                        Turkish
+                      </button>
+                    </div>
+                  </div>
                   <Button
                     size="xs"
                     variant="light"
                     leftSection={<MdAdd size={14} />}
-                    onClick={addContentBlock}
+                    onClick={() => addContentBlock(contentEditorLang)}
                   >
                     Add Block
                   </Button>
                 </div>
-                {blogForm.contentBlocks?.length ? (
+                {(blogForm[getBlocksField(contentEditorLang)] || []).length ? (
                   <div className="space-y-4">
-                    {blogForm.contentBlocks.map((block, index) => (
+                    {(blogForm[getBlocksField(contentEditorLang)] || []).map((block, index) => (
                       <div
                         key={index}
                         className="rounded-xl border border-slate-100 bg-slate-50 p-3 space-y-3"
@@ -4166,7 +4339,7 @@ const AdminPanel = () => {
                             variant="subtle"
                             color="red"
                             size="sm"
-                            onClick={() => removeContentBlock(index)}
+                            onClick={() => removeContentBlock(index, contentEditorLang)}
                           >
                             <MdClose size={14} />
                           </ActionIcon>
@@ -4186,7 +4359,7 @@ const AdminPanel = () => {
                                   color="red"
                                   size="xs"
                                   onClick={() =>
-                                    removeContentBlockLine(index, lineIndex)
+                                    removeContentBlockLine(index, lineIndex, contentEditorLang)
                                   }
                                 >
                                   <MdClose size={12} />
@@ -4199,9 +4372,12 @@ const AdminPanel = () => {
                                     className="ml-2 h-8 rounded-md border border-slate-200 bg-white px-2 text-xs"
                                     value={line.icon ?? "•"}
                                     onChange={(e) =>
-                                      updateContentBlockLine(index, lineIndex, {
-                                        icon: e.target.value,
-                                      })
+                                      updateContentBlockLine(
+                                        index,
+                                        lineIndex,
+                                        { icon: e.target.value },
+                                        contentEditorLang
+                                      )
                                     }
                                   >
                                     {blockIconOptions.map((option) => (
@@ -4216,9 +4392,12 @@ const AdminPanel = () => {
                                   label="Bold"
                                   checked={!!line.bold}
                                   onChange={(e) =>
-                                    updateContentBlockLine(index, lineIndex, {
-                                      bold: e.currentTarget.checked,
-                                    })
+                                    updateContentBlockLine(
+                                      index,
+                                      lineIndex,
+                                      { bold: e.currentTarget.checked },
+                                      contentEditorLang
+                                    )
                                   }
                                 />
                               </div>
@@ -4227,9 +4406,12 @@ const AdminPanel = () => {
                                 minRows={2}
                                 value={line.text || ""}
                                 onChange={(e) =>
-                                  updateContentBlockLine(index, lineIndex, {
-                                    text: e.target.value,
-                                  })
+                                  updateContentBlockLine(
+                                    index,
+                                    lineIndex,
+                                    { text: e.target.value },
+                                    contentEditorLang
+                                  )
                                 }
                               />
                             </div>
@@ -4238,7 +4420,7 @@ const AdminPanel = () => {
                             size="xs"
                             variant="light"
                             leftSection={<MdAdd size={14} />}
-                            onClick={() => addContentBlockLine(index)}
+                            onClick={() => addContentBlockLine(index, contentEditorLang)}
                           >
                             Add Line
                           </Button>
@@ -4261,7 +4443,7 @@ const AdminPanel = () => {
                           <Button
                             size="xs"
                             variant="light"
-                            onClick={() => openContentBlockImageUpload(index)}
+                            onClick={() => openContentBlockImageUpload(index, contentEditorLang)}
                             loading={blockImageUploadingIndex === index}
                           >
                             {block.image ? "Change Image" : "Upload Image"}
@@ -4298,7 +4480,7 @@ const AdminPanel = () => {
                           Featured Image
                         </p>
                         <h4 className="text-base font-semibold leading-snug">
-                          {blogForm.title || "Blog cover preview"}
+                          {blogForm.title_en || blogForm.title_tr || "Blog cover preview"}
                         </h4>
                       </div>
                       <ActionIcon
@@ -4340,8 +4522,8 @@ const AdminPanel = () => {
                     Preview Notes
                   </p>
                   <ul className="mt-3 space-y-2 text-sm text-slate-600">
-                    {getSummaryBullets(blogForm.summary).length > 0 ? (
-                      getSummaryBullets(blogForm.summary).map((item, idx) => (
+                    {getSummaryBullets(blogForm.summary_en || blogForm.summary_tr || blogForm.summary).length > 0 ? (
+                      getSummaryBullets(blogForm.summary_en || blogForm.summary_tr || blogForm.summary).map((item, idx) => (
                         <li key={idx}>• {item}</li>
                       ))
                     ) : (
@@ -4465,15 +4647,26 @@ const AdminPanel = () => {
           centered
         >
           <div className="space-y-4 py-2">
-            <TextInput
-              label="Title"
-              placeholder="Blog title"
-              required
-              value={blogForm.title}
-              onChange={(e) =>
-                setBlogForm({ ...blogForm, title: e.target.value })
-              }
-            />
+            <div className="grid gap-3 md:grid-cols-2">
+              <TextInput
+                label="Title (English)"
+                placeholder="Blog title in English"
+                required
+                value={blogForm.title_en}
+                onChange={(e) =>
+                  setBlogForm({ ...blogForm, title_en: e.target.value })
+                }
+              />
+              <TextInput
+                label="Title (Turkish)"
+                placeholder="Blog title in Turkish"
+                required
+                value={blogForm.title_tr}
+                onChange={(e) =>
+                  setBlogForm({ ...blogForm, title_tr: e.target.value })
+                }
+              />
+            </div>
 
             <TextInput
               label="Category"
@@ -4485,44 +4678,85 @@ const AdminPanel = () => {
               }
             />
 
-            <Textarea
-              label="Summary"
-              placeholder="Brief summary of the blog post"
-              rows={2}
-              value={blogForm.summary}
-              onChange={(e) =>
-                setBlogForm({ ...blogForm, summary: e.target.value })
-              }
-            />
-
-            <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="grid gap-3 md:grid-cols-2">
               <Textarea
-                label="Content"
-                placeholder="Full blog content..."
-                rows={12}
-                value={blogForm.content}
+                label="Summary (English)"
+                placeholder="Brief summary in English"
+                rows={3}
+                value={blogForm.summary_en}
                 onChange={(e) =>
-                  setBlogForm({ ...blogForm, content: e.target.value })
+                  setBlogForm({ ...blogForm, summary_en: e.target.value })
                 }
               />
+              <Textarea
+                label="Summary (Turkish)"
+                placeholder="Brief summary in Turkish"
+                rows={3}
+                value={blogForm.summary_tr}
+                onChange={(e) =>
+                  setBlogForm({ ...blogForm, summary_tr: e.target.value })
+                }
+              />
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+              <div className="space-y-4">
+                <Textarea
+                  label="Content (English)"
+                  placeholder="Full blog content in English..."
+                  rows={10}
+                  value={blogForm.content_en}
+                  onChange={(e) =>
+                    setBlogForm({ ...blogForm, content_en: e.target.value })
+                  }
+                />
+                <Textarea
+                  label="Content (Turkish)"
+                  placeholder="Full blog content in Turkish..."
+                  rows={10}
+                  value={blogForm.content_tr}
+                  onChange={(e) =>
+                    setBlogForm({ ...blogForm, content_tr: e.target.value })
+                  }
+                />
+              </div>
 
               <div className="rounded-2xl border border-slate-200 bg-white p-4 space-y-4">
                 <div className="flex items-center justify-between">
-                  <Text size="sm" fw={600}>
-                    Content Blocks (Text + Image)
-                  </Text>
+                  <div className="space-y-1">
+                    <Text size="sm" fw={600}>
+                      Content Blocks (Text + Image)
+                    </Text>
+                    <div className="flex items-center gap-2 text-[11px] text-slate-500">
+                      <span>Blocks language:</span>
+                      <button
+                        type="button"
+                        className={`px-2 py-1 rounded-full border ${contentEditorLang === "en" ? "bg-indigo-600 text-white border-indigo-600" : "border-slate-200 text-slate-600"}`}
+                        onClick={() => setContentEditorLang("en")}
+                      >
+                        English
+                      </button>
+                      <button
+                        type="button"
+                        className={`px-2 py-1 rounded-full border ${contentEditorLang === "tr" ? "bg-red-600 text-white border-red-600" : "border-slate-200 text-slate-600"}`}
+                        onClick={() => setContentEditorLang("tr")}
+                      >
+                        Turkish
+                      </button>
+                    </div>
+                  </div>
                   <Button
                     size="xs"
                     variant="light"
                     leftSection={<MdAdd size={14} />}
-                    onClick={addContentBlock}
+                    onClick={() => addContentBlock(contentEditorLang)}
                   >
                     Add Block
                   </Button>
                 </div>
-                {blogForm.contentBlocks?.length ? (
+                {(blogForm[getBlocksField(contentEditorLang)] || []).length ? (
                   <div className="space-y-4">
-                    {blogForm.contentBlocks.map((block, index) => (
+                    {(blogForm[getBlocksField(contentEditorLang)] || []).map((block, index) => (
                       <div
                         key={index}
                         className="rounded-xl border border-slate-100 bg-slate-50 p-3 space-y-3"
@@ -4535,7 +4769,7 @@ const AdminPanel = () => {
                             variant="subtle"
                             color="red"
                             size="sm"
-                            onClick={() => removeContentBlock(index)}
+                            onClick={() => removeContentBlock(index, contentEditorLang)}
                           >
                             <MdClose size={14} />
                           </ActionIcon>
@@ -4555,7 +4789,7 @@ const AdminPanel = () => {
                                   color="red"
                                   size="xs"
                                   onClick={() =>
-                                    removeContentBlockLine(index, lineIndex)
+                                    removeContentBlockLine(index, lineIndex, contentEditorLang)
                                   }
                                 >
                                   <MdClose size={12} />
@@ -4568,9 +4802,12 @@ const AdminPanel = () => {
                                     className="ml-2 h-8 rounded-md border border-slate-200 bg-white px-2 text-xs"
                                     value={line.icon ?? "•"}
                                     onChange={(e) =>
-                                      updateContentBlockLine(index, lineIndex, {
-                                        icon: e.target.value,
-                                      })
+                                      updateContentBlockLine(
+                                        index,
+                                        lineIndex,
+                                        { icon: e.target.value },
+                                        contentEditorLang
+                                      )
                                     }
                                   >
                                     {blockIconOptions.map((option) => (
@@ -4585,9 +4822,12 @@ const AdminPanel = () => {
                                   label="Bold"
                                   checked={!!line.bold}
                                   onChange={(e) =>
-                                    updateContentBlockLine(index, lineIndex, {
-                                      bold: e.currentTarget.checked,
-                                    })
+                                    updateContentBlockLine(
+                                      index,
+                                      lineIndex,
+                                      { bold: e.currentTarget.checked },
+                                      contentEditorLang
+                                    )
                                   }
                                 />
                               </div>
@@ -4596,9 +4836,12 @@ const AdminPanel = () => {
                                 minRows={2}
                                 value={line.text || ""}
                                 onChange={(e) =>
-                                  updateContentBlockLine(index, lineIndex, {
-                                    text: e.target.value,
-                                  })
+                                  updateContentBlockLine(
+                                    index,
+                                    lineIndex,
+                                    { text: e.target.value },
+                                    contentEditorLang
+                                  )
                                 }
                               />
                             </div>
@@ -4607,7 +4850,7 @@ const AdminPanel = () => {
                             size="xs"
                             variant="light"
                             leftSection={<MdAdd size={14} />}
-                            onClick={() => addContentBlockLine(index)}
+                            onClick={() => addContentBlockLine(index, contentEditorLang)}
                           >
                             Add Line
                           </Button>
@@ -4630,7 +4873,7 @@ const AdminPanel = () => {
                           <Button
                             size="xs"
                             variant="light"
-                            onClick={() => openContentBlockImageUpload(index)}
+                            onClick={() => openContentBlockImageUpload(index, contentEditorLang)}
                             loading={blockImageUploadingIndex === index}
                           >
                             {block.image ? "Change Image" : "Upload Image"}
@@ -4667,7 +4910,7 @@ const AdminPanel = () => {
                           Featured Image
                         </p>
                         <h4 className="text-base font-semibold leading-snug">
-                          {blogForm.title || "Blog cover preview"}
+                          {blogForm.title_en || blogForm.title_tr || "Blog cover preview"}
                         </h4>
                       </div>
                       <ActionIcon
@@ -4709,8 +4952,8 @@ const AdminPanel = () => {
                     Preview Notes
                   </p>
                   <ul className="mt-3 space-y-2 text-sm text-slate-600">
-                    {getSummaryBullets(blogForm.summary).length > 0 ? (
-                      getSummaryBullets(blogForm.summary).map((item, idx) => (
+                    {getSummaryBullets(blogForm.summary_en || blogForm.summary_tr || blogForm.summary).length > 0 ? (
+                      getSummaryBullets(blogForm.summary_en || blogForm.summary_tr || blogForm.summary).map((item, idx) => (
                         <li key={idx}>• {item}</li>
                       ))
                     ) : (

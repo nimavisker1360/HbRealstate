@@ -90,9 +90,15 @@ export const createBlog = asyncHandler(async (req, res) => {
     const blog = await prisma.blog.create({
       data: {
         title: data.title,
+        title_en: data.title_en || data.title || "",
+        title_tr: data.title_tr || "",
         category: data.category,
         content: data.content || "",
+        content_en: data.content_en || data.content || "",
+        content_tr: data.content_tr || "",
         summary: data.summary || "",
+        summary_en: data.summary_en || data.summary || "",
+        summary_tr: data.summary_tr || "",
         image: data.image || "",
         images: data.images || [],
         slug: slug,
@@ -121,12 +127,18 @@ export const updateBlog = asyncHandler(async (req, res) => {
       where: { id },
       data: {
         title: data.title,
+        title_en: data.title_en,
+        title_tr: data.title_tr,
         category: data.category,
         content: data.content,
+        content_en: data.content_en,
+        content_tr: data.content_tr,
         summary: data.summary,
+        summary_en: data.summary_en,
+        summary_tr: data.summary_tr,
         image: data.image,
+        images: data.images,
         published: data.published,
-        // Note: 'images' field requires running 'npx prisma generate' first
       },
     });
 

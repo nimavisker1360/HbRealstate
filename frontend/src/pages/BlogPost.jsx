@@ -3,6 +3,7 @@ import { useQuery } from "react-query";
 import { getBlog } from "../utils/api";
 import { MdArrowBack, MdCalendarToday, MdCategory, MdErrorOutline, MdTranslate, MdAccessTime, MdShare, MdClose, MdChevronLeft, MdChevronRight } from "react-icons/md";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import HousingSalesChart from "../components/HousingSalesChart";
 import ForeignSalesChart from "../components/ForeignSalesChart";
 import { MdPhotoLibrary } from "react-icons/md";
@@ -10,7 +11,8 @@ import { MdPhotoLibrary } from "react-icons/md";
 const BlogPost = () => {
   const { blogId } = useParams();
   const navigate = useNavigate();
-  const [language, setLanguage] = useState("en"); // Default to English
+  const { i18n } = useTranslation();
+  const language = i18n.language?.toLowerCase().startsWith("tr") ? "tr" : "en";
   const [selectedImage, setSelectedImage] = useState(null); // For lightbox
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
@@ -37,8 +39,6 @@ const BlogPost = () => {
     return Array.isArray(faq) ? faq : [];
   };
 
-  // Check if bilingual content exists
-  const hasBilingualContent = blog?.content_en || blog?.content_tr;
 
   // Update meta tags for SEO
   useEffect(() => {
@@ -141,7 +141,7 @@ const BlogPost = () => {
         </div>
       )}
       <div className="max-padd-container relative z-10">
-        {/* Top Bar with Back & Language Switcher */}
+        {/* Top Bar with Back */}
         <div className="flex items-center justify-between mb-8">
           <button
             onClick={() => navigate(-1)}
@@ -154,34 +154,6 @@ const BlogPost = () => {
             <MdArrowBack size={20} />
             <span className="font-medium">{language === "tr" ? "Geri" : "Back"}</span>
           </button>
-
-          {/* Language Switcher - Only show if bilingual content exists */}
-          {hasBilingualContent && !isHousingStatsBlog && !isForeignSalesBlog && (
-            <div className="flex items-center gap-2 bg-white rounded-xl p-1.5 shadow-lg shadow-gray-200/50 border border-gray-100">
-              <button
-                onClick={() => setLanguage("en")}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
-                  language === "en"
-                    ? "bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-md"
-                    : "text-gray-600 hover:bg-gray-100"
-                }`}
-              >
-                <span className="text-lg">🇬🇧</span>
-                <span>English</span>
-              </button>
-              <button
-                onClick={() => setLanguage("tr")}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
-                  language === "tr"
-                    ? "bg-gradient-to-r from-red-600 to-red-500 text-white shadow-md"
-                    : "text-gray-600 hover:bg-gray-100"
-                }`}
-              >
-                <span className="text-lg">🇹🇷</span>
-                <span>Türkçe</span>
-              </button>
-            </div>
-          )}
         </div>
 
         {/* Image Lightbox Modal */}
