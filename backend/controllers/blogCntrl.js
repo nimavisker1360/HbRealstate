@@ -2,6 +2,16 @@ import asyncHandler from "express-async-handler";
 import { prisma } from "../config/prismaConfig.js";
 import { generateRealEstateBlog, generateMultipleBlogs } from "../services/aiBlogGenerator.js";
 
+const toSlug = (value = "") =>
+  value
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
 // Get all blogs (public)
 export const getAllBlogs = asyncHandler(async (req, res) => {
   try {
@@ -53,8 +63,8 @@ export const getBlog = asyncHandler(async (req, res) => {
 export const createBlog = asyncHandler(async (req, res) => {
   const { data } = req.body;
 
-  if (!data.title || !data.content || !data.category) {
-    return res.status(400).send({ message: "Title, content and category are required" });
+  if (!data.title || !data.category) {
+    return res.status(400).send({ message: "Title and category are required" });
   }
 
   try {
@@ -64,14 +74,28 @@ export const createBlog = asyncHandler(async (req, res) => {
       select: { order: true },
     });
 
+    let slugBase = toSlug(data.title);
+    if (!slugBase) {
+      slugBase = `blog-${Date.now()}`;
+    }
+    let slug = slugBase;
+    let slugExists = await prisma.blog.findUnique({ where: { slug } });
+    let counter = 1;
+    while (slugExists) {
+      slug = `${slugBase}-${counter}`;
+      slugExists = await prisma.blog.findUnique({ where: { slug } });
+      counter++;
+    }
+
     const blog = await prisma.blog.create({
       data: {
         title: data.title,
         category: data.category,
-        content: data.content,
+        content: data.content || "",
         summary: data.summary || "",
         image: data.image || "",
-        // Note: 'images' field requires running 'npx prisma generate' first
+        images: data.images || [],
+        slug: slug,
         published: data.published !== undefined ? data.published : true,
         order: (maxOrder?.order || 0) + 1,
       },
@@ -80,7 +104,10 @@ export const createBlog = asyncHandler(async (req, res) => {
     res.status(201).send({ message: "Blog created successfully", blog });
   } catch (err) {
     console.error("Error creating blog:", err);
-    res.status(500).send({ message: "Error creating blog" });
+    res.status(500).send({
+      message: "Error creating blog",
+      error: err.message,
+    });
   }
 });
 

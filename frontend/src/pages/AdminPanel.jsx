@@ -286,6 +286,7 @@ const AdminPanel = () => {
     title: "",
     category: "",
     content: "",
+    contentBlocks: [],
     summary: "",
     image: "",
     images: [], // Multiple images for gallery
@@ -483,6 +484,9 @@ const AdminPanel = () => {
   // Cloudinary widget for blog gallery images (multiple)
   const blogGalleryWidgetRef = useRef();
   const [blogGalleryUploading, setBlogGalleryUploading] = useState(false);
+  const blogBlockWidgetRef = useRef();
+  const activeBlockIndexRef = useRef(null);
+  const [blockImageUploadingIndex, setBlockImageUploadingIndex] = useState(null);
 
   useEffect(() => {
     blogWidgetRef.current = cloudinaryRef.current?.createUploadWidget(
@@ -567,6 +571,54 @@ const AdminPanel = () => {
         }
       }
     );
+
+    blogBlockWidgetRef.current = cloudinaryRef.current?.createUploadWidget(
+      {
+        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
+        uploadPreset:
+          import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
+        maxFiles: 1,
+        multiple: false,
+        cropping: true,
+        croppingAspectRatio: 4 / 3,
+        croppingShowDimensions: true,
+        croppingCoordinatesMode: "custom",
+        showSkipCropButton: false,
+        resourceType: "image",
+        clientAllowedFormats: [
+          "jpg",
+          "jpeg",
+          "png",
+          "gif",
+          "webp",
+          "bmp",
+          "tiff",
+          "svg",
+          "heic",
+          "heif",
+          "avif",
+        ],
+        sources: ["local", "url", "camera"],
+      },
+      (err, result) => {
+        if (result.event === "success") {
+          const croppedUrl = buildCroppedUrl(result.info);
+          const index = activeBlockIndexRef.current;
+          if (index !== null) {
+            setBlogForm((prev) => {
+              const blocks = [...(prev.contentBlocks || [])];
+              const target = blocks[index] || {};
+              blocks[index] = { ...target, image: croppedUrl };
+              return { ...prev, contentBlocks: blocks };
+            });
+          }
+          setBlockImageUploadingIndex(null);
+        }
+        if (result.event === "close") {
+          setBlockImageUploadingIndex(null);
+        }
+      }
+    );
   }, []);
 
   const openBlogImageUpload = () => {
@@ -588,6 +640,148 @@ const AdminPanel = () => {
       ...prev,
       images: prev.images.filter((_, index) => index !== indexToRemove),
     }));
+  };
+
+  const setCoverFromGallery = (index) => {
+    setBlogForm((prev) => ({
+      ...prev,
+      image: prev.images[index] || prev.image,
+    }));
+  };
+
+  const addContentBlock = () => {
+    setBlogForm((prev) => ({
+      ...prev,
+      contentBlocks: [
+        ...(prev.contentBlocks || []),
+        { image: "", lines: [{ text: "", icon: "•", bold: false }] },
+      ],
+    }));
+  };
+
+  const ensureBlockLines = (block) => {
+    if (Array.isArray(block.lines) && block.lines.length > 0) return block;
+    if (block.text) {
+      const lines = block.text
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .map((line) => ({ text: line, icon: "•", bold: false }));
+      return { ...block, lines };
+    }
+    return { ...block, lines: [{ text: "", icon: "•", bold: false }] };
+  };
+
+  const updateContentBlockLine = (blockIndex, lineIndex, data) => {
+    setBlogForm((prev) => {
+      const blocks = [...(prev.contentBlocks || [])];
+      const block = ensureBlockLines(blocks[blockIndex] || {});
+      const lines = [...(block.lines || [])];
+      lines[lineIndex] = { ...(lines[lineIndex] || {}), ...data };
+      blocks[blockIndex] = { ...block, lines };
+      return { ...prev, contentBlocks: blocks };
+    });
+  };
+
+  const addContentBlockLine = (blockIndex) => {
+    setBlogForm((prev) => {
+      const blocks = [...(prev.contentBlocks || [])];
+      const block = ensureBlockLines(blocks[blockIndex] || {});
+      blocks[blockIndex] = {
+        ...block,
+        lines: [...(block.lines || []), { text: "", icon: "•", bold: false }],
+      };
+      return { ...prev, contentBlocks: blocks };
+    });
+  };
+
+  const removeContentBlockLine = (blockIndex, lineIndex) => {
+    setBlogForm((prev) => {
+      const blocks = [...(prev.contentBlocks || [])];
+      const block = ensureBlockLines(blocks[blockIndex] || {});
+      const lines = block.lines.filter((_, idx) => idx !== lineIndex);
+      blocks[blockIndex] = {
+        ...block,
+        lines: lines.length ? lines : [{ text: "", icon: "•", bold: false }],
+      };
+      return { ...prev, contentBlocks: blocks };
+    });
+  };
+
+  const removeContentBlock = (index) => {
+    setBlogForm((prev) => ({
+      ...prev,
+      contentBlocks: prev.contentBlocks.filter((_, idx) => idx !== index),
+    }));
+  };
+
+  const openContentBlockImageUpload = (index) => {
+    activeBlockIndexRef.current = index;
+    setBlockImageUploadingIndex(index);
+    blogBlockWidgetRef.current?.open();
+  };
+
+  const getSummaryBullets = (text) =>
+    (text || "")
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .slice(0, 4);
+
+  const blockIconOptions = [
+    { value: "", label: "None" },
+    { value: "•", label: "Dot" },
+    { value: "✓", label: "Check" },
+    { value: "★", label: "Star" },
+    { value: "→", label: "Arrow" },
+    { value: "🏛️", label: "Greece" },
+    { value: "🏖️", label: "Beach" },
+    { value: "🏡", label: "Home" },
+    { value: "💶", label: "Euro" },
+  ];
+
+  const extractBlocksFromContent = (html = "") => {
+    if (!html) return { baseContent: "", blocks: [] };
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, "text/html");
+      const blockNodes = Array.from(
+        doc.body.querySelectorAll('div.not-prose.grid')
+      );
+      const blocks = blockNodes.map((node) => {
+        const img = node.querySelector("img");
+        const paragraphs = Array.from(node.querySelectorAll("p"));
+        const lines = paragraphs
+          .map((p) => {
+            const text = (p.textContent || "").trim();
+            if (!text) return null;
+            const firstToken = text.split(" ")[0];
+            const iconMatch = blockIconOptions.find(
+              (option) => option.value === firstToken
+            );
+            const cleanedText = iconMatch
+              ? text.replace(firstToken, "").trim()
+              : text;
+            const isBold = p.querySelector("strong") !== null;
+            return {
+              text: cleanedText,
+              icon: iconMatch ? iconMatch.value : "•",
+              bold: isBold,
+            };
+          })
+          .filter(Boolean);
+        return {
+          image: img?.getAttribute("src") || "",
+          lines: lines.length ? lines : [{ text: "", icon: "•", bold: false }],
+        };
+      });
+
+      blockNodes.forEach((node) => node.remove());
+      const baseContent = (doc.body.innerText || "").trim();
+      return { baseContent, blocks };
+    } catch (error) {
+      return { baseContent: html, blocks: [] };
+    }
   };
 
   const [propertyDetails, setPropertyDetails] = useState({
@@ -740,6 +934,7 @@ const AdminPanel = () => {
       title: "",
       category: "",
       content: "",
+      contentBlocks: [],
       summary: "",
       image: "",
       images: [],
@@ -747,9 +942,51 @@ const AdminPanel = () => {
     });
   };
 
+  const buildContentWithBlocks = (content, blocks = []) => {
+    const baseContent = content || "";
+    if (!blocks.length) return baseContent;
+
+    const blockHtml = blocks
+      .map((block, index) => {
+        const lines = ensureBlockLines(block || {}).lines || [];
+        const hasText = lines.some((line) => line.text?.trim());
+        if (!hasText && !block?.image) return "";
+        const textHtml = hasText
+          ? `<div class="space-y-4">${lines
+              .filter((line) => line.text?.trim())
+              .map((line) => {
+                const icon = line.icon ? `${line.icon} ` : "";
+                const text = line.bold
+                  ? `<strong>${line.text}</strong>`
+                  : line.text;
+                return `<p>${icon}${text}</p>`;
+              })
+              .join("")}</div>`
+          : "";
+        const imageHtml = block?.image
+          ? `<div class="w-full rounded-2xl overflow-hidden shadow-lg border border-slate-100"><img src="${block.image}" alt="Blog block ${index + 1}" class="w-full h-full object-cover" /></div>`
+          : "";
+
+        const imageColumn = `<div class="${
+          index % 2 === 1 ? "md:order-2" : ""
+        }">${imageHtml}</div>`;
+        const textColumn = `<div>${textHtml}</div>`;
+
+        return `<div class="not-prose grid gap-6 md:grid-cols-2 items-start my-10">${imageColumn}${textColumn}</div>`;
+      })
+      .filter(Boolean)
+      .join("");
+
+    return `${baseContent}${blockHtml ? `${baseContent ? "\n" : ""}${blockHtml}` : ""}`;
+  };
+
   const handleCreateBlog = async () => {
     if (!token) return;
-    if (!blogForm.title || !blogForm.content || !blogForm.category) {
+    const hasBlocks = blogForm.contentBlocks?.some((block) => {
+      const lines = ensureBlockLines(block || {}).lines || [];
+      return lines.some((line) => line.text?.trim()) || block?.image;
+    });
+    if (!blogForm.title || !blogForm.category || (!blogForm.content && !hasBlocks)) {
       toast.error("Please fill required fields (Title, Category, Content)", {
         position: "bottom-right",
       });
@@ -758,7 +995,15 @@ const AdminPanel = () => {
 
     setBlogLoading(true);
     try {
-      await createBlog(blogForm, token);
+      const payload = {
+        ...blogForm,
+        content: buildContentWithBlocks(blogForm.content, blogForm.contentBlocks),
+      };
+      if (!payload.image && payload.images?.length) {
+        payload.image = payload.images[0];
+      }
+      delete payload.contentBlocks;
+      await createBlog(payload, token);
       toast.success("Blog created successfully!", {
         position: "bottom-right",
       });
@@ -773,13 +1018,17 @@ const AdminPanel = () => {
   };
 
   const handleEditBlog = (blog) => {
+    const fallbackImage =
+      !blog.image && blog.images?.length ? blog.images[0] : blog.image;
+    const { baseContent, blocks } = extractBlocksFromContent(blog.content || "");
     setSelectedBlog(blog);
     setBlogForm({
       title: blog.title || "",
       category: blog.category || "",
-      content: blog.content || "",
+      content: baseContent,
+      contentBlocks: blocks || [],
       summary: blog.summary || "",
-      image: blog.image || "",
+      image: fallbackImage || "",
       images: blog.images || [],
       published: blog.published !== undefined ? blog.published : true,
     });
@@ -791,7 +1040,15 @@ const AdminPanel = () => {
 
     setBlogLoading(true);
     try {
-      await updateBlog(selectedBlog.id, blogForm, token);
+      const payload = {
+        ...blogForm,
+        content: buildContentWithBlocks(blogForm.content, blogForm.contentBlocks),
+      };
+      if (!payload.image && payload.images?.length) {
+        payload.image = payload.images[0];
+      }
+      delete payload.contentBlocks;
+      await updateBlog(selectedBlog.id, payload, token);
       toast.success("Blog updated successfully!", {
         position: "bottom-right",
       });
@@ -3869,62 +4126,233 @@ const AdminPanel = () => {
               }
             />
 
-            <Textarea
-              label="Content"
-              placeholder="Full blog content..."
-              required
-              rows={10}
-              value={blogForm.content}
-              onChange={(e) =>
-                setBlogForm({ ...blogForm, content: e.target.value })
-              }
-            />
+            <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+              <Textarea
+                label="Content"
+                placeholder="Full blog content..."
+                rows={12}
+                value={blogForm.content}
+                onChange={(e) =>
+                  setBlogForm({ ...blogForm, content: e.target.value })
+                }
+              />
+
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <Text size="sm" fw={600}>
+                    Content Blocks (Text + Image)
+                  </Text>
+                  <Button
+                    size="xs"
+                    variant="light"
+                    leftSection={<MdAdd size={14} />}
+                    onClick={addContentBlock}
+                  >
+                    Add Block
+                  </Button>
+                </div>
+                {blogForm.contentBlocks?.length ? (
+                  <div className="space-y-4">
+                    {blogForm.contentBlocks.map((block, index) => (
+                      <div
+                        key={index}
+                        className="rounded-xl border border-slate-100 bg-slate-50 p-3 space-y-3"
+                      >
+                        <div className="flex items-center justify-between">
+                          <Text size="xs" fw={600}>
+                            Block {index + 1}
+                          </Text>
+                          <ActionIcon
+                            variant="subtle"
+                            color="red"
+                            size="sm"
+                            onClick={() => removeContentBlock(index)}
+                          >
+                            <MdClose size={14} />
+                          </ActionIcon>
+                        </div>
+                        <div className="space-y-3">
+                          {ensureBlockLines(block).lines.map((line, lineIndex) => (
+                            <div
+                              key={lineIndex}
+                              className="rounded-lg border border-slate-200 bg-white p-2 space-y-2"
+                            >
+                              <div className="flex items-center justify-between">
+                                <Text size="xs" fw={600}>
+                                  Line {lineIndex + 1}
+                                </Text>
+                                <ActionIcon
+                                  variant="subtle"
+                                  color="red"
+                                  size="xs"
+                                  onClick={() =>
+                                    removeContentBlockLine(index, lineIndex)
+                                  }
+                                >
+                                  <MdClose size={12} />
+                                </ActionIcon>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <label className="text-xs text-slate-500">
+                                  Icon
+                                  <select
+                                    className="ml-2 h-8 rounded-md border border-slate-200 bg-white px-2 text-xs"
+                                    value={line.icon ?? "•"}
+                                    onChange={(e) =>
+                                      updateContentBlockLine(index, lineIndex, {
+                                        icon: e.target.value,
+                                      })
+                                    }
+                                  >
+                                    {blockIconOptions.map((option) => (
+                                      <option key={option.value} value={option.value}>
+                                        {option.label}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </label>
+                                <Switch
+                                  size="sm"
+                                  label="Bold"
+                                  checked={!!line.bold}
+                                  onChange={(e) =>
+                                    updateContentBlockLine(index, lineIndex, {
+                                      bold: e.currentTarget.checked,
+                                    })
+                                  }
+                                />
+                              </div>
+                              <Textarea
+                                placeholder="Write line text..."
+                                minRows={2}
+                                value={line.text || ""}
+                                onChange={(e) =>
+                                  updateContentBlockLine(index, lineIndex, {
+                                    text: e.target.value,
+                                  })
+                                }
+                              />
+                            </div>
+                          ))}
+                          <Button
+                            size="xs"
+                            variant="light"
+                            leftSection={<MdAdd size={14} />}
+                            onClick={() => addContentBlockLine(index)}
+                          >
+                            Add Line
+                          </Button>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="h-16 w-20 rounded-lg border border-dashed border-slate-200 bg-white overflow-hidden flexCenter">
+                            {block.image ? (
+                              <img
+                                src={block.image}
+                                alt={`Block ${index + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <MdOutlineCloudUpload
+                                size={18}
+                                className="text-slate-400"
+                              />
+                            )}
+                          </div>
+                          <Button
+                            size="xs"
+                            variant="light"
+                            onClick={() => openContentBlockImageUpload(index)}
+                            loading={blockImageUploadingIndex === index}
+                          >
+                            {block.image ? "Change Image" : "Upload Image"}
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-xs text-slate-500 leading-relaxed">
+                    Add blocks to mix text and images in the article body.
+                  </div>
+                )}
+              </div>
+            </div>
 
             {/* Blog Image Upload */}
             <div>
               <Text size="sm" fw={500} mb={4}>
                 Featured Image
               </Text>
-              {blogForm.image ? (
-                <div className="relative inline-block">
-                  <img
-                    src={blogForm.image}
-                    alt="Blog"
-                    className="w-full max-w-md h-32 rounded-lg object-cover border-2 border-gray-200"
-                  />
-                  <ActionIcon
-                    variant="filled"
-                    color="red"
-                    size="sm"
-                    radius="xl"
-                    className="absolute top-2 right-2"
-                    onClick={removeBlogImage}
-                  >
-                    <MdClose size={14} />
-                  </ActionIcon>
+              <div className="grid gap-4 md:grid-cols-[1.2fr_0.8fr]">
+                <div className="relative">
+                  {blogForm.image ? (
+                    <div className="relative rounded-2xl overflow-hidden border border-slate-200">
+                      <img
+                        src={blogForm.image}
+                        alt="Blog"
+                        className="w-full h-44 sm:h-56 object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+                      <div className="absolute bottom-3 left-4 right-4 text-white">
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">
+                          Featured Image
+                        </p>
+                        <h4 className="text-base font-semibold leading-snug">
+                          {blogForm.title || "Blog cover preview"}
+                        </h4>
+                      </div>
+                      <ActionIcon
+                        variant="filled"
+                        color="red"
+                        size="sm"
+                        radius="xl"
+                        className="absolute top-3 right-3"
+                        onClick={removeBlogImage}
+                      >
+                        <MdClose size={14} />
+                      </ActionIcon>
+                    </div>
+                  ) : (
+                    <div
+                      onClick={openBlogImageUpload}
+                      className="w-full h-44 sm:h-56 rounded-2xl border-2 border-dashed border-gray-300 flexCenter flex-col cursor-pointer hover:border-teal-500 hover:bg-gray-50 transition-colors"
+                    >
+                      <MdOutlineCloudUpload size={32} className="text-gray-400" />
+                      <span className="text-sm text-gray-400 mt-2">
+                        Click to upload cover image
+                      </span>
+                    </div>
+                  )}
+                  {blogForm.image && (
+                    <Button
+                      variant="light"
+                      size="xs"
+                      mt="xs"
+                      onClick={openBlogImageUpload}
+                      loading={blogImageUploading}
+                    >
+                      Change Image
+                    </Button>
+                  )}
                 </div>
-              ) : (
-                <div
-                  onClick={openBlogImageUpload}
-                  className="w-full max-w-md h-32 rounded-lg border-2 border-dashed border-gray-300 flexCenter flex-col cursor-pointer hover:border-teal-500 hover:bg-gray-50 transition-colors"
-                >
-                  <MdOutlineCloudUpload size={32} className="text-gray-400" />
-                  <span className="text-sm text-gray-400 mt-1">
-                    Click to upload cover image
-                  </span>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400">
+                    Preview Notes
+                  </p>
+                  <ul className="mt-3 space-y-2 text-sm text-slate-600">
+                    {getSummaryBullets(blogForm.summary).length > 0 ? (
+                      getSummaryBullets(blogForm.summary).map((item, idx) => (
+                        <li key={idx}>• {item}</li>
+                      ))
+                    ) : (
+                      <>
+                        <li>• Add summary lines to preview the layout.</li>
+                        <li>• Each line becomes a bullet point.</li>
+                      </>
+                    )}
+                  </ul>
                 </div>
-              )}
-              {blogForm.image && (
-                <Button
-                  variant="subtle"
-                  size="xs"
-                  mt="xs"
-                  onClick={openBlogImageUpload}
-                  loading={blogImageUploading}
-                >
-                  Change Image
-                </Button>
-              )}
+              </div>
             </div>
 
             {/* Blog Gallery Images */}
@@ -3935,11 +4363,20 @@ const AdminPanel = () => {
               <div className="flex flex-wrap gap-2 mb-2">
                 {blogForm.images && blogForm.images.map((img, index) => (
                   <div key={index} className="relative">
-                    <img
-                      src={img}
-                      alt={`Gallery ${index + 1}`}
-                      className="w-20 h-20 rounded-lg object-cover border border-gray-200"
-                    />
+                    <button
+                      type="button"
+                      className="block"
+                      onClick={() => setCoverFromGallery(index)}
+                      aria-label="Set cover image"
+                    >
+                      <img
+                        src={img}
+                        alt={`Gallery ${index + 1}`}
+                        className={`w-20 h-20 rounded-lg object-cover border ${
+                          blogForm.image === img ? "border-secondary ring-2 ring-secondary/40" : "border-gray-200"
+                        }`}
+                      />
+                    </button>
                     <ActionIcon
                       variant="filled"
                       color="red"
@@ -3950,6 +4387,11 @@ const AdminPanel = () => {
                     >
                       <MdClose size={10} />
                     </ActionIcon>
+                    {blogForm.image !== img && (
+                      <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-white border border-gray-200 rounded-full px-2 py-0.5 text-[9px] text-gray-600 shadow-sm">
+                        Click to set cover
+                      </span>
+                    )}
                   </div>
                 ))}
                 <div
@@ -4053,62 +4495,233 @@ const AdminPanel = () => {
               }
             />
 
-            <Textarea
-              label="Content"
-              placeholder="Full blog content..."
-              required
-              rows={10}
-              value={blogForm.content}
-              onChange={(e) =>
-                setBlogForm({ ...blogForm, content: e.target.value })
-              }
-            />
+            <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+              <Textarea
+                label="Content"
+                placeholder="Full blog content..."
+                rows={12}
+                value={blogForm.content}
+                onChange={(e) =>
+                  setBlogForm({ ...blogForm, content: e.target.value })
+                }
+              />
+
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <Text size="sm" fw={600}>
+                    Content Blocks (Text + Image)
+                  </Text>
+                  <Button
+                    size="xs"
+                    variant="light"
+                    leftSection={<MdAdd size={14} />}
+                    onClick={addContentBlock}
+                  >
+                    Add Block
+                  </Button>
+                </div>
+                {blogForm.contentBlocks?.length ? (
+                  <div className="space-y-4">
+                    {blogForm.contentBlocks.map((block, index) => (
+                      <div
+                        key={index}
+                        className="rounded-xl border border-slate-100 bg-slate-50 p-3 space-y-3"
+                      >
+                        <div className="flex items-center justify-between">
+                          <Text size="xs" fw={600}>
+                            Block {index + 1}
+                          </Text>
+                          <ActionIcon
+                            variant="subtle"
+                            color="red"
+                            size="sm"
+                            onClick={() => removeContentBlock(index)}
+                          >
+                            <MdClose size={14} />
+                          </ActionIcon>
+                        </div>
+                        <div className="space-y-3">
+                          {ensureBlockLines(block).lines.map((line, lineIndex) => (
+                            <div
+                              key={lineIndex}
+                              className="rounded-lg border border-slate-200 bg-white p-2 space-y-2"
+                            >
+                              <div className="flex items-center justify-between">
+                                <Text size="xs" fw={600}>
+                                  Line {lineIndex + 1}
+                                </Text>
+                                <ActionIcon
+                                  variant="subtle"
+                                  color="red"
+                                  size="xs"
+                                  onClick={() =>
+                                    removeContentBlockLine(index, lineIndex)
+                                  }
+                                >
+                                  <MdClose size={12} />
+                                </ActionIcon>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <label className="text-xs text-slate-500">
+                                  Icon
+                                  <select
+                                    className="ml-2 h-8 rounded-md border border-slate-200 bg-white px-2 text-xs"
+                                    value={line.icon ?? "•"}
+                                    onChange={(e) =>
+                                      updateContentBlockLine(index, lineIndex, {
+                                        icon: e.target.value,
+                                      })
+                                    }
+                                  >
+                                    {blockIconOptions.map((option) => (
+                                      <option key={option.value} value={option.value}>
+                                        {option.label}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </label>
+                                <Switch
+                                  size="sm"
+                                  label="Bold"
+                                  checked={!!line.bold}
+                                  onChange={(e) =>
+                                    updateContentBlockLine(index, lineIndex, {
+                                      bold: e.currentTarget.checked,
+                                    })
+                                  }
+                                />
+                              </div>
+                              <Textarea
+                                placeholder="Write line text..."
+                                minRows={2}
+                                value={line.text || ""}
+                                onChange={(e) =>
+                                  updateContentBlockLine(index, lineIndex, {
+                                    text: e.target.value,
+                                  })
+                                }
+                              />
+                            </div>
+                          ))}
+                          <Button
+                            size="xs"
+                            variant="light"
+                            leftSection={<MdAdd size={14} />}
+                            onClick={() => addContentBlockLine(index)}
+                          >
+                            Add Line
+                          </Button>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="h-16 w-20 rounded-lg border border-dashed border-slate-200 bg-white overflow-hidden flexCenter">
+                            {block.image ? (
+                              <img
+                                src={block.image}
+                                alt={`Block ${index + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <MdOutlineCloudUpload
+                                size={18}
+                                className="text-slate-400"
+                              />
+                            )}
+                          </div>
+                          <Button
+                            size="xs"
+                            variant="light"
+                            onClick={() => openContentBlockImageUpload(index)}
+                            loading={blockImageUploadingIndex === index}
+                          >
+                            {block.image ? "Change Image" : "Upload Image"}
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-xs text-slate-500 leading-relaxed">
+                    Add blocks to mix text and images in the article body.
+                  </div>
+                )}
+              </div>
+            </div>
 
             {/* Blog Image Upload */}
             <div>
               <Text size="sm" fw={500} mb={4}>
                 Featured Image
               </Text>
-              {blogForm.image ? (
-                <div className="relative inline-block">
-                  <img
-                    src={blogForm.image}
-                    alt="Blog"
-                    className="w-full max-w-md h-32 rounded-lg object-cover border-2 border-gray-200"
-                  />
-                  <ActionIcon
-                    variant="filled"
-                    color="red"
-                    size="sm"
-                    radius="xl"
-                    className="absolute top-2 right-2"
-                    onClick={removeBlogImage}
-                  >
-                    <MdClose size={14} />
-                  </ActionIcon>
+              <div className="grid gap-4 md:grid-cols-[1.2fr_0.8fr]">
+                <div className="relative">
+                  {blogForm.image ? (
+                    <div className="relative rounded-2xl overflow-hidden border border-slate-200">
+                      <img
+                        src={blogForm.image}
+                        alt="Blog"
+                        className="w-full h-44 sm:h-56 object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+                      <div className="absolute bottom-3 left-4 right-4 text-white">
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">
+                          Featured Image
+                        </p>
+                        <h4 className="text-base font-semibold leading-snug">
+                          {blogForm.title || "Blog cover preview"}
+                        </h4>
+                      </div>
+                      <ActionIcon
+                        variant="filled"
+                        color="red"
+                        size="sm"
+                        radius="xl"
+                        className="absolute top-3 right-3"
+                        onClick={removeBlogImage}
+                      >
+                        <MdClose size={14} />
+                      </ActionIcon>
+                    </div>
+                  ) : (
+                    <div
+                      onClick={openBlogImageUpload}
+                      className="w-full h-44 sm:h-56 rounded-2xl border-2 border-dashed border-gray-300 flexCenter flex-col cursor-pointer hover:border-blue-500 hover:bg-gray-50 transition-colors"
+                    >
+                      <MdOutlineCloudUpload size={32} className="text-gray-400" />
+                      <span className="text-sm text-gray-400 mt-2">
+                        Click to upload cover image
+                      </span>
+                    </div>
+                  )}
+                  {blogForm.image && (
+                    <Button
+                      variant="light"
+                      size="xs"
+                      mt="xs"
+                      onClick={openBlogImageUpload}
+                      loading={blogImageUploading}
+                    >
+                      Change Image
+                    </Button>
+                  )}
                 </div>
-              ) : (
-                <div
-                  onClick={openBlogImageUpload}
-                  className="w-full max-w-md h-32 rounded-lg border-2 border-dashed border-gray-300 flexCenter flex-col cursor-pointer hover:border-blue-500 hover:bg-gray-50 transition-colors"
-                >
-                  <MdOutlineCloudUpload size={32} className="text-gray-400" />
-                  <span className="text-sm text-gray-400 mt-1">
-                    Click to upload cover image
-                  </span>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400">
+                    Preview Notes
+                  </p>
+                  <ul className="mt-3 space-y-2 text-sm text-slate-600">
+                    {getSummaryBullets(blogForm.summary).length > 0 ? (
+                      getSummaryBullets(blogForm.summary).map((item, idx) => (
+                        <li key={idx}>• {item}</li>
+                      ))
+                    ) : (
+                      <>
+                        <li>• Add summary lines to preview the layout.</li>
+                        <li>• Each line becomes a bullet point.</li>
+                      </>
+                    )}
+                  </ul>
                 </div>
-              )}
-              {blogForm.image && (
-                <Button
-                  variant="subtle"
-                  size="xs"
-                  mt="xs"
-                  onClick={openBlogImageUpload}
-                  loading={blogImageUploading}
-                >
-                  Change Image
-                </Button>
-              )}
+              </div>
             </div>
 
             {/* Blog Gallery Images */}
@@ -4119,11 +4732,20 @@ const AdminPanel = () => {
               <div className="flex flex-wrap gap-2 mb-2">
                 {blogForm.images && blogForm.images.map((img, index) => (
                   <div key={index} className="relative">
-                    <img
-                      src={img}
-                      alt={`Gallery ${index + 1}`}
-                      className="w-20 h-20 rounded-lg object-cover border border-gray-200"
-                    />
+                    <button
+                      type="button"
+                      className="block"
+                      onClick={() => setCoverFromGallery(index)}
+                      aria-label="Set cover image"
+                    >
+                      <img
+                        src={img}
+                        alt={`Gallery ${index + 1}`}
+                        className={`w-20 h-20 rounded-lg object-cover border ${
+                          blogForm.image === img ? "border-secondary ring-2 ring-secondary/40" : "border-gray-200"
+                        }`}
+                      />
+                    </button>
                     <ActionIcon
                       variant="filled"
                       color="red"
@@ -4134,6 +4756,11 @@ const AdminPanel = () => {
                     >
                       <MdClose size={10} />
                     </ActionIcon>
+                    {blogForm.image !== img && (
+                      <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-white border border-gray-200 rounded-full px-2 py-0.5 text-[9px] text-gray-600 shadow-sm">
+                        Click to set cover
+                      </span>
+                    )}
                   </div>
                 ))}
                 <div

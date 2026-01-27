@@ -580,7 +580,8 @@ export const createBlog = async (data, token) => {
     return response.data;
   } catch (error) {
     console.error("Error creating blog:", error);
-    toast.error("Error creating blog");
+    const message = error.response?.data?.error || error.response?.data?.message || "Error creating blog";
+    toast.error(message);
     throw error;
   }
 };
