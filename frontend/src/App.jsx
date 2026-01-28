@@ -5,6 +5,7 @@ import AddProperty from "./pages/AddProperty";
 import AdminPanel from "./pages/AdminPanel";
 import Consultants from "./pages/Consultants";
 import TodayProperties from "./pages/TodayProperties";
+import BlogsPage from "./pages/Blogs";
 import BlogPost from "./pages/BlogPost";
 import Addresses from "./pages/Addresses";
 import LocalProjects from "./pages/LocalProjects";
@@ -60,6 +61,7 @@ export default function App() {
                   <Route path="/favourites" element={<Favourites />} />
                   <Route path="/consultants" element={<Consultants />} />
                   <Route path="/today" element={<TodayProperties />} />
+                  <Route path="/blogs" element={<BlogsPage />} />
                   <Route path="/blog/:blogId" element={<BlogPost />} />
                   <Route path="/testimonials-test" element={<TestimonialsTest />} />
                   <Route path="/addresses" element={<Addresses />} />

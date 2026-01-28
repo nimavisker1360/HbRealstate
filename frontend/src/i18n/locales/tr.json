@@ -284,7 +284,10 @@
     "title": "Uzman Bloglarımız",
     "subtitle": "En Son Haberlerden Haberdar Olun!",
     "readMore": "Devamını Oku",
-    "continueReading": "devamını oku"
+    "continueReading": "devamını oku",
+    "viewAll": "Daha Fazla",
+    "pageIntro": "Piyasa icgoruleri, yatirim stratejileri ve bolge analizlerini uzman ekibimizle kesfedin.",
+    "pageNote": "Yeni icerikler sizi bekliyor."
   },
   "testimonials": {
     "subtitle": "Gerçek Deneyimler",

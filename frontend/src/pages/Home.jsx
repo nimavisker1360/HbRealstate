@@ -19,7 +19,7 @@ const Home = () => {
             <div className="w-full border-t border-gray-300"></div>
             <ConsultantsSection />
             <TestimonialsSection autoScroll />
-            <Blogs/>
+            <Blogs limit={4} showMore />
         </main>
     )
 }

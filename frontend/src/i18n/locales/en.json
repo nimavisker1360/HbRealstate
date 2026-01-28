@@ -284,7 +284,10 @@
     "title": "Our Expert Blogs",
     "subtitle": "Stay Updated with the Latest News!",
     "readMore": "Read More",
-    "continueReading": "continue reading"
+    "continueReading": "continue reading",
+    "viewAll": "More",
+    "pageIntro": "Explore market intelligence, investment strategies, and neighborhood deep dives curated by our experts.",
+    "pageNote": "Latest insights ready to explore."
   },
   "testimonials": {
     "subtitle": "Real Experiences",

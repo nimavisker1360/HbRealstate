@@ -10,7 +10,7 @@ import blog4 from "../assets/blog4.jpg";
 // Default placeholder image for blogs without images
 const placeholderImages = [blog1, blog2, blog3, blog4];
 
-const Blogs = () => {
+const Blogs = ({ limit = null, showMore = false }) => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const { data: blogs, isLoading } = useBlogs();
@@ -18,6 +18,7 @@ const Blogs = () => {
 
   // Use API data if available, otherwise fall back to static data
   const displayBlogs = Array.isArray(blogs) && blogs.length > 0 ? blogs : BLOGS;
+  const visibleBlogs = typeof limit === "number" ? displayBlogs.slice(0, limit) : displayBlogs;
 
   const handleContinueReading = (blog) => {
     // If blog has an id (from API), navigate to the blog page
@@ -59,7 +60,7 @@ const Blogs = () => {
           </div>
         ) : (
           <div className="grid gap-8 sm:gap-10 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 mt-20 justify-items-center">
-            {displayBlogs.map((blog, index) => (
+            {visibleBlogs.map((blog, index) => (
               <div
                 key={blog.id || blog.title}
                 className="group flex flex-col items-center text-center cursor-pointer"
@@ -92,6 +93,17 @@ const Blogs = () => {
                 </button>
               </div>
             ))}
+          </div>
+        )}
+        {showMore && !isLoading && (
+          <div className="flex justify-center mt-10">
+            <button
+              type="button"
+              onClick={() => navigate("/blogs")}
+              className="inline-flex items-center gap-2 rounded-full bg-emerald-500 px-6 py-3 text-white text-sm sm:text-base font-semibold shadow-lg shadow-emerald-200/60 hover:bg-emerald-600 transition"
+            >
+              {t("blogs.viewAll", "More")}
+            </button>
           </div>
         )}
       </div>
