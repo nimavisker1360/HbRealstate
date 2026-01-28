@@ -20,6 +20,9 @@ const getLocalizedField = (consultant, field, language) => {
   return consultant[localizedKey] || consultant[field] || "";
 };
 
+const normalizeText = (value) =>
+  value?.toString().toLowerCase().replace(/\s+/g, " ").trim() || "";
+
 const Consultants = () => {
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language === "tr" ? "tr" : "en";
@@ -129,11 +132,19 @@ const Consultants = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {consultants.map((consultant) => (
-              <div 
+              <div
                 key={consultant.id}
                 className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer group"
                 onClick={() => setSelectedConsultant(consultant)}
               >
+                {(() => {
+                  const titleText = getLocalizedField(consultant, "title", currentLang);
+                  const specialtyText = getLocalizedField(consultant, "specialty", currentLang);
+                  const showSpecialty =
+                    specialtyText && normalizeText(specialtyText) !== normalizeText(titleText);
+
+                  return (
+                    <>
                 {/* Image */}
                 <div className="relative h-72 overflow-hidden">
                   <img
@@ -176,7 +187,7 @@ const Consultants = () => {
                       <MdVerified className="text-secondary" />
                     </h3>
                     <p className="text-secondary text-sm font-medium">
-                      {getLocalizedField(consultant, "title", currentLang)}
+                      {titleText}
                     </p>
                   </div>
                 </div>
@@ -184,9 +195,11 @@ const Consultants = () => {
                 {/* Content */}
                 <div className="p-5">
                   {/* Specialty */}
-                  <p className="text-gray-30 text-sm mb-4 line-clamp-2">
-                    {getLocalizedField(consultant, "specialty", currentLang)}
-                  </p>
+                  {showSpecialty && (
+                    <p className="text-gray-30 text-sm mb-4 line-clamp-2">
+                      {specialtyText}
+                    </p>
+                  )}
 
                   {/* Languages */}
                   <div className="flex items-center gap-2 mb-4">
@@ -232,6 +245,9 @@ const Consultants = () => {
                     </a>
                   </div>
                 </div>
+                    </>
+                  );
+                })()}
               </div>
             ))}
           </div>
@@ -369,12 +385,19 @@ const Consultants = () => {
 
             {/* Specialty & Languages */}
             <div className="px-6 pb-6 space-y-4">
-              {getLocalizedField(selectedConsultant, "specialty", currentLang) && (
-                <div className="bg-white/5 rounded-2xl p-4 border border-white/10">
-                  <h4 className="text-xs text-white/50 uppercase tracking-wider mb-2">{t("consultants.specialty")}</h4>
-                  <p className="text-white/90 text-sm">{getLocalizedField(selectedConsultant, "specialty", currentLang)}</p>
-                </div>
-              )}
+              {(() => {
+                const titleText = getLocalizedField(selectedConsultant, "title", currentLang);
+                const specialtyText = getLocalizedField(selectedConsultant, "specialty", currentLang);
+                const showSpecialty =
+                  specialtyText && normalizeText(specialtyText) !== normalizeText(titleText);
+                if (!showSpecialty) return null;
+                return (
+                  <div className="bg-white/5 rounded-2xl p-4 border border-white/10">
+                    <h4 className="text-xs text-white/50 uppercase tracking-wider mb-2">{t("consultants.specialty")}</h4>
+                    <p className="text-white/90 text-sm">{specialtyText}</p>
+                  </div>
+                );
+              })()}
 
               {selectedConsultant.languages?.length > 0 && (
                 <div>

@@ -59,6 +59,9 @@ const getLocalizedField = (consultant, field, language) => {
   return consultant[localizedKey] || consultant[field] || "";
 };
 
+const normalizeText = (value) =>
+  value?.toString().toLowerCase().replace(/\s+/g, " ").trim() || "";
+
 const ConsultantsSection = () => {
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language === "tr" ? "tr" : "en";
@@ -126,53 +129,62 @@ const ConsultantsSection = () => {
         {/* Right Side - Agent Cards */}
         <div className="flex-1 flex justify-center lg:justify-end">
           <div className="flex gap-6 items-start">
-            {displayConsultants.map((consultant, index) => (
-              <AnimatedElement key={consultant.id} delay={200 + index * 150}>
-                <div
-                  className="flex flex-col items-center cursor-pointer group"
-                  onClick={() => navigate("/consultants")}
-                >
-                  {/* Circular Avatar */}
-                  <div className="w-28 h-28 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-white shadow-lg mb-4 group-hover:shadow-xl transition-shadow">
-                    <img
-                      src={
-                        consultant.image ||
-                        "https://via.placeholder.com/150?text=Agent"
-                      }
-                      alt={consultant.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
+            {displayConsultants.map((consultant, index) => {
+              const titleText = getLocalizedField(consultant, "title", currentLang);
+              const specialtyText = getLocalizedField(consultant, "specialty", currentLang);
+              const showSpecialty =
+                specialtyText && normalizeText(specialtyText) !== normalizeText(titleText);
 
-                  {/* Name */}
-                  <h3 className="font-bold text-gray-900 text-center text-lg">
-                    {consultant.name}
-                  </h3>
+              return (
+                <AnimatedElement key={consultant.id} delay={200 + index * 150}>
+                  <div
+                    className="flex flex-col items-center cursor-pointer group"
+                    onClick={() => navigate("/consultants")}
+                  >
+                    {/* Circular Avatar */}
+                    <div className="w-28 h-28 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-white shadow-lg mb-4 group-hover:shadow-xl transition-shadow">
+                      <img
+                        src={
+                          consultant.image ||
+                          "https://via.placeholder.com/150?text=Agent"
+                        }
+                        alt={consultant.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
 
-                  {/* Company/Title */}
-                  <p className="text-gray-500 text-sm text-center">
-                    {getLocalizedField(consultant, "title", currentLang)}
-                  </p>
+                    {/* Name */}
+                    <h3 className="font-bold text-gray-900 text-center text-lg">
+                      {consultant.name}
+                    </h3>
 
-                  {/* License/Specialty */}
-                  <p className="text-gray-400 text-xs text-center mb-4">
-                    {getLocalizedField(consultant, "specialty", currentLang)}
-                  </p>
+                    {/* Company/Title */}
+                    <p className="text-gray-500 text-sm text-center">
+                      {titleText}
+                    </p>
 
-                  {/* Stats Row */}
-                  <div className="flex gap-6 justify-center">
-                    <div className="text-center">
-                      <p className="font-bold text-gray-900">
-                        {formatExperience(consultant.experience)}
+                    {/* License/Specialty */}
+                    {showSpecialty && (
+                      <p className="text-gray-400 text-xs text-center mb-4">
+                        {specialtyText}
                       </p>
-                      <p className="text-gray-400 text-xs">
-                        {t("consultants.experience")}
-                      </p>
+                    )}
+
+                    {/* Stats Row */}
+                    <div className="flex gap-6 justify-center">
+                      <div className="text-center">
+                        <p className="font-bold text-gray-900">
+                          {formatExperience(consultant.experience)}
+                        </p>
+                        <p className="text-gray-400 text-xs">
+                          {t("consultants.experience")}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </AnimatedElement>
-            ))}
+                </AnimatedElement>
+              );
+            })}
 
             {/* More Agents Card */}
             {moreCount > 0 && (
