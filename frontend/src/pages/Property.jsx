@@ -1211,7 +1211,7 @@ const Property = () => {
               <div className="space-y-2">
                 <div className="flexCenter gap-2 bg-white text-tertiary py-3 rounded-xl font-medium text-sm w-full select-text cursor-default">
                   <FaPhone className="text-secondary" />
-                  <span dir="ltr">+90 542 435 9694</span>
+                  <span dir="ltr">{data?.consultant?.phone}</span>
                 </div>
                 <a
                   href={`https://wa.me/${data.consultant.whatsapp}`}

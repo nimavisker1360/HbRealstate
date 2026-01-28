@@ -218,7 +218,7 @@ const Consultants = () => {
                       className="flexCenter gap-2 bg-tertiary text-white py-3 rounded-xl font-medium w-full select-text cursor-default"
                     >
                       <FaPhone />
-                      <span dir="ltr">+90 542 435 9694</span>
+                      <span dir="ltr">{consultant.phone}</span>
                     </div>
                     <a
                       href={`https://wa.me/${consultant.whatsapp}`}
@@ -281,7 +281,7 @@ const Consultants = () => {
                 <div className="w-10 h-10 bg-white/10 rounded-lg flexCenter">
                   <FaPhone className="text-secondary" />
                 </div>
-                <span dir="ltr">+90 542 435 9694</span>
+                <span dir="ltr">{consultants?.[0]?.phone || ""}</span>
               </div>
               <button 
                 onClick={() => setContactModalOpen(true)}
@@ -399,7 +399,7 @@ const Consultants = () => {
                 className="flex items-center justify-center gap-2 bg-white text-slate-900 py-4 rounded-2xl font-semibold shadow-lg w-full select-text cursor-default"
               >
                 <FaPhone />
-                <span dir="ltr">+90 542 435 9694</span>
+                <span dir="ltr">{selectedConsultant.phone}</span>
               </div>
               <a
                 href={`https://wa.me/${selectedConsultant.whatsapp}`}
