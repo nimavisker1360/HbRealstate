@@ -9,17 +9,29 @@ import {
 } from "react-icons/md";
 import { FcGoogle } from "react-icons/fc";
 import PropTypes from "prop-types";
+import { useTranslation } from "react-i18next";
 import logo from "../assets/logo.png";
 
 const LoginModal = ({ isOpen, onClose }) => {
   const { loginWithRedirect } = useAuth0();
   const [isLoading, setIsLoading] = useState(false);
+  const { t } = useTranslation();
 
-  const handleLogin = async (connection = null) => {
+  const handleLogin = async ({
+    connection = null,
+    screenHint = null,
+  } = {}) => {
     setIsLoading(true);
     try {
+      const authorizationParams = {};
+      if (connection) {
+        authorizationParams.connection = connection;
+      }
+      if (screenHint) {
+        authorizationParams.screen_hint = screenHint;
+      }
       await loginWithRedirect({
-        authorizationParams: connection ? { connection } : {},
+        authorizationParams,
       });
     } catch (error) {
       console.error("Login error:", error);
@@ -88,13 +100,17 @@ const LoginModal = ({ isOpen, onClose }) => {
                 <div className="p-2 bg-secondary/20 rounded-lg">
                   <MdHome className="text-secondary text-lg" />
                 </div>
-                <span className="text-xs text-slate-300">1000+ Properties</span>
+                <span className="text-xs text-slate-300">
+                  {t("auth.benefitProperties")}
+                </span>
               </div>
               <div className="flex items-center gap-2 p-3 bg-white/5 rounded-xl border border-white/10">
                 <div className="p-2 bg-secondaryBlue/20 rounded-lg">
                   <MdSecurity className="text-secondaryBlue text-lg" />
                 </div>
-                <span className="text-xs text-slate-300">Secure Login</span>
+                <span className="text-xs text-slate-300">
+                  {t("auth.benefitSecure")}
+                </span>
               </div>
             </div>
 
@@ -102,19 +118,19 @@ const LoginModal = ({ isOpen, onClose }) => {
             <div className="space-y-3">
               {/* Google Login */}
               <button
-                onClick={() => handleLogin("google-oauth2")}
+                onClick={() => handleLogin({ connection: "google-oauth2" })}
                 disabled={isLoading}
-                className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white hover:bg-gray-50 rounded-xl font-medium text-gray-800 transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white/95 hover:bg-white rounded-2xl font-medium text-gray-800 transition-all duration-200 shadow-lg hover:shadow-xl hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed border border-white/60"
               >
                 <FcGoogle className="text-2xl" />
-                <span>Continue with Google</span>
+                <span>{t("auth.continueWithGoogle")}</span>
               </button>
 
               {/* Divider */}
               <div className="flex items-center gap-4 py-2">
                 <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
                 <span className="text-xs text-slate-500 uppercase tracking-wider">
-                  or
+                  {t("auth.orShort")}
                 </span>
                 <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
               </div>
@@ -123,10 +139,25 @@ const LoginModal = ({ isOpen, onClose }) => {
               <button
                 onClick={() => handleLogin()}
                 disabled={isLoading}
-                className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-secondary to-green-600 hover:from-secondary/90 hover:to-green-600/90 rounded-xl font-medium text-white transition-all duration-200 shadow-lg shadow-secondary/30 hover:shadow-xl hover:shadow-secondary/40 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed group"
+                className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-2xl font-semibold text-white transition-all duration-200 shadow-lg shadow-secondary/30 hover:shadow-xl hover:shadow-secondary/40 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed group bg-gradient-to-r from-secondary via-green-500 to-secondaryBlue border border-white/10"
               >
                 <MdEmail className="text-xl" />
-                <span>Login with Email</span>
+                <span>{t("auth.loginWithEmail")}</span>
+                <MdArrowForward className="text-lg opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
+              </button>
+            </div>
+
+            {/* Sign Up */}
+            <div className="mt-6 space-y-3">
+              <p className="text-center text-xs text-slate-400">
+                {t("auth.signUpPrompt")}
+              </p>
+              <button
+                onClick={() => handleLogin({ screenHint: "signup" })}
+                disabled={isLoading}
+                className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-2xl font-semibold text-white transition-all duration-200 shadow-lg shadow-secondaryBlue/30 hover:shadow-xl hover:shadow-secondaryBlue/40 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed group bg-gradient-to-r from-secondaryBlue via-sky-500 to-secondary border border-white/10"
+              >
+                <span>{t("auth.signUpCta")}</span>
                 <MdArrowForward className="text-lg opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
               </button>
             </div>

@@ -277,8 +277,14 @@
   "auth": {
     "loginTitle": "Login to Your Account",
     "loginSubtitle": "Access your account to manage properties and bookings",
+    "benefitProperties": "1000+ Properties",
+    "benefitSecure": "Secure Login",
     "continueWithGoogle": "Continue with Google",
-    "orLoginWith": "or login with email"
+    "orLoginWith": "or login with email",
+    "orShort": "or",
+    "loginWithEmail": "Login with Email",
+    "signUpPrompt": "New here? Create your account in minutes.",
+    "signUpCta": "Sign up"
   },
   "blogs": {
     "title": "Our Expert Blogs",

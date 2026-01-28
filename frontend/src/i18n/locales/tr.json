@@ -277,8 +277,14 @@
   "auth": {
     "loginTitle": "Hesabınıza Giriş Yapın",
     "loginSubtitle": "Mülkleri ve randevuları yönetmek için hesabınıza erişin",
+    "benefitProperties": "1000+ Mülk",
+    "benefitSecure": "Güvenli Giriş",
     "continueWithGoogle": "Google ile Devam Et",
-    "orLoginWith": "veya e-posta ile giriş yapın"
+    "orLoginWith": "veya e-posta ile giriş yapın",
+    "orShort": "veya",
+    "loginWithEmail": "E-posta ile Giriş Yap",
+    "signUpPrompt": "Yeni misin? Hesabını dakikalar içinde oluştur.",
+    "signUpCta": "Kayıt ol"
   },
   "blogs": {
     "title": "Uzman Bloglarımız",
