@@ -12,6 +12,7 @@ import ContactModal from "../components/ContactModal";
 import UserDetailContext from "../context/UserDetailContext";
 import { Button, Avatar } from "@mantine/core";
 import { toast } from "react-toastify";
+import { normalizeWhatsAppNumber } from "../utils/common";
 import {
   MdOutlineBed,
   MdOutlineBathtub,
@@ -230,6 +231,7 @@ const Property = () => {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const { validateLogin } = useAuthCheck();
   const { user } = useAuth0();
+  const whatsappNumber = normalizeWhatsAppNumber(data?.consultant?.whatsapp);
 
   // Get all images - support both 'images' array and single 'image'
   const getPropertyImages = () => {
@@ -1238,7 +1240,7 @@ const Property = () => {
                   <span dir="ltr">{data?.consultant?.phone}</span>
                 </div>
                 <a
-                  href={`https://wa.me/${data.consultant.whatsapp}`}
+                  href={`https://wa.me/${whatsappNumber}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flexCenter gap-2 bg-[#25D366] text-white py-3 rounded-xl hover:bg-[#20bd5a] transition-colors font-medium text-sm w-full"

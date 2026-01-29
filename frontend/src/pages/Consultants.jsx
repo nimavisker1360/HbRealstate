@@ -13,6 +13,7 @@ import { Loader } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import useConsultants from "../hooks/useConsultants";
 import ContactModal from "../components/ContactModal";
+import { normalizeWhatsAppNumber } from "../utils/common";
 
 // Helper function to get localized field
 const getLocalizedField = (consultant, field, language) => {
@@ -234,7 +235,7 @@ const Consultants = () => {
                       <span dir="ltr">{consultant.phone}</span>
                     </div>
                     <a
-                      href={`https://wa.me/${consultant.whatsapp}`}
+                      href={`https://wa.me/${normalizeWhatsAppNumber(consultant.whatsapp)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
@@ -425,7 +426,7 @@ const Consultants = () => {
                 <span dir="ltr">{selectedConsultant.phone}</span>
               </div>
               <a
-                href={`https://wa.me/${selectedConsultant.whatsapp}`}
+                href={`https://wa.me/${normalizeWhatsAppNumber(selectedConsultant.whatsapp)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 bg-[#25D366] text-white py-4 rounded-2xl hover:bg-[#20bd5a] transition-all font-semibold shadow-lg w-full"

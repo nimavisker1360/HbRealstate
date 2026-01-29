@@ -15,3 +15,8 @@ export const validateString = (value) => {
     ? "Enter at least 3 characters"
     : null;
 };
+
+export const normalizeWhatsAppNumber = (value) => {
+  const digits = value?.toString().replace(/\D/g, "") || "";
+  return digits.startsWith("00") ? digits.slice(2) : digits;
+};
