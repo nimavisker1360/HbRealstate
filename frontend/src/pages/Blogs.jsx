@@ -104,31 +104,26 @@ const BlogsPage = () => {
       </div>
 
       <div className="max-padd-container relative z-10">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-2xl">
-            <span className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">
-              {t("blogs.countriesSubtitle", "Explore Countries")}
+        <div className="max-w-3xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-emerald-600">
+            {t("blogs.countriesSubtitle", "Explore Countries")}
+          </p>
+          <h1 className="mt-3 text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900">
+            {t("blogs.countriesTitle", "Countries")}
+          </h1>
+          <p className="mt-4 text-slate-600">
+            {t(
+              "blogs.countriesIntro",
+              "Select a country to see related articles."
+            )}
+          </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-white/90 px-4 py-2 text-xs font-semibold text-emerald-700 shadow-sm">
+              {countryCards.length} {t("blogs.totalCountries", "Total Countries")}
             </span>
-            <h1 className="mt-4 text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900">
-              {t("blogs.countriesTitle", "Countries")}
-            </h1>
-            <p className="mt-4 text-slate-600">
-              {t(
-                "blogs.countriesIntro",
-                "Select a country to see related articles."
-              )}
-            </p>
-          </div>
-          <div className="w-full max-w-sm rounded-3xl border border-white/70 bg-white/80 p-6 shadow-lg shadow-emerald-100/60">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-600">
-              {t("blogs.totalCountries", "Total Countries")}
-            </p>
-            <p className="mt-2 text-3xl font-bold text-slate-900">
-              {countryCards.length}
-            </p>
-            <p className="mt-2 text-sm text-slate-500">
+            <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/90 px-4 py-2 text-xs font-semibold text-slate-600 shadow-sm">
               {t("blogs.totalPosts", "Total posts")}: {displayBlogs.length}
-            </p>
+            </span>
           </div>
         </div>
 
