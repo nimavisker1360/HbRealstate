@@ -23,7 +23,6 @@ import {
   MdCheck,
   MdClose,
   MdPlayCircleOutline,
-  MdVideocam,
 } from "react-icons/md";
 import {
   FaLocationDot,
@@ -246,6 +245,10 @@ const Property = () => {
   
   // Get all videos
   const propertyVideos = data?.videos || [];
+  const galleryItems = [
+    ...propertyVideos.map((url) => ({ url, type: "video" })),
+    ...propertyImages.map((url) => ({ url, type: "image" })),
+  ];
 
   const {
     userDetails: { token, bookings },
@@ -289,13 +292,13 @@ const Property = () => {
   // Navigate gallery
   const nextImage = () => {
     setCurrentImageIndex((prev) =>
-      prev === propertyImages.length - 1 ? 0 : prev + 1
+      prev === galleryItems.length - 1 ? 0 : prev + 1
     );
   };
 
   const prevImage = () => {
     setCurrentImageIndex((prev) =>
-      prev === 0 ? propertyImages.length - 1 : prev - 1
+      prev === 0 ? galleryItems.length - 1 : prev - 1
     );
   };
 
@@ -320,15 +323,45 @@ const Property = () => {
           {/* Main Large Image - Left Side */}
           <div
             className="relative flex-[1.5] group cursor-pointer"
-            onClick={() => setGalleryOpened(true)}
+            onClick={() => {
+              if (galleryItems[currentImageIndex]?.type === "video") {
+                setCurrentVideoIndex(currentImageIndex);
+                setVideoModalOpen(true);
+              } else {
+                setGalleryOpened(true);
+              }
+            }}
           >
-            <img
-              src={propertyImages[0] || "https://via.placeholder.com/800x600"}
-              alt={data?.title}
-              className="w-full h-full object-cover"
-            />
+            {galleryItems[currentImageIndex]?.type === "video" ? (
+              <>
+                <video
+                  src={galleryItems[currentImageIndex]?.url}
+                  className="w-full h-full object-cover"
+                  muted
+                  onMouseEnter={(e) => e.target.play()}
+                  onMouseLeave={(e) => {
+                    e.target.pause();
+                    e.target.currentTime = 0;
+                  }}
+                />
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="bg-black/50 rounded-full p-4 group-hover:bg-black/70 transition-colors">
+                    <MdPlayCircleOutline className="text-white" size={56} />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <img
+                src={
+                  galleryItems[currentImageIndex]?.url ||
+                  "https://via.placeholder.com/800x600"
+                }
+                alt={data?.title}
+                className="w-full h-full object-cover"
+              />
+            )}
             {/* Navigation Arrow Left */}
-            {propertyImages.length > 1 && (
+            {galleryItems.length > 1 && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -346,27 +379,45 @@ const Property = () => {
           </div>
 
           {/* Right Side - 2x2 Grid */}
-          {propertyImages.length > 1 && (
+          {galleryItems.length > 1 && (
             <div className="flex-1 grid grid-cols-2 gap-2">
-              {propertyImages.slice(1, 5).map((img, index) => (
+              {galleryItems.slice(1, 5).map((item, index) => (
                 <div
                   key={index}
                   className="relative cursor-pointer overflow-hidden group"
                   onClick={() => {
                     setCurrentImageIndex(index + 1);
-                    setGalleryOpened(true);
+                    if (item.type === "video") {
+                      setCurrentVideoIndex(index + 1);
+                      setVideoModalOpen(true);
+                    } else {
+                      setGalleryOpened(true);
+                    }
                   }}
                 >
-                  <img
-                    src={img}
-                    alt={`${data?.title} - ${index + 2}`}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
+                  {item.type === "video" ? (
+                    <>
+                      <video
+                        src={item.url}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        muted
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/20 transition-colors">
+                        <MdPlayCircleOutline size={32} color="white" />
+                      </div>
+                    </>
+                  ) : (
+                    <img
+                      src={item.url}
+                      alt={`${data?.title} - ${index + 2}`}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  )}
                   {/* Show overlay on last visible image if more images */}
-                  {index === 3 && propertyImages.length > 5 && (
+                  {index === 3 && galleryItems.length > 5 && (
                     <div className="absolute inset-0 bg-black/50 flexCenter">
                       <span className="text-white font-semibold text-lg">
-                        +{propertyImages.length - 5} {t('propertyDetails.more')}
+                        +{galleryItems.length - 5} {t('propertyDetails.more')}
                       </span>
                     </div>
                   )}
@@ -376,7 +427,7 @@ const Property = () => {
           )}
 
           {/* Navigation Arrow Right */}
-          {propertyImages.length > 1 && (
+          {galleryItems.length > 1 && (
             <button
               onClick={nextImage}
               className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full flexCenter shadow-lg z-10"
@@ -396,65 +447,12 @@ const Property = () => {
               {propertyImages.length} {t('propertyDetails.photos')}
             </span>
           </button>
-          {propertyVideos.length > 0 && (
-            <>
-              <div className="w-px h-5 bg-gray-300"></div>
-              <button 
-                onClick={() => setVideoModalOpen(true)}
-                className="flex items-center gap-2 text-purple-600 hover:text-purple-700 transition-colors"
-              >
-                <MdVideocam size={18} />
-                <span className="font-medium">
-                  {propertyVideos.length} {t('propertyDetails.videos', 'ویدیو')}
-                </span>
-              </button>
-            </>
-          )}
           <div className="w-px h-5 bg-gray-300"></div>
           <button className="flex items-center gap-2 text-gray-500 hover:text-secondary transition-colors">
             <span>{t('propertyDetails.virtualTour')}</span>
           </button>
         </div>
       </div>
-
-      {/* Video Gallery Section */}
-      {propertyVideos.length > 0 && (
-        <div className="mb-6">
-          <h3 className="flex items-center gap-2 text-lg font-semibold mb-3">
-            <MdVideocam className="text-purple-600" />
-            {t('propertyDetails.videos', 'ویدیوها / Videolar')}
-          </h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {propertyVideos.map((video, index) => (
-              <div
-                key={index}
-                onClick={() => {
-                  setCurrentVideoIndex(index);
-                  setVideoModalOpen(true);
-                }}
-                className="relative h-40 rounded-xl overflow-hidden cursor-pointer group bg-gray-900"
-              >
-                <video
-                  src={video}
-                  className="h-full w-full object-cover"
-                  muted
-                  onMouseEnter={(e) => e.target.play()}
-                  onMouseLeave={(e) => {
-                    e.target.pause();
-                    e.target.currentTime = 0;
-                  }}
-                />
-                <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/20 transition-colors">
-                  <MdPlayCircleOutline size={48} color="white" className="opacity-80 group-hover:opacity-100" />
-                </div>
-                <span className="absolute bottom-2 left-2 bg-purple-600 text-white text-xs px-2 py-1 rounded">
-                  Video {index + 1}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Video Modal */}
       {videoModalOpen && propertyVideos.length > 0 && (
@@ -537,20 +535,29 @@ const Property = () => {
             ×
           </button>
 
-          {/* Image Counter */}
+          {/* Gallery Counter */}
           <div className="absolute top-4 left-4 text-white/80 text-sm">
-            {currentImageIndex + 1} / {propertyImages.length}
+            {currentImageIndex + 1} / {galleryItems.length}
           </div>
 
-          {/* Main Image */}
-          <img
-            src={propertyImages[currentImageIndex]}
-            alt={`${data?.title} - ${currentImageIndex + 1}`}
-            className="max-h-[85vh] max-w-[90vw] object-contain"
-          />
+          {/* Main Image/Video */}
+          {galleryItems[currentImageIndex]?.type === "video" ? (
+            <video
+              src={galleryItems[currentImageIndex]?.url}
+              className="max-h-[85vh] max-w-[90vw] rounded-lg"
+              controls
+              autoPlay
+            />
+          ) : (
+            <img
+              src={galleryItems[currentImageIndex]?.url}
+              alt={`${data?.title} - ${currentImageIndex + 1}`}
+              className="max-h-[85vh] max-w-[90vw] object-contain"
+            />
+          )}
 
           {/* Navigation Arrows */}
-          {propertyImages.length > 1 && (
+          {galleryItems.length > 1 && (
             <>
               <button
                 onClick={prevImage}
@@ -569,18 +576,35 @@ const Property = () => {
 
           {/* Thumbnail Strip */}
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 max-w-[90vw] overflow-x-auto p-2">
-            {propertyImages.map((img, index) => (
-              <img
+            {galleryItems.map((item, index) => (
+              <button
                 key={index}
-                src={img}
-                alt={`thumb-${index + 1}`}
                 onClick={() => setCurrentImageIndex(index)}
-                className={`h-16 w-24 object-cover rounded-lg cursor-pointer transition-all ${
+                className={`relative h-16 w-24 rounded-lg cursor-pointer transition-all overflow-hidden ${
                   currentImageIndex === index
                     ? "ring-2 ring-secondary opacity-100"
                     : "opacity-50 hover:opacity-80"
                 }`}
-              />
+              >
+                {item.type === "video" ? (
+                  <>
+                    <video
+                      src={item.url}
+                      className="h-full w-full object-cover"
+                      muted
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                      <MdPlayCircleOutline size={20} color="white" />
+                    </div>
+                  </>
+                ) : (
+                  <img
+                    src={item.url}
+                    alt={`thumb-${index + 1}`}
+                    className="h-full w-full object-cover"
+                  />
+                )}
+              </button>
             ))}
           </div>
         </div>
