@@ -105,7 +105,7 @@ const BlogsPage = () => {
 
       <div className="max-padd-container relative z-10">
         <div className="max-w-3xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-emerald-600">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.35em] text-emerald-600">
             {t("blogs.countriesSubtitle", "Explore Countries")}
           </p>
           <h1 className="mt-3 text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900">
@@ -118,7 +118,7 @@ const BlogsPage = () => {
             )}
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-white/90 px-4 py-2 text-xs font-semibold text-emerald-700 shadow-sm">
+            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200/80 bg-white/90 px-4 py-2 text-xs font-semibold text-emerald-700 shadow-sm">
               {countryCards.length} {t("blogs.totalCountries", "Total Countries")}
             </span>
             <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/90 px-4 py-2 text-xs font-semibold text-slate-600 shadow-sm">
