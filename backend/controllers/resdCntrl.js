@@ -223,6 +223,39 @@ export const getAllResidencies = asyncHandler(async (req, res) => {
       return r;
     });
 
+    // Attach consultant details for list view (if assigned)
+    const consultantIds = [
+      ...new Set(
+        transformed
+          .map((r) => r.consultantId)
+          .filter((id) => id && ObjectId.isValid(id))
+      ),
+    ];
+
+    if (consultantIds.length > 0) {
+      const consultants = await db
+        .collection("Consultant")
+        .find({
+          _id: { $in: consultantIds.map((id) => new ObjectId(id)) },
+        })
+        .toArray();
+
+      const consultantMap = new Map(
+        consultants.map((consultant) => {
+          const id = consultant._id.toString();
+          delete consultant._id;
+          return [id, { ...consultant, id }];
+        })
+      );
+
+      transformed.forEach((residency) => {
+        const consultant = consultantMap.get(residency.consultantId);
+        if (consultant) {
+          residency.consultant = consultant;
+        }
+      });
+    }
+
     res.send(transformed);
   } catch (err) {
     throw new Error(err.message);
