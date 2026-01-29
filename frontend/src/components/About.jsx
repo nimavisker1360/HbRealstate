@@ -55,6 +55,7 @@ const StepCountUp = ({
 
 const About = () => {
   const { t } = useTranslation();
+  const missionText = t("about.missionText");
 
   // Define the statistics with translations
   const statistics = [
@@ -78,6 +79,7 @@ const About = () => {
   ];
 
   const [isVisible, setIsVisible] = useState(false);
+  const [isMissionExpanded, setIsMissionExpanded] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -248,13 +250,26 @@ const About = () => {
               ))}
           </h1>
           <p
+            id="about-mission-text"
             className={`py-5 ${
               isVisible ? "animate-about-slide-right" : "opacity-0"
-            }`}
+            } ${isMissionExpanded ? "" : "line-clamp-4"}`}
             style={{ animationDelay: "0.3s" }}
           >
-            {t("about.missionText")}
+            {missionText}
           </p>
+          <button
+            type="button"
+            onClick={() => setIsMissionExpanded((prev) => !prev)}
+            aria-expanded={isMissionExpanded}
+            aria-controls="about-mission-text"
+            className={`self-start text-secondary font-semibold transition-colors hover:text-tertiary mb-4 md:mb-6 ${
+              isVisible ? "animate-about-slide-right" : "opacity-0"
+            }`}
+            style={{ animationDelay: "0.35s" }}
+          >
+            {isMissionExpanded ? t("about.showLess") : t("about.showMore")}
+          </button>
           {/* Statistics Container */}
           <div className="flex flex-wrap gap-4">
             {statistics.map((statistic, index) => {

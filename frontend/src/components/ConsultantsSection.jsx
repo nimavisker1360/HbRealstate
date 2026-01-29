@@ -62,6 +62,22 @@ const getLocalizedField = (consultant, field, language) => {
 const normalizeText = (value) =>
   value?.toString().toLowerCase().replace(/\s+/g, " ").trim() || "";
 
+const splitTitle = (value) =>
+  value?.toString().split("|").map((part) => part.trim()).filter(Boolean) || [];
+
+const renderTitle = (value) => {
+  const parts = splitTitle(value);
+  if (parts.length <= 1) return value;
+  return parts.map((part, index) => (
+    <span key={`${part}-${index}`} className="block sm:inline">
+      {part}
+      {index < parts.length - 1 && (
+        <span className="hidden sm:inline">{" | "}</span>
+      )}
+    </span>
+  ));
+};
+
 const ConsultantsSection = () => {
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language === "tr" ? "tr" : "en";
@@ -159,8 +175,8 @@ const ConsultantsSection = () => {
                     </h3>
 
                     {/* Company/Title */}
-                    <p className="text-gray-500 text-sm text-center">
-                      {titleText}
+                    <p className="text-gray-500 text-sm text-center leading-snug">
+                      {renderTitle(titleText)}
                     </p>
 
                     {/* License/Specialty */}
