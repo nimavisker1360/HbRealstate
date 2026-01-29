@@ -101,6 +101,7 @@ export const createBlog = asyncHandler(async (req, res) => {
         summary_tr: data.summary_tr || "",
         image: data.image || "",
         images: data.images || [],
+        country: data.country?.trim() || null,
         slug: slug,
         published: data.published !== undefined ? data.published : true,
         order: (maxOrder?.order || 0) + 1,
@@ -138,6 +139,7 @@ export const updateBlog = asyncHandler(async (req, res) => {
         summary_tr: data.summary_tr,
         image: data.image,
         images: data.images,
+        country: data.country?.trim() || null,
         published: data.published,
       },
     });

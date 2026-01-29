@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { MdArrowForward, MdCalendarToday } from "react-icons/md";
+import { MdArrowForward } from "react-icons/md";
 import useBlogs from "../hooks/useBlogs";
 import { BLOGS } from "../constant/data";
 import blog1 from "../assets/blog1.jpg";
@@ -32,24 +32,68 @@ const BlogsPage = () => {
     return blog.title || t("blogs.title", "Our Expert Blogs");
   };
 
-  const getLocalizedCategory = (blog) => {
-    if (language === "tr" && blog.category_tr) return blog.category_tr;
-    if (language === "en" && blog.category_en) return blog.category_en;
-    return blog.category || t("common.all", "All");
-  };
+  const toSlug = (value = "") =>
+    value
+      .toString()
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-+|-+$/g, "");
 
-  const getLocalizedSummary = (blog) => {
-    if (language === "tr" && blog.summary_tr) return blog.summary_tr;
-    if (language === "en" && blog.summary_en) return blog.summary_en;
-    if (blog.summary) return blog.summary;
-    return t("blogs.subtitle", "Stay Updated with the Latest News!");
-  };
-
-  const handleOpenBlog = (blog) => {
-    if (blog.id) {
-      navigate(`/blog/${blog.id}`);
+  const extractCountryTitle = (rawTitle) => {
+    if (!rawTitle || typeof rawTitle !== "string") return "";
+    const cleaned = rawTitle.replace(/[?!\u061f]+$/g, "").trim();
+    const lower = cleaned.toLowerCase();
+    const inIndex = lower.lastIndexOf(" in ");
+    if (inIndex !== -1 && inIndex + 4 < cleaned.length) {
+      return cleaned.slice(inIndex + 4).trim();
     }
+    return "";
   };
+
+  const getCountryFromBlog = (blog) => {
+    if (blog.country) return blog.country;
+    const candidates = [
+      blog.title_en,
+      blog.title_tr,
+      blog.title,
+      getLocalizedTitle(blog),
+    ].filter(Boolean);
+    for (const candidate of candidates) {
+      const extracted = extractCountryTitle(candidate);
+      if (extracted) return extracted;
+    }
+    return "";
+  };
+
+  const getCountrySlug = (country) => {
+    if (!country) return "";
+    const trimmed = country.toString().trim();
+    const asciiSlug = toSlug(trimmed);
+    return (asciiSlug || encodeURIComponent(trimmed.toLowerCase())).toLowerCase();
+  };
+
+  const countryMap = displayBlogs.reduce((acc, blog, index) => {
+    const country = getCountryFromBlog(blog);
+    if (!country) return acc;
+    const key = country.toLowerCase();
+    if (!acc[key]) {
+      acc[key] = {
+        country,
+        coverBlog: blog,
+        coverIndex: index,
+        count: 0,
+      };
+    }
+    acc[key].count += 1;
+    return acc;
+  }, {});
+
+  const countryCards = Object.values(countryMap).sort((a, b) =>
+    a.country.localeCompare(b.country)
+  );
 
   return (
     <section className="min-h-screen pt-24 pb-16 bg-slate-50 relative overflow-hidden">
@@ -63,27 +107,27 @@ const BlogsPage = () => {
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
             <span className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">
-              {t("blogs.subtitle", "Stay Updated with the Latest News!")}
+              {t("blogs.countriesSubtitle", "Explore Countries")}
             </span>
             <h1 className="mt-4 text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900">
-              {t("blogs.title", "Our Expert Blogs")}
+              {t("blogs.countriesTitle", "Countries")}
             </h1>
             <p className="mt-4 text-slate-600">
               {t(
-                "blogs.pageIntro",
-                "Explore market intelligence, investment strategies, and neighborhood deep dives curated by our experts."
+                "blogs.countriesIntro",
+                "Select a country to see related articles."
               )}
             </p>
           </div>
           <div className="w-full max-w-sm rounded-3xl border border-white/70 bg-white/80 p-6 shadow-lg shadow-emerald-100/60">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-600">
-              {t("common.total", "Total")}
+              {t("blogs.totalCountries", "Total Countries")}
             </p>
             <p className="mt-2 text-3xl font-bold text-slate-900">
-              {displayBlogs.length}
+              {countryCards.length}
             </p>
             <p className="mt-2 text-sm text-slate-500">
-              {t("blogs.pageNote", "Latest insights ready to explore.")}
+              {t("blogs.totalPosts", "Total posts")}: {displayBlogs.length}
             </p>
           </div>
         </div>
@@ -92,74 +136,50 @@ const BlogsPage = () => {
           <div className="flexCenter mt-20">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
           </div>
+        ) : countryCards.length === 0 ? (
+          <div className="mt-16 rounded-3xl border border-white/70 bg-white/90 p-10 text-center shadow-xl shadow-emerald-100/40">
+            <p className="text-slate-600">
+              {t("blogs.noCountries", "No countries to show yet.")}
+            </p>
+          </div>
         ) : (
-          <div className="mt-12 grid gap-8 md:grid-cols-2 xl:grid-cols-3">
-            {displayBlogs.map((blog, index) => {
-              const canNavigate = Boolean(blog.id);
-              const title = getLocalizedTitle(blog);
-              const summary = getLocalizedSummary(blog);
-              const category = getLocalizedCategory(blog);
-
-              return (
-                <article
-                  key={blog.id || `${title}-${index}`}
-                  className={`group relative overflow-hidden rounded-3xl border border-white/70 bg-white/90 shadow-xl shadow-emerald-100/40 transition hover:-translate-y-1 hover:shadow-2xl ${
-                    canNavigate ? "cursor-pointer" : "cursor-default"
-                  }`}
-                  onClick={() => handleOpenBlog(blog)}
-                >
-                  <div className="p-6 sm:p-7 flex flex-col items-center text-center">
-                    <div className="relative">
-                      <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full p-[6px] bg-white shadow-lg ring-1 ring-emerald-100 transition-transform duration-300 group-hover:-translate-y-1">
-                        <div className="w-full h-full rounded-full overflow-hidden bg-slate-100">
-                          <img
-                            src={getBlogImage(blog, index)}
-                            alt={title}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          />
-                        </div>
-                      </div>
-                      <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 ring-1 ring-emerald-100 shadow-sm">
-                        {category}
-                      </span>
+          <div className="mt-12 grid gap-8 sm:grid-cols-2 xl:grid-cols-3">
+            {countryCards.map(({ country, coverBlog, coverIndex, count }) => (
+              <article
+                key={country}
+                className="group rounded-3xl border border-white/70 bg-white/90 shadow-xl shadow-emerald-100/40 transition hover:-translate-y-1 hover:shadow-2xl cursor-pointer"
+                onClick={() => navigate(`/blogs/${getCountrySlug(country)}`)}
+              >
+                <div className="p-6 sm:p-7 flex flex-col items-center text-center">
+                  <div className="w-24 h-24 rounded-full p-[5px] bg-white shadow-lg ring-1 ring-emerald-100">
+                    <div className="w-full h-full rounded-full overflow-hidden bg-slate-100">
+                      <img
+                        src={getBlogImage(coverBlog, coverIndex)}
+                        alt={country}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
-                    {blog.createdAt && (
-                      <div className="mt-5 flex items-center justify-center gap-2 text-xs text-slate-500">
-                        <MdCalendarToday className="text-emerald-500" />
-                        <span>
-                          {new Date(blog.createdAt).toLocaleDateString(
-                            language === "tr" ? "tr-TR" : "en-US",
-                            {
-                              year: "numeric",
-                              month: "short",
-                              day: "numeric",
-                            }
-                          )}
-                        </span>
-                      </div>
-                    )}
-                    <h3 className="mt-4 text-lg sm:text-xl font-semibold text-slate-900 transition-colors group-hover:text-emerald-600">
-                      {title}
-                    </h3>
-                    <p className="mt-3 text-sm text-slate-600 leading-relaxed max-h-[72px] overflow-hidden">
-                      {summary}
-                    </p>
-                    <button
-                      type="button"
-                      disabled={!canNavigate}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        handleOpenBlog(blog);
-                      }}
-                      className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-emerald-600 hover:text-emerald-700 disabled:cursor-default disabled:opacity-50"
-                    >
-                      {t("blogs.continueReading", "continue reading")}
-                      <MdArrowForward />
-                    </button>
                   </div>
-                </article>
-              );
-            })}
+                  <h3 className="mt-4 text-xl font-semibold text-slate-900">
+                    {country}
+                  </h3>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {count} {t("blogs.posts", "posts")}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      navigate(`/blogs/${getCountrySlug(country)}`);
+                    }}
+                    className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-emerald-600 hover:text-emerald-700"
+                  >
+                    {t("blogs.continueReading", "continue reading")}
+                    <MdArrowForward />
+                  </button>
+                </div>
+              </article>
+            ))}
           </div>
         )}
       </div>

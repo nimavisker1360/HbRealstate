@@ -20,6 +20,7 @@ import {
   NumberInput,
   Switch,
   MultiSelect,
+  Select,
 } from "@mantine/core";
 import { useAuth0 } from "@auth0/auth0-react";
 import { Navigate, useNavigate } from "react-router-dom";
@@ -32,6 +33,7 @@ import EditPropertyModal from "../components/EditPropertyModal";
 import useAdmin from "../hooks/useAdmin";
 import useProperties from "../hooks/useProperties";
 import useConsultants from "../hooks/useConsultants";
+import useCountries from "../hooks/useCountries";
 import UserDetailContext from "../context/UserDetailContext";
 import {
   getAdminAllBookings,
@@ -257,6 +259,62 @@ const AdminPanel = () => {
   const [aiGenerateModalOpened, setAiGenerateModalOpened] = useState(false);
   const [aiGenerating, setAiGenerating] = useState(false);
   const [contentEditorLang, setContentEditorLang] = useState("en");
+  const { getAll: getAllCountries } = useCountries();
+  const extractCountryFromTitle = (rawTitle) => {
+    if (!rawTitle || typeof rawTitle !== "string") return "";
+    const cleaned = rawTitle.replace(/[?!\u061f]+$/g, "").trim();
+    const lower = cleaned.toLowerCase();
+    const inIndex = lower.lastIndexOf(" in ");
+    if (inIndex !== -1 && inIndex + 4 < cleaned.length) {
+      return cleaned.slice(inIndex + 4).trim();
+    }
+    return "";
+  };
+
+  const countryOptions = useMemo(() => {
+    const allCountries = getAllCountries();
+    const countryMap = new Map(
+      allCountries.map((country) => [
+        country.value.toLowerCase(),
+        { value: country.value, label: country.label },
+      ])
+    );
+    const blogCountries = new Set();
+
+    (blogs || []).forEach((blog) => {
+      const direct = (blog.country || "").trim();
+      if (direct) {
+        blogCountries.add(direct.toLowerCase());
+        return;
+      }
+      const candidates = [blog.title_en, blog.title_tr, blog.title, blog.title_en];
+      for (const candidate of candidates) {
+        const extracted = extractCountryFromTitle(candidate);
+        if (extracted) {
+          blogCountries.add(extracted.toLowerCase());
+          break;
+        }
+      }
+    });
+    blogCountries.add("turkey");
+    const options = [];
+
+    blogCountries.forEach((lower) => {
+      const option = countryMap.get(lower);
+      if (option) {
+        options.push(option);
+        return;
+      }
+      const original =
+        (blogs || []).find(
+          (blog) => (blog.country || "").trim().toLowerCase() === lower
+        )?.country || lower;
+      const label = original.charAt(0).toUpperCase() + original.slice(1);
+      options.push({ value: label, label });
+    });
+
+    return options.sort((a, b) => a.value.localeCompare(b.value));
+  }, [blogs, getAllCountries]);
 
   // Testimonials state
   const [testimonials, setTestimonials] = useState([]);
@@ -288,6 +346,7 @@ const AdminPanel = () => {
     title_en: "",
     title_tr: "",
     category: "",
+    country: "",
     content: "",
     content_en: "",
     content_tr: "",
@@ -952,6 +1011,7 @@ const AdminPanel = () => {
       title_en: "",
       title_tr: "",
       category: "",
+      country: "",
       content: "",
       content_en: "",
       content_tr: "",
@@ -1093,6 +1153,7 @@ const AdminPanel = () => {
       title_en: blog.title_en || blog.title || "",
       title_tr: blog.title_tr || "",
       category: blog.category || "",
+      country: blog.country || "",
       content: blog.content || baseEn || "",
       content_en: baseEn,
       content_tr: baseTr,
@@ -2596,6 +2657,7 @@ const AdminPanel = () => {
                     <Table.Tr>
                       <Table.Th>Blog</Table.Th>
                       <Table.Th>Category</Table.Th>
+                      <Table.Th>Country</Table.Th>
                       <Table.Th>Status</Table.Th>
                       <Table.Th>Date</Table.Th>
                       <Table.Th>Actions</Table.Th>
@@ -2634,6 +2696,11 @@ const AdminPanel = () => {
                           <Badge color="teal" variant="light">
                             {blog.category}
                           </Badge>
+                        </Table.Td>
+                        <Table.Td>
+                          <Text size="xs" color="dimmed">
+                            {blog.country || "-"}
+                          </Text>
                         </Table.Td>
                         <Table.Td>
                           <Badge
@@ -4238,15 +4305,28 @@ const AdminPanel = () => {
               />
             </div>
 
-            <TextInput
-              label="Category"
-              placeholder="e.g., Real Estate, Investment, Tips"
-              required
-              value={blogForm.category}
-              onChange={(e) =>
-                setBlogForm({ ...blogForm, category: e.target.value })
-              }
-            />
+            <div className="grid gap-3 md:grid-cols-2">
+              <TextInput
+                label="Category"
+                placeholder="e.g., Real Estate, Investment, Tips"
+                required
+                value={blogForm.category}
+                onChange={(e) =>
+                  setBlogForm({ ...blogForm, category: e.target.value })
+                }
+              />
+              <Select
+                label="Country"
+                placeholder="e.g., Greece"
+                searchable
+                clearable
+                data={countryOptions}
+                value={blogForm.country || null}
+                onChange={(value) =>
+                  setBlogForm({ ...blogForm, country: value || "" })
+                }
+              />
+            </div>
 
             <div className="grid gap-3 md:grid-cols-2">
               <Textarea
@@ -4668,15 +4748,28 @@ const AdminPanel = () => {
               />
             </div>
 
-            <TextInput
-              label="Category"
-              placeholder="e.g., Real Estate, Investment, Tips"
-              required
-              value={blogForm.category}
-              onChange={(e) =>
-                setBlogForm({ ...blogForm, category: e.target.value })
-              }
-            />
+            <div className="grid gap-3 md:grid-cols-2">
+              <TextInput
+                label="Category"
+                placeholder="e.g., Real Estate, Investment, Tips"
+                required
+                value={blogForm.category}
+                onChange={(e) =>
+                  setBlogForm({ ...blogForm, category: e.target.value })
+                }
+              />
+              <Select
+                label="Country"
+                placeholder="e.g., Greece"
+                searchable
+                clearable
+                data={countryOptions}
+                value={blogForm.country || null}
+                onChange={(value) =>
+                  setBlogForm({ ...blogForm, country: value || "" })
+                }
+              />
+            </div>
 
             <div className="grid gap-3 md:grid-cols-2">
               <Textarea

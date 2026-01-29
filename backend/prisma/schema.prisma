@@ -154,6 +154,7 @@ model Blog {
     category String
     category_en String?
     category_tr String?
+    country String?
     content String
     content_en String?
     content_tr String?

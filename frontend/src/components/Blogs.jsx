@@ -18,13 +18,10 @@ const Blogs = ({ limit = null, showMore = false }) => {
 
   // Use API data if available, otherwise fall back to static data
   const displayBlogs = Array.isArray(blogs) && blogs.length > 0 ? blogs : BLOGS;
-  const visibleBlogs = typeof limit === "number" ? displayBlogs.slice(0, limit) : displayBlogs;
 
-  const handleContinueReading = (blog) => {
-    // If blog has an id (from API), navigate to the blog page
-    if (blog.id) {
-      navigate(`/blog/${blog.id}`);
-    }
+  const handleContinueReading = (country) => {
+    if (!country) return;
+    navigate(`/blogs/${getCountrySlug(country)}`);
   };
 
   const getBlogImage = (blog, index) => {
@@ -40,18 +37,77 @@ const Blogs = ({ limit = null, showMore = false }) => {
     return blog.title;
   };
 
-  const getLocalizedCategory = (blog) => {
-    if (currentLang === "tr" && blog.category_tr) return blog.category_tr;
-    if (currentLang === "en" && blog.category_en) return blog.category_en;
-    return blog.category;
+  const toSlug = (value = "") =>
+    value
+      .toString()
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-+|-+$/g, "");
+
+  const extractCountryTitle = (rawTitle) => {
+    if (!rawTitle || typeof rawTitle !== "string") return "";
+    const cleaned = rawTitle.replace(/[?!\u061f]+$/g, "").trim();
+    const lower = cleaned.toLowerCase();
+    const inIndex = lower.lastIndexOf(" in ");
+    if (inIndex !== -1 && inIndex + 4 < cleaned.length) {
+      return cleaned.slice(inIndex + 4).trim();
+    }
+    return "";
   };
+
+  const getCountryFromBlog = (blog) => {
+    if (blog.country) return blog.country;
+    const candidates = [
+      blog.title_en,
+      blog.title_tr,
+      blog.title,
+      getLocalizedTitle(blog),
+    ].filter(Boolean);
+    for (const candidate of candidates) {
+      const extracted = extractCountryTitle(candidate);
+      if (extracted) return extracted;
+    }
+    return "";
+  };
+
+  const getCountrySlug = (country) => {
+    if (!country) return "";
+    const trimmed = country.toString().trim();
+    const asciiSlug = toSlug(trimmed);
+    return (asciiSlug || encodeURIComponent(trimmed.toLowerCase())).toLowerCase();
+  };
+
+  const countryMap = displayBlogs.reduce((acc, blog, index) => {
+    const country = getCountryFromBlog(blog);
+    if (!country) return acc;
+    const key = country.toLowerCase();
+    if (!acc[key]) {
+      acc[key] = {
+        country,
+        coverBlog: blog,
+        coverIndex: index,
+        count: 0,
+      };
+    }
+    acc[key].count += 1;
+    return acc;
+  }, {});
+
+  const countryCards = Object.values(countryMap).sort((a, b) =>
+    a.country.localeCompare(b.country)
+  );
+  const visibleCountries =
+    typeof limit === "number" ? countryCards.slice(0, limit) : countryCards;
 
   return (
     <section className="max-padd-container overflow-x-hidden">
       <div className="py-16 xl:py-28 rounded-3xl">
         <div className="text-center">
-          <span className="medium-18">{t('blogs.subtitle', 'Stay Updated with the Latest News!')}</span>
-          <h2 className="h2">{t('blogs.title', 'Our Expert Blogs')}</h2>
+          <span className="medium-18">{t('blogs.countriesSubtitle', 'Explore Countries')}</span>
+          <h2 className="h2">{t('blogs.countriesTitle', 'Countries')}</h2>
         </div>
         {/* container */}
         {isLoading ? (
@@ -60,33 +116,33 @@ const Blogs = ({ limit = null, showMore = false }) => {
           </div>
         ) : (
           <div className="grid gap-8 sm:gap-10 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 mt-20 justify-items-center">
-            {visibleBlogs.map((blog, index) => (
+            {visibleCountries.map(({ country, coverBlog, coverIndex, count }) => (
               <div
-                key={blog.id || blog.title}
+                key={country}
                 className="group flex flex-col items-center text-center cursor-pointer"
-                onClick={() => handleContinueReading(blog)}
+                onClick={() => handleContinueReading(country)}
               >
                 <div className="relative w-36 h-36 sm:w-44 sm:h-44 lg:w-48 lg:h-48 rounded-full p-[6px] bg-white shadow-lg ring-1 ring-black/5 transition-transform duration-300 group-hover:-translate-y-1 group-hover:shadow-xl">
                   <div className="w-full h-full rounded-full overflow-hidden bg-gray-100">
                     <img
-                      src={getBlogImage(blog, index)}
-                      alt={getLocalizedTitle(blog)}
+                      src={getBlogImage(coverBlog, coverIndex)}
+                      alt={country}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   </div>
                 </div>
 
                 <h3 className="mt-4 text-sm sm:text-base font-semibold text-gray-800 max-w-[220px]">
-                  {getLocalizedTitle(blog)}
+                  {country}
                 </h3>
                 <p className="text-xs sm:text-sm text-gray-500 mt-1">
-                  {getLocalizedCategory(blog)}
+                  {count} {t("blogs.posts", "posts")}
                 </p>
                 <button
                   className="mt-3 bg-white rounded-full font-[500] text-[13px] sm:text-[14px] text-tertiary px-4 py-1.5 border border-gray-200 hover:bg-secondary hover:text-white hover:border-secondary transition-colors"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleContinueReading(blog);
+                    handleContinueReading(country);
                   }}
                 >
                   {t("blogs.continueReading", "continue reading")}
