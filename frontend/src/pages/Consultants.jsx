@@ -273,7 +273,10 @@ const Consultants = () => {
               }
             </p>
             <div className="flex flex-wrap gap-4">
-              <button className="btn-secondary !bg-secondary !ring-secondary">
+              <button
+                onClick={() => setContactModalOpen(true)}
+                className="btn-secondary !bg-secondary !ring-secondary"
+              >
                 {currentLang === "tr" ? "Geri Arama İste" : "Request Callback"}
               </button>
               <a 
