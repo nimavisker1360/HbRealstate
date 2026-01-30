@@ -7,6 +7,7 @@ import "@mantine/dates/styles.css";
 import { Auth0Provider } from "@auth0/auth0-react";
 import { MantineProvider } from "@mantine/core";
 import "./i18n"; // Initialize i18n
+import { Analytics } from "@vercel/analytics/react";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -22,6 +23,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     >
       <MantineProvider>
         <App />
+        <Analytics />
       </MantineProvider>
     </Auth0Provider>
   </React.StrictMode>
