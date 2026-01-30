@@ -41,6 +41,7 @@
   },
   "categories": {
     "residential": "Residential",
+    "villa": "Villa",
     "commercial": "Commercial",
     "land": "Land",
     "workplace": "Workplace",

@@ -41,6 +41,7 @@
   },
   "categories": {
     "residential": "Konut",
+    "villa": "Vila",
     "commercial": "Ticari",
     "land": "Arsa",
     "workplace": "İş Yeri",

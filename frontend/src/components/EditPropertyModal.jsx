@@ -113,6 +113,7 @@ const SortableImage = ({ url, index, onRemove }) => {
 // Property categories
 const propertyCategories = [
   { value: "residential", label: "Konut", icon: FaHome },
+  { value: "villa", label: "Vila", icon: FaHome },
   { value: "commercial", label: "Ticari", icon: FaBriefcase },
   { value: "land", label: "Arsa", icon: FaLandmark },
 ];

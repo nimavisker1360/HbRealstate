@@ -50,6 +50,7 @@ const Listing = () => {
   // Property categories with translations (projects have their own dedicated pages)
   const propertyCategories = [
     { value: "residential", label: t('categories.residential'), icon: FaHome },
+    { value: "villa", label: t('categories.villa'), icon: FaHome },
     { value: "commercial", label: t('categories.commercial'), icon: FaBriefcase },
     { value: "land", label: t('categories.land'), icon: FaLandmark },
     { value: "residentialProjects", label: t('categories.residentialProjects'), icon: FaCity },
