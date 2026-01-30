@@ -187,7 +187,7 @@ const Consultants = () => {
                       {consultant.name}
                       <MdVerified className="text-secondary" />
                     </h3>
-                    <p className="text-secondary text-sm font-medium">
+                    <p className="text-secondary text-sm font-medium line-clamp-2 min-h-[2.5rem]">
                       {titleText}
                     </p>
                   </div>
@@ -197,7 +197,7 @@ const Consultants = () => {
                 <div className="p-5">
                   {/* Specialty */}
                   {showSpecialty && (
-                    <p className="text-gray-30 text-sm mb-4 line-clamp-2">
+                    <p className="text-gray-30 text-sm mb-4 line-clamp-2 min-h-[2.5rem]">
                       {specialtyText}
                     </p>
                   )}
