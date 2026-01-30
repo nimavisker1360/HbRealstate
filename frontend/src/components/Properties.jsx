@@ -54,38 +54,8 @@ const Properties = () => {
   const headerRef = useRef(null);
 
   useEffect(() => {
-    const headerEl = headerRef.current;
-    if (!headerEl) return;
-
-    const isInViewport = () => {
-      const rect = headerEl.getBoundingClientRect();
-      return rect.top < window.innerHeight && rect.bottom > 0;
-    };
-
-    // Fallback for browsers that don't fire the observer immediately
-    if (isInViewport()) {
-      setHeaderVisible(true);
-      return;
-    }
-
-    if (!("IntersectionObserver" in window)) {
-      setHeaderVisible(true);
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setHeaderVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    observer.observe(headerEl);
-
-    return () => observer.disconnect();
+    const frameId = requestAnimationFrame(() => setHeaderVisible(true));
+    return () => cancelAnimationFrame(frameId);
   }, []);
 
   if (isError) {
