@@ -9,7 +9,7 @@ import { createUser, setTokenRefreshCallback } from "../utils/api";
 import useFavourites from "../hooks/useFavourites.jsx";
 import useBookings from "../hooks/useBookings.jsx";
 
-const INACTIVITY_LIMIT_MS = 24 * 60 * 60 * 1000;
+const INACTIVITY_LIMIT_MS = 6 * 60 * 60 * 1000;
 const ACTIVITY_THROTTLE_MS = 60 * 1000;
 const LAST_ACTIVITY_KEY = "last_activity_ts";
 
@@ -52,20 +52,11 @@ const Layout = () => {
   const isSessionExpired = useCallback(() => {
     const lastActivity = getLastActivity();
     if (!lastActivity) {
-      console.log("⏱️ Inactivity: no lastActivity set yet");
+      // No activity yet; treat as active
       return false;
     }
     const diff = Date.now() - lastActivity;
     const expired = diff > INACTIVITY_LIMIT_MS;
-    console.log(
-      "⏱️ Inactivity check:",
-      "diffMs=",
-      diff,
-      "limitMs=",
-      INACTIVITY_LIMIT_MS,
-      "expired=",
-      expired
-    );
     return expired;
   }, [getLastActivity]);
 
@@ -79,10 +70,8 @@ const Layout = () => {
       try {
         localStorage.setItem(LAST_ACTIVITY_KEY, String(now));
         lastActivityWriteRef.current = now;
-        console.log("🟢 Activity recorded", { now, force });
       } catch (error) {
         // Ignore storage errors (private mode, quota issues)
-        console.warn("⚠️ Activity record failed", error);
       }
     },
     []
@@ -93,10 +82,8 @@ const Layout = () => {
     try {
       localStorage.setItem(LAST_ACTIVITY_KEY, String(now));
       lastActivityWriteRef.current = now;
-      console.log("🟢 Activity set (token)", { now });
     } catch (error) {
       // Ignore storage errors
-      console.warn("⚠️ Activity set failed", error);
     }
   }, []);
 
@@ -104,7 +91,6 @@ const Layout = () => {
     if (isForcingLogoutRef.current) return;
     isForcingLogoutRef.current = true;
 
-    console.log("🚪 Forcing logout due to inactivity");
     try {
       localStorage.removeItem("access_token");
       localStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()));
@@ -229,7 +215,6 @@ const Layout = () => {
 
     canRecordActivityRef.current = true;
     recordActivity(true);
-    console.log("✅ Inactivity tracking enabled");
   }, [isLoading, isAuthenticated, isSessionExpired, forceLogout, recordActivity]);
 
   // Record activity on route change
@@ -251,8 +236,6 @@ const Layout = () => {
       window.addEventListener(event, handleActivity, { passive: true })
     );
     document.addEventListener("visibilitychange", handleVisibility);
-    console.log("📡 Inactivity listeners attached", events);
-
     return () => {
       events.forEach((event) =>
         window.removeEventListener(event, handleActivity)
@@ -272,7 +255,6 @@ const Layout = () => {
     };
 
     const intervalId = setInterval(checkInactivity, 60 * 1000);
-    console.log("⏲️ Inactivity interval started");
     return () => clearInterval(intervalId);
   }, [isAuthenticated, isLoading, isSessionExpired, forceLogout]);
 
