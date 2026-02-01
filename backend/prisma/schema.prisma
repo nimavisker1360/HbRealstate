@@ -151,6 +151,7 @@ model Blog {
     title_en String?
     title_tr String?
     slug String? // SEO-friendly URL slug (will be unique after migration)
+    menuKey String? // Optional key to link blog to About Turkey menu items
     category String
     category_en String?
     category_tr String?

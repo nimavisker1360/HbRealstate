@@ -75,9 +75,32 @@ const BlogsPage = () => {
     return (asciiSlug || encodeURIComponent(trimmed.toLowerCase())).toLowerCase();
   };
 
+  const normalizeCountry = (value = "") =>
+    value
+      .toString()
+      .toLowerCase()
+      .replace(/\u0131/g, "i")
+      .replace(/\u0130/g, "i")
+      .replace(/\u00fc/g, "u")
+      .replace(/\u00f6/g, "o")
+      .replace(/\u015f/g, "s")
+      .replace(/\u011f/g, "g")
+      .replace(/\u00e7/g, "c")
+      .replace(/\u00c4\u00b1/g, "i")
+      .replace(/\u00c3\u00bc/g, "u")
+      .replace(/\u00c3\u00b6/g, "o")
+      .replace(/\u00c5\u017f/g, "s")
+      .replace(/\u00c4\u009f/g, "g")
+      .replace(/\u00c3\u00a7/g, "c");
+
+  const isExcludedCountry = (name) => {
+    const normalized = normalizeCountry(name);
+    return normalized === "turkey" || normalized === "turkiye";
+  };
+
   const countryMap = displayBlogs.reduce((acc, blog, index) => {
     const country = getCountryFromBlog(blog);
-    if (!country) return acc;
+    if (!country || isExcludedCountry(country)) return acc;
     const key = country.toLowerCase();
     if (!acc[key]) {
       acc[key] = {

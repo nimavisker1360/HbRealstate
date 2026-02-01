@@ -101,25 +101,28 @@ const Blogs = ({ limit = null, showMore = false }) => {
     value
       .toString()
       .toLowerCase()
-      .replace(/ı/g, "i")
-      .replace(/ü/g, "u")
-      .replace(/ö/g, "o")
-      .replace(/ş/g, "s")
-      .replace(/ğ/g, "g")
-      .replace(/ç/g, "c");
+      .replace(/\u0131/g, "i")
+      .replace(/\u0130/g, "i")
+      .replace(/\u00fc/g, "u")
+      .replace(/\u00f6/g, "o")
+      .replace(/\u015f/g, "s")
+      .replace(/\u011f/g, "g")
+      .replace(/\u00e7/g, "c")
+      .replace(/\u00c4\u00b1/g, "i")
+      .replace(/\u00c3\u00bc/g, "u")
+      .replace(/\u00c3\u00b6/g, "o")
+      .replace(/\u00c5\u017f/g, "s")
+      .replace(/\u00c4\u009f/g, "g")
+      .replace(/\u00c3\u00a7/g, "c");
 
-  const getCountryPriority = (name) => {
+  const isExcludedCountry = (name) => {
     const normalized = normalizeCountry(name);
-    if (normalized === "turkey" || normalized === "turkiye") return 0;
-    if (normalized === "cyprus" || normalized === "kibris") return 2;
-    return 1;
+    return normalized === "turkey" || normalized === "turkiye";
   };
 
-  const countryCards = Object.values(countryMap).sort((a, b) => {
-    const priorityDiff = getCountryPriority(a.country) - getCountryPriority(b.country);
-    if (priorityDiff !== 0) return priorityDiff;
-    return a.country.localeCompare(b.country);
-  });
+  const countryCards = Object.values(countryMap)
+    .filter(({ country }) => !isExcludedCountry(country))
+    .sort((a, b) => a.country.localeCompare(b.country));
   const visibleCountries =
     typeof limit === "number" ? countryCards.slice(0, limit) : countryCards;
 
@@ -200,3 +203,4 @@ const Blogs = ({ limit = null, showMore = false }) => {
 };
 
 export default Blogs;
+

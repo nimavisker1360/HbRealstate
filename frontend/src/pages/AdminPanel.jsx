@@ -1,5 +1,6 @@
 import { useState, useContext, useEffect, useCallback, useMemo } from "react";
 import PropTypes from "prop-types";
+import { useTranslation } from "react-i18next";
 import {
   Container,
   Stepper,
@@ -35,6 +36,7 @@ import useProperties from "../hooks/useProperties";
 import useConsultants from "../hooks/useConsultants";
 import useCountries from "../hooks/useCountries";
 import UserDetailContext from "../context/UserDetailContext";
+import { aboutTurkeyMenu } from "../constant/aboutTurkeyMenu";
 import {
   getAdminAllBookings,
   deleteResidency,
@@ -153,6 +155,7 @@ const AdminPanel = () => {
     userDetails: { token },
   } = useContext(UserDetailContext);
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
 
   // Bookings state (reserved for future use)
   // eslint-disable-next-line no-unused-vars
@@ -316,6 +319,24 @@ const AdminPanel = () => {
     return options.sort((a, b) => a.value.localeCompare(b.value));
   }, [blogs, getAllCountries]);
 
+  const aboutTurkeyMenuOptions = useMemo(() => {
+    const seen = new Set();
+    const options = [];
+    aboutTurkeyMenu.forEach((section) => {
+      const sectionLabel = t(section.titleKey);
+      section.items.forEach((item) => {
+        const value = item.menuKey || item.labelKey;
+        if (!value || seen.has(value)) return;
+        seen.add(value);
+        options.push({
+          value,
+          label: `${sectionLabel} - ${t(item.labelKey)}`,
+        });
+      });
+    });
+    return options;
+  }, [t, i18n.language]);
+
   // Testimonials state
   const [testimonials, setTestimonials] = useState([]);
   const [testimonialsLoading, setTestimonialsLoading] = useState(true);
@@ -347,6 +368,7 @@ const AdminPanel = () => {
     title_tr: "",
     category: "",
     country: "",
+    menuKey: "",
     content: "",
     content_en: "",
     content_tr: "",
@@ -1012,6 +1034,7 @@ const AdminPanel = () => {
       title_tr: "",
       category: "",
       country: "",
+      menuKey: "",
       content: "",
       content_en: "",
       content_tr: "",
@@ -1154,6 +1177,7 @@ const AdminPanel = () => {
       title_tr: blog.title_tr || "",
       category: blog.category || "",
       country: blog.country || "",
+      menuKey: blog.menuKey || "",
       content: blog.content || baseEn || "",
       content_en: baseEn,
       content_tr: baseTr,
@@ -2687,6 +2711,16 @@ const AdminPanel = () => {
                                   maw={250}
                                 >
                                   {blog.summary}
+                                </Text>
+                              )}
+                              {blog.menuKey && (
+                                <Text
+                                  size="xs"
+                                  color="dimmed"
+                                  lineClamp={1}
+                                  maw={250}
+                                >
+                                  Menu: {t(blog.menuKey)}
                                 </Text>
                               )}
                             </div>
@@ -4328,6 +4362,18 @@ const AdminPanel = () => {
               />
             </div>
 
+            <Select
+              label="About Turkey menu (optional)"
+              placeholder="Link this post to a navbar title"
+              searchable
+              clearable
+              data={aboutTurkeyMenuOptions}
+              value={blogForm.menuKey || null}
+              onChange={(value) =>
+                setBlogForm({ ...blogForm, menuKey: value || "" })
+              }
+            />
+
             <div className="grid gap-3 md:grid-cols-2">
               <Textarea
                 label="Summary (English)"
@@ -4770,6 +4816,18 @@ const AdminPanel = () => {
                 }
               />
             </div>
+
+            <Select
+              label="About Turkey menu (optional)"
+              placeholder="Link this post to a navbar title"
+              searchable
+              clearable
+              data={aboutTurkeyMenuOptions}
+              value={blogForm.menuKey || null}
+              onChange={(value) =>
+                setBlogForm({ ...blogForm, menuKey: value || "" })
+              }
+            />
 
             <div className="grid gap-3 md:grid-cols-2">
               <Textarea

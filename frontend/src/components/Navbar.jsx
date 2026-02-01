@@ -1,6 +1,6 @@
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import PropTypes from "prop-types";
-import { useRef, useState } from "react";
+import { useRef, useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 // icons
 import {
@@ -25,6 +25,7 @@ import useAdmin from "../hooks/useAdmin";
 import useAuthCheck from "../hooks/useAuthCheck";
 import useBlogs from "../hooks/useBlogs";
 import userIcon from "../assets/user.svg";
+import { aboutTurkeyMenu } from "../constant/aboutTurkeyMenu";
 
 const Navbar = ({ 
   containerStyles, 
@@ -87,73 +88,17 @@ const Navbar = ({
     },
   ];
 
-  const aboutTurkeyMenu = [
-    {
-      titleKey: "aboutTurkeyMenu.mediterraneanRegion",
-      items: [
-        { labelKey: "aboutTurkeyMenu.livingInAntalyaProsConsCost" },
-        { labelKey: "aboutTurkeyMenu.propertyInvestmentAntalyaGuide2026" },
-        { labelKey: "aboutTurkeyMenu.bestAreasBuyPropertyAlanya" },
-        { labelKey: "aboutTurkeyMenu.sideRealEstateMarketOverview" },
-        { labelKey: "aboutTurkeyMenu.belekGolfTourismLuxuryInvestment" },
-        { labelKey: "aboutTurkeyMenu.kemerLifestyleGuideForeigners" },
-        { labelKey: "aboutTurkeyMenu.costOfLivingMediterraneanTurkey" },
-        { labelKey: "aboutTurkeyMenu.whyMediterraneanCoastIdealInvestors" },
-      ],
-    },
-    {
-      titleKey: "aboutTurkeyMenu.aegeanRegion",
-      items: [
-        { labelKey: "aboutTurkeyMenu.livingInIstanbulDistrictGuide" },
-        { labelKey: "aboutTurkeyMenu.bestAreasBuyPropertyIstanbul2026" },
-        { labelKey: "aboutTurkeyMenu.istanbulRealEstateMarketForecast" },
-        { labelKey: "aboutTurkeyMenu.bursaAffordableAlternativeIstanbul" },
-        { labelKey: "aboutTurkeyMenu.yalovaPropertyInvestmentGuide" },
-        { labelKey: "aboutTurkeyMenu.costOfLivingMarmaraRegion" },
-        { labelKey: "aboutTurkeyMenu.istanbulVsAnkaraVsIzmirWhereInvest" },
-        { labelKey: "aboutTurkeyMenu.whyMarmaraEconomicHeart" },
-      ],
-    },
-    {
-      titleKey: "aboutTurkeyMenu.marmaraRegion",
-      items: [
-        { labelKey: "aboutTurkeyMenu.livingInIstanbulDistrictGuide" },
-        { labelKey: "aboutTurkeyMenu.bestAreasBuyPropertyIstanbul2026" },
-        { labelKey: "aboutTurkeyMenu.istanbulRealEstateMarketForecast" },
-        { labelKey: "aboutTurkeyMenu.bursaAffordableAlternativeIstanbul" },
-        { labelKey: "aboutTurkeyMenu.yalovaPropertyInvestmentGuide" },
-        { labelKey: "aboutTurkeyMenu.costOfLivingMarmaraRegion" },
-        { labelKey: "aboutTurkeyMenu.istanbulVsAnkaraVsIzmirWhereInvest" },
-        { labelKey: "aboutTurkeyMenu.whyMarmaraEconomicHeart" },
-      ],
-    },
-    {
-      titleKey: "aboutTurkeyMenu.lycianCoast",
-      items: [
-        { labelKey: "aboutTurkeyMenu.lycianCoastLifestyleGuide" },
-        { labelKey: "aboutTurkeyMenu.whyForeignersLoveLycianWay" },
-        { labelKey: "aboutTurkeyMenu.bestCoastalTownsLycianCoast" },
-        { labelKey: "aboutTurkeyMenu.fethiyeKasInvestmentComparison" },
-        { labelKey: "aboutTurkeyMenu.livingInKasHiddenGemExpats" },
-        { labelKey: "aboutTurkeyMenu.ecoTourismRealEstateLycianCoast" },
-        { labelKey: "aboutTurkeyMenu.longTermRentalPotentialLycianRegion" },
-      ],
-    },
-    {
-      titleKey: "aboutTurkeyMenu.marketAnalysis",
-      items: [
-        {
-          labelKey: "aboutTurkeyMenu.housingSalesStatisticsTurkey",
-          blogKey: "housingStats",
-          singleLine: true,
-        },
-        {
-          labelKey: "aboutTurkeyMenu.housingSalesForeignersByNationality",
-          blogKey: "foreignSales",
-        },
-      ],
-    },
-  ];
+  const menuBlogMap = useMemo(() => {
+    const map = new Map();
+    if (Array.isArray(blogs)) {
+      blogs.forEach((blog) => {
+        if (blog?.menuKey) {
+          map.set(blog.menuKey, blog.id);
+        }
+      });
+    }
+    return map;
+  }, [blogs]);
 
   const findBlogIdByMarker = (list, marker) => {
     if (!marker || !Array.isArray(list)) return null;
@@ -189,10 +134,36 @@ const Navbar = ({
     return id;
   };
 
-  const handleAboutTurkeyItemClick = async (item) => {
-    if (!item?.blogKey) return;
+  const findBlogIdByMenuKey = (list, menuKey) => {
+    if (!menuKey || !Array.isArray(list)) return null;
+    const match = list.find((blog) => blog?.menuKey === menuKey);
+    return match?.id || null;
+  };
 
-    const blogId = await getMarketAnalysisBlogId(item.blogKey);
+  const getMenuBlogId = async (item) => {
+    const menuKey = item?.menuKey || item?.labelKey;
+    let list = Array.isArray(blogs) ? blogs : null;
+    let id = menuKey ? findBlogIdByMenuKey(list, menuKey) : null;
+
+    if (!id && menuKey) {
+      try {
+        const result = await refetchBlogs();
+        list = result?.data || [];
+        id = findBlogIdByMenuKey(list, menuKey);
+      } catch (error) {
+        // ignore
+      }
+    }
+
+    if (id) return id;
+    if (item?.blogKey) {
+      return await getMarketAnalysisBlogId(item.blogKey);
+    }
+    return null;
+  };
+
+  const handleAboutTurkeyItemClick = async (item) => {
+    const blogId = await getMenuBlogId(item);
     if (blogId) {
       navigate(`/blog/${blogId}`);
     } else {
@@ -495,7 +466,10 @@ const Navbar = ({
                     </div>
                     <ul className="space-y-2">
                       {column.items.map((item) => {
-                        const isBlogLink = Boolean(item.blogKey);
+                        const menuKey = item?.menuKey || item?.labelKey;
+                        const isBlogLink =
+                          Boolean(item.blogKey) ||
+                          (menuKey ? menuBlogMap.has(menuKey) : false);
                         const isSingleLine = Boolean(item.singleLine);
                         return (
                           <li key={item.labelKey}>
@@ -571,7 +545,10 @@ const Navbar = ({
                   </div>
                   <div className="mt-2 space-y-1">
                     {section.items.map((item) => {
-                      const isBlogLink = Boolean(item.blogKey);
+                      const menuKey = item?.menuKey || item?.labelKey;
+                      const isBlogLink =
+                        Boolean(item.blogKey) ||
+                        (menuKey ? menuBlogMap.has(menuKey) : false);
                       return (
                         <button
                           key={item.labelKey}
