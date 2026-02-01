@@ -488,7 +488,7 @@ const Navbar = ({
                   {aboutTurkeyMenu.map((column) => (
                     <div key={column.titleKey} className="min-w-0">
                     <div className="mb-4">
-                      <h4 className="text-sm font-semibold text-gray-700">
+                      <h4 className="text-sm font-semibold text-[#00A86B]">
                         {t(column.titleKey)}
                       </h4>
                       <div className="mt-2 h-0.5 w-10 bg-red-500"></div>
@@ -566,7 +566,7 @@ const Navbar = ({
                   key={section.titleKey}
                   className="px-4 py-3 border-t border-gray-100"
                 >
-                  <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-[#00A86B]">
                     {t(section.titleKey)}
                   </div>
                   <div className="mt-2 space-y-1">
