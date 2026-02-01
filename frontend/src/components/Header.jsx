@@ -173,6 +173,24 @@ const Header = () => {
               >
                 <FaWhatsapp size={18} />
               </a>
+              {/* Desktop Only - Profile/Login */}
+              <div className="hidden lg:flex items-center">
+                {isLoading ? (
+                  <span className="medium-16">{t("common.loading")}</span>
+                ) : !isAuthenticated ? (
+                  <button
+                    onClick={handleLoginClick}
+                    className={
+                      "btn-secondary flexCenter gap-x-2 medium-16 rounded-[10px] !bg-[#00A86B] !ring-[#00A86B] hover:!bg-[#009A61]"
+                    }
+                  >
+                    <img src={userIcon} alt="" height={22} width={22} />
+                    <span>{t("common.login")}</span>
+                  </button>
+                ) : (
+                  <ProfileMenu user={user} logout={logout} />
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -203,25 +221,6 @@ const Header = () => {
                   onClick={toggleMenu}
                 />
               )}
-
-              {/* Desktop Only - Profile/Login */}
-              <div className="hidden lg:block">
-                {isLoading ? (
-                  <span className="medium-16">{t("common.loading")}</span>
-                ) : !isAuthenticated ? (
-                  <button
-                    onClick={handleLoginClick}
-                    className={
-                      "btn-secondary flexCenter gap-x-2 medium-16 rounded-[10px] !bg-[#00A86B] !ring-[#00A86B] hover:!bg-[#009A61]"
-                    }
-                  >
-                    <img src={userIcon} alt="" height={22} width={22} />
-                    <span>{t("common.login")}</span>
-                  </button>
-                ) : (
-                  <ProfileMenu user={user} logout={logout} />
-                )}
-              </div>
             </div>
           </div>
         </div>

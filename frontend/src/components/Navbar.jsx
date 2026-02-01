@@ -89,45 +89,52 @@ const Navbar = ({
     {
       titleKey: "aboutTurkeyMenu.mediterraneanRegion",
       items: [
-        { labelKey: "aboutTurkeyMenu.aboutSide" },
-        { labelKey: "aboutTurkeyMenu.aboutKalkan", hasChildren: true },
-        { labelKey: "aboutTurkeyMenu.aboutKas", hasChildren: true },
-        { labelKey: "aboutTurkeyMenu.aboutAntalya", hasChildren: true },
-        { labelKey: "aboutTurkeyMenu.aboutBelek" },
-        { labelKey: "aboutTurkeyMenu.aboutDalaman" },
-        { labelKey: "aboutTurkeyMenu.aboutAlanya" },
-        { labelKey: "aboutTurkeyMenu.aboutKemer", hasChildren: true },
-        { labelKey: "aboutTurkeyMenu.turkishMediterraneanRegion" },
+        { labelKey: "aboutTurkeyMenu.livingInAntalyaProsConsCost" },
+        { labelKey: "aboutTurkeyMenu.propertyInvestmentAntalyaGuide2026" },
+        { labelKey: "aboutTurkeyMenu.bestAreasBuyPropertyAlanya" },
+        { labelKey: "aboutTurkeyMenu.sideRealEstateMarketOverview" },
+        { labelKey: "aboutTurkeyMenu.belekGolfTourismLuxuryInvestment" },
+        { labelKey: "aboutTurkeyMenu.kemerLifestyleGuideForeigners" },
+        { labelKey: "aboutTurkeyMenu.costOfLivingMediterraneanTurkey" },
+        { labelKey: "aboutTurkeyMenu.whyMediterraneanCoastIdealInvestors" },
       ],
     },
     {
       titleKey: "aboutTurkeyMenu.aegeanRegion",
       items: [
-        { labelKey: "aboutTurkeyMenu.izmirInformation" },
-        { labelKey: "aboutTurkeyMenu.fethiyeInformation", hasChildren: true },
-        { labelKey: "aboutTurkeyMenu.bodrumInformation", hasChildren: true },
-        { labelKey: "aboutTurkeyMenu.marmarisInformation" },
-        { labelKey: "aboutTurkeyMenu.alkintumInformation" },
-        { labelKey: "aboutTurkeyMenu.kusadasiInformation", hasChildren: true },
-        { labelKey: "aboutTurkeyMenu.gocekInformation" },
-        { labelKey: "aboutTurkeyMenu.turkishAegeanRegion" },
-        { labelKey: "aboutTurkeyMenu.ayvalikCundaInformation" },
-        { labelKey: "aboutTurkeyMenu.dalyanInformation" },
-        { labelKey: "aboutTurkeyMenu.cesmeInformation" },
+        { labelKey: "aboutTurkeyMenu.livingInIstanbulDistrictGuide" },
+        { labelKey: "aboutTurkeyMenu.bestAreasBuyPropertyIstanbul2026" },
+        { labelKey: "aboutTurkeyMenu.istanbulRealEstateMarketForecast" },
+        { labelKey: "aboutTurkeyMenu.bursaAffordableAlternativeIstanbul" },
+        { labelKey: "aboutTurkeyMenu.yalovaPropertyInvestmentGuide" },
+        { labelKey: "aboutTurkeyMenu.costOfLivingMarmaraRegion" },
+        { labelKey: "aboutTurkeyMenu.istanbulVsAnkaraVsIzmirWhereInvest" },
+        { labelKey: "aboutTurkeyMenu.whyMarmaraEconomicHeart" },
       ],
     },
     {
       titleKey: "aboutTurkeyMenu.marmaraRegion",
       items: [
-        { labelKey: "aboutTurkeyMenu.aboutIstanbul", hasChildren: true },
-        { labelKey: "aboutTurkeyMenu.aboutYalova", hasChildren: true },
-        { labelKey: "aboutTurkeyMenu.aboutBursa", hasChildren: true },
+        { labelKey: "aboutTurkeyMenu.livingInIstanbulDistrictGuide" },
+        { labelKey: "aboutTurkeyMenu.bestAreasBuyPropertyIstanbul2026" },
+        { labelKey: "aboutTurkeyMenu.istanbulRealEstateMarketForecast" },
+        { labelKey: "aboutTurkeyMenu.bursaAffordableAlternativeIstanbul" },
+        { labelKey: "aboutTurkeyMenu.yalovaPropertyInvestmentGuide" },
+        { labelKey: "aboutTurkeyMenu.costOfLivingMarmaraRegion" },
+        { labelKey: "aboutTurkeyMenu.istanbulVsAnkaraVsIzmirWhereInvest" },
+        { labelKey: "aboutTurkeyMenu.whyMarmaraEconomicHeart" },
       ],
     },
     {
       titleKey: "aboutTurkeyMenu.lycianCoast",
       items: [
-        { labelKey: "aboutTurkeyMenu.aboutLycianWay" },
+        { labelKey: "aboutTurkeyMenu.lycianCoastLifestyleGuide" },
+        { labelKey: "aboutTurkeyMenu.whyForeignersLoveLycianWay" },
+        { labelKey: "aboutTurkeyMenu.bestCoastalTownsLycianCoast" },
+        { labelKey: "aboutTurkeyMenu.fethiyeKasInvestmentComparison" },
+        { labelKey: "aboutTurkeyMenu.livingInKasHiddenGemExpats" },
+        { labelKey: "aboutTurkeyMenu.ecoTourismRealEstateLycianCoast" },
+        { labelKey: "aboutTurkeyMenu.longTermRentalPotentialLycianRegion" },
       ],
     },
   ];
@@ -356,12 +363,12 @@ const Navbar = ({
                   className={`group flex items-center gap-3 px-8 lg:px-4 py-3 lg:py-2 cursor-pointer transition-colors border-b lg:border-b-0 border-gray-100 last:border-b-0 ${
                     isActive
                       ? "bg-secondary/15 text-secondary font-semibold"
-                      : "text-gray-700 hover:bg-secondary/10 hover:text-secondary"
+                      : "text-gray-700 hover:bg-[#00A86B] hover:text-white"
                   }`}
                 >
                   <IconComponent
                     size={18}
-                    className="text-gray-500 group-hover:text-secondary"
+                    className="text-gray-500 group-hover:text-white"
                   />
                   <span className="text-sm lg:text-sm font-medium">
                     {cat.label}
@@ -513,12 +520,12 @@ const Navbar = ({
                   className={`group flex items-center gap-3 px-8 lg:px-4 py-3 lg:py-2 cursor-pointer transition-colors border-b lg:border-b-0 border-gray-100 last:border-b-0 ${
                     isActive
                       ? "bg-secondary/15 text-secondary font-semibold"
-                      : "text-gray-700 hover:bg-secondary/10 hover:text-secondary"
+                      : "text-gray-700 hover:bg-[#00A86B] hover:text-white"
                   }`}
                 >
                   <IconComponent
                     size={18}
-                    className="text-gray-500 group-hover:text-secondary"
+                    className="text-gray-500 group-hover:text-white"
                   />
                   <span className="text-sm lg:text-sm font-medium whitespace-nowrap">
                     {project.label}
