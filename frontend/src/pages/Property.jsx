@@ -1285,6 +1285,7 @@ const Property = () => {
         propertyId={id}
         propertyTitle={data?.title}
         userEmail={user?.email}
+        consultantId={data?.consultant?.id || data?.consultantId}
       />
     </section>
   );

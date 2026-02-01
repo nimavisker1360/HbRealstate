@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Navbar from "./Navbar";
 import { MdClose, MdMenu } from "react-icons/md";
@@ -19,8 +19,11 @@ const Header = () => {
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [contactModalOpen, setContactModalOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const autoLoginTriggeredRef = useRef(false);
+  const loginPromptTimerRef = useRef(null);
   const toggleMenu = () => setMenuOpened(!menuOpened);
   const { isAuthenticated, user, logout, isLoading } = useAuth0();
+  const prevAuthRef = useRef(isAuthenticated);
 
   const handleLoginClick = () => {
     setLoginModalOpen(true);
@@ -43,6 +46,43 @@ const Header = () => {
       window.removeEventListener("scroll", handleScroll);
     };
   }, [menuOpened]); // Dependency array ensures that the effect runs when menuOpened changes
+
+  const scheduleLoginPrompt = useCallback(() => {
+    if (loginPromptTimerRef.current) return;
+    loginPromptTimerRef.current = setTimeout(() => {
+      loginPromptTimerRef.current = null;
+      autoLoginTriggeredRef.current = true;
+      setLoginModalOpen(true);
+    }, 180);
+  }, []);
+
+  useEffect(() => {
+    if (autoLoginTriggeredRef.current) return;
+    if (isLoading) return;
+    if (!isAuthenticated) {
+      scheduleLoginPrompt();
+      return;
+    }
+    autoLoginTriggeredRef.current = true;
+  }, [isAuthenticated, isLoading, scheduleLoginPrompt]);
+
+  useEffect(() => {
+    if (isLoading) return;
+    const wasAuthenticated = prevAuthRef.current;
+    if (wasAuthenticated && !isAuthenticated) {
+      scheduleLoginPrompt();
+    }
+    prevAuthRef.current = isAuthenticated;
+  }, [isAuthenticated, isLoading, scheduleLoginPrompt]);
+
+  useEffect(() => {
+    return () => {
+      if (loginPromptTimerRef.current) {
+        clearTimeout(loginPromptTimerRef.current);
+        loginPromptTimerRef.current = null;
+      }
+    };
+  }, []);
 
   return (
     <header className="fixed top-1 w-full left-0 right-0 z-50 px-4 sm:px-6 lg:px-12">

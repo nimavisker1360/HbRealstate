@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import { Modal, TextInput, Textarea, Button, Group, Rating } from "@mantine/core";
 import { toast } from "react-toastify";
 import { sendEmail, submitTestimonial } from "../utils/api";
@@ -8,10 +8,18 @@ import UserDetailContext from "../context/UserDetailContext";
 import { useTranslation } from "react-i18next";
 import useConsultants from "../hooks/useConsultants";
 
-const ContactModal = ({ opened, onClose, propertyId, propertyTitle, userEmail }) => {
+const ContactModal = ({
+  opened,
+  onClose,
+  propertyId,
+  propertyTitle,
+  userEmail,
+  consultantId,
+}) => {
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language === "tr" ? "tr" : "en";
-  const { data: consultants = [], isLoading: consultantsLoading } = useConsultants();
+  const { data: consultants = [], isLoading: consultantsLoading } =
+    useConsultants();
   const [loading, setLoading] = useState(false);
   const [reviewLoading, setReviewLoading] = useState(false);
   const [selectedConsultantId, setSelectedConsultantId] = useState(null);
@@ -56,12 +64,23 @@ const ContactModal = ({ opened, onClose, propertyId, propertyTitle, userEmail })
     return consultant?.[localizedKey] || consultant?.[field] || "";
   };
 
-  const availableConsultants = Array.isArray(consultants)
-    ? consultants.filter((c) => c.available !== false)
-    : [];
-  const selectedConsultant = availableConsultants.find(
+  const allConsultants = Array.isArray(consultants) ? consultants : [];
+  const availableConsultants = allConsultants.filter(
+    (c) => c.available !== false
+  );
+  const scopedConsultants = consultantId
+    ? allConsultants.filter((c) => c.id === consultantId)
+    : allConsultants;
+  const selectedConsultant = scopedConsultants.find(
     (c) => c.id === selectedConsultantId
   );
+
+  useEffect(() => {
+    if (!opened) return;
+    if (consultantId) {
+      setSelectedConsultantId(consultantId);
+    }
+  }, [consultantId, opened]);
 
   const handleSubmit = async () => {
     // Validation
@@ -254,7 +273,7 @@ const ContactModal = ({ opened, onClose, propertyId, propertyTitle, userEmail })
                 <span className="text-sm font-semibold text-gray-700">
                   {t("contactModal.chooseConsultant")}
                 </span>
-                {selectedConsultant && (
+                {selectedConsultant && !consultantId && (
                   <button
                     type="button"
                     onClick={() => setSelectedConsultantId(null)}
@@ -268,13 +287,13 @@ const ContactModal = ({ opened, onClose, propertyId, propertyTitle, userEmail })
                 <p className="mt-2 text-xs text-gray-400">
                   {t("common.loading")}
                 </p>
-              ) : availableConsultants.length === 0 ? (
+              ) : scopedConsultants.length === 0 ? (
                 <p className="mt-2 text-xs text-gray-500">
                   {t("contactModal.noConsultants")}
                 </p>
               ) : (
                 <div className="mt-3 flex gap-3 overflow-x-auto pb-2">
-                  {availableConsultants.slice(0, 10).map((consultant) => {
+                  {scopedConsultants.map((consultant) => {
                     const isSelected = consultant.id === selectedConsultantId;
                     return (
                       <button
@@ -418,6 +437,7 @@ ContactModal.propTypes = {
   propertyId: PropTypes.string,
   propertyTitle: PropTypes.string,
   userEmail: PropTypes.string,
+  consultantId: PropTypes.string,
 };
 
 export default ContactModal;
