@@ -491,7 +491,7 @@ const Navbar = ({
                       <h4 className="text-sm font-semibold text-[#00A86B]">
                         {t(column.titleKey)}
                       </h4>
-                      <div className="mt-2 h-0.5 w-10 bg-red-500"></div>
+                      <div className="mt-2 h-0.5 w-10 bg-[#00A86B]"></div>
                     </div>
                     <ul className="space-y-2">
                       {column.items.map((item) => {
