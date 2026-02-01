@@ -23,6 +23,7 @@ import { FaLandmark, FaHome, FaBriefcase } from "react-icons/fa";
 import { Avatar } from "@mantine/core";
 import useAdmin from "../hooks/useAdmin";
 import useAuthCheck from "../hooks/useAuthCheck";
+import useBlogs from "../hooks/useBlogs";
 import userIcon from "../assets/user.svg";
 
 const Navbar = ({ 
@@ -40,6 +41,7 @@ const Navbar = ({
   const { t } = useTranslation();
   const { isAdmin, loading } = useAdmin();
   const { validateLogin } = useAuthCheck();
+  const { data: blogs, refetch: refetchBlogs } = useBlogs();
   const navigate = useNavigate();
   const location = useLocation();
   const [saleDropdownOpen, setSaleDropdownOpen] = useState(false);
@@ -137,7 +139,68 @@ const Navbar = ({
         { labelKey: "aboutTurkeyMenu.longTermRentalPotentialLycianRegion" },
       ],
     },
+    {
+      titleKey: "aboutTurkeyMenu.marketAnalysis",
+      items: [
+        {
+          labelKey: "aboutTurkeyMenu.housingSalesStatisticsTurkey",
+          blogKey: "housingStats",
+          singleLine: true,
+        },
+        {
+          labelKey: "aboutTurkeyMenu.housingSalesForeignersByNationality",
+          blogKey: "foreignSales",
+        },
+      ],
+    },
   ];
+
+  const findBlogIdByMarker = (list, marker) => {
+    if (!marker || !Array.isArray(list)) return null;
+    const match = list.find((blog) =>
+      [blog?.content, blog?.content_en, blog?.content_tr]
+        .filter((content) => typeof content === "string")
+        .some((content) => content.includes(marker))
+    );
+    return match?.id || null;
+  };
+
+  const getMarketAnalysisBlogId = async (key) => {
+    const markers = {
+      housingStats: "HOUSING_STATS_CHART",
+      foreignSales: "FOREIGN_SALES_CHART",
+    };
+    const marker = markers[key];
+    if (!marker) return null;
+
+    let list = Array.isArray(blogs) ? blogs : null;
+    let id = list ? findBlogIdByMarker(list, marker) : null;
+
+    if (!id) {
+      try {
+        const result = await refetchBlogs();
+        list = result?.data || [];
+        id = findBlogIdByMarker(list, marker);
+      } catch (error) {
+        return null;
+      }
+    }
+
+    return id;
+  };
+
+  const handleAboutTurkeyItemClick = async (item) => {
+    if (!item?.blogKey) return;
+
+    const blogId = await getMarketAnalysisBlogId(item.blogKey);
+    if (blogId) {
+      navigate(`/blog/${blogId}`);
+    } else {
+      navigate("/blogs");
+    }
+    setAboutTurkeyDropdownOpen(false);
+    closeMenu && closeMenu();
+  };
 
   const handleAddPropertyClick = () => {
     if (validateLogin()) {
@@ -170,6 +233,14 @@ const Navbar = ({
     e.stopPropagation();
     setProjectsDropdownOpen(!projectsDropdownOpen);
     setSaleDropdownOpen(false);
+  };
+
+  const toggleAboutTurkeyDropdown = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setAboutTurkeyDropdownOpen((prev) => !prev);
+    setSaleDropdownOpen(false);
+    setProjectsDropdownOpen(false);
   };
 
   const openAboutTurkeyMenu = () => {
@@ -413,9 +484,9 @@ const Navbar = ({
           {aboutTurkeyDropdownOpen && (
             <div className="absolute top-full left-1/2 z-50 w-[min(1100px,92vw)] -translate-x-1/2 pt-3">
               <div className="rounded-2xl border border-black/10 bg-[#e7e2d4] p-6 shadow-xl">
-                <div className="grid grid-cols-4 gap-6">
+                <div className="grid grid-cols-5 gap-6">
                   {aboutTurkeyMenu.map((column) => (
-                    <div key={column.title} className="min-w-0">
+                    <div key={column.titleKey} className="min-w-0">
                     <div className="mb-4">
                       <h4 className="text-sm font-semibold text-gray-700">
                         {t(column.titleKey)}
@@ -423,22 +494,47 @@ const Navbar = ({
                       <div className="mt-2 h-0.5 w-10 bg-red-500"></div>
                     </div>
                     <ul className="space-y-2">
-                      {column.items.map((item) => (
-                        <li key={item.labelKey}>
+                      {column.items.map((item) => {
+                        const isBlogLink = Boolean(item.blogKey);
+                        const isSingleLine = Boolean(item.singleLine);
+                        return (
+                          <li key={item.labelKey}>
                             <button
                               type="button"
-                              className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-[#00A86B] hover:text-white"
+                              onClick={() => {
+                                if (isBlogLink) {
+                                  handleAboutTurkeyItemClick(item);
+                                }
+                              }}
+                              className={`group flex w-full ${
+                                isBlogLink ? "items-start" : "items-center"
+                              } justify-between gap-3 px-3 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-[#00A86B] hover:text-white ${
+                                isBlogLink ? "cursor-pointer" : "cursor-default"
+                              }`}
                             >
-                            <span>{t(item.labelKey)}</span>
-                            {item.hasChildren && (
-                              <MdKeyboardArrowRight
-                                size={18}
-                                className="text-gray-500"
+                              <span
+                                className={
+                                  isBlogLink
+                                  ? `block text-[12px] font-semibold leading-5 text-gray-800 group-hover:text-white ${
+                                      isSingleLine
+                                        ? "whitespace-nowrap text-[11px] tracking-tight overflow-visible"
+                                        : "whitespace-normal"
+                                    }`
+                                  : undefined
+                                }
+                              >
+                              {t(item.labelKey)}
+                            </span>
+                              {item.hasChildren && (
+                                <MdKeyboardArrowRight
+                                  size={18}
+                                  className="text-gray-500"
                                 />
                               )}
                             </button>
                           </li>
-                        ))}
+                        );
+                      })}
                       </ul>
                     </div>
                   ))}
@@ -448,9 +544,57 @@ const Navbar = ({
           )}
         </div>
       ) : (
-        <button type="button" className={simpleButtonClass(false)}>
-          <span>{t("nav.aboutTurkey")}</span>
-        </button>
+        <div className="w-full">
+          <button
+            type="button"
+            className={simpleButtonClass(false)}
+            aria-expanded={aboutTurkeyDropdownOpen}
+            onClick={toggleAboutTurkeyDropdown}
+          >
+            <span>{t("nav.aboutTurkey")}</span>
+            <MdKeyboardArrowDown
+              size={20}
+              className={`text-gray-500 transition-transform duration-300 ${
+                aboutTurkeyDropdownOpen ? "rotate-180" : ""
+              }`}
+            />
+          </button>
+          {aboutTurkeyDropdownOpen && (
+            <div className="border-b border-gray-200 bg-white">
+              {aboutTurkeyMenu.map((section) => (
+                <div
+                  key={section.titleKey}
+                  className="px-4 py-3 border-t border-gray-100"
+                >
+                  <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    {t(section.titleKey)}
+                  </div>
+                  <div className="mt-2 space-y-1">
+                    {section.items.map((item) => {
+                      const isBlogLink = Boolean(item.blogKey);
+                      return (
+                        <button
+                          key={item.labelKey}
+                          type="button"
+                          onClick={() => {
+                            if (isBlogLink) {
+                              handleAboutTurkeyItemClick(item);
+                            }
+                          }}
+                          className={`w-full rounded-md px-3 py-1.5 text-left text-[13px] text-gray-700 transition-colors hover:bg-[#00A86B] hover:text-white ${
+                            isBlogLink ? "cursor-pointer font-semibold" : "cursor-default"
+                          }`}
+                        >
+                          {t(item.labelKey)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
       <button type="button" className={simpleButtonClass(false)}>
