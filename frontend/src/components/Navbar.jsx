@@ -1,12 +1,13 @@
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import PropTypes from "prop-types";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 // icons
 import {
   MdHomeWork,
   MdSell,
   MdKeyboardArrowDown,
+  MdKeyboardArrowRight,
   MdBusiness,
   MdLocationCity,
   MdPublic,
@@ -43,6 +44,21 @@ const Navbar = ({
   const location = useLocation();
   const [saleDropdownOpen, setSaleDropdownOpen] = useState(false);
   const [projectsDropdownOpen, setProjectsDropdownOpen] = useState(false);
+  const [aboutTurkeyDropdownOpen, setAboutTurkeyDropdownOpen] = useState(false);
+  const aboutTurkeyCloseTimer = useRef(null);
+  const isDesktop = !isMobile;
+  const desktopItemClass = (isActive = false) =>
+    `flex items-center gap-1 px-2 py-1 text-[13px] font-semibold ${
+      isActive ? "text-secondaryRed" : "text-gray-800"
+    } hover:text-secondary transition-colors`;
+  const mobileItemClass = (isActive = false) =>
+    `flex items-center justify-between w-full px-4 py-4 border-b border-gray-200 hover:bg-gray-50/30 transition-colors ${
+      isActive ? "text-secondaryRed font-semibold" : "text-gray-800"
+    }`;
+  const linkClass = (isActive = false) =>
+    isMobile ? mobileItemClass(isActive) : desktopItemClass(isActive);
+  const simpleButtonClass = (isActive = false) =>
+    isMobile ? mobileItemClass(isActive) : desktopItemClass(isActive);
 
   // Property categories with translations
   const propertyCategories = [
@@ -66,6 +82,53 @@ const Navbar = ({
       value: "international",
       label: t("nav.internationalProjects"),
       icon: MdPublic,
+    },
+  ];
+
+  const aboutTurkeyMenu = [
+    {
+      titleKey: "aboutTurkeyMenu.mediterraneanRegion",
+      items: [
+        { labelKey: "aboutTurkeyMenu.aboutSide" },
+        { labelKey: "aboutTurkeyMenu.aboutKalkan", hasChildren: true },
+        { labelKey: "aboutTurkeyMenu.aboutKas", hasChildren: true },
+        { labelKey: "aboutTurkeyMenu.aboutAntalya", hasChildren: true },
+        { labelKey: "aboutTurkeyMenu.aboutBelek" },
+        { labelKey: "aboutTurkeyMenu.aboutDalaman" },
+        { labelKey: "aboutTurkeyMenu.aboutAlanya" },
+        { labelKey: "aboutTurkeyMenu.aboutKemer", hasChildren: true },
+        { labelKey: "aboutTurkeyMenu.turkishMediterraneanRegion" },
+      ],
+    },
+    {
+      titleKey: "aboutTurkeyMenu.aegeanRegion",
+      items: [
+        { labelKey: "aboutTurkeyMenu.izmirInformation" },
+        { labelKey: "aboutTurkeyMenu.fethiyeInformation", hasChildren: true },
+        { labelKey: "aboutTurkeyMenu.bodrumInformation", hasChildren: true },
+        { labelKey: "aboutTurkeyMenu.marmarisInformation" },
+        { labelKey: "aboutTurkeyMenu.alkintumInformation" },
+        { labelKey: "aboutTurkeyMenu.kusadasiInformation", hasChildren: true },
+        { labelKey: "aboutTurkeyMenu.gocekInformation" },
+        { labelKey: "aboutTurkeyMenu.turkishAegeanRegion" },
+        { labelKey: "aboutTurkeyMenu.ayvalikCundaInformation" },
+        { labelKey: "aboutTurkeyMenu.dalyanInformation" },
+        { labelKey: "aboutTurkeyMenu.cesmeInformation" },
+      ],
+    },
+    {
+      titleKey: "aboutTurkeyMenu.marmaraRegion",
+      items: [
+        { labelKey: "aboutTurkeyMenu.aboutIstanbul", hasChildren: true },
+        { labelKey: "aboutTurkeyMenu.aboutYalova", hasChildren: true },
+        { labelKey: "aboutTurkeyMenu.aboutBursa", hasChildren: true },
+      ],
+    },
+    {
+      titleKey: "aboutTurkeyMenu.lycianCoast",
+      items: [
+        { labelKey: "aboutTurkeyMenu.aboutLycianWay" },
+      ],
     },
   ];
 
@@ -102,6 +165,24 @@ const Navbar = ({
     setSaleDropdownOpen(false);
   };
 
+  const openAboutTurkeyMenu = () => {
+    if (aboutTurkeyCloseTimer.current) {
+      clearTimeout(aboutTurkeyCloseTimer.current);
+      aboutTurkeyCloseTimer.current = null;
+    }
+    setAboutTurkeyDropdownOpen(true);
+  };
+
+  const scheduleCloseAboutTurkeyMenu = () => {
+    if (aboutTurkeyCloseTimer.current) {
+      clearTimeout(aboutTurkeyCloseTimer.current);
+    }
+    aboutTurkeyCloseTimer.current = setTimeout(() => {
+      setAboutTurkeyDropdownOpen(false);
+      aboutTurkeyCloseTimer.current = null;
+    }, 180);
+  };
+
   const handleProjectClick = (projectType) => {
     if (projectType === "LocalProject") {
       navigate("/projects");
@@ -124,10 +205,16 @@ const Navbar = ({
           ) : !isAuthenticated ? (
             <button
               onClick={onLoginClick}
-              className="flex items-center gap-3 w-full px-3 py-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-3 w-full px-3 py-3 rounded-lg bg-[#00A86B] text-white hover:bg-[#009A61] transition-colors"
             >
-              <img src={userIcon} alt="" height={20} width={20} className="opacity-60" />
-              <span className="text-gray-700 font-medium">{t('common.login')}</span>
+              <img
+                src={userIcon}
+                alt=""
+                height={20}
+                width={20}
+                className="brightness-0 invert"
+              />
+              <span className="font-medium">{t('common.login')}</span>
             </button>
           ) : (
             <div className="space-y-1">
@@ -189,16 +276,13 @@ const Navbar = ({
       <NavLink
         to={"/"}
         onClick={() => closeMenu && closeMenu()}
-        className={({ isActive }) =>
-          `flex items-center justify-between w-full lg:w-auto px-4 py-4 lg:px-2 lg:py-1 border-b lg:border-b-0 border-gray-200 hover:bg-gray-50/30 lg:hover:bg-transparent transition-colors ${
-            isActive
-              ? "text-blue-600 font-semibold lg:active-link"
-              : "text-gray-800"
-          }`
-        }
+        className={({ isActive }) => linkClass(isActive)}
       >
         <div className="flex items-center gap-3">
-          <MdHomeWork size={20} />
+          <MdHomeWork
+            size={20}
+            className={isMobile ? "" : "text-secondaryRed"}
+          />
           <span>{t("nav.home")}</span>
         </div>
       </NavLink>
@@ -207,16 +291,13 @@ const Navbar = ({
       <NavLink
         to={"/listing"}
         onClick={() => closeMenu && closeMenu()}
-        className={({ isActive }) =>
-          `flex items-center justify-between w-full lg:w-auto px-4 py-4 lg:px-2 lg:py-1 border-b lg:border-b-0 border-gray-200 hover:bg-gray-50/30 lg:hover:bg-transparent transition-colors ${
-            isActive && !currentFilter
-              ? "text-blue-600 font-semibold lg:active-link"
-              : "text-gray-800"
-          }`
-        }
+        className={({ isActive }) => linkClass(isActive && !currentFilter)}
       >
         <div className="flex items-center gap-3">
-          <RiCheckboxMultipleBlankFill size={20} />
+          <RiCheckboxMultipleBlankFill
+            size={20}
+            className={isMobile ? "" : "lg:hidden"}
+          />
           <span>{t("nav.listing")}</span>
         </div>
       </NavLink>
@@ -232,11 +313,7 @@ const Navbar = ({
         }
       >
         <div
-          className={`flex items-center justify-between w-full px-4 py-4 lg:px-3 lg:py-1 border-b lg:border-b-0 border-gray-200 cursor-pointer hover:bg-green-50/50 lg:hover:bg-transparent transition-colors ${
-            currentFilter === "sale"
-              ? "text-green-600 font-semibold lg:bg-green-500 lg:text-white"
-              : "text-gray-800 lg:bg-green-100 lg:text-green-700 lg:hover:bg-green-500 lg:hover:text-white"
-          }`}
+          className={`${linkClass(currentFilter === "sale")} cursor-pointer`}
           onClick={(e) => {
             // On mobile: toggle dropdown
             if (window.innerWidth < 1024) {
@@ -249,12 +326,12 @@ const Navbar = ({
           }}
         >
           <div className="flex items-center gap-3 lg:gap-1">
-            <MdSell size={20} />
+            <MdSell size={20} className={isMobile ? "" : "lg:hidden"} />
             <span>{t("nav.forSale")}</span>
           </div>
           <MdKeyboardArrowDown
             size={20}
-            className={`transition-transform duration-300 ${
+            className={`transition-transform duration-300 text-gray-500 ${
               saleDropdownOpen ? "rotate-180" : ""
             }`}
             onClick={(e) => {
@@ -267,7 +344,7 @@ const Navbar = ({
 
         {/* Sale Dropdown */}
         {saleDropdownOpen && (
-          <div className="lg:absolute lg:top-full lg:left-0 lg:z-50 bg-white lg:shadow-lg lg:border lg:border-gray-100">
+          <div className="lg:absolute lg:top-full lg:left-0 lg:z-50 bg-white lg:shadow-xl lg:border lg:border-gray-200 lg:rounded-lg lg:overflow-hidden lg:min-w-[210px]">
             {propertyCategories.map((cat) => {
               const IconComponent = cat.icon;
               const isActive =
@@ -276,13 +353,16 @@ const Navbar = ({
                 <div
                   key={cat.value}
                   onClick={() => handleCategoryClick("sale", cat.value)}
-                  className={`flex items-start gap-3 px-8 lg:px-4 py-3 lg:py-2 cursor-pointer transition-colors border-b lg:border-b-0 border-gray-200 last:border-b-0 ${
+                  className={`group flex items-center gap-3 px-8 lg:px-4 py-3 lg:py-2 cursor-pointer transition-colors border-b lg:border-b-0 border-gray-100 last:border-b-0 ${
                     isActive
-                      ? "bg-green-100 text-green-700 font-medium lg:bg-green-500 lg:text-white"
-                      : "text-green-700 hover:bg-green-50/50 lg:hover:bg-green-50 lg:hover:text-green-600"
+                      ? "bg-secondary/15 text-secondary font-semibold"
+                      : "text-gray-700 hover:bg-secondary/10 hover:text-secondary"
                   }`}
                 >
-                  <IconComponent size={18} />
+                  <IconComponent
+                    size={18}
+                    className="text-gray-500 group-hover:text-secondary"
+                  />
                   <span className="text-sm lg:text-sm font-medium">
                     {cat.label}
                   </span>
@@ -292,6 +372,95 @@ const Navbar = ({
           </div>
         )}
       </div>
+
+      <button type="button" className={simpleButtonClass(false)}>
+        <span>{t("nav.citizenship")}</span>
+      </button>
+
+      {isDesktop ? (
+        <div
+          className="relative"
+          onMouseEnter={() => window.innerWidth >= 1024 && openAboutTurkeyMenu()}
+          onMouseLeave={() =>
+            window.innerWidth >= 1024 && scheduleCloseAboutTurkeyMenu()
+          }
+        >
+          <button
+            type="button"
+            className={simpleButtonClass(false)}
+            aria-expanded={aboutTurkeyDropdownOpen}
+            onClick={(e) => {
+              e.preventDefault();
+              if (window.innerWidth < 1024) return;
+              if (aboutTurkeyDropdownOpen) {
+                scheduleCloseAboutTurkeyMenu();
+              } else {
+                openAboutTurkeyMenu();
+              }
+            }}
+          >
+            <span>{t("nav.aboutTurkey")}</span>
+            <MdKeyboardArrowDown size={16} className="text-gray-500" />
+          </button>
+
+          {aboutTurkeyDropdownOpen && (
+            <div className="absolute top-full left-1/2 z-50 w-[min(1100px,92vw)] -translate-x-1/2 pt-3">
+              <div className="rounded-2xl border border-black/10 bg-[#e7e2d4] p-6 shadow-xl">
+                <div className="grid grid-cols-4 gap-6">
+                  {aboutTurkeyMenu.map((column) => (
+                    <div key={column.title} className="min-w-0">
+                    <div className="mb-4">
+                      <h4 className="text-sm font-semibold text-gray-700">
+                        {t(column.titleKey)}
+                      </h4>
+                      <div className="mt-2 h-0.5 w-10 bg-red-500"></div>
+                    </div>
+                    <ul className="space-y-2">
+                      {column.items.map((item) => (
+                        <li key={item.labelKey}>
+                            <button
+                              type="button"
+                              className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-[#00A86B] hover:text-white"
+                            >
+                            <span>{t(item.labelKey)}</span>
+                            {item.hasChildren && (
+                              <MdKeyboardArrowRight
+                                size={18}
+                                className="text-gray-500"
+                                />
+                              )}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <button type="button" className={simpleButtonClass(false)}>
+          <span>{t("nav.aboutTurkey")}</span>
+        </button>
+      )}
+
+      <button type="button" className={simpleButtonClass(false)}>
+        <span>{t("nav.buyerGuide")}</span>
+        <MdKeyboardArrowDown
+          size={isMobile ? 20 : 16}
+          className="text-gray-500"
+        />
+      </button>
+
+      <button type="button" className={simpleButtonClass(false)}>
+        <span>{t("nav.aboutUs")}</span>
+        <MdKeyboardArrowDown
+          size={isMobile ? 20 : 16}
+          className="text-gray-500"
+        />
+      </button>
 
       {/* Projects with Dropdown */}
       <div
@@ -304,11 +473,7 @@ const Navbar = ({
         }
       >
         <div
-          className={`flex items-center justify-between w-full px-4 py-4 lg:px-3 lg:py-1 border-b lg:border-b-0 border-gray-200 cursor-pointer hover:bg-blue-50/50 lg:hover:bg-transparent transition-colors ${
-            searchParams.get("projectType")
-              ? "text-blue-600 font-semibold lg:bg-blue-500 lg:text-white"
-              : "text-gray-800 lg:bg-blue-100 lg:text-blue-700 lg:hover:bg-blue-500 lg:hover:text-white"
-          }`}
+          className={`${linkClass(Boolean(searchParams.get("projectType")))} cursor-pointer`}
           onClick={(e) => {
             // On mobile: toggle dropdown
             if (window.innerWidth < 1024) {
@@ -320,12 +485,12 @@ const Navbar = ({
           }}
         >
           <div className="flex items-center gap-3 lg:gap-1">
-            <MdBusiness size={20} />
+            <MdBusiness size={20} className={isMobile ? "" : "lg:hidden"} />
             <span>{t("nav.projects")}</span>
           </div>
           <MdKeyboardArrowDown
             size={20}
-            className={`transition-transform duration-300 ${
+            className={`transition-transform duration-300 text-gray-500 ${
               projectsDropdownOpen ? "rotate-180" : ""
             }`}
             onClick={(e) => {
@@ -336,7 +501,7 @@ const Navbar = ({
 
         {/* Projects Dropdown */}
         {projectsDropdownOpen && (
-          <div className="lg:absolute lg:top-full lg:left-0 lg:z-50 bg-blue-50 lg:bg-white lg:shadow-lg lg:border lg:border-gray-100 lg:min-w-[200px]">
+          <div className="lg:absolute lg:top-full lg:left-0 lg:z-50 bg-white lg:shadow-xl lg:border lg:border-gray-200 lg:rounded-lg lg:overflow-hidden lg:min-w-[210px]">
             {projectTypes.map((project) => {
               const IconComponent = project.icon;
               const isActive =
@@ -345,13 +510,16 @@ const Navbar = ({
                 <div
                   key={project.value}
                   onClick={() => handleProjectClick(project.value)}
-                  className={`flex items-center gap-3 px-8 lg:px-4 py-3 lg:py-2 cursor-pointer transition-colors border-b lg:border-b-0 border-gray-200 last:border-b-0 ${
+                  className={`group flex items-center gap-3 px-8 lg:px-4 py-3 lg:py-2 cursor-pointer transition-colors border-b lg:border-b-0 border-gray-100 last:border-b-0 ${
                     isActive
-                      ? "bg-blue-100 text-blue-700 font-medium lg:bg-blue-500 lg:text-white"
-                      : "text-blue-700 hover:bg-blue-50/50 lg:hover:bg-blue-50 lg:hover:text-blue-600"
+                      ? "bg-secondary/15 text-secondary font-semibold"
+                      : "text-gray-700 hover:bg-secondary/10 hover:text-secondary"
                   }`}
                 >
-                  <IconComponent size={18} />
+                  <IconComponent
+                    size={18}
+                    className="text-gray-500 group-hover:text-secondary"
+                  />
                   <span className="text-sm lg:text-sm font-medium whitespace-nowrap">
                     {project.label}
                   </span>
@@ -362,25 +530,14 @@ const Navbar = ({
         )}
       </div>
 
-      {/* Contact */}
-      <button
-        onClick={onContactClick}
-        className="flex items-center justify-between w-full lg:w-auto px-4 py-4 lg:px-2 lg:py-1 border-b lg:border-b-0 border-gray-200 hover:bg-gray-50/30 lg:hover:bg-transparent lg:hover:text-secondary transition-colors text-gray-800"
-      >
-        <div className="flex items-center gap-3">
-          <MdPermContactCalendar size={20} />
-          <span>{t("nav.contact")}</span>
-        </div>
-      </button>
-
       {/* Add Property - Admin Only */}
       {!loading && isAdmin && (
         <div
           onClick={handleAddPropertyClick}
-          className="flex items-center justify-between w-full lg:w-auto px-4 py-4 lg:px-2 lg:py-1 border-b lg:border-b-0 border-gray-200 cursor-pointer hover:bg-gray-50/30 lg:hover:bg-secondary lg:hover:text-white transition-colors text-gray-800"
+          className={`${linkClass(false)} cursor-pointer`}
         >
           <div className="flex items-center gap-3">
-            <MdAddHome size={20} />
+            <MdAddHome size={20} className={isMobile ? "" : "lg:hidden"} />
             <span>{t("nav.addProperty")}</span>
           </div>
         </div>

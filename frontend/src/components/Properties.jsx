@@ -1,9 +1,10 @@
 import PropertyGridCard from "./PropertyGridCard";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import useProperties from "../hooks/useProperties";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
+import { MdLocationOn, MdSearch, MdKeyboardArrowDown, MdFilterList, MdClose } from "react-icons/md";
 
 // Animated Card wrapper with IntersectionObserver
 const AnimatedCard = ({ children, delay = 0 }) => {
@@ -50,13 +51,201 @@ AnimatedCard.propTypes = {
 const Properties = () => {
   const { t } = useTranslation();
   const { data, isError, isLoading } = useProperties();
+  const navigate = useNavigate();
   const [headerVisible, setHeaderVisible] = useState(false);
   const headerRef = useRef(null);
+
+  const [searchValue, setSearchValue] = useState("");
+  const [typeFilter, setTypeFilter] = useState(null);
+  const [categoryFilter, setCategoryFilter] = useState(null);
+  const [priceRange, setPriceRange] = useState({ min: "", max: "" });
+  const [roomsFilter, setRoomsFilter] = useState("");
+
+  const [showTypeDropdown, setShowTypeDropdown] = useState(false);
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [showPriceDropdown, setShowPriceDropdown] = useState(false);
+  const [showRoomsDropdown, setShowRoomsDropdown] = useState(false);
+
+  const typeRef = useRef(null);
+  const categoryRef = useRef(null);
+  const priceRef = useRef(null);
+  const roomsRef = useRef(null);
 
   useEffect(() => {
     const frameId = requestAnimationFrame(() => setHeaderVisible(true));
     return () => cancelAnimationFrame(frameId);
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (typeRef.current && !typeRef.current.contains(event.target)) {
+        setShowTypeDropdown(false);
+      }
+      if (categoryRef.current && !categoryRef.current.contains(event.target)) {
+        setShowCategoryDropdown(false);
+      }
+      if (priceRef.current && !priceRef.current.contains(event.target)) {
+        setShowPriceDropdown(false);
+      }
+      if (roomsRef.current && !roomsRef.current.contains(event.target)) {
+        setShowRoomsDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const roomOptions = [
+    { value: "0", label: t("listing.studio") },
+    { value: "1", label: t("listing.room1") },
+    { value: "2", label: t("listing.room2") },
+    { value: "3", label: t("listing.room3") },
+    { value: "4", label: t("listing.room4") },
+    { value: "5+", label: t("listing.room5plus") },
+  ];
+
+  const propertyTypes = [
+    { value: null, label: t("listing.all") },
+    { value: "sale", label: t("listing.forSale") },
+  ];
+
+  const propertyCategories = [
+    { value: "residential", label: t("categories.residential") },
+    { value: "villa", label: t("categories.villa") },
+    { value: "commercial", label: t("categories.commercial") },
+    { value: "land", label: t("categories.land") },
+    { value: "residentialProjects", label: t("categories.residentialProjects") },
+    { value: "building", label: t("categories.building") },
+    { value: "timeshare", label: t("categories.timeshare") },
+    { value: "touristFacility", label: t("categories.touristFacility") },
+  ];
+
+  const formatNumber = (num) => new Intl.NumberFormat("tr-TR").format(num);
+  const formatCurrency = (num) => `TRY ${formatNumber(num)}`;
+
+  const getTypeLabel = () => {
+    const current = propertyTypes.find((type) => type.value === typeFilter);
+    return current ? current.label : t("listing.all");
+  };
+
+  const getCategoryLabel = () => {
+    if (!categoryFilter) return t("listing.propertyUses");
+    const current = propertyCategories.find((cat) => cat.value === categoryFilter);
+    return current ? current.label : t("listing.propertyUses");
+  };
+
+  const getPriceLabel = () => {
+    if (priceRange.min || priceRange.max) {
+      if (priceRange.min && priceRange.max) {
+        return `${formatCurrency(priceRange.min)} - ${formatCurrency(priceRange.max)}`;
+      }
+      if (priceRange.min) return `${formatCurrency(priceRange.min)}+`;
+      return `${t("listing.maxPrice")}: ${formatCurrency(priceRange.max)}`;
+    }
+    return t("listing.price");
+  };
+
+  const getRoomsLabel = () => {
+    if (roomsFilter) {
+      const option = roomOptions.find((item) => item.value === roomsFilter);
+      return option ? option.label : t("listing.rooms");
+    }
+    return t("listing.rooms");
+  };
+
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (searchValue.trim()) count += 1;
+    if (typeFilter) count += 1;
+    if (categoryFilter) count += 1;
+    if (priceRange.min || priceRange.max) count += 1;
+    if (roomsFilter) count += 1;
+    return count;
+  }, [searchValue, typeFilter, categoryFilter, priceRange, roomsFilter]);
+
+  const filteredProperties = useMemo(() => {
+    if (!Array.isArray(data)) return [];
+    const query = searchValue.trim().toLowerCase();
+
+    return data
+      .filter(
+        (property) =>
+          property.propertyType !== "local-project" &&
+          property.propertyType !== "international-project"
+      )
+      .filter((property) => {
+        if (typeFilter) {
+          return property.propertyType === typeFilter;
+        }
+        return true;
+      })
+      .filter((property) => {
+        if (categoryFilter) {
+          return property.category === categoryFilter;
+        }
+        return true;
+      })
+      .filter((property) => {
+        if (!priceRange.min && !priceRange.max) return true;
+        const priceValue = Number(property.price || 0);
+        if (priceRange.min && priceValue < Number(priceRange.min)) return false;
+        if (priceRange.max && priceValue > Number(priceRange.max)) return false;
+        return true;
+      })
+      .filter((property) => {
+        if (!roomsFilter) return true;
+
+        if (property.rooms) {
+          const roomsValue = property.rooms.toLowerCase();
+          const normalizedRooms = roomsValue.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+          const roomMatch = roomsValue.match(/^(\d+)/);
+          const roomCount = roomMatch ? parseInt(roomMatch[1], 10) : 0;
+
+          if (roomsFilter === "0") {
+            return (
+              normalizedRooms.includes("studyo") ||
+              normalizedRooms.includes("studio") ||
+              roomCount === 0
+            );
+          }
+          if (roomsFilter === "5+") {
+            return roomCount >= 5;
+          }
+          return roomCount === parseInt(roomsFilter, 10);
+        }
+
+        const bedrooms = property.facilities?.bedrooms || 0;
+        if (roomsFilter === "0") return bedrooms === 0;
+        if (roomsFilter === "5+") return bedrooms >= 5;
+        return bedrooms === parseInt(roomsFilter, 10);
+      })
+      .filter((property) => {
+        if (!query) return true;
+        const title = property.title?.toLowerCase() || "";
+        const city = property.city?.toLowerCase() || "";
+        const country = property.country?.toLowerCase() || "";
+        const address = property.address?.toLowerCase() || "";
+        return (
+          title.includes(query) ||
+          city.includes(query) ||
+          country.includes(query) ||
+          address.includes(query)
+        );
+      });
+  }, [data, searchValue, typeFilter, categoryFilter, priceRange, roomsFilter]);
+
+  const handleAllFilters = () => {
+    const params = new URLSearchParams();
+    if (searchValue.trim()) params.set("search", searchValue.trim());
+    if (typeFilter) params.set("type", typeFilter);
+    if (categoryFilter) params.set("category", categoryFilter);
+    if (priceRange.min) params.set("minPrice", priceRange.min);
+    if (priceRange.max) params.set("maxPrice", priceRange.max);
+    if (roomsFilter) params.set("rooms", roomsFilter);
+    const queryString = params.toString();
+    navigate(`/listing${queryString ? `?${queryString}` : ""}`);
+  };
 
   if (isError) {
     return (
@@ -123,16 +312,243 @@ const Properties = () => {
           </p>
         </div>
 
+        {/* Filter Bar */}
+        <div className="max-w-5xl mx-auto mb-12">
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {/* Location Search */}
+            <div className="flex items-center gap-2 w-full sm:w-auto min-w-[220px] flex-1 sm:flex-none bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-sm">
+              <MdLocationOn className="text-gray-400 text-lg flex-shrink-0" />
+              <input
+                type="text"
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+                placeholder={t("listing.locationPlaceholder")}
+                className="w-full bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400"
+              />
+              {searchValue && (
+                <button
+                  type="button"
+                  onClick={() => setSearchValue("")}
+                  className="text-gray-400 hover:text-gray-600"
+                  aria-label={t("listing.clear")}
+                >
+                  <MdClose size={16} />
+                </button>
+              )}
+              <MdSearch className="text-gray-400 text-lg flex-shrink-0" />
+            </div>
+
+            {/* Type Filter Dropdown */}
+            <div ref={typeRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setShowTypeDropdown((prev) => !prev)}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border border-gray-200 text-gray-700 hover:border-emerald-200 hover:bg-emerald-50 transition"
+              >
+                <span>{getTypeLabel()}</span>
+                <MdKeyboardArrowDown
+                  className={`transition-transform ${showTypeDropdown ? "rotate-180" : ""}`}
+                />
+              </button>
+
+              {showTypeDropdown && (
+                <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-20 min-w-[180px] py-1">
+                  {propertyTypes.map((type) => (
+                    <button
+                      key={type.value ?? "all"}
+                      type="button"
+                      onClick={() => {
+                        setTypeFilter(type.value);
+                        setShowTypeDropdown(false);
+                      }}
+                      className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                        typeFilter === type.value
+                          ? "bg-emerald-50 text-emerald-700 font-medium"
+                          : "text-gray-700 hover:bg-emerald-50"
+                      }`}
+                    >
+                      {type.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Category Filter Dropdown */}
+            <div ref={categoryRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setShowCategoryDropdown((prev) => !prev)}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border border-gray-200 text-gray-700 hover:border-emerald-200 hover:bg-emerald-50 transition"
+              >
+                <span>{getCategoryLabel()}</span>
+                <MdKeyboardArrowDown
+                  className={`transition-transform ${showCategoryDropdown ? "rotate-180" : ""}`}
+                />
+              </button>
+
+              {showCategoryDropdown && (
+                <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-20 min-w-[200px] py-1 max-h-[280px] overflow-y-auto">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCategoryFilter(null);
+                      setShowCategoryDropdown(false);
+                    }}
+                    className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                      !categoryFilter
+                        ? "bg-emerald-50 text-emerald-700 font-medium"
+                        : "text-gray-700 hover:bg-emerald-50"
+                    }`}
+                  >
+                    {t("listing.allCategories")}
+                  </button>
+                  {propertyCategories.map((cat) => (
+                    <button
+                      key={cat.value}
+                      type="button"
+                      onClick={() => {
+                        setCategoryFilter(cat.value);
+                        setShowCategoryDropdown(false);
+                      }}
+                      className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                        categoryFilter === cat.value
+                          ? "bg-emerald-50 text-emerald-700 font-medium"
+                          : "text-gray-700 hover:bg-emerald-50"
+                      }`}
+                    >
+                      {cat.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Price Filter Dropdown */}
+            <div ref={priceRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setShowPriceDropdown((prev) => !prev)}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border border-gray-200 text-gray-700 hover:border-emerald-200 hover:bg-emerald-50 transition"
+              >
+                <span>{getPriceLabel()}</span>
+                <MdKeyboardArrowDown
+                  className={`transition-transform ${showPriceDropdown ? "rotate-180" : ""}`}
+                />
+              </button>
+
+              {showPriceDropdown && (
+                <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-20 w-[260px] p-3">
+                  <h4 className="text-sm font-medium text-gray-800 mb-3">
+                    {t("listing.priceRange")}
+                  </h4>
+                  <div className="flex items-center gap-2 mb-3">
+                    <input
+                      type="number"
+                      value={priceRange.min}
+                      onChange={(e) => setPriceRange({ ...priceRange, min: e.target.value })}
+                      placeholder={t("listing.minPrice")}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                    />
+                    <span className="text-gray-400">-</span>
+                    <input
+                      type="number"
+                      value={priceRange.max}
+                      onChange={(e) => setPriceRange({ ...priceRange, max: e.target.value })}
+                      placeholder={t("listing.maxPrice")}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowPriceDropdown(false)}
+                    className="w-full py-2 bg-gray-900 text-white rounded-md text-sm font-medium hover:bg-gray-800 transition"
+                  >
+                    {t("listing.applyFilters")}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Rooms Filter Dropdown */}
+            <div ref={roomsRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setShowRoomsDropdown((prev) => !prev)}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border border-gray-200 text-gray-700 hover:border-emerald-200 hover:bg-emerald-50 transition"
+              >
+                <span>{getRoomsLabel()}</span>
+                <MdKeyboardArrowDown
+                  className={`transition-transform ${showRoomsDropdown ? "rotate-180" : ""}`}
+                />
+              </button>
+
+              {showRoomsDropdown && (
+                <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-20 min-w-[160px] py-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRoomsFilter("");
+                      setShowRoomsDropdown(false);
+                    }}
+                    className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                      !roomsFilter
+                        ? "bg-emerald-50 text-emerald-700 font-medium"
+                        : "text-gray-700 hover:bg-emerald-50"
+                    }`}
+                  >
+                    {t("listing.all")}
+                  </button>
+                  {roomOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => {
+                        setRoomsFilter(option.value);
+                        setShowRoomsDropdown(false);
+                      }}
+                      className={`w-full text-left px-4 py-2 text-sm transition-colors ${
+                        roomsFilter === option.value
+                          ? "bg-emerald-50 text-emerald-700 font-medium"
+                          : "text-gray-700 hover:bg-emerald-50"
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* All Filters Button */}
+            <button
+              type="button"
+              onClick={handleAllFilters}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-500 transition"
+            >
+              <MdFilterList />
+              <span>{t("listing.allFilters")}</span>
+              {activeFiltersCount > 0 && (
+                <span className="bg-white/20 text-white text-xs px-2 py-0.5 rounded-full">
+                  {activeFiltersCount}
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
+
         {/* Properties Grid - Exclude projects (they have their own pages) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {Array.isArray(data) && data
-            .filter(property => property.propertyType !== "local-project" && property.propertyType !== "international-project")
-            .slice(0, 12)
-            .map((property, index) => (
-              <AnimatedCard key={property.id} delay={index * 100}>
-                <PropertyGridCard property={property} />
-              </AnimatedCard>
-            ))}
+          {filteredProperties.slice(0, 12).map((property, index) => (
+            <AnimatedCard key={property.id} delay={index * 100}>
+              <PropertyGridCard property={property} />
+            </AnimatedCard>
+          ))}
+          {filteredProperties.length === 0 && (
+            <div className="col-span-full text-center text-gray-500">
+              {t("properties.noProperties")}
+            </div>
+          )}
         </div>
 
         {/* View More Button */}

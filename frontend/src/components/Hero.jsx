@@ -1,61 +1,121 @@
-import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import heroBg from "../assets/img1.png";
-import useProperties from "../hooks/useProperties";
 
 const Hero = () => {
   const { t } = useTranslation();
-  const [query, setQuery] = useState("");
-  const [showResults, setShowResults] = useState(false);
-  const [filteredResults, setFilteredResults] = useState([]);
-  const { data: properties, isLoading } = useProperties();
-  const navigate = useNavigate();
-  const searchRef = useRef(null);
-
-  // Filter properties based on search query (exclude projects - they have their own pages)
-  useEffect(() => {
-    if (query.trim() && properties) {
-      const filtered = properties.filter(
-        (property) =>
-          property.propertyType !== "local-project" &&
-          property.propertyType !== "international-project" &&
-          (property.title.toLowerCase().includes(query.toLowerCase()) ||
-          property.city.toLowerCase().includes(query.toLowerCase()) ||
-          property.country.toLowerCase().includes(query.toLowerCase()) ||
-          property.address.toLowerCase().includes(query.toLowerCase()))
-      );
-      setFilteredResults(filtered);
-      setShowResults(true);
-    } else {
-      setFilteredResults([]);
-      setShowResults(false);
+  const getInitialTab = () => {
+    if (typeof window === "undefined") {
+      return "ALL";
     }
-  }, [query, properties]);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (searchRef.current && !searchRef.current.contains(e.target)) {
-        setShowResults(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (query.trim()) {
-      navigate(`/listing?search=${encodeURIComponent(query)}`);
-    }
+    return localStorage.getItem("heroActiveTab") || "ALL";
   };
+  const [activeTab, setActiveTab] = useState(getInitialTab);
+  const locationTabs = [
+    {
+      label: "ALL",
+      icon: (
+        <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+          <circle
+            cx="10"
+            cy="10"
+            r="6"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.7"
+          />
+          <path
+            d="M15 15l5 5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+          />
+        </svg>
+      ),
+    },
+    {
+      label: "ISTANBUL",
+      icon: (
+        <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+          <path
+            d="M7 20h10M9 20V9l3-3 3 3v11M10 9h4M8 13h8M8 16h8M12 3v3"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      ),
+    },
+    {
+      label: "GREECE",
+      icon: (
+        <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+          <path
+            d="M3 17h18M5 15l4-6 5 4 5-3 2 5H5zM9 9l3-5 3 5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      ),
+    },
+    {
+      label: "DUBAI",
+      icon: (
+        <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+          <path
+            d="M5 20h14M9 20V7l3-3 3 3v13M7 12h10M10 9h4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      ),
+    },
+    {
+      label: "GEORGIA",
+      icon: (
+        <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+          <path
+            d="M4 7h16M12 7v3M8 10h8v5H8zM6 20h12"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      ),
+    },
+    {
+      label: "CYPRUS",
+      icon: (
+        <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+          <path
+            d="M4 19h16M12 19V6m0 0l5 4H12m0 0H7l5-4M5 16c3-1 6-1 9 0 2 .7 3 .7 5-.2"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      ),
+    },
+  ];
 
-  const handleResultClick = (property) => {
-    setShowResults(false);
-    setQuery("");
-    // Navigate to listing page with property title to show only that property
-    navigate(`/listing?search=${encodeURIComponent(property.title)}`);
+  const handleTabClick = (label) => {
+    setActiveTab(label);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("heroActiveTab", label);
+    }
   };
 
   return (
@@ -78,77 +138,42 @@ const Hero = () => {
         <p className="text-lg sm:text-xl text-white/90 italic">
           {t("hero.subtitle")}
         </p>
+      </div>
 
-        {/* Search Form */}
-        <div ref={searchRef} className="relative w-full max-w-[560px] mt-6">
-          <form
-            onSubmit={handleSubmit}
-            className="flex items-center bg-white rounded-full shadow-[0_14px_40px_rgba(15,23,42,0.25)]"
-          >
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onFocus={() => query.trim() && setShowResults(true)}
-              placeholder={t("hero.searchPlaceholder")}
-              className="flex-1 rounded-full border-none py-3 px-5 text-sm text-gray-800 focus:outline-none"
-            />
-            <button
-              type="submit"
-              className="w-10 h-10 mr-1 rounded-full bg-[#06a84e] flex items-center justify-center text-white text-sm transition hover:bg-[#058a41]"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                className="w-5 h-5"
-                fill="currentColor"
-              >
-                <path d="M10 4a6 6 0 014.472 10.04l4.744 4.744-1.415 1.415-4.744-4.744A6 6 0 1110 4zm0 2a4 4 0 100 8 4 4 0 000-8z" />
-              </svg>
-            </button>
-          </form>
-
-          {/* Search Results Dropdown */}
-          {showResults && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl overflow-hidden z-50 max-h-[400px] overflow-y-auto">
-              {isLoading ? (
-                <div className="p-4 text-center text-gray-500">
-                  {t("common.loading")}
-                </div>
-              ) : filteredResults.length > 0 ? (
-                <ul>
-                  {filteredResults.map((property) => (
-                    <li
-                      key={property.id}
-                      onClick={() => handleResultClick(property)}
-                      className="flex items-center gap-4 p-3 hover:bg-gray-50 cursor-pointer transition border-b border-gray-100 last:border-b-0"
+      {/* Location Tabs */}
+      <div className="absolute inset-x-0 bottom-0">
+        <div className="max-w-[1100px] mx-auto px-6 sm:px-10">
+          <div className="overflow-x-auto">
+            <div className="flex justify-center">
+              <div className="inline-flex bg-[#8b1c1c] shadow-[0_18px_40px_rgba(120,22,22,0.35)]">
+                {locationTabs.map((item, index) => (
+                  <button
+                    key={item.label}
+                    type="button"
+                    onClick={() => handleTabClick(item.label)}
+                    className={`flex items-center gap-2 px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm sm:text-base font-semibold tracking-wide uppercase transition
+                      ${
+                        activeTab === item.label
+                          ? "bg-white text-[#8b1c1c]"
+                          : "text-white hover:bg-white/10"
+                      } ${index === locationTabs.length - 1 ? "" : "border-r border-white/10"}`}
+                    aria-current={activeTab === item.label ? "true" : "false"}
+                  >
+                    <span
+                      className={`${
+                        activeTab === item.label
+                          ? "text-[#8b1c1c]"
+                          : "text-white"
+                      }`}
                     >
-                      <img
-                        src={property.image}
-                        alt={property.title}
-                        className="w-16 h-12 object-cover rounded-lg flex-shrink-0"
-                      />
-                      <div className="flex-1 min-w-0 text-left">
-                        <h4 className="text-sm font-semibold text-gray-800 truncate">
-                          {property.title}
-                        </h4>
-                        <p className="text-xs text-gray-500 truncate">
-                          {property.city}, {property.country}
-                        </p>
-                      </div>
-                      <div className="text-sm font-bold text-[#06a84e] flex-shrink-0">
-                        ₺{property.price.toLocaleString()}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <div className="p-4 text-center text-gray-500">
-                  No properties found for &ldquo;{query}&rdquo;
-                </div>
-              )}
+                      {item.icon}
+                    </span>
+                    <span>{item.label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
-          )}
+          </div>
         </div>
       </div>
     </section>

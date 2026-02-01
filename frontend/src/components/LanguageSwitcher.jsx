@@ -13,24 +13,23 @@ const LanguageSwitcher = ({ className = '' }) => {
   };
 
   return (
-    <div className={`flex items-center bg-gray-100 rounded-full p-1 ${className}`}>
+    <div className={`flex items-center gap-2 text-xs font-semibold ${className}`}>
       <button
         onClick={() => handleLanguageChange('en')}
-        className={`px-3 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
-          isEnglish
-            ? 'bg-[#06a84e] text-white shadow-sm'
-            : 'text-gray-600 hover:text-gray-800'
+        className={`transition-colors ${
+          isEnglish ? 'text-secondaryRed' : 'text-gray-700 hover:text-secondaryRed'
         }`}
+        type="button"
       >
         EN
       </button>
+      <span className="text-gray-300">|</span>
       <button
         onClick={() => handleLanguageChange('tr')}
-        className={`px-3 py-1.5 text-sm font-medium rounded-full transition-all duration-200 ${
-          isTurkish
-            ? 'bg-[#06a84e] text-white shadow-sm'
-            : 'text-gray-600 hover:text-gray-800'
+        className={`transition-colors ${
+          isTurkish ? 'text-secondaryRed' : 'text-gray-700 hover:text-secondaryRed'
         }`}
+        type="button"
       >
         TR
       </button>

@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+﻿import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Navbar from "./Navbar";
-import { MdClose, MdMenu } from "react-icons/md";
+import { MdArrowBack, MdClose, MdMenu, MdSearch } from "react-icons/md";
+import { FaHandshake, FaWhatsapp } from "react-icons/fa";
 import userIcon from "../assets/user.svg";
 import { Link } from "react-router-dom";
 import { useAuth0 } from "@auth0/auth0-react";
@@ -10,7 +11,9 @@ import LoginModal from "./LoginModal";
 import ContactModal from "./ContactModal";
 import ProfileModal from "./ProfileModal";
 import LanguageSwitcher from "./LanguageSwitcher";
+import SearchOverlay from "./SearchOverlay";
 import logo from "../assets/logo.png";
+import { normalizeWhatsAppNumber } from "../utils/common";
 
 const Header = () => {
   const { t } = useTranslation();
@@ -19,8 +22,12 @@ const Header = () => {
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [contactModalOpen, setContactModalOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [searchOverlayOpen, setSearchOverlayOpen] = useState(false);
+  const [selectedCurrency, setSelectedCurrency] = useState("USD");
   const autoLoginTriggeredRef = useRef(false);
   const loginPromptTimerRef = useRef(null);
+  const whatsappNumber = normalizeWhatsAppNumber("+90 542 435 96 94");
+  const whatsappLink = `https://wa.me/${whatsappNumber}`;
   const toggleMenu = () => setMenuOpened(!menuOpened);
   const { isAuthenticated, user, logout, isLoading } = useAuth0();
   const prevAuthRef = useRef(isAuthenticated);
@@ -46,6 +53,15 @@ const Header = () => {
       window.removeEventListener("scroll", handleScroll);
     };
   }, [menuOpened]); // Dependency array ensures that the effect runs when menuOpened changes
+
+  useEffect(() => {
+    if (!menuOpened) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [menuOpened]);
 
   const scheduleLoginPrompt = useCallback((delayMs = 180) => {
     if (loginPromptTimerRef.current) return;
@@ -92,95 +108,164 @@ const Header = () => {
   }, []);
 
   return (
-    <header className="fixed top-1 w-full left-0 right-0 z-50 px-4 sm:px-6 lg:px-12">
-      {/* container */}
-      <div
-        className={`${
-          active ? "py-0 " : " py-1"
-        } max-w-[1440px] mx-auto bg-white transition-all duration-200 rounded-full px-4 sm:px-5 ring-1 ring-slate-900/5`}
-      >
-        <div className="flexBetween py-3 ">
-          {/* logo */}
-          <Link to={"/"} className="flex items-center gap-x-2">
-            <img
-              src={logo}
-              alt="HB International"
-              className="h-10 sm:h-12 md:h-14 object-contain"
-            />
-          </Link>
-          {/* Navbar */}
-          <div className="flexCenter gap-x-4">
-            {/* Desktop Navbar */}
-            <Navbar
-              containerStyles={
-                "hidden lg:flex gap-x-5 lg:gap-x-10 capitalize medium-15 ring-1 ring-slate-900/10 rounded-full p-2 bg-primary"
-              }
-              onContactClick={() => setContactModalOpen(true)}
-              closeMenu={() => {}}
-            />
-
-            {/* Mobile Navbar */}
-            <Navbar
-              containerStyles={`${
-                menuOpened
-                  ? "flex lg:hidden items-start flex-col gap-y-2 capitalize fixed top-20 right-4 sm:right-8 p-4 sm:p-6 bg-white rounded-3xl shadow-md w-56 sm:w-64 medium-16 ring-1 ring-slate-900/5 transition-all duration-300 z-50 max-h-[calc(100vh-100px)] overflow-y-auto"
-                  : "flex lg:hidden items-start flex-col gap-y-2 fixed top-20 p-6 bg-white rounded-3xl shadow-md w-64 medium-16 ring-1 ring-slate-900/5 transition-all duration-300 right-[-300px] invisible opacity-0"
-              }`}
-              onContactClick={() => {
-                setMenuOpened(false);
-                setContactModalOpen(true);
-              }}
-              closeMenu={() => setMenuOpened(false)}
-              isMobile={true}
-              isAuthenticated={isAuthenticated}
-              user={user}
-              logout={logout}
-              isLoading={isLoading}
-              onLoginClick={() => {
-                setMenuOpened(false);
-                handleLoginClick();
-              }}
-              onProfileClick={() => {
-                setMenuOpened(false);
-                setProfileModalOpen(true);
-              }}
-            />
-          </div>
-          {/* buttons */}
-          <div className="flexBetween gap-x-3 sm:gap-x-5 bold-16">
-            {/* Language Switcher */}
-            <LanguageSwitcher />
-            
-            {!menuOpened ? (
-              <MdMenu
-                className="lg:hidden cursor-pointer text-3xl hover:text-secondary"
-                onClick={toggleMenu}
+    <header
+      className={`relative w-full left-0 right-0 z-40 bg-white ${
+        active ? "shadow-md" : "shadow-sm"
+      }`}
+    >
+      {/* Top Bar */}
+      <div className="border-b border-gray-200">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-12">
+          <div className="flex flex-wrap items-center justify-between gap-3 py-3">
+            <Link to={"/"} className="flex items-center gap-x-2">
+              <img
+                src={logo}
+                alt="HB International"
+                className="h-11 sm:h-12 md:h-14 object-contain"
               />
-            ) : (
-              <MdClose
-                className="lg:hidden cursor-pointer text-3xl hover:text-secondary"
-                onClick={toggleMenu}
-              />
-            )}
-            {/* Desktop Only - Profile/Login */}
-            <div className="hidden lg:block">
-              {isLoading ? (
-                <span className="medium-16">{t('common.loading')}</span>
-              ) : !isAuthenticated ? (
-                <button
-                  onClick={handleLoginClick}
-                  className={
-                    "btn-secondary flexCenter gap-x-2 medium-16 rounded-full"
-                  }
-                >
-                  <img src={userIcon} alt="" height={22} width={22} />
-                  <span>{t('common.login')}</span>
-                </button>
-              ) : (
-                <ProfileMenu user={user} logout={logout} />
-              )}
+            </Link>
+            <div className="flex items-center gap-2 sm:gap-3">
+              <button
+                onClick={() => setContactModalOpen(true)}
+                className="hidden md:inline-flex items-center gap-2 rounded-md bg-secondary px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-secondary/90"
+                type="button"
+              >
+                <FaHandshake className="text-sm" />
+                {t("header.partner")}
+              </button>
+              <div className="hidden sm:flex items-center gap-2 border border-secondaryRed/80 px-3 py-1 text-sm text-gray-800">
+                {[
+                  { code: "GBP", symbol: "\u00A3" },
+                  { code: "EUR", symbol: "\u20AC" },
+                  { code: "USD", symbol: "$" },
+                  { code: "TRY", symbol: "\u20BA" },
+                ].map((currency) => (
+                  <button
+                    key={currency.code}
+                    onClick={() => setSelectedCurrency(currency.code)}
+                    className={`text-sm font-semibold transition ${
+                      selectedCurrency === currency.code
+                        ? "text-secondaryRed"
+                        : "text-gray-800 hover:text-secondaryRed"
+                    }`}
+                    aria-pressed={selectedCurrency === currency.code}
+                    type="button"
+                  >
+                    {currency.symbol}
+                  </button>
+                ))}
+              </div>
+              <LanguageSwitcher />
+              <button
+                className="flex h-8 w-8 items-center justify-center text-gray-700 transition hover:text-secondaryRed"
+                aria-label={t("common.search")}
+                type="button"
+                onClick={() => setSearchOverlayOpen(true)}
+              >
+                <MdSearch size={20} />
+              </button>
+              <a
+                href={whatsappLink}
+                target="_blank"
+                rel="noreferrer"
+                className="animate-whatsapp-ring flex h-9 w-9 items-center justify-center rounded-full border-2 border-emerald-500 text-emerald-500 transition hover:bg-emerald-50"
+                aria-label="WhatsApp"
+              >
+                <FaWhatsapp size={18} />
+              </a>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Navigation Row */}
+      <div className="border-b border-gray-200">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-12">
+          <div className="flex items-center justify-between gap-4 py-2">
+            <div className="flex-1">
+              {/* Desktop Navbar */}
+              <Navbar
+                containerStyles="hidden lg:flex items-center gap-6 text-[13px] font-semibold"
+                onContactClick={() => setContactModalOpen(true)}
+                closeMenu={() => {}}
+              />
+            </div>
+
+            <div className="flex items-center gap-3">
+              {!menuOpened ? (
+                <MdMenu
+                  className="lg:hidden cursor-pointer text-3xl hover:text-secondary"
+                  onClick={toggleMenu}
+                />
+              ) : (
+                <MdClose
+                  className="lg:hidden cursor-pointer text-3xl hover:text-secondary"
+                  onClick={toggleMenu}
+                />
+              )}
+
+              {/* Desktop Only - Profile/Login */}
+              <div className="hidden lg:block">
+                {isLoading ? (
+                  <span className="medium-16">{t("common.loading")}</span>
+                ) : !isAuthenticated ? (
+                  <button
+                    onClick={handleLoginClick}
+                    className={
+                      "btn-secondary flexCenter gap-x-2 medium-16 rounded-[10px] !bg-[#00A86B] !ring-[#00A86B] hover:!bg-[#009A61]"
+                    }
+                  >
+                    <img src={userIcon} alt="" height={22} width={22} />
+                    <span>{t("common.login")}</span>
+                  </button>
+                ) : (
+                  <ProfileMenu user={user} logout={logout} />
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Menu Overlay */}
+      <div
+        className={`fixed inset-0 z-50 bg-white transition-transform duration-300 ease-out lg:hidden ${
+          menuOpened ? "translate-x-0" : "-translate-x-full"
+        } ${menuOpened ? "pointer-events-auto" : "pointer-events-none"}`}
+        aria-hidden={!menuOpened}
+      >
+        <div className="flex h-16 items-center justify-end border-b border-gray-200 px-5">
+          <button
+            type="button"
+            onClick={toggleMenu}
+            className="flex items-center gap-2 text-sm font-semibold text-gray-700 transition hover:text-secondaryRed"
+          >
+            <MdArrowBack size={20} />
+            <span>{t("common.back")}</span>
+          </button>
+        </div>
+        <div className="h-[calc(100dvh-4rem)] overflow-y-auto px-2 pb-6">
+          <Navbar
+            containerStyles="flex w-full flex-col"
+            onContactClick={() => {
+              setMenuOpened(false);
+              setContactModalOpen(true);
+            }}
+            closeMenu={() => setMenuOpened(false)}
+            isMobile={true}
+            isAuthenticated={isAuthenticated}
+            user={user}
+            logout={logout}
+            isLoading={isLoading}
+            onLoginClick={() => {
+              setMenuOpened(false);
+              handleLoginClick();
+            }}
+            onProfileClick={() => {
+              setMenuOpened(false);
+              setProfileModalOpen(true);
+            }}
+          />
         </div>
       </div>
 
@@ -201,6 +286,13 @@ const Header = () => {
         opened={profileModalOpen}
         setOpened={setProfileModalOpen}
       />
+
+      {searchOverlayOpen && (
+        <SearchOverlay
+          isOpen={searchOverlayOpen}
+          onClose={() => setSearchOverlayOpen(false)}
+        />
+      )}
     </header>
   );
 };

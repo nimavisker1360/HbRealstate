@@ -135,7 +135,7 @@ const ConsultantsSection = () => {
 
           <button
             onClick={() => setContactModalOpen(true)}
-            className="inline-flex items-center gap-3 rounded-full bg-[#7aac3f] px-8 py-3 text-white shadow-lg shadow-[#7aac3f]/30 transition hover:bg-[#6d9a38]"
+            className="inline-flex items-center gap-3 rounded-[10px] bg-[#00A86B] px-8 py-3 text-white shadow-lg shadow-[#00A86B]/30 transition hover:bg-[#009A61]"
           >
             <MdEmail className="text-xl" />
             <span className="font-semibold">{t("contactModal.sendMessage")}</span>
