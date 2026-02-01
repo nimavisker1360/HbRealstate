@@ -47,13 +47,13 @@ const Header = () => {
     };
   }, [menuOpened]); // Dependency array ensures that the effect runs when menuOpened changes
 
-  const scheduleLoginPrompt = useCallback(() => {
+  const scheduleLoginPrompt = useCallback((delayMs = 180) => {
     if (loginPromptTimerRef.current) return;
     loginPromptTimerRef.current = setTimeout(() => {
       loginPromptTimerRef.current = null;
       autoLoginTriggeredRef.current = true;
       setLoginModalOpen(true);
-    }, 180);
+    }, delayMs);
   }, []);
 
   useEffect(() => {
@@ -70,10 +70,17 @@ const Header = () => {
     if (isLoading) return;
     const wasAuthenticated = prevAuthRef.current;
     if (wasAuthenticated && !isAuthenticated) {
-      scheduleLoginPrompt();
+      scheduleLoginPrompt(60 * 1000);
     }
     prevAuthRef.current = isAuthenticated;
   }, [isAuthenticated, isLoading, scheduleLoginPrompt]);
+
+  useEffect(() => {
+    if (isAuthenticated && loginPromptTimerRef.current) {
+      clearTimeout(loginPromptTimerRef.current);
+      loginPromptTimerRef.current = null;
+    }
+  }, [isAuthenticated]);
 
   useEffect(() => {
     return () => {
