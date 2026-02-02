@@ -376,7 +376,7 @@ body {
 }
 
 .animate-hero-fade {
-  animation: hero-fade 1s ease-out forwards;
+  animation: hero-fade 2s ease-out 0.3s both;
 }
 
 .animate-hero-slide-up {
