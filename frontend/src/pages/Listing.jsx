@@ -175,6 +175,11 @@ const Listing = () => {
     setPriceRange({ min: "", max: "" });
   };
 
+  const handleResetFilters = () => {
+    clearAllFilters();
+    setShowAllFiltersModal(false);
+  };
+
   // Count active filters
   const getActiveFiltersCount = () => {
     let count = 0;
@@ -831,8 +836,8 @@ const Listing = () => {
             {/* Modal Footer */}
             <div className="flex items-center gap-3 p-4 border-t sticky bottom-0 bg-white">
               <button
-                onClick={clearAllFilters}
-                className="flex-1 py-2.5 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                onClick={handleResetFilters}
+                className="flex-1 py-2.5 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-700 transition-colors"
               >
                 {t('listing.resetFilters')}
               </button>

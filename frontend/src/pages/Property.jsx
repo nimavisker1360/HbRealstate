@@ -321,10 +321,10 @@ const Property = () => {
     <section className="max-padd-container my-[99px] overflow-x-hidden">
       {/* Image Gallery Grid */}
       <div className="pb-4 relative">
-        <div className="flex gap-2 h-[400px] md:h-[500px] rounded-xl overflow-hidden">
+        <div className="flex flex-col md:flex-row gap-2 md:h-[500px] rounded-xl overflow-hidden">
           {/* Main Large Image - Left Side */}
           <div
-            className="relative flex-[1.5] group cursor-pointer"
+            className="relative md:flex-[1.5] h-[320px] sm:h-[380px] md:h-full group cursor-pointer rounded-lg overflow-hidden"
             onClick={() => {
               if (galleryItems[currentImageIndex]?.type === "video") {
                 setCurrentVideoIndex(currentImageIndex);
@@ -382,11 +382,11 @@ const Property = () => {
 
           {/* Right Side - 2x2 Grid */}
           {galleryItems.length > 1 && (
-            <div className="flex-1 grid grid-cols-2 gap-2">
+            <div className="md:flex-1 grid grid-cols-2 auto-rows-fr gap-2 h-[240px] sm:h-[280px] md:h-full">
               {galleryItems.slice(1, 5).map((item, index) => (
                 <div
                   key={index}
-                  className="relative cursor-pointer overflow-hidden group"
+                  className="relative cursor-pointer overflow-hidden group rounded-lg"
                   onClick={() => {
                     setCurrentImageIndex(index + 1);
                     if (item.type === "video") {
@@ -415,14 +415,6 @@ const Property = () => {
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   )}
-                  {/* Show overlay on last visible image if more images */}
-                  {index === 3 && galleryItems.length > 5 && (
-                    <div className="absolute inset-0 bg-black/50 flexCenter">
-                      <span className="text-white font-semibold text-lg">
-                        +{galleryItems.length - 5} {t('propertyDetails.more')}
-                      </span>
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
@@ -439,21 +431,6 @@ const Property = () => {
           )}
         </div>
 
-        {/* Bottom Info Bar */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-sm rounded-full px-6 py-2 shadow-lg flex items-center gap-4">
-          <button
-            onClick={() => setGalleryOpened(true)}
-            className="flex items-center gap-2 text-gray-700 hover:text-secondary transition-colors"
-          >
-            <span className="font-medium text-secondary">
-              {propertyImages.length} {t('propertyDetails.photos')}
-            </span>
-          </button>
-          <div className="w-px h-5 bg-gray-300"></div>
-          <button className="flex items-center gap-2 text-gray-500 hover:text-secondary transition-colors">
-            <span>{t('propertyDetails.virtualTour')}</span>
-          </button>
-        </div>
       </div>
 
       {/* Video Modal */}

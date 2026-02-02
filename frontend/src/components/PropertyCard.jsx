@@ -138,7 +138,7 @@ const PropertyCard = ({ property, onCardClick }) => {
 
   return (
     <div
-      className="bg-white border-b border-gray-100 p-4 hover:bg-gray-50/50 cursor-pointer transition-colors"
+      className="bg-white border-b border-gray-100 p-4 hover:bg-emerald-100/70 cursor-pointer transition-colors"
       onClick={handleCardClick}
     >
       <div className="flex flex-col sm:flex-row gap-4">
@@ -162,7 +162,7 @@ const PropertyCard = ({ property, onCardClick }) => {
         <div className="flex-1 min-w-0">
           {/* Title Row */}
           <div className="flex items-start justify-between gap-2">
-            <div>
+            <div className="min-w-0 flex-1">
               <h3 className="text-base sm:text-lg font-bold text-gray-900 truncate">
                 {property.title}
               </h3>
@@ -173,12 +173,15 @@ const PropertyCard = ({ property, onCardClick }) => {
             {/* Favorite Button */}
             <button
               onClick={handleFavoriteClick}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              className="group p-2 rounded-full transition-colors flex-shrink-0"
             >
               {isFavorite ? (
                 <FaHeart className="w-5 h-5 text-red-500" />
               ) : (
-                <FaRegHeart className="w-5 h-5 text-gray-400" />
+                <span className="relative inline-flex w-5 h-5">
+                  <FaRegHeart className="w-5 h-5 text-gray-400 transition-opacity duration-150 group-hover:opacity-0" />
+                  <FaHeart className="w-5 h-5 text-emerald-600 absolute inset-0 opacity-0 transition-opacity duration-150 group-hover:opacity-100" />
+                </span>
               )}
             </button>
           </div>

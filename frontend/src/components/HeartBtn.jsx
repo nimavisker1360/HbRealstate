@@ -1,15 +1,14 @@
-import { useContext, useEffect, useState } from "react";
-import { FaHeart } from "react-icons/fa6";
+import { useContext } from "react";
+import { FaHeart, FaRegHeart } from "react-icons/fa";
 import PropTypes from "prop-types";
 import useAuthCheck from "../hooks/useAuthCheck";
 import { useMutation } from "react-query";
 import { useAuth0 } from "@auth0/auth0-react";
 import UserDetailContext from "../context/UserDetailContext";
 import { toFav } from "../utils/api";
-import { checkFavourites, updateFavourites } from "../utils/common";
+import { updateFavourites } from "../utils/common";
 
 const HeartBtn = ({ id }) => {
-  const [heartColor, setHeartColor] = useState("white");
   const { validateLogin } = useAuthCheck();
   const { user } = useAuth0();
 
@@ -17,10 +16,6 @@ const HeartBtn = ({ id }) => {
     userDetails: { favourites, token },
     setUserDetails,
   } = useContext(UserDetailContext);
-
-  useEffect(() => {
-    setHeartColor(() => checkFavourites(id, favourites));
-  }, [favourites, id]);
 
   const { mutate } = useMutation({
     mutationFn: () => toFav(id, user?.email, token),
@@ -35,20 +30,30 @@ const HeartBtn = ({ id }) => {
   const handleLike = () => {
     if (validateLogin()) {
       mutate();
-      setHeartColor((prev) => (prev === "#8ac243" ? "white" : "#8ac243"));
     }
   };
 
+  const isFavourite = favourites?.includes(id);
+
   return (
-    <FaHeart
+    <button
+      type="button"
       onClick={(e) => {
         e.stopPropagation();
         handleLike();
       }}
-      color={heartColor}
-      size={23}
-      className="cursor-pointer drop-shadow-sm"
-    />
+      className="group inline-flex items-center justify-center cursor-pointer drop-shadow-sm"
+      aria-pressed={isFavourite}
+    >
+      {isFavourite ? (
+        <FaHeart className="w-[23px] h-[23px] text-red-500" />
+      ) : (
+        <span className="relative inline-flex w-[23px] h-[23px]">
+          <FaRegHeart className="w-[23px] h-[23px] text-gray-400 transition-opacity duration-150 group-hover:opacity-0" />
+          <FaHeart className="w-[23px] h-[23px] text-emerald-600 absolute inset-0 opacity-0 transition-opacity duration-150 group-hover:opacity-100" />
+        </span>
+      )}
+    </button>
   );
 };
 
