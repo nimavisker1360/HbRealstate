@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import heroBg from "../assets/img1.png";
-import heroCyprus from "../assets/hero/Cyprus.jpg";
-import heroDubai from "../assets/hero/Dubai.jpg";
+import heroCyprus from "../assets/hero/cyprus.jpg";
+import heroDubai from "../assets/hero/dubai.jpg";
 import heroGeorgia from "../assets/hero/Georgia.jpg";
-import heroGreece from "../assets/hero/Greece.jpg";
-import heroIstanbul from "../assets/hero/Istanbul.jpg";
+import heroGreece from "../assets/hero/Greece.JPG";
+import heroIstanbul from "../assets/hero/istanbul.jpg";
 import iconIstanbul from "../assets/icons/istanbul.png";
 import iconGreece from "../assets/icons/Greece.png";
 import iconDubai from "../assets/icons/dubai.png";
@@ -14,13 +14,7 @@ import iconCyprus from "../assets/icons/cyprus.png";
 
 const Hero = () => {
   const { t } = useTranslation();
-  const getInitialTab = () => {
-    if (typeof window === "undefined") {
-      return "ALL";
-    }
-    return localStorage.getItem("heroActiveTab") || "ALL";
-  };
-  const [activeTab, setActiveTab] = useState(getInitialTab);
+  const [activeTab, setActiveTab] = useState("ALL");
   const heroImages = {
     ALL: heroBg,
     ISTANBUL: heroIstanbul,
@@ -116,9 +110,6 @@ const Hero = () => {
 
   const handleTabClick = (label) => {
     setActiveTab(label);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("heroActiveTab", label);
-    }
   };
 
   return (
@@ -126,9 +117,10 @@ const Hero = () => {
       {/* Background */}
       <div className="absolute inset-0">
         <img
+          key={activeTab}
           src={activeHeroImage}
           alt="city skyline"
-          className="w-full h-full object-cover object-center"
+          className="w-full h-full object-cover object-center animate-hero-fade"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-[#101828]/70 via-[#101828]/40 to-[#101828]/80" />
       </div>
