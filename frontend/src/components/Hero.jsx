@@ -143,15 +143,15 @@ const Hero = () => {
       {/* Location Tabs */}
       <div className="absolute inset-x-0 bottom-0">
         <div className="max-w-[1100px] mx-auto px-6 sm:px-10">
-          <div className="overflow-x-auto">
+          <div className="overflow-hidden">
             <div className="flex justify-center">
-              <div className="inline-flex bg-[#8b1c1c] shadow-[0_18px_40px_rgba(120,22,22,0.35)]">
+              <div className="flex w-full flex-nowrap bg-[#8b1c1c] shadow-[0_18px_40px_rgba(120,22,22,0.35)]">
                 {locationTabs.map((item, index) => (
                   <button
                     key={item.label}
                     type="button"
                     onClick={() => handleTabClick(item.label)}
-                    className={`flex items-center gap-2 px-4 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm sm:text-base font-semibold tracking-wide uppercase transition
+                    className={`flex flex-1 sm:flex-none min-w-0 flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 px-2 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-[11px] sm:text-base font-semibold tracking-normal sm:tracking-wide uppercase leading-tight transition
                       ${
                         activeTab === item.label
                           ? "bg-white text-[#8b1c1c]"
@@ -168,7 +168,9 @@ const Hero = () => {
                     >
                       {item.icon}
                     </span>
-                    <span>{item.label}</span>
+                    <span className="w-full truncate text-center sm:w-auto sm:text-left">
+                      {item.label}
+                    </span>
                   </button>
                 ))}
               </div>
