@@ -310,10 +310,10 @@ const Listing = () => {
   };
 
   return (
-    <main className="h-screen pt-[80px] flex flex-col overflow-hidden">
+    <main className="h-screen pt-[64px] lg:pt-[80px] flex flex-col overflow-hidden">
       {/* Top Filter Bar */}
       <div className="bg-white border-b shadow-sm z-20">
-        <div className="flex flex-col gap-3 px-4 py-4 lg:pr-0 lg:flex-row lg:flex-nowrap lg:items-center lg:gap-2 lg:max-w-[60%]">
+        <div className="flex flex-col gap-2 px-4 py-3 lg:pr-0 lg:flex-row lg:flex-nowrap lg:items-center lg:gap-2 lg:max-w-[60%] lg:py-4">
           {/* Search Row */}
           <div className="flex items-center gap-2 w-full order-1 lg:order-1 lg:flex-none lg:w-[420px]">
             <div className="flex items-center gap-2 w-full bg-white border border-gray-300 rounded-xl px-3 py-2.5 lg:px-3 lg:py-2.5 shadow-sm focus-within:border-teal-400 focus-within:ring-2 focus-within:ring-teal-100">
@@ -654,7 +654,7 @@ const Listing = () => {
         </div>
 
         {/* Property List */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden">
           {filteredData.length > 0 ? (
             filteredData.map((property) => (
               <PropertyCard
