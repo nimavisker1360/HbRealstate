@@ -28,6 +28,11 @@ const Header = () => {
   const loginPromptTimerRef = useRef(null);
   const whatsappNumber = normalizeWhatsAppNumber("+90 542 435 96 94");
   const whatsappLink = `https://wa.me/${whatsappNumber}`;
+  const currencies = [
+    { code: "EUR", symbol: "\u20AC" },
+    { code: "USD", symbol: "$" },
+    { code: "TRY", symbol: "\u20BA" },
+  ];
   const toggleMenu = () => setMenuOpened(!menuOpened);
   const { isAuthenticated, user, logout, isLoading } = useAuth0();
   const prevAuthRef = useRef(isAuthenticated);
@@ -134,12 +139,7 @@ const Header = () => {
                 {t("header.partner")}
               </button>
               <div className="hidden sm:flex items-center gap-2 border border-secondaryRed/80 px-3 py-1 text-sm text-gray-800">
-                {[
-                  { code: "GBP", symbol: "\u00A3" },
-                  { code: "EUR", symbol: "\u20AC" },
-                  { code: "USD", symbol: "$" },
-                  { code: "TRY", symbol: "\u20BA" },
-                ].map((currency) => (
+                {currencies.map((currency) => (
                   <button
                     key={currency.code}
                     onClick={() => setSelectedCurrency(currency.code)}
@@ -206,6 +206,9 @@ const Header = () => {
                 containerStyles="hidden lg:flex items-center gap-6 text-[13px] font-semibold"
                 onContactClick={() => setContactModalOpen(true)}
                 closeMenu={() => {}}
+                currencies={currencies}
+                selectedCurrency={selectedCurrency}
+                onCurrencySelect={setSelectedCurrency}
               />
             </div>
 
@@ -264,6 +267,9 @@ const Header = () => {
               setMenuOpened(false);
               setProfileModalOpen(true);
             }}
+            currencies={currencies}
+            selectedCurrency={selectedCurrency}
+            onCurrencySelect={setSelectedCurrency}
           />
         </div>
       </div>
@@ -292,6 +298,7 @@ const Header = () => {
           onClose={() => setSearchOverlayOpen(false)}
         />
       )}
+
     </header>
   );
 };

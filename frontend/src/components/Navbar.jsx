@@ -38,6 +38,9 @@ const Navbar = ({
   isLoading = false,
   onLoginClick = null,
   onProfileClick = null,
+  currencies = [],
+  selectedCurrency = null,
+  onCurrencySelect = null,
 }) => {
   const { t } = useTranslation();
   const { isAdmin, loading } = useAdmin();
@@ -250,7 +253,9 @@ const Navbar = ({
       {isMobile && (
         <div className="w-full mb-3 pb-3 border-b border-gray-200">
           {isLoading ? (
-            <div className="px-3 py-2 text-gray-500 text-sm">{t('common.loading')}</div>
+            <div className="px-3 py-2 text-gray-500 text-sm">
+              {t("common.loading")}
+            </div>
           ) : !isAuthenticated ? (
             <button
               onClick={onLoginClick}
@@ -263,7 +268,7 @@ const Navbar = ({
                 width={20}
                 className="brightness-0 invert"
               />
-              <span className="font-medium">{t('common.login')}</span>
+              <span className="font-medium">{t("common.login")}</span>
             </button>
           ) : (
             <div className="space-y-1">
@@ -271,7 +276,9 @@ const Navbar = ({
               <div className="flex items-center gap-3 px-3 py-2">
                 <Avatar src={user?.picture} alt="user" radius="xl" size="md" />
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-800 truncate text-sm">{user?.name || 'User'}</p>
+                  <p className="font-medium text-gray-800 truncate text-sm">
+                    {user?.name || "User"}
+                  </p>
                   <p className="text-xs text-gray-500 truncate">{user?.email}</p>
                 </div>
               </div>
@@ -282,7 +289,9 @@ const Navbar = ({
                 className="flex items-center gap-3 w-full px-3 py-2.5 hover:bg-gray-50/50 rounded-lg transition-colors"
               >
                 <MdPerson size={18} className="text-gray-400" />
-                <span className="text-sm text-gray-700">{t('profile.myProfile')}</span>
+                <span className="text-sm text-gray-700">
+                  {t("profile.myProfile")}
+                </span>
               </button>
               
               <NavLink
@@ -291,7 +300,9 @@ const Navbar = ({
                 className="flex items-center gap-3 w-full px-3 py-2.5 hover:bg-gray-50/50 rounded-lg transition-colors"
               >
                 <MdFavorite size={18} className="text-gray-400" />
-                <span className="text-sm text-gray-700">{t('profile.favourites')}</span>
+                <span className="text-sm text-gray-700">
+                  {t("profile.favourites")}
+                </span>
               </NavLink>
               
               <NavLink
@@ -300,7 +311,9 @@ const Navbar = ({
                 className="flex items-center gap-3 w-full px-3 py-2.5 hover:bg-gray-50/50 rounded-lg transition-colors"
               >
                 <MdBookmarks size={18} className="text-gray-400" />
-                <span className="text-sm text-gray-700">{t('profile.bookings')}</span>
+                <span className="text-sm text-gray-700">
+                  {t("profile.bookings")}
+                </span>
               </NavLink>
               
               <div className="border-t border-gray-100 mt-1 pt-1">
@@ -313,8 +326,34 @@ const Navbar = ({
                   className="flex items-center gap-3 w-full px-3 py-2.5 hover:bg-red-50/50 rounded-lg transition-colors"
                 >
                   <MdLogout size={18} className="text-red-500" />
-                  <span className="text-sm text-red-500">{t('profile.logout')}</span>
+                  <span className="text-sm text-red-500">
+                    {t("profile.logout")}
+                  </span>
                 </button>
+              </div>
+            </div>
+          )}
+
+          {Array.isArray(currencies) && currencies.length > 0 && (
+            <div className="mt-3">
+              <div className="flex items-center justify-center gap-3 border border-secondaryRed/80 px-3 py-2 text-base text-gray-800">
+                {currencies.map((currency) => (
+                  <button
+                    key={currency.code}
+                    onClick={() =>
+                      onCurrencySelect && onCurrencySelect(currency.code)
+                    }
+                    className={`text-base font-semibold transition ${
+                      selectedCurrency === currency.code
+                        ? "text-secondaryRed"
+                        : "text-gray-800 hover:text-secondaryRed"
+                    }`}
+                    aria-pressed={selectedCurrency === currency.code}
+                    type="button"
+                  >
+                    {currency.symbol}
+                  </button>
+                ))}
               </div>
             </div>
           )}
@@ -686,6 +725,9 @@ Navbar.propTypes = {
   isLoading: PropTypes.bool,
   onLoginClick: PropTypes.func,
   onProfileClick: PropTypes.func,
+  currencies: PropTypes.array,
+  selectedCurrency: PropTypes.string,
+  onCurrencySelect: PropTypes.func,
 };
 
 export default Navbar;
