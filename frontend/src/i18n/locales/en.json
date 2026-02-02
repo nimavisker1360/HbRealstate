@@ -451,7 +451,9 @@
     "room4": "4+1",
     "room5plus": "5+",
     "filtersApplied": "{{count}} filters applied",
-    "selectCategory": "Select Category"
+    "selectCategory": "Select Category",
+    "list": "List",
+    "map": "Map"
   },
   "profile": {
     "myProfile": "My Profile",

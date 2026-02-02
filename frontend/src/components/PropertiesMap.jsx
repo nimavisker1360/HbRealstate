@@ -49,6 +49,53 @@ FitBounds.propTypes = {
   positions: PropTypes.array.isRequired,
 };
 
+// Keep Leaflet sized correctly when container visibility or size changes
+const MapAutoResize = ({ watch }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    let frameId;
+    const handleResize = () => {
+      if (frameId) cancelAnimationFrame(frameId);
+      frameId = requestAnimationFrame(() => {
+        map.invalidateSize();
+      });
+    };
+
+    handleResize();
+
+    const container = map.getContainer();
+    let observer;
+    if (container && typeof ResizeObserver !== "undefined") {
+      observer = new ResizeObserver(handleResize);
+      observer.observe(container);
+    } else {
+      const timerId = setTimeout(handleResize, 200);
+      return () => clearTimeout(timerId);
+    }
+
+    window.addEventListener("orientationchange", handleResize);
+
+    return () => {
+      window.removeEventListener("orientationchange", handleResize);
+      if (observer) observer.disconnect();
+      if (frameId) cancelAnimationFrame(frameId);
+    };
+  }, [map]);
+
+  useEffect(() => {
+    if (watch !== undefined) {
+      map.invalidateSize();
+    }
+  }, [map, watch]);
+
+  return null;
+};
+
+MapAutoResize.propTypes = {
+  watch: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.bool]),
+};
+
 // Single property marker with geocoding
 const PropertyMarker = ({ property, onPropertyClick }) => {
   const [position, setPosition] = useState(null);
@@ -101,7 +148,7 @@ PropertyMarker.propTypes = {
   onPropertyClick: PropTypes.func.isRequired,
 };
 
-const PropertiesMap = ({ properties, onPropertyClick }) => {
+const PropertiesMap = ({ properties, onPropertyClick, resizeKey }) => {
   const [positions, setPositions] = useState([]);
 
   // Geocode all properties to get their positions for bounds
@@ -135,6 +182,7 @@ const PropertiesMap = ({ properties, onPropertyClick }) => {
       scrollWheelZoom={true}
       className="h-full w-full z-0"
     >
+      <MapAutoResize watch={resizeKey} />
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -154,6 +202,7 @@ const PropertiesMap = ({ properties, onPropertyClick }) => {
 PropertiesMap.propTypes = {
   properties: PropTypes.array.isRequired,
   onPropertyClick: PropTypes.func.isRequired,
+  resizeKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number, PropTypes.bool]),
 };
 
 export default PropertiesMap;

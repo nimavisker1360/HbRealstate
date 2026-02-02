@@ -452,7 +452,9 @@
     "room4": "4+1",
     "room5plus": "5+",
     "filtersApplied": "{{count}} filtre uygulandı",
-    "selectCategory": "Kategori Seç"
+    "selectCategory": "Kategori Seç",
+    "list": "Liste",
+    "map": "Harita"
   },
   "profile": {
     "myProfile": "Profilim",

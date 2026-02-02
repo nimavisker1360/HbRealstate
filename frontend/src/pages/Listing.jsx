@@ -30,6 +30,7 @@ const Listing = () => {
   const [showPriceDropdown, setShowPriceDropdown] = useState(false);
   const [showRoomsDropdown, setShowRoomsDropdown] = useState(false);
   const [showAllFiltersModal, setShowAllFiltersModal] = useState(false);
+  const [mobileView, setMobileView] = useState("list");
 
   // Refs for closing dropdowns on outside click
   const typeRef = useRef(null);
@@ -312,250 +313,289 @@ const Listing = () => {
     <main className="h-screen pt-[80px] flex flex-col overflow-hidden">
       {/* Top Filter Bar */}
       <div className="bg-white border-b shadow-sm z-20">
-        <div className="flex items-center gap-2 px-4 py-3 flex-wrap">
-          {/* Location Search */}
-          <div className="flex items-center gap-2 min-w-[200px] max-w-[280px] bg-white border border-gray-300 rounded-md px-3 py-2 hover:border-gray-400 transition-colors">
-            <MdLocationOn className="text-gray-400 text-lg flex-shrink-0" />
-            <input
-              type="text"
-              value={filter}
-              onChange={(e) => handleFilterChange(e.target.value)}
-              placeholder={t('listing.locationPlaceholder')}
-              className="w-full bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400"
-            />
-            {filter && (
-              <button 
-                onClick={() => handleFilterChange("")}
-                className="text-gray-400 hover:text-gray-600"
+        <div className="flex flex-col gap-3 px-4 py-4 lg:pr-0 lg:flex-row lg:flex-nowrap lg:items-center lg:gap-2 lg:max-w-[60%]">
+          {/* Search Row */}
+          <div className="flex items-center gap-2 w-full order-1 lg:order-1 lg:flex-none lg:w-[420px]">
+            <div className="flex items-center gap-2 w-full bg-white border border-gray-300 rounded-xl px-3 py-2.5 lg:px-3 lg:py-2.5 shadow-sm focus-within:border-teal-400 focus-within:ring-2 focus-within:ring-teal-100">
+              <MdLocationOn className="text-gray-400 text-lg flex-shrink-0" />
+              <input
+                type="text"
+                value={filter}
+                onChange={(e) => handleFilterChange(e.target.value)}
+                placeholder={t('listing.locationPlaceholder')}
+                className="w-full bg-transparent outline-none text-sm text-gray-700 placeholder-gray-400"
+              />
+              {filter && (
+                <button 
+                  onClick={() => handleFilterChange("")}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <MdClose size={16} />
+                </button>
+              )}
+              <MdSearch className="text-gray-400 text-lg flex-shrink-0 cursor-pointer hover:text-gray-600" />
+            </div>
+            <button
+              onClick={() => setShowAllFiltersModal(true)}
+              className="flex items-center justify-center gap-2 px-3 py-2.5 lg:px-4 lg:py-2.5 bg-gray-900 text-white rounded-xl text-sm font-medium hover:bg-gray-950 transition-colors shrink-0 lg:flex-none lg:text-xs"
+            >
+              <MdFilterList />
+              <span className="hidden sm:inline">{t('listing.allFilters')}</span>
+              {activeFiltersCount > 0 && (
+                <span className="bg-teal-500 text-white text-xs px-1.5 py-0.5 rounded-full ml-1">
+                  {activeFiltersCount}
+                </span>
+              )}
+            </button>
+          </div>
+
+          {/* Filters Grid */}
+          <div className="grid grid-cols-2 gap-2 w-full order-2 lg:order-2 lg:flex lg:flex-nowrap lg:items-center lg:gap-2 lg:flex-none">
+            {/* Type Filter Dropdown */}
+            <div ref={typeRef} className="relative">
+              <button
+                onClick={() => setShowTypeDropdown(!showTypeDropdown)}
+                className={`flex w-full items-center justify-between gap-2 px-4 py-2.5 lg:px-4 lg:py-2.5 rounded-xl text-sm font-medium transition-all border lg:text-xs ${
+                  effectiveTypeFilter
+                    ? "bg-teal-600 text-white border-teal-600 hover:bg-teal-700"
+                    : "bg-white text-gray-700 border-gray-300 hover:border-gray-400"
+                }`}
               >
-                <MdClose size={16} />
+                <span className="min-w-0 truncate">{getCurrentTypeLabel()}</span>
+                <MdKeyboardArrowDown className={`transition-transform ${showTypeDropdown ? 'rotate-180' : ''}`} />
+              </button>
+              
+              {showTypeDropdown && (
+                <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-xl z-50 min-w-[220px] py-1 animate-fadeIn">
+                  {propertyTypes.map((type) => {
+                    const IconComponent = type.icon;
+                    const isActive = effectiveTypeFilter === type.value;
+                    return (
+                      <button
+                        key={type.value || 'all'}
+                        onClick={() => handleTypeFilter(type.value)}
+                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm whitespace-nowrap transition-colors ${
+                          isActive
+                            ? "bg-teal-50 text-teal-700 font-medium"
+                            : "text-gray-700 hover:bg-gray-50"
+                        }`}
+                      >
+                        <IconComponent className={`text-lg flex-shrink-0 ${isActive ? 'text-teal-600' : 'text-gray-400'}`} />
+                        <span className="flex-1 text-left">{type.label}</span>
+                        {isActive && (
+                          <span className="w-2 h-2 bg-teal-500 rounded-full flex-shrink-0" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Category Filter Dropdown */}
+            <div ref={categoryRef} className="relative">
+              <button
+                onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                className={`flex w-full items-center justify-between gap-2 px-4 py-2.5 lg:px-4 lg:py-2.5 rounded-xl text-sm font-medium transition-all border lg:text-xs ${
+                  categoryFilter
+                    ? "bg-teal-600 text-white border-teal-600 hover:bg-teal-700"
+                    : "bg-white text-gray-700 border-gray-300 hover:border-gray-400"
+                }`}
+              >
+                <span className="min-w-0 truncate">{getCurrentCategoryLabel()}</span>
+                <MdKeyboardArrowDown className={`transition-transform ${showCategoryDropdown ? 'rotate-180' : ''}`} />
+              </button>
+              
+              {showCategoryDropdown && (
+                <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-xl z-50 min-w-[200px] py-1 animate-fadeIn">
+                  <button
+                    onClick={() => handleCategoryFilter(null)}
+                    className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm whitespace-nowrap transition-colors ${
+                      !categoryFilter
+                        ? "bg-teal-50 text-teal-700 font-medium"
+                        : "text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    <MdList className={`text-lg flex-shrink-0 ${!categoryFilter ? 'text-teal-600' : 'text-gray-400'}`} />
+                    <span className="flex-1 text-left">{t('listing.allCategories')}</span>
+                    {!categoryFilter && (
+                      <span className="w-2 h-2 bg-teal-500 rounded-full flex-shrink-0" />
+                    )}
+                  </button>
+                  {propertyCategories.map((cat) => {
+                    const IconComponent = cat.icon;
+                    const isActive = categoryFilter === cat.value;
+                    return (
+                      <button
+                        key={cat.value}
+                        onClick={() => handleCategoryFilter(cat.value)}
+                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm whitespace-nowrap transition-colors ${
+                          isActive
+                            ? "bg-teal-50 text-teal-700 font-medium"
+                            : "text-gray-700 hover:bg-gray-50"
+                        }`}
+                      >
+                        <IconComponent className={`text-lg flex-shrink-0 ${isActive ? 'text-teal-600' : 'text-gray-400'}`} />
+                        <span className="flex-1 text-left">{cat.label}</span>
+                        {isActive && (
+                          <span className="w-2 h-2 bg-teal-500 rounded-full flex-shrink-0" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Price Filter Dropdown */}
+            <div ref={priceRef} className="relative">
+              <button
+                onClick={() => setShowPriceDropdown(!showPriceDropdown)}
+                className={`flex w-full items-center justify-between gap-2 px-4 py-2.5 lg:px-4 lg:py-2.5 rounded-xl text-sm font-medium transition-all border lg:text-xs ${
+                  minPrice || maxPrice
+                    ? "bg-teal-600 text-white border-teal-600 hover:bg-teal-700"
+                    : "bg-white text-gray-700 border-gray-300 hover:border-gray-400"
+                }`}
+              >
+                <span className="min-w-0 truncate">{getPriceLabel()}</span>
+                <MdKeyboardArrowDown className={`transition-transform ${showPriceDropdown ? 'rotate-180' : ''}`} />
+              </button>
+              
+              {showPriceDropdown && (
+                <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-xl z-50 w-[280px] p-4 animate-fadeIn">
+                  <h4 className="font-medium text-gray-800 mb-3">{t('listing.priceRange')}</h4>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="flex-1">
+                      <input
+                        type="number"
+                        value={priceRange.min}
+                        onChange={(e) => setPriceRange({ ...priceRange, min: e.target.value })}
+                        placeholder={t('listing.minPrice')}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      />
+                    </div>
+                    <span className="text-gray-400">-</span>
+                    <div className="flex-1">
+                      <input
+                        type="number"
+                        value={priceRange.max}
+                        onChange={(e) => setPriceRange({ ...priceRange, max: e.target.value })}
+                        placeholder={t('listing.maxPrice')}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                  <button
+                    onClick={handlePriceFilter}
+                    className="w-full py-2 bg-teal-600 text-white rounded-md text-sm font-medium hover:bg-teal-700 transition-colors"
+                  >
+                    {t('listing.applyFilters')}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Rooms Filter Dropdown */}
+            <div ref={roomsRef} className="relative">
+              <button
+                onClick={() => setShowRoomsDropdown(!showRoomsDropdown)}
+                className={`flex w-full items-center justify-between gap-2 px-4 py-2.5 lg:px-4 lg:py-2.5 rounded-xl text-sm font-medium transition-all border lg:text-xs ${
+                  roomsFilter
+                    ? "bg-teal-600 text-white border-teal-600 hover:bg-teal-700"
+                    : "bg-white text-gray-700 border-gray-300 hover:border-gray-400"
+                }`}
+              >
+                <span className="min-w-0 truncate">{getRoomsLabel()}</span>
+                <MdKeyboardArrowDown className={`transition-transform ${showRoomsDropdown ? 'rotate-180' : ''}`} />
+              </button>
+              
+              {showRoomsDropdown && (
+                <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-xl z-50 min-w-[160px] py-1 animate-fadeIn">
+                  <button
+                    onClick={() => handleRoomsFilter(null)}
+                    className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
+                      !roomsFilter
+                        ? "bg-teal-50 text-teal-700 font-medium"
+                        : "text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    <span>{t('listing.all')}</span>
+                    {!roomsFilter && (
+                      <span className="ml-auto w-2 h-2 bg-teal-500 rounded-full" />
+                    )}
+                  </button>
+                  {roomOptions.map((option) => {
+                    const isActive = roomsFilter === option.value;
+                    return (
+                      <button
+                        key={option.value}
+                        onClick={() => handleRoomsFilter(option.value)}
+                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
+                          isActive
+                            ? "bg-teal-50 text-teal-700 font-medium"
+                            : "text-gray-700 hover:bg-gray-50"
+                        }`}
+                      >
+                        <span>{option.label}</span>
+                        {isActive && (
+                          <span className="ml-auto w-2 h-2 bg-teal-500 rounded-full" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Actions Row */}
+          <div className="flex items-center justify-between gap-2 w-full order-3 lg:order-3 lg:w-auto lg:ml-auto">
+            <div className="flex items-center gap-2 text-xs text-gray-500 lg:hidden">
+              <span>{t('listing.propertiesFound', { count: filteredData.length })}</span>
+              {activeFiltersCount > 0 && (
+                <span className="text-xs text-teal-600 font-medium bg-teal-50 px-2 py-0.5 rounded-full">
+                  {t('listing.filtersApplied', { count: activeFiltersCount })}
+                </span>
+              )}
+            </div>
+            {activeFiltersCount > 0 && (
+              <button
+                onClick={clearAllFilters}
+                className="flex items-center gap-1 px-3 py-2 border border-gray-300 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                <span>{t('listing.clear')}</span>
               </button>
             )}
-            <MdSearch className="text-gray-400 text-lg flex-shrink-0 cursor-pointer hover:text-gray-600" />
           </div>
 
-          {/* Divider */}
-          <div className="h-8 w-px bg-gray-200 hidden sm:block" />
-
-          {/* Type Filter Dropdown */}
-          <div ref={typeRef} className="relative">
-            <button
-              onClick={() => setShowTypeDropdown(!showTypeDropdown)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all border ${
-                effectiveTypeFilter
-                  ? "bg-teal-600 text-white border-teal-600 hover:bg-teal-700"
-                  : "bg-white text-gray-700 border-gray-300 hover:border-gray-400"
-              }`}
-            >
-              <span>{getCurrentTypeLabel()}</span>
-              <MdKeyboardArrowDown className={`transition-transform ${showTypeDropdown ? 'rotate-180' : ''}`} />
-            </button>
-            
-            {showTypeDropdown && (
-              <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl z-50 min-w-[220px] py-1 animate-fadeIn">
-                {propertyTypes.map((type) => {
-                  const IconComponent = type.icon;
-                  const isActive = effectiveTypeFilter === type.value;
-                  return (
-                    <button
-                      key={type.value || 'all'}
-                      onClick={() => handleTypeFilter(type.value)}
-                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm whitespace-nowrap transition-colors ${
-                        isActive
-                          ? "bg-teal-50 text-teal-700 font-medium"
-                          : "text-gray-700 hover:bg-gray-50"
-                      }`}
-                    >
-                      <IconComponent className={`text-lg flex-shrink-0 ${isActive ? 'text-teal-600' : 'text-gray-400'}`} />
-                      <span className="flex-1 text-left">{type.label}</span>
-                      {isActive && (
-                        <span className="w-2 h-2 bg-teal-500 rounded-full flex-shrink-0" />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+          {/* Mobile List/Map Toggle */}
+          <div className="flex items-center justify-between w-full order-4 lg:hidden">
+            <div className="inline-flex items-center bg-gray-100 rounded-full p-1">
+              <button
+                onClick={() => setMobileView("list")}
+                className={`px-4 py-1.5 text-xs font-semibold rounded-full transition-colors ${
+                  mobileView === "list"
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-500"
+                }`}
+              >
+                {t('listing.list')}
+              </button>
+              <button
+                onClick={() => setMobileView("map")}
+                className={`px-4 py-1.5 text-xs font-semibold rounded-full transition-colors ${
+                  mobileView === "map"
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-500"
+                }`}
+              >
+                {t('listing.map')}
+              </button>
+            </div>
+            <span className="text-xs text-gray-500">
+              {activeFiltersCount > 0 ? t('listing.filtersApplied', { count: activeFiltersCount }) : t('listing.all')}
+            </span>
           </div>
-
-          {/* Category Filter Dropdown */}
-          <div ref={categoryRef} className="relative">
-            <button
-              onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all border ${
-                categoryFilter
-                  ? "bg-teal-600 text-white border-teal-600 hover:bg-teal-700"
-                  : "bg-white text-gray-700 border-gray-300 hover:border-gray-400"
-              }`}
-            >
-              <span>{getCurrentCategoryLabel()}</span>
-              <MdKeyboardArrowDown className={`transition-transform ${showCategoryDropdown ? 'rotate-180' : ''}`} />
-            </button>
-            
-            {showCategoryDropdown && (
-              <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl z-50 min-w-[200px] py-1 animate-fadeIn">
-                <button
-                  onClick={() => handleCategoryFilter(null)}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm whitespace-nowrap transition-colors ${
-                    !categoryFilter
-                      ? "bg-teal-50 text-teal-700 font-medium"
-                      : "text-gray-700 hover:bg-gray-50"
-                  }`}
-                >
-                  <MdList className={`text-lg flex-shrink-0 ${!categoryFilter ? 'text-teal-600' : 'text-gray-400'}`} />
-                  <span className="flex-1 text-left">{t('listing.allCategories')}</span>
-                  {!categoryFilter && (
-                    <span className="w-2 h-2 bg-teal-500 rounded-full flex-shrink-0" />
-                  )}
-                </button>
-                {propertyCategories.map((cat) => {
-                  const IconComponent = cat.icon;
-                  const isActive = categoryFilter === cat.value;
-                  return (
-                    <button
-                      key={cat.value}
-                      onClick={() => handleCategoryFilter(cat.value)}
-                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm whitespace-nowrap transition-colors ${
-                        isActive
-                          ? "bg-teal-50 text-teal-700 font-medium"
-                          : "text-gray-700 hover:bg-gray-50"
-                      }`}
-                    >
-                      <IconComponent className={`text-lg flex-shrink-0 ${isActive ? 'text-teal-600' : 'text-gray-400'}`} />
-                      <span className="flex-1 text-left">{cat.label}</span>
-                      {isActive && (
-                        <span className="w-2 h-2 bg-teal-500 rounded-full flex-shrink-0" />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Price Filter Dropdown */}
-          <div ref={priceRef} className="relative">
-            <button
-              onClick={() => setShowPriceDropdown(!showPriceDropdown)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all border ${
-                minPrice || maxPrice
-                  ? "bg-teal-600 text-white border-teal-600 hover:bg-teal-700"
-                  : "bg-white text-gray-700 border-gray-300 hover:border-gray-400"
-              }`}
-            >
-              <span>{getPriceLabel()}</span>
-              <MdKeyboardArrowDown className={`transition-transform ${showPriceDropdown ? 'rotate-180' : ''}`} />
-            </button>
-            
-            {showPriceDropdown && (
-              <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl z-50 w-[280px] p-4 animate-fadeIn">
-                <h4 className="font-medium text-gray-800 mb-3">{t('listing.priceRange')}</h4>
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="flex-1">
-                    <input
-                      type="number"
-                      value={priceRange.min}
-                      onChange={(e) => setPriceRange({ ...priceRange, min: e.target.value })}
-                      placeholder={t('listing.minPrice')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                    />
-                  </div>
-                  <span className="text-gray-400">-</span>
-                  <div className="flex-1">
-                    <input
-                      type="number"
-                      value={priceRange.max}
-                      onChange={(e) => setPriceRange({ ...priceRange, max: e.target.value })}
-                      placeholder={t('listing.maxPrice')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                    />
-                  </div>
-                </div>
-                <button
-                  onClick={handlePriceFilter}
-                  className="w-full py-2 bg-teal-600 text-white rounded-md text-sm font-medium hover:bg-teal-700 transition-colors"
-                >
-                  {t('listing.applyFilters')}
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Rooms Filter Dropdown */}
-          <div ref={roomsRef} className="relative">
-            <button
-              onClick={() => setShowRoomsDropdown(!showRoomsDropdown)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all border ${
-                roomsFilter
-                  ? "bg-teal-600 text-white border-teal-600 hover:bg-teal-700"
-                  : "bg-white text-gray-700 border-gray-300 hover:border-gray-400"
-              }`}
-            >
-              <span>{getRoomsLabel()}</span>
-              <MdKeyboardArrowDown className={`transition-transform ${showRoomsDropdown ? 'rotate-180' : ''}`} />
-            </button>
-            
-            {showRoomsDropdown && (
-              <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl z-50 min-w-[160px] py-1 animate-fadeIn">
-                <button
-                  onClick={() => handleRoomsFilter(null)}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
-                    !roomsFilter
-                      ? "bg-teal-50 text-teal-700 font-medium"
-                      : "text-gray-700 hover:bg-gray-50"
-                  }`}
-                >
-                  <span>{t('listing.all')}</span>
-                  {!roomsFilter && (
-                    <span className="ml-auto w-2 h-2 bg-teal-500 rounded-full" />
-                  )}
-                </button>
-                {roomOptions.map((option) => {
-                  const isActive = roomsFilter === option.value;
-                  return (
-                    <button
-                      key={option.value}
-                      onClick={() => handleRoomsFilter(option.value)}
-                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
-                        isActive
-                          ? "bg-teal-50 text-teal-700 font-medium"
-                          : "text-gray-700 hover:bg-gray-50"
-                      }`}
-                    >
-                      <span>{option.label}</span>
-                      {isActive && (
-                        <span className="ml-auto w-2 h-2 bg-teal-500 rounded-full" />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* All Filters Button */}
-          <button
-            onClick={() => setShowAllFiltersModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded-md text-sm font-medium hover:bg-gray-900 transition-colors"
-          >
-            <MdFilterList />
-            <span>{t('listing.allFilters')}</span>
-            {activeFiltersCount > 0 && (
-              <span className="bg-teal-500 text-white text-xs px-1.5 py-0.5 rounded-full ml-1">
-                {activeFiltersCount}
-              </span>
-            )}
-          </button>
-
-          {/* Clear Button */}
-          {activeFiltersCount > 0 && (
-            <button
-              onClick={clearAllFilters}
-              className="flex items-center gap-1 px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
-            >
-              <span>{t('listing.clear')}</span>
-            </button>
-          )}
         </div>
 
       </div>
@@ -563,10 +603,15 @@ const Listing = () => {
       {/* Main Content - Map and Listings */}
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
       {/* Left Side - Map */}
-      <div className="w-full lg:w-[60%] h-[300px] lg:h-full relative">
+      <div
+        className={`w-full lg:w-[60%] relative lg:h-full ${
+          mobileView === "map" ? "flex-1 h-full" : "h-[240px]"
+        } ${mobileView === "list" ? "hidden lg:block" : ""}`}
+      >
         <PropertiesMap
           properties={filteredData}
           onPropertyClick={handlePropertyClick}
+          resizeKey={mobileView}
         />
 
         {/* Map Controls */}
@@ -585,13 +630,13 @@ const Listing = () => {
       </div>
 
       {/* Right Side - Property Listings */}
-      <div className="w-full lg:w-[40%] h-full flex flex-col bg-white overflow-hidden">
+      <div className={`w-full lg:w-[40%] h-full flex flex-col bg-white overflow-hidden ${mobileView === "map" ? "hidden lg:flex" : ""}`}>
         {/* Header */}
         <div className="p-4 border-b bg-white">
           {/* Search Title */}
             <div className="flex items-center justify-between">
               <div>
-            <h1 className="text-xl font-bold text-gray-900">
+            <h1 className="text-lg sm:text-xl font-bold text-gray-900">
               {filter
                 ? t('listing.propertiesIn', { location: filter })
                 : t('listing.allProperties')}

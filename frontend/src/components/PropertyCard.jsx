@@ -141,9 +141,9 @@ const PropertyCard = ({ property, onCardClick }) => {
       className="bg-white border-b border-gray-100 p-4 hover:bg-gray-50/50 cursor-pointer transition-colors"
       onClick={handleCardClick}
     >
-      <div className="flex gap-4">
+      <div className="flex flex-col sm:flex-row gap-4">
         {/* Property Image */}
-        <div className="relative w-[280px] h-[180px] flex-shrink-0">
+        <div className="relative w-full h-[200px] sm:w-[280px] sm:h-[180px] flex-shrink-0">
           <img
             src={property.image}
             alt={property.title}
@@ -163,7 +163,7 @@ const PropertyCard = ({ property, onCardClick }) => {
           {/* Title Row */}
           <div className="flex items-start justify-between gap-2">
             <div>
-              <h3 className="text-lg font-bold text-gray-900 truncate">
+              <h3 className="text-base sm:text-lg font-bold text-gray-900 truncate">
                 {property.title}
               </h3>
               <p className="text-sm text-gray-500">
@@ -217,10 +217,10 @@ const PropertyCard = ({ property, onCardClick }) => {
           </p>
 
           {/* Contact Buttons */}
-          <div className="flex items-center gap-3 mt-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-3">
             <button
               onClick={handleWhatsAppClick}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#25D366] rounded-lg hover:bg-[#1da851] transition-colors"
+              className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#25D366] rounded-lg hover:bg-[#1da851] transition-colors"
             >
               <FaWhatsapp className="w-4 h-4" />
               WhatsApp
@@ -230,7 +230,7 @@ const PropertyCard = ({ property, onCardClick }) => {
                 e.stopPropagation();
                 navigate(`/listing/${property.id}`);
               }}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-green-500 rounded-lg hover:bg-green-600 transition-colors"
+              className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-green-500 rounded-lg hover:bg-green-600 transition-colors"
             >
               <MdEmail className="w-4 h-4" />
               Contact
