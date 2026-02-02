@@ -1,6 +1,11 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import heroBg from "../assets/img1.png";
+import iconIstanbul from "../assets/icons/istanbul.png";
+import iconGreece from "../assets/icons/greece.png";
+import iconDubai from "../assets/icons/dubai.png";
+import iconGeorgia from "../assets/icons/boat.png";
+import iconCyprus from "../assets/icons/cyprus.png";
 
 const Hero = () => {
   const { t } = useTranslation();
@@ -15,7 +20,11 @@ const Hero = () => {
     {
       label: "ALL",
       icon: (
-        <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+        <svg
+          viewBox="0 0 24 24"
+          className="h-8 w-8 sm:h-9 sm:w-9"
+          aria-hidden="true"
+        >
           <circle
             cx="10"
             cy="10"
@@ -37,76 +46,56 @@ const Hero = () => {
     {
       label: "ISTANBUL",
       icon: (
-        <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
-          <path
-            d="M7 20h10M9 20V9l3-3 3 3v11M10 9h4M8 13h8M8 16h8M12 3v3"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.7"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        <img
+          src={iconIstanbul}
+          alt=""
+          aria-hidden="true"
+          className="h-8 w-8 sm:h-9 sm:w-9 object-contain"
+        />
       ),
     },
     {
       label: "GREECE",
       icon: (
-        <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
-          <path
-            d="M3 17h18M5 15l4-6 5 4 5-3 2 5H5zM9 9l3-5 3 5"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.7"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        <img
+          src={iconGreece}
+          alt=""
+          aria-hidden="true"
+          className="h-8 w-8 sm:h-9 sm:w-9 object-contain"
+        />
       ),
     },
     {
       label: "DUBAI",
       icon: (
-        <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
-          <path
-            d="M5 20h14M9 20V7l3-3 3 3v13M7 12h10M10 9h4"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.7"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        <img
+          src={iconDubai}
+          alt=""
+          aria-hidden="true"
+          className="h-8 w-8 sm:h-9 sm:w-9 object-contain"
+        />
       ),
     },
     {
       label: "GEORGIA",
       icon: (
-        <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
-          <path
-            d="M4 7h16M12 7v3M8 10h8v5H8zM6 20h12"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.7"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        <img
+          src={iconGeorgia}
+          alt=""
+          aria-hidden="true"
+          className="h-8 w-8 sm:h-9 sm:w-9 object-contain"
+        />
       ),
     },
     {
       label: "CYPRUS",
       icon: (
-        <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
-          <path
-            d="M4 19h16M12 19V6m0 0l5 4H12m0 0H7l5-4M5 16c3-1 6-1 9 0 2 .7 3 .7 5-.2"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.7"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        <img
+          src={iconCyprus}
+          alt=""
+          aria-hidden="true"
+          className="h-8 w-8 sm:h-9 sm:w-9 object-contain"
+        />
       ),
     },
   ];
@@ -145,7 +134,7 @@ const Hero = () => {
         <div className="max-w-[1100px] mx-auto px-6 sm:px-10">
           <div className="overflow-hidden">
             <div className="flex justify-center">
-              <div className="flex w-full flex-nowrap bg-[#8b1c1c] shadow-[0_18px_40px_rgba(120,22,22,0.35)]">
+              <div className="flex w-full sm:inline-flex sm:w-auto flex-nowrap bg-[#8b1c1c] shadow-[0_18px_40px_rgba(120,22,22,0.35)]">
                 {locationTabs.map((item, index) => (
                   <button
                     key={item.label}
