@@ -1,6 +1,11 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import heroBg from "../assets/img1.png";
+import heroCyprus from "../assets/hero/Cyprus.jpg";
+import heroDubai from "../assets/hero/Dubai.jpg";
+import heroGeorgia from "../assets/hero/Georgia.jpg";
+import heroGreece from "../assets/hero/Greece.jpg";
+import heroIstanbul from "../assets/hero/Istanbul.jpg";
 import iconIstanbul from "../assets/icons/istanbul.png";
 import iconGreece from "../assets/icons/Greece.png";
 import iconDubai from "../assets/icons/dubai.png";
@@ -16,6 +21,15 @@ const Hero = () => {
     return localStorage.getItem("heroActiveTab") || "ALL";
   };
   const [activeTab, setActiveTab] = useState(getInitialTab);
+  const heroImages = {
+    ALL: heroBg,
+    ISTANBUL: heroIstanbul,
+    GREECE: heroGreece,
+    DUBAI: heroDubai,
+    GEORGIA: heroGeorgia,
+    CYPRUS: heroCyprus,
+  };
+  const activeHeroImage = heroImages[activeTab] || heroBg;
   const locationTabs = [
     {
       label: "ALL",
@@ -112,7 +126,7 @@ const Hero = () => {
       {/* Background */}
       <div className="absolute inset-0">
         <img
-          src={heroBg}
+          src={activeHeroImage}
           alt="city skyline"
           className="w-full h-full object-cover object-center"
         />
