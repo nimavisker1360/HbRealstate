@@ -60,6 +60,7 @@ import {
   generateAIBlog,
 } from "../utils/api";
 import { toast } from "react-toastify";
+import { bilingualFromMessage, bilingualKey } from "../utils/bilingualToast";
 import {
   MdDashboard,
   MdAddHome,
@@ -231,7 +232,7 @@ const AdminPanel = () => {
         const orderedIds = newItems.map((c) => c.id);
         reorderConsultants(orderedIds, token)
           .then(() => {
-            toast.success("Danışman sırası güncellendi");
+            toast.success(bilingualKey("toast.consultantOrderUpdated"));
           })
           .catch((error) => {
             console.error("Error saving order:", error);
@@ -1114,12 +1115,9 @@ const AdminPanel = () => {
       !hasAnyContent ||
       !hasRequiredSummary
     ) {
-      toast.error(
-        "Please fill required fields (Title EN/TR, Summary EN/TR, Category, Content)",
-        {
-          position: "bottom-right",
-        }
-      );
+      toast.error(bilingualKey("toast.blogRequiredFields"), {
+        position: "bottom-right",
+      });
       return;
     }
 
@@ -1148,7 +1146,7 @@ const AdminPanel = () => {
       delete payload.contentBlocks_en;
       delete payload.contentBlocks_tr;
       await createBlog(payload, token);
-      toast.success("Blog created successfully!", {
+      toast.success(bilingualKey("toast.blogCreatedSuccess"), {
         position: "bottom-right",
       });
       setBlogModalOpened(false);
@@ -1221,12 +1219,9 @@ const AdminPanel = () => {
       !hasAnyContent ||
       !hasRequiredSummary
     ) {
-      toast.error(
-        "Please fill required fields (Title EN/TR, Summary EN/TR, Category, Content)",
-        {
-          position: "bottom-right",
-        }
-      );
+      toast.error(bilingualKey("toast.blogRequiredFields"), {
+        position: "bottom-right",
+      });
       return;
     }
 
@@ -1255,7 +1250,7 @@ const AdminPanel = () => {
       delete payload.contentBlocks_en;
       delete payload.contentBlocks_tr;
       await updateBlog(selectedBlog.id, payload, token);
-      toast.success("Blog updated successfully!", {
+      toast.success(bilingualKey("toast.blogUpdatedSuccess"), {
         position: "bottom-right",
       });
       setEditBlogModalOpened(false);
@@ -1280,7 +1275,7 @@ const AdminPanel = () => {
     setBlogLoading(true);
     try {
       await deleteBlog(blogToDelete.id, token);
-      toast.success("Blog deleted successfully!", {
+      toast.success(bilingualKey("toast.blogDeletedSuccess"), {
         position: "bottom-right",
       });
       setDeleteBlogModalOpened(false);
@@ -1320,7 +1315,7 @@ const AdminPanel = () => {
   const handleGenerateAIBlog = async () => {
     if (!token) return;
     if (!aiMarketData.city || !aiMarketData.district) {
-      toast.error("Please provide at least City and District", {
+      toast.error(bilingualKey("toast.aiBlogMinFields"), {
         position: "bottom-right",
       });
       return;
@@ -1343,7 +1338,7 @@ const AdminPanel = () => {
 
       await generateAIBlog(marketData, aiMarketData.autoPublish, token);
       
-      toast.success("AI blog generated successfully! 🎉", {
+      toast.success(bilingualKey("toast.aiBlogGeneratedSuccess"), {
         position: "bottom-right",
         autoClose: 5000,
       });
@@ -1381,7 +1376,7 @@ const AdminPanel = () => {
       !testimonialForm.comment_tr ||
       !testimonialForm.comment_en
     ) {
-      toast.error("Please fill required fields (Name, Comment TR, Comment EN)", {
+      toast.error(bilingualKey("toast.testimonialRequiredFields"), {
         position: "bottom-right",
       });
       return;
@@ -1397,7 +1392,7 @@ const AdminPanel = () => {
           "",
       };
       await createTestimonial(payload, token);
-      toast.success("Testimonial created successfully!", {
+      toast.success(bilingualKey("toast.testimonialCreatedSuccess"), {
         position: "bottom-right",
       });
       setTestimonialModalOpened(false);
@@ -1435,7 +1430,7 @@ const AdminPanel = () => {
       !testimonialForm.comment_tr ||
       !testimonialForm.comment_en
     ) {
-      toast.error("Please fill required fields (Name, Comment TR, Comment EN)", {
+      toast.error(bilingualKey("toast.testimonialRequiredFields"), {
         position: "bottom-right",
       });
       return;
@@ -1455,7 +1450,7 @@ const AdminPanel = () => {
         payload,
         token
       );
-      toast.success("Testimonial updated successfully!", {
+      toast.success(bilingualKey("toast.testimonialUpdatedSuccess"), {
         position: "bottom-right",
       });
       setEditTestimonialModalOpened(false);
@@ -1480,7 +1475,7 @@ const AdminPanel = () => {
     setTestimonialLoading(true);
     try {
       await deleteTestimonial(testimonialToDelete.id, token);
-      toast.success("Testimonial deleted successfully!", {
+      toast.success(bilingualKey("toast.testimonialDeletedSuccess"), {
         position: "bottom-right",
       });
       setDeleteTestimonialModalOpened(false);
@@ -1509,13 +1504,13 @@ const AdminPanel = () => {
 
     try {
       await deleteContactMessage(messageId, token);
-      toast.success("Message deleted successfully!", {
+      toast.success(bilingualKey("toast.messageDeletedSuccess"), {
         position: "bottom-right",
       });
       fetchMessages();
     } catch (error) {
       console.error("Delete message error:", error);
-      toast.error("Failed to delete message", {
+      toast.error(bilingualKey("toast.messageDeleteFailed"), {
         position: "bottom-right",
       });
     }
@@ -1539,7 +1534,7 @@ const AdminPanel = () => {
     setDeleteLoading(true);
     try {
       await deleteResidency(propertyToDelete.id, token);
-      toast.success("Delete operation completed successfully!", {
+      toast.success(bilingualKey("toast.deleteOperationSuccess"), {
         position: "bottom-right",
       });
       setDeleteModalOpened(false);
@@ -1585,7 +1580,7 @@ const AdminPanel = () => {
       !consultantForm.email ||
       !consultantForm.phone
     ) {
-      toast.error("Please fill required fields (Name, Email, Phone)", {
+      toast.error(bilingualKey("toast.consultantRequiredFields"), {
         position: "bottom-right",
       });
       return;
@@ -1594,7 +1589,7 @@ const AdminPanel = () => {
     setConsultantLoading(true);
     try {
       await createConsultant(consultantForm, token);
-      toast.success("Consultant added successfully!", {
+      toast.success(bilingualKey("toast.consultantAddedSuccess"), {
         position: "bottom-right",
       });
       setConsultantModalOpened(false);
@@ -1604,9 +1599,12 @@ const AdminPanel = () => {
       console.error("Create consultant error:", error);
       const errorMessage =
         error.response?.data?.message || "Failed to add consultant";
-      toast.error(errorMessage, {
-        position: "bottom-right",
-      });
+      toast.error(
+        bilingualFromMessage(errorMessage, "toast.consultantCreateError"),
+        {
+          position: "bottom-right",
+        }
+      );
     } finally {
       setConsultantLoading(false);
     }
@@ -1646,7 +1644,7 @@ const AdminPanel = () => {
     setConsultantLoading(true);
     try {
       await updateConsultant(selectedConsultant.id, consultantForm, token);
-      toast.success("Consultant updated successfully!", {
+      toast.success(bilingualKey("toast.consultantUpdatedSuccess"), {
         position: "bottom-right",
       });
       setEditConsultantModalOpened(false);
@@ -1657,9 +1655,12 @@ const AdminPanel = () => {
       console.error("Update consultant error:", error);
       const errorMessage =
         error.response?.data?.message || "Failed to update consultant";
-      toast.error(errorMessage, {
-        position: "bottom-right",
-      });
+      toast.error(
+        bilingualFromMessage(errorMessage, "toast.consultantUpdateError"),
+        {
+          position: "bottom-right",
+        }
+      );
     } finally {
       setConsultantLoading(false);
     }
@@ -1676,7 +1677,7 @@ const AdminPanel = () => {
     setConsultantLoading(true);
     try {
       await deleteConsultant(consultantToDelete.id, token);
-      toast.success("Consultant deleted successfully!", {
+      toast.success(bilingualKey("toast.consultantDeletedSuccess"), {
         position: "bottom-right",
       });
       setDeleteConsultantModalOpened(false);

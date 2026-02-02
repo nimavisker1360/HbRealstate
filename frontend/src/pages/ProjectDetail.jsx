@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "react-query";
 import { toast } from "react-toastify";
+import { bilingualKey } from "../utils/bilingualToast";
 import {
   Container,
   Grid,
@@ -346,18 +347,18 @@ const ProjectDetail = () => {
 
     // Validation
     if (!contactForm.name.trim()) {
-      toast.error(t("projectDetail.errorName"));
+      toast.error(bilingualKey("projectDetail.errorName"));
       return;
     }
     if (!contactForm.email.trim()) {
-      toast.error(t("projectDetail.errorEmail"));
+      toast.error(bilingualKey("projectDetail.errorEmail"));
       return;
     }
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(contactForm.email)) {
-      toast.error(t("projectDetail.errorEmailInvalid"));
+      toast.error(bilingualKey("projectDetail.errorEmailInvalid"));
       return;
     }
 
@@ -374,7 +375,7 @@ const ProjectDetail = () => {
       };
 
       await sendEmail(emailData);
-      toast.success(t("projectDetail.contactSuccess"));
+      toast.success(bilingualKey("projectDetail.contactSuccess"));
       
       // Reset form
       setContactForm({
@@ -384,7 +385,7 @@ const ProjectDetail = () => {
         message: "",
       });
     } catch (error) {
-      toast.error(t("projectDetail.contactError"));
+      toast.error(bilingualKey("projectDetail.contactError"));
       console.error("Error sending email:", error);
     } finally {
       setLoading(false);

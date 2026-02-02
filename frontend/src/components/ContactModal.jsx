@@ -1,6 +1,7 @@
 import { useState, useContext, useEffect } from "react";
 import { Modal, TextInput, Textarea, Button, Group, Rating } from "@mantine/core";
 import { toast } from "react-toastify";
+import { bilingualKey } from "../utils/bilingualToast";
 import { sendEmail, submitTestimonial } from "../utils/api";
 import { FaEnvelope, FaUser, FaPhone } from "react-icons/fa6";
 import PropTypes from "prop-types";
@@ -85,22 +86,22 @@ const ContactModal = ({
   const handleSubmit = async () => {
     // Validation
     if (!formData.name.trim()) {
-      toast.error(t("contactModal.errorName"));
+      toast.error(bilingualKey("contactModal.errorName"));
       return;
     }
     if (!formData.email.trim()) {
-      toast.error(t("contactModal.errorEmail"));
+      toast.error(bilingualKey("contactModal.errorEmail"));
       return;
     }
     if (!formData.message.trim()) {
-      toast.error(t("contactModal.errorMessage"));
+      toast.error(bilingualKey("contactModal.errorMessage"));
       return;
     }
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      toast.error(t("contactModal.errorEmailInvalid"));
+      toast.error(bilingualKey("contactModal.errorEmailInvalid"));
       return;
     }
 
@@ -117,7 +118,7 @@ const ContactModal = ({
       };
       
       await sendEmail(emailDataToSend);
-      toast.success(t("contactModal.successMessage"));
+      toast.success(bilingualKey("contactModal.successMessage"));
       setFormData({
         name: "",
         email: "",
@@ -128,7 +129,7 @@ const ContactModal = ({
       setSelectedConsultantId(null);
       onClose();
     } catch (error) {
-      toast.error(t("contactModal.errorSending"));
+      toast.error(bilingualKey("contactModal.errorSending"));
       console.error(error);
     } finally {
       setLoading(false);
@@ -137,25 +138,25 @@ const ContactModal = ({
 
   const handleReviewSubmit = async () => {
     if (!reviewData.name.trim()) {
-      toast.error(t("contactModal.errorName"));
+      toast.error(bilingualKey("contactModal.errorName"));
       return;
     }
     if (!reviewData.email.trim()) {
-      toast.error(t("contactModal.errorEmail"));
+      toast.error(bilingualKey("contactModal.errorEmail"));
       return;
     }
     if (!reviewData.comment.trim()) {
-      toast.error(t("contactModal.errorMessage"));
+      toast.error(bilingualKey("contactModal.errorMessage"));
       return;
     }
     if (!reviewData.rating || reviewData.rating < 1) {
-      toast.error(t("contactModal.errorRating"));
+      toast.error(bilingualKey("contactModal.errorRating"));
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(reviewData.email)) {
-      toast.error(t("contactModal.errorEmailInvalid"));
+      toast.error(bilingualKey("contactModal.errorEmailInvalid"));
       return;
     }
 
@@ -172,7 +173,7 @@ const ContactModal = ({
       };
 
       await submitTestimonial(payload);
-      toast.success(t("contactModal.reviewSuccess"));
+      toast.success(bilingualKey("contactModal.reviewSuccess"));
       setReviewData({
         name: "",
         email: "",
@@ -181,7 +182,7 @@ const ContactModal = ({
       });
       handleClose();
     } catch (error) {
-      toast.error(t("contactModal.reviewErrorSending"));
+      toast.error(bilingualKey("contactModal.reviewErrorSending"));
       console.error(error);
     } finally {
       setReviewLoading(false);

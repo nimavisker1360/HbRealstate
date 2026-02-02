@@ -12,6 +12,7 @@ import { useMutation } from "react-query";
 import { toFav } from "../utils/api";
 import { useAuth0 } from "@auth0/auth0-react";
 import { toast } from "react-toastify";
+import { bilingualKey } from "../utils/bilingualToast";
 
 // Get category display name (bilingual)
 const getCategoryLabel = (category, propertyType, lang = "tr") => {
@@ -98,13 +99,13 @@ const PropertyCard = ({ property, onCardClick }) => {
           ...prev,
           favourites: prev.favourites.filter((id) => id !== property.id),
         }));
-        toast.success("Removed from favorites");
+        toast.success(bilingualKey("favorites.removedFromFavorites"));
       } else {
         setUserDetails((prev) => ({
           ...prev,
           favourites: [...prev.favourites, property.id],
         }));
-        toast.success("Added to favorites");
+        toast.success(bilingualKey("favorites.addedToFavorites"));
       }
     },
   });
@@ -112,7 +113,7 @@ const PropertyCard = ({ property, onCardClick }) => {
   const handleFavoriteClick = (e) => {
     e.stopPropagation();
     if (!user) {
-      toast.error("Please login first");
+      toast.error(bilingualKey("toast.loginFirst"));
       return;
     }
     toggleFav();

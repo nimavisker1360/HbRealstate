@@ -1,6 +1,7 @@
 import axios from "axios";
 import dayjs from "dayjs";
 import { toast } from "react-toastify";
+import { bilingualFromMessage, bilingualKey } from "./bilingualToast";
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "/api",
@@ -42,7 +43,7 @@ api.interceptors.response.use(
       const now = Date.now();
       if (now - lastToastTime > 5000) {
         lastToastTime = now;
-        toast.error("Session expired. Please login again.", {
+        toast.error(bilingualKey("toast.sessionExpired"), {
           position: "bottom-right",
         });
       }
@@ -62,7 +63,7 @@ export const getAllProperties = async () => {
     }
     return response.data;
   } catch (error) {
-    toast.error("Something's not right");
+    toast.error(bilingualKey("toast.somethingNotRight"));
     throw error;
   }
 };
@@ -77,7 +78,7 @@ export const getProperty = async (id) => {
     }
     return response.data;
   } catch (error) {
-    toast.error("Something's not right");
+    toast.error(bilingualKey("toast.somethingNotRight"));
     throw error;
   }
 };
@@ -97,7 +98,7 @@ export const createUser = async (userData, token) => {
       "❌ Registration API error:",
       error.response?.data || error.message
     );
-    toast.error("Something's not right, Please Try again");
+    toast.error(bilingualKey("toast.somethingNotRightTryAgain"));
     throw error;
   }
 };
@@ -118,7 +119,7 @@ export const bookVisit = async (date, propertyId, email, token) => {
       }
     );
   } catch (error) {
-    toast.error("Something's not right. Please try again.");
+    toast.error(bilingualKey("toast.somethingNotRightTryAgain"));
     throw error;
   }
 };
@@ -135,7 +136,7 @@ export const removeBooking = async (id, email, token) => {
       }
     );
   } catch (error) {
-    toast.error("Something's not right. Please try again.");
+    toast.error(bilingualKey("toast.somethingNotRightTryAgain"));
 
     throw error;
   }
@@ -171,7 +172,7 @@ export const getAllFav = async (email, token) => {
     // console.log(res)
     return res.data["favResidenciesID"];
   } catch (e) {
-    toast.error("Something went wrong while fetching favs");
+    toast.error(bilingualKey("toast.fetchFavoritesError"));
     throw e;
   }
 };
@@ -192,7 +193,7 @@ export const getAllBookings = async (email, token) => {
     // console.log("res", res)
     return res.data["bookedVisits"];
   } catch (e) {
-    toast.error("Something went wrong while fetching bookings");
+    toast.error(bilingualKey("toast.fetchBookingsError"));
     throw e;
   }
 };
@@ -264,7 +265,7 @@ export const updateResidency = async (id, data, token) => {
     return response.data;
   } catch (error) {
     console.error("Error updating residency:", error);
-    toast.error("Mülk güncellenirken bir hata oluştu");
+    toast.error(bilingualKey("toast.propertyUpdateError"));
     throw error;
   }
 };
@@ -280,7 +281,7 @@ export const deleteResidency = async (id, token) => {
     return response.data;
   } catch (error) {
     console.error("Error deleting residency:", error);
-    toast.error("Mülk silinirken bir hata oluştu");
+    toast.error(bilingualKey("toast.propertyDeleteError"));
     throw error;
   }
 };
@@ -296,7 +297,7 @@ export const getAllConsultants = async () => {
     return response.data;
   } catch (error) {
     console.error("Error fetching consultants:", error);
-    toast.error("Danışmanlar yüklenirken bir hata oluştu");
+    toast.error(bilingualKey("toast.consultantsLoadError"));
     throw error;
   }
 };
@@ -329,7 +330,7 @@ export const createConsultant = async (data, token) => {
     return response.data;
   } catch (error) {
     console.error("Error creating consultant:", error);
-    toast.error("Danışman eklenirken bir hata oluştu");
+    toast.error(bilingualKey("toast.consultantCreateError"));
     throw error;
   }
 };
@@ -349,7 +350,7 @@ export const updateConsultant = async (id, data, token) => {
     return response.data;
   } catch (error) {
     console.error("Error updating consultant:", error);
-    toast.error("Danışman güncellenirken bir hata oluştu");
+    toast.error(bilingualKey("toast.consultantUpdateError"));
     throw error;
   }
 };
@@ -365,7 +366,7 @@ export const deleteConsultant = async (id, token) => {
     return response.data;
   } catch (error) {
     console.error("Error deleting consultant:", error);
-    toast.error("Danışman silinirken bir hata oluştu");
+    toast.error(bilingualKey("toast.consultantDeleteError"));
     throw error;
   }
 };
@@ -385,7 +386,7 @@ export const toggleConsultantAvailability = async (id, token) => {
     return response.data;
   } catch (error) {
     console.error("Error toggling consultant availability:", error);
-    toast.error("Danışman durumu değiştirilirken bir hata oluştu");
+    toast.error(bilingualKey("toast.consultantToggleError"));
     throw error;
   }
 };
@@ -405,7 +406,7 @@ export const reorderConsultants = async (orderedIds, token) => {
     return response.data;
   } catch (error) {
     console.error("Error reordering consultants:", error);
-    toast.error("Danışman sırası değiştirilirken bir hata oluştu");
+    toast.error(bilingualKey("toast.consultantReorderError"));
     throw error;
   }
 };
@@ -444,7 +445,7 @@ export const updateUserProfile = async (profileData, token) => {
     return response.data;
   } catch (error) {
     console.error("Error updating profile:", error);
-    toast.error("Profil güncellenirken bir hata oluştu");
+    toast.error(bilingualKey("toast.profileUpdateError"));
     throw error;
   }
 };
@@ -532,7 +533,7 @@ export const getAllBlogs = async () => {
     return response.data;
   } catch (error) {
     console.error("Error fetching blogs:", error);
-    toast.error("Error loading blogs");
+    toast.error(bilingualKey("toast.blogsLoadError"));
     throw error;
   }
 };
@@ -581,7 +582,7 @@ export const createBlog = async (data, token) => {
   } catch (error) {
     console.error("Error creating blog:", error);
     const message = error.response?.data?.error || error.response?.data?.message || "Error creating blog";
-    toast.error(message);
+    toast.error(bilingualFromMessage(message, "toast.blogCreateError"));
     throw error;
   }
 };
@@ -601,7 +602,7 @@ export const updateBlog = async (id, data, token) => {
     return response.data;
   } catch (error) {
     console.error("Error updating blog:", error);
-    toast.error("Error updating blog");
+    toast.error(bilingualKey("toast.blogUpdateError"));
     throw error;
   }
 };
@@ -617,7 +618,7 @@ export const deleteBlog = async (id, token) => {
     return response.data;
   } catch (error) {
     console.error("Error deleting blog:", error);
-    toast.error("Error deleting blog");
+    toast.error(bilingualKey("toast.blogDeleteError"));
     throw error;
   }
 };
@@ -637,7 +638,7 @@ export const toggleBlogPublish = async (id, token) => {
     return response.data;
   } catch (error) {
     console.error("Error toggling blog status:", error);
-    toast.error("Error updating blog status");
+    toast.error(bilingualKey("toast.blogStatusUpdateError"));
     throw error;
   }
 };
@@ -657,7 +658,7 @@ export const reorderBlogs = async (orderedIds, token) => {
     return response.data;
   } catch (error) {
     console.error("Error reordering blogs:", error);
-    toast.error("Error reordering blogs");
+    toast.error(bilingualKey("toast.blogReorderError"));
     throw error;
   }
 };
@@ -678,7 +679,12 @@ export const generateAIBlog = async (marketData, autoPublish, token) => {
     return response.data;
   } catch (error) {
     console.error("Error generating AI blog:", error);
-    toast.error(error.response?.data?.message || "Error generating AI blog");
+    toast.error(
+      bilingualFromMessage(
+        error.response?.data?.message,
+        "toast.aiBlogGenerateError"
+      )
+    );
     throw error;
   }
 };
@@ -699,7 +705,12 @@ export const generateMultipleAIBlogs = async (marketDataArray, autoPublish, toke
     return response.data;
   } catch (error) {
     console.error("Error generating multiple AI blogs:", error);
-    toast.error(error.response?.data?.message || "Error generating AI blogs");
+    toast.error(
+      bilingualFromMessage(
+        error.response?.data?.message,
+        "toast.aiBlogsGenerateError"
+      )
+    );
     throw error;
   }
 };
@@ -715,7 +726,7 @@ export const getAllTestimonials = async () => {
     return response.data;
   } catch (error) {
     console.error("Error fetching testimonials:", error);
-    toast.error("Error loading testimonials");
+    toast.error(bilingualKey("toast.testimonialsLoadError"));
     throw error;
   }
 };
@@ -750,7 +761,7 @@ export const createTestimonial = async (data, token) => {
     return response.data;
   } catch (error) {
     console.error("Error creating testimonial:", error);
-    toast.error("Error creating testimonial");
+    toast.error(bilingualKey("toast.testimonialCreateError"));
     throw error;
   }
 };
@@ -781,7 +792,7 @@ export const updateTestimonial = async (id, data, token) => {
     return response.data;
   } catch (error) {
     console.error("Error updating testimonial:", error);
-    toast.error("Error updating testimonial");
+    toast.error(bilingualKey("toast.testimonialUpdateError"));
     throw error;
   }
 };
@@ -797,7 +808,7 @@ export const deleteTestimonial = async (id, token) => {
     return response.data;
   } catch (error) {
     console.error("Error deleting testimonial:", error);
-    toast.error("Error deleting testimonial");
+    toast.error(bilingualKey("toast.testimonialDeleteError"));
     throw error;
   }
 };
@@ -817,7 +828,7 @@ export const toggleTestimonialPublish = async (id, token) => {
     return response.data;
   } catch (error) {
     console.error("Error toggling testimonial status:", error);
-    toast.error("Error updating testimonial status");
+    toast.error(bilingualKey("toast.testimonialStatusUpdateError"));
     throw error;
   }
 };
@@ -837,7 +848,7 @@ export const reorderTestimonials = async (orderedIds, token) => {
     return response.data;
   } catch (error) {
     console.error("Error reordering testimonials:", error);
-    toast.error("Error reordering testimonials");
+    toast.error(bilingualKey("toast.testimonialReorderError"));
     throw error;
   }
 };

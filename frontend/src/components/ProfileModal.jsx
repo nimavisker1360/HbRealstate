@@ -14,6 +14,7 @@ import PropTypes from "prop-types";
 import UserDetailContext from "../context/UserDetailContext";
 import { getUserProfile, updateUserProfile } from "../utils/api";
 import { toast } from "react-toastify";
+import { bilingualKey } from "../utils/bilingualToast";
 import { useTranslation } from "react-i18next";
 import {
   MdPerson,
@@ -170,7 +171,9 @@ const ProfileModal = ({ opened, setOpened }) => {
       !formData.phone ||
       !formData.address
     ) {
-      toast.error(t("profile.fillAllFields"), { position: "bottom-right" });
+      toast.error(bilingualKey("profile.fillAllFields"), {
+        position: "bottom-right",
+      });
       return;
     }
 
@@ -193,7 +196,7 @@ const ProfileModal = ({ opened, setOpened }) => {
           ...prev,
           profile: result.user,
         }));
-        toast.success(t("profile.profileUpdated"), {
+        toast.success(bilingualKey("profile.profileUpdated"), {
           position: "bottom-right",
         });
         setOpened(false);

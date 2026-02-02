@@ -12,6 +12,7 @@ import ContactModal from "../components/ContactModal";
 import UserDetailContext from "../context/UserDetailContext";
 import { Button, Avatar } from "@mantine/core";
 import { toast } from "react-toastify";
+import { bilingualKey } from "../utils/bilingualToast";
 import { normalizeWhatsAppNumber } from "../utils/common";
 import {
   MdOutlineBed,
@@ -265,7 +266,9 @@ const Property = () => {
         bookings: prev.bookings.filter((booking) => booking?.id !== id),
       }));
 
-      toast.success("Booking cancelled", { position: "bottom-right" });
+      toast.success(bilingualKey("booking.bookingCancelled"), {
+        position: "bottom-right",
+      });
     },
   });
 
@@ -860,7 +863,7 @@ const Property = () => {
                 <Button
                   onClick={() => {
                     if (!validateLogin()) return;
-                    toast.warning(`⚠️ ${t('propertyDetails.bookFirstWarning')}`, {
+                    toast.warning(`⚠️ ${bilingualKey("propertyDetails.bookFirstWarning")}`, {
                       position: "bottom-right",
                       autoClose: 5000,
                     });

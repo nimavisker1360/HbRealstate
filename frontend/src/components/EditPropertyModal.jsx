@@ -414,6 +414,7 @@ const ALL_EXTERIOR_FEATURES = [
   "Yüzme Havuzu (Kapalı)",
 ];
 import { toast } from "react-toastify";
+import { bilingualFromMessage, bilingualKey } from "../utils/bilingualToast";
 import { useMutation } from "react-query";
 import PropTypes from "prop-types";
 import useCountries from "../hooks/useCountries";
@@ -857,10 +858,12 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
     onError: (error) => {
       const message =
         error?.response?.data?.message || "Mülk güncellenirken hata oluştu";
-      toast.error(message, { position: "bottom-right" });
+      toast.error(bilingualFromMessage(message, "toast.propertyUpdateError"), {
+        position: "bottom-right",
+      });
     },
     onSuccess: () => {
-      toast.success("Mülk başarıyla güncellendi! / Property updated successfully!", {
+      toast.success(bilingualKey("toast.propertyUpdatedSuccess"), {
         position: "bottom-right",
         autoClose: 3000,
       });
@@ -880,7 +883,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
     const isProject = form.values.propertyType === "local-project" || form.values.propertyType === "international-project";
 
     if (imageURLs.length === 0 && !isProject) {
-      toast.error("Lütfen en az bir görsel ekleyin", {
+      toast.error(bilingualKey("toast.imageRequired"), {
         position: "bottom-right",
       });
       return;

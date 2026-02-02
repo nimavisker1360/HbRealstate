@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import UserDetailContext from "../context/UserDetailContext";
 import { bookVisit, getUserProfile } from "../utils/api";
 import { toast } from "react-toastify";
+import { bilingualFromMessage, bilingualKey } from "../utils/bilingualToast";
 import dayjs from "dayjs";
 import { MdWarning, MdPerson } from "react-icons/md";
 import ProfileModal from "./ProfileModal";
@@ -43,7 +44,7 @@ const BookingModal = ({ opened, setOpened, email, propertyId }) => {
   }, [opened, email, token]);
 
   const handleBookingSuccess = () => {
-    toast.success(t("booking.bookingConfirmed"), {
+    toast.success(bilingualKey("booking.bookingConfirmed"), {
       position: "bottom-right",
     });
     setUserDetails((prev) => ({
@@ -61,7 +62,10 @@ const BookingModal = ({ opened, setOpened, email, propertyId }) => {
   const { mutate, isLoading } = useMutation({
     mutationFn: () => bookVisit(value, propertyId, email, token),
     onSuccess: () => handleBookingSuccess(),
-    onError: ({ response }) => toast.error(response?.data?.message || "An error occurred"),
+    onError: ({ response }) =>
+      toast.error(
+        bilingualFromMessage(response?.data?.message, "toast.genericError")
+      ),
     onSettled: () => setOpened(false),
   });
 

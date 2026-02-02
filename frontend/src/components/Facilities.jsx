@@ -6,6 +6,7 @@ import UserDetailContext from "../context/UserDetailContext";
 import useProperties from "../hooks/useProperties";
 import { useMutation } from "react-query";
 import { toast } from "react-toastify";
+import { bilingualFromMessage, bilingualKey } from "../utils/bilingualToast";
 import { createResidency } from "../utils/api";
 import PropTypes from "prop-types";
 
@@ -56,10 +57,12 @@ const Facilities = ({
       ),
     onError: (error) => {
       const message = error?.response?.data?.message || "Error adding property";
-      toast.error(message, { position: "bottom-right" });
+      toast.error(bilingualFromMessage(message, "toast.propertyAddError"), {
+        position: "bottom-right",
+      });
     },
     onSuccess: () => {
-      toast.success("Mülk başarıyla eklendi!", {
+      toast.success(bilingualKey("toast.propertyAddedSuccess"), {
         position: "bottom-right",
       });
       setPropertyDetails({
