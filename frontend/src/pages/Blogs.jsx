@@ -119,16 +119,16 @@ const BlogsPage = () => {
   );
 
   return (
-    <section className="min-h-screen pt-24 pb-16 bg-slate-50 relative overflow-hidden">
+    <section className="min-h-screen pt-24 pb-20 bg-[#f7f3ea] relative overflow-hidden">
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-32 -left-20 h-72 w-72 rounded-full bg-emerald-200/40 blur-3xl"></div>
-        <div className="absolute top-20 right-0 h-80 w-80 rounded-full bg-lime-200/40 blur-3xl"></div>
-        <div className="absolute bottom-0 left-1/3 h-96 w-96 rounded-full bg-sky-200/30 blur-3xl"></div>
+        <div className="absolute -top-32 -left-24 h-72 w-72 rounded-full bg-emerald-200/35 blur-3xl"></div>
+        <div className="absolute top-16 -right-20 h-80 w-80 rounded-full bg-amber-200/35 blur-3xl"></div>
+        <div className="absolute bottom-0 left-1/3 h-96 w-96 rounded-full bg-teal-200/25 blur-3xl"></div>
       </div>
 
       <div className="max-padd-container relative z-10">
         <div className="max-w-3xl">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.35em] text-emerald-600">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.35em] text-emerald-700">
             {t("blogs.countriesSubtitle", "Explore Countries")}
           </p>
           <h1 className="mt-3 text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900">
@@ -155,7 +155,7 @@ const BlogsPage = () => {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
           </div>
         ) : countryCards.length === 0 ? (
-          <div className="mt-16 rounded-3xl border border-white/70 bg-white/90 p-10 text-center shadow-xl shadow-emerald-100/40">
+          <div className="mt-16 rounded-3xl border border-white/70 bg-white/90 p-10 text-center shadow-[0_24px_60px_-45px_rgba(15,23,42,0.4)]">
             <p className="text-slate-600">
               {t("blogs.noCountries", "No countries to show yet.")}
             </p>
@@ -165,34 +165,39 @@ const BlogsPage = () => {
             {countryCards.map(({ country, coverBlog, coverIndex, count }) => (
               <article
                 key={country}
-                className="group rounded-3xl border border-white/70 bg-white/90 shadow-xl shadow-emerald-100/40 transition hover:-translate-y-1 hover:shadow-2xl cursor-pointer"
+                className="group overflow-hidden rounded-[28px] border border-white/70 bg-white/85 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.35)] transition hover:-translate-y-1 hover:shadow-[0_30px_70px_-40px_rgba(15,23,42,0.5)] cursor-pointer"
                 onClick={() => navigate(`/blogs/${getCountrySlug(country)}`)}
               >
-                <div className="p-6 sm:p-7 flex flex-col items-center text-center">
-                  <div className="w-24 h-24 rounded-full p-[5px] bg-white shadow-lg ring-1 ring-emerald-100">
-                    <div className="w-full h-full rounded-full overflow-hidden bg-slate-100">
-                      <img
-                        src={getBlogImage(coverBlog, coverIndex)}
-                        alt={country}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
+                <div className="flex justify-center pt-8 pb-4">
+                  <div className="relative h-24 w-24 sm:h-28 sm:w-28 lg:h-32 lg:w-32 rounded-full overflow-hidden border-[6px] border-white/80 bg-white shadow-[0_18px_45px_-25px_rgba(15,23,42,0.45)]">
+                    <img
+                      src={getBlogImage(coverBlog, coverIndex)}
+                      alt={country}
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
                   </div>
-                  <h3 className="mt-4 text-xl font-semibold text-slate-900">
-                    {country}
-                  </h3>
-                  <p className="mt-1 text-sm text-slate-500">
-                    {count} {t("blogs.posts", "posts")}
-                  </p>
+                </div>
+                <div className="px-5 pb-6 flex flex-col items-center text-center gap-3">
+                  <div>
+                    <h3 className="text-lg sm:text-xl font-semibold text-slate-900">
+                      {country}
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-1">
+                      {count} {t("blogs.posts", "posts")}
+                    </p>
+                  </div>
+                  <span className="text-sm text-slate-600">
+                    {t("blogs.continueReading", "continue reading")}
+                  </span>
                   <button
                     type="button"
                     onClick={(event) => {
                       event.stopPropagation();
                       navigate(`/blogs/${getCountrySlug(country)}`);
                     }}
-                    className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-emerald-600 hover:text-emerald-700"
+                    className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-semibold text-emerald-700 transition group-hover:border-emerald-600 group-hover:bg-emerald-600 group-hover:text-white"
                   >
-                    {t("blogs.continueReading", "continue reading")}
+                    {t("blogs.viewAll", "More")}
                     <MdArrowForward />
                   </button>
                 </div>

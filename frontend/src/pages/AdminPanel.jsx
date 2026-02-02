@@ -845,7 +845,7 @@ const AdminPanel = () => {
       const parser = new DOMParser();
       const doc = parser.parseFromString(html, "text/html");
       const blockNodes = Array.from(
-        doc.body.querySelectorAll('div.not-prose.grid')
+        doc.body.querySelectorAll('div.not-prose.blog-block, div.not-prose.grid')
       );
       const blocks = blockNodes.map((node) => {
         const img = node.querySelector("img");
@@ -1077,12 +1077,10 @@ const AdminPanel = () => {
           ? `<div class="w-full rounded-2xl overflow-hidden shadow-lg border border-slate-100"><img src="${block.image}" alt="Blog block ${index + 1}" class="w-full h-full object-cover" /></div>`
           : "";
 
-        const imageColumn = `<div class="${
-          index % 2 === 1 ? "md:order-2" : ""
-        }">${imageHtml}</div>`;
+        const imageColumn = `<div>${imageHtml}</div>`;
         const textColumn = `<div>${textHtml}</div>`;
 
-        return `<div class="not-prose grid gap-6 md:grid-cols-2 items-start my-10">${imageColumn}${textColumn}</div>`;
+        return `<div class="not-prose blog-block flex flex-col gap-6 my-10">${imageColumn}${textColumn}</div>`;
       })
       .filter(Boolean)
       .join("");

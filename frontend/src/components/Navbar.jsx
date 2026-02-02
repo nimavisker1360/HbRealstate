@@ -498,10 +498,17 @@ const Navbar = ({
                   {aboutTurkeyMenu.map((column) => (
                     <div key={column.titleKey} className="min-w-0">
                     <div className="mb-4">
-                      <h4 className="text-sm font-semibold text-[#00A86B]">
-                        {t(column.titleKey)}
-                      </h4>
-                      <div className="mt-2 h-0.5 w-10 bg-[#00A86B]"></div>
+                      <div className="flex items-center justify-between gap-3">
+                        <h4 className="text-sm font-semibold text-red-500">
+                          {t(column.titleKey)}
+                        </h4>
+                        <MdKeyboardArrowDown
+                          size={18}
+                          className="text-red-500"
+                          aria-hidden="true"
+                        />
+                      </div>
+                      <div className="mt-2 h-0.5 w-10 bg-red-500"></div>
                     </div>
                     <ul className="space-y-2">
                       {column.items.map((item) => {
@@ -528,16 +535,16 @@ const Navbar = ({
                               <span
                                 className={
                                   isBlogLink
-                                  ? `block text-[12px] font-semibold leading-5 text-gray-800 group-hover:text-white ${
-                                      isSingleLine
-                                        ? "whitespace-nowrap text-[11px] tracking-tight overflow-visible"
-                                        : "whitespace-normal"
-                                    }`
-                                  : undefined
+                                    ? `block text-[12px] font-semibold leading-5 text-emerald-500 group-hover:text-white ${
+                                        isSingleLine
+                                          ? "whitespace-nowrap text-[11px] tracking-tight overflow-visible"
+                                          : "whitespace-normal"
+                                      }`
+                                    : "text-slate-600"
                                 }
                               >
-                              {t(item.labelKey)}
-                            </span>
+                                {t(item.labelKey)}
+                              </span>
                               {item.hasChildren && (
                                 <MdKeyboardArrowRight
                                   size={18}
@@ -579,8 +586,13 @@ const Navbar = ({
                   key={section.titleKey}
                   className="px-4 py-3 border-t border-gray-100"
                 >
-                  <div className="text-xs font-semibold uppercase tracking-wide text-[#00A86B]">
-                    {t(section.titleKey)}
+                  <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-red-500">
+                    <span>{t(section.titleKey)}</span>
+                    <MdKeyboardArrowDown
+                      size={16}
+                      className="text-red-500"
+                      aria-hidden="true"
+                    />
                   </div>
                   <div className="mt-2 space-y-1">
                     {section.items.map((item) => {
@@ -597,8 +609,10 @@ const Navbar = ({
                               handleAboutTurkeyItemClick(item);
                             }
                           }}
-                          className={`w-full rounded-md px-3 py-1.5 text-left text-[13px] text-gray-700 transition-colors hover:bg-[#00A86B] hover:text-white ${
-                            isBlogLink ? "cursor-pointer font-semibold" : "cursor-default"
+                          className={`w-full rounded-md px-3 py-1.5 text-left text-[13px] transition-colors hover:bg-[#00A86B] hover:text-white ${
+                            isBlogLink
+                              ? "cursor-pointer font-semibold text-emerald-500"
+                              : "cursor-default text-gray-700"
                           }`}
                         >
                           {t(item.labelKey)}

@@ -466,3 +466,31 @@ body {
 .animate-whatsapp-ring {
   animation: whatsapp-ring 2s ease-out infinite;
 }
+
+/* Blog content blocks: stack image and text vertically */
+.blog-content .not-prose.blog-block,
+.blog-content .not-prose.grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.blog-content .not-prose.blog-block > div,
+.blog-content .not-prose.grid > div {
+  order: 0;
+  width: 100%;
+}
+
+.blog-content img {
+  max-height: 320px;
+  width: 100%;
+  object-fit: cover;
+  border-radius: 18px;
+  box-shadow: 0 18px 40px -28px rgba(15, 23, 42, 0.45);
+}
+
+@media (min-width: 1024px) {
+  .blog-content img {
+    max-height: 360px;
+  }
+}

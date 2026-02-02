@@ -128,19 +128,19 @@ const Blogs = ({ limit = null, showMore = false }) => {
 
   return (
     <section className="max-padd-container overflow-x-hidden mb-16">
-      <div className="relative rounded-[36px] border-2 border-slate-200/80 bg-white/95 p-6 sm:p-10 shadow-[0_16px_40px_-18px_rgba(203,213,225,0.9)]">
+      <div className="relative rounded-[32px] border border-white/70 bg-white/90 p-6 sm:p-10 shadow-[0_24px_60px_-45px_rgba(15,23,42,0.35)]">
         <div className="pointer-events-none absolute -top-6 left-10 h-12 w-12 rounded-2xl border border-emerald-200 bg-white/90 shadow-sm flexCenter">
-          <MdArticle className="text-emerald-500 text-xl" />
+          <MdArticle className="text-emerald-600 text-xl" />
         </div>
         <div className="pointer-events-none absolute top-10 right-12 h-12 w-12 rounded-2xl border border-slate-200 bg-white/90 shadow-sm flexCenter">
           <MdPublic className="text-slate-500 text-xl" />
         </div>
         <div className="pointer-events-none absolute bottom-6 right-24 h-12 w-12 rounded-2xl border border-emerald-200 bg-white/90 shadow-sm flexCenter">
-          <MdTrendingUp className="text-emerald-500 text-xl" />
+          <MdTrendingUp className="text-emerald-600 text-xl" />
         </div>
         <div className="py-10 xl:py-16 rounded-3xl">
           <div className="text-center">
-            <span className="medium-18">{t('blogs.countriesSubtitle', 'Explore Countries')}</span>
+            <span className="medium-18 text-emerald-700">{t('blogs.countriesSubtitle', 'Explore Countries')}</span>
             <h2 className="h2">{t('blogs.countriesTitle', 'Countries')}</h2>
           </div>
           {/* container */}
@@ -149,15 +149,15 @@ const Blogs = ({ limit = null, showMore = false }) => {
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-secondary"></div>
             </div>
           ) : (
-            <div className="grid gap-8 sm:gap-10 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 mt-20 justify-items-center">
+            <div className="grid gap-6 sm:gap-8 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 mt-16 justify-items-center">
               {visibleCountries.map(({ country, coverBlog, coverIndex, count }) => (
                 <div
                   key={country}
-                  className="group flex flex-col items-center text-center cursor-pointer"
+                  className="group flex flex-col items-center text-center cursor-pointer rounded-2xl border border-white/70 bg-white/85 p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
                   onClick={() => handleContinueReading(country)}
                 >
-                  <div className="relative w-36 h-36 sm:w-44 sm:h-44 lg:w-48 lg:h-48 rounded-full p-[6px] bg-white shadow-lg ring-1 ring-black/5 transition-transform duration-300 group-hover:-translate-y-1 group-hover:shadow-xl">
-                    <div className="w-full h-full rounded-full overflow-hidden bg-gray-100">
+                  <div className="relative w-28 h-28 sm:w-32 sm:h-32 lg:w-36 lg:h-36 rounded-full p-[6px] bg-white shadow-lg ring-1 ring-emerald-100 transition-transform duration-300 group-hover:-translate-y-1 group-hover:shadow-xl">
+                    <div className="w-full h-full rounded-full overflow-hidden bg-slate-100">
                       <img
                         src={getBlogImage(coverBlog, coverIndex)}
                         alt={country}
@@ -166,14 +166,14 @@ const Blogs = ({ limit = null, showMore = false }) => {
                     </div>
                   </div>
 
-                  <h3 className="mt-4 text-sm sm:text-base font-semibold text-gray-800 max-w-[220px]">
+                  <h3 className="mt-4 text-sm sm:text-base font-semibold text-slate-900 max-w-[220px]">
                     {country}
                   </h3>
-                  <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                  <p className="text-xs sm:text-sm text-slate-500 mt-1">
                     {count} {t("blogs.posts", "posts")}
                   </p>
                   <button
-                    className="mt-3 bg-white rounded-full font-[500] text-[13px] sm:text-[14px] text-tertiary px-4 py-1.5 border border-gray-200 hover:bg-secondary hover:text-white hover:border-secondary transition-colors"
+                    className="mt-3 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-1.5 text-[13px] sm:text-[14px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-600 hover:text-white hover:border-emerald-600"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleContinueReading(country);

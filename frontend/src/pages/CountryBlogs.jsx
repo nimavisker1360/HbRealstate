@@ -112,11 +112,11 @@ const CountryBlogs = () => {
     : decodeURIComponent(normalizedSlug || "").replace(/-/g, " ");
 
   return (
-    <section className="min-h-screen pt-24 pb-16 bg-slate-50 relative overflow-hidden">
+    <section className="min-h-screen pt-24 pb-20 bg-[#f7f3ea] relative overflow-hidden">
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-32 -left-20 h-72 w-72 rounded-full bg-emerald-200/40 blur-3xl"></div>
-        <div className="absolute top-20 right-0 h-80 w-80 rounded-full bg-lime-200/40 blur-3xl"></div>
-        <div className="absolute bottom-0 left-1/3 h-96 w-96 rounded-full bg-sky-200/30 blur-3xl"></div>
+        <div className="absolute -top-32 -left-24 h-72 w-72 rounded-full bg-emerald-200/35 blur-3xl"></div>
+        <div className="absolute top-16 -right-20 h-80 w-80 rounded-full bg-amber-200/35 blur-3xl"></div>
+        <div className="absolute bottom-0 left-1/3 h-96 w-96 rounded-full bg-teal-200/25 blur-3xl"></div>
       </div>
 
       <div className="max-padd-container relative z-10">
@@ -124,7 +124,7 @@ const CountryBlogs = () => {
           <button
             type="button"
             onClick={() => navigate("/blogs")}
-            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm hover:border-emerald-200 hover:text-emerald-600"
+            className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:border-emerald-200 hover:text-emerald-700"
           >
             <MdArrowBack />
             {t("blogs.back", "Back to countries")}
@@ -145,20 +145,20 @@ const CountryBlogs = () => {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
           </div>
         ) : countryBlogs.length === 0 ? (
-          <div className="mt-16 rounded-3xl border border-white/70 bg-white/90 p-10 text-center shadow-xl shadow-emerald-100/40">
+          <div className="mt-16 rounded-3xl border border-white/70 bg-white/90 p-10 text-center shadow-[0_24px_60px_-45px_rgba(15,23,42,0.4)]">
             <p className="text-slate-600">
               {t("blogs.noCountryPosts", "No posts found for this country yet.")}
             </p>
             <button
               type="button"
               onClick={() => navigate("/blogs")}
-              className="mt-6 inline-flex items-center gap-2 rounded-full bg-emerald-500 px-6 py-3 text-white text-sm font-semibold shadow-lg shadow-emerald-200/60 hover:bg-emerald-600 transition"
+              className="mt-6 inline-flex items-center gap-2 rounded-full bg-emerald-600 px-6 py-3 text-white text-sm font-semibold shadow-lg shadow-emerald-200/60 hover:bg-emerald-700 transition"
             >
               {t("blogs.viewAll", "More")}
             </button>
           </div>
         ) : (
-          <div className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+          <div className="mt-10 grid gap-8 md:grid-cols-2 xl:grid-cols-3">
             {countryBlogs.map(({ blog, index }) => {
               const canNavigate = Boolean(blog.id);
               const postTitle = getLocalizedTitle(blog);
@@ -169,7 +169,7 @@ const CountryBlogs = () => {
               return (
                 <article
                   key={blog.id || `${postTitle}-${index}`}
-                  className={`group rounded-2xl border border-slate-100 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+                  className={`group overflow-hidden rounded-[26px] border border-white/70 bg-white/90 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.35)] transition hover:-translate-y-1 hover:shadow-[0_30px_70px_-40px_rgba(15,23,42,0.5)] ${
                     canNavigate ? "cursor-pointer" : "cursor-default"
                   }`}
                   onClick={() => {
@@ -178,53 +178,52 @@ const CountryBlogs = () => {
                     }
                   }}
                 >
-                  <div className="p-5 flex flex-col h-full">
-                    <div className="flex items-start gap-3">
-                      <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-100">
-                        <img
-                          src={getBlogImage(blog, index)}
-                          alt={postTitle}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-emerald-600">
-                          {category}
-                        </p>
-                        <h4 className="mt-1 text-base font-semibold text-slate-900 leading-snug">
-                          {postTitle}
-                        </h4>
-                        {blog.createdAt && (
-                          <div className="mt-1 flex items-center gap-1.5 text-[11px] text-slate-500">
-                            <MdCalendarToday className="text-emerald-500" />
-                            <span>
-                              {new Date(blog.createdAt).toLocaleDateString(
-                                language === "tr" ? "tr-TR" : "en-US",
-                                {
-                                  year: "numeric",
-                                  month: "short",
-                                  day: "numeric",
-                                }
-                              )}
-                            </span>
-                          </div>
-                        )}
-                      </div>
+                  <div className="flex justify-center pt-8 pb-4">
+                    <div className="relative h-24 w-24 sm:h-28 sm:w-28 md:h-32 md:w-32 rounded-full overflow-hidden border-[6px] border-white/80 bg-white shadow-[0_18px_45px_-25px_rgba(15,23,42,0.35)]">
+                      <img
+                        src={getBlogImage(blog, index)}
+                        alt={postTitle}
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    </div>
+                  </div>
+                  <div className="px-5 pb-6 flex flex-col h-full">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+                        {category}
+                      </span>
+                      {blog.createdAt && (
+                        <span className="inline-flex items-center gap-1.5 text-xs text-slate-500">
+                          <MdCalendarToday className="text-emerald-500" />
+                          {new Date(blog.createdAt).toLocaleDateString(
+                            language === "tr" ? "tr-TR" : "en-US",
+                            {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                            }
+                          )}
+                        </span>
+                      )}
                     </div>
 
+                    <h4 className="mt-4 text-lg font-semibold text-slate-900 leading-snug">
+                      {postTitle}
+                    </h4>
+
                     {summaryItems.length > 1 ? (
-                      <div className="mt-4 grid gap-2">
+                      <div className="mt-4 flex flex-wrap gap-2">
                         {summaryItems.map((item, itemIndex) => (
-                          <div
+                          <span
                             key={`${blog.id || postTitle}-${itemIndex}`}
-                            className="rounded-xl border border-emerald-100/80 bg-emerald-50/70 px-3 py-2 text-xs text-slate-600 shadow-sm"
+                            className="rounded-full border border-emerald-100/80 bg-emerald-50/70 px-3 py-1 text-xs text-slate-600"
                           >
                             {item}
-                          </div>
+                          </span>
                         ))}
                       </div>
                     ) : (
-                      <p className="mt-4 text-xs text-slate-600 leading-relaxed line-clamp-4">
+                      <p className="mt-4 text-sm text-slate-600 leading-relaxed line-clamp-3">
                         {summary}
                       </p>
                     )}
@@ -238,7 +237,7 @@ const CountryBlogs = () => {
                           navigate(`/blog/${blog.id}`);
                         }
                       }}
-                      className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-emerald-600 hover:text-emerald-700 disabled:cursor-default disabled:opacity-50"
+                      className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-emerald-700 hover:text-emerald-800 disabled:cursor-default disabled:opacity-50"
                     >
                       {t("blogs.continueReading", "continue reading")}
                       <MdArrowForward />
