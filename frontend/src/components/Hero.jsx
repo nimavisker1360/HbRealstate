@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import heroBg from "../assets/img1.png";
 import iconIstanbul from "../assets/icons/istanbul.png";
-import iconGreece from "../assets/icons/greece.png";
+import iconGreece from "../assets/icons/Greece.png";
 import iconDubai from "../assets/icons/dubai.png";
 import iconGeorgia from "../assets/icons/boat.png";
 import iconCyprus from "../assets/icons/cyprus.png";
