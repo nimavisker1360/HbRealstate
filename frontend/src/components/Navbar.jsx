@@ -624,7 +624,7 @@ const Navbar = ({
                                 handleAboutTurkeyItemClick(item);
                               }
                             }}
-                            className={`group flex w-full ${
+                            className={`group flex w-full min-w-0 ${
                               isBlogLink ? "items-start" : "items-center"
                             } justify-between gap-3 px-3 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-[#00A86B] hover:text-white ${
                               isBlogLink ? "cursor-pointer" : "cursor-default"
@@ -633,10 +633,10 @@ const Navbar = ({
                             <span
                               className={
                                 isBlogLink
-                                  ? `block text-[12px] font-semibold leading-5 text-emerald-500 group-hover:text-white ${
+                                  ? `block flex-1 min-w-0 text-[12px] font-semibold leading-5 text-emerald-500 group-hover:text-white ${
                                       isSingleLine
-                                        ? "whitespace-nowrap text-[11px] tracking-tight overflow-visible"
-                                        : "whitespace-normal"
+                                        ? "line-clamp-2 whitespace-normal text-[11px] tracking-tight"
+                                        : "whitespace-normal break-words"
                                     }`
                                   : "text-slate-600"
                               }
@@ -817,29 +817,29 @@ const Navbar = ({
                                           handleBuyerGuideItemClick(item);
                                         }
                                       }}
-                                      className={`group flex w-full ${
+                                    className={`group flex w-full min-w-0 ${
+                                      isBlogLink
+                                        ? "items-start"
+                                        : "items-center"
+                                    } justify-between gap-3 px-3 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-[#00A86B] hover:text-white ${
+                                      isBlogLink
+                                        ? "cursor-pointer"
+                                        : "cursor-default"
+                                    }`}
+                                  >
+                                    <span
+                                      className={
                                         isBlogLink
-                                          ? "items-start"
-                                          : "items-center"
-                                      } justify-between gap-3 px-3 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-[#00A86B] hover:text-white ${
-                                        isBlogLink
-                                          ? "cursor-pointer"
-                                          : "cursor-default"
-                                      }`}
+                                          ? `block flex-1 min-w-0 text-[12px] font-semibold leading-5 text-emerald-500 group-hover:text-white ${
+                                              isSingleLine
+                                                ? "line-clamp-2 whitespace-normal text-[11px] tracking-tight"
+                                                : "whitespace-normal break-words"
+                                            }`
+                                          : "text-slate-600"
+                                      }
                                     >
-                                      <span
-                                        className={
-                                          isBlogLink
-                                            ? `block text-[12px] font-semibold leading-5 text-emerald-500 group-hover:text-white ${
-                                                isSingleLine
-                                                  ? "whitespace-nowrap text-[11px] tracking-tight overflow-visible"
-                                                  : "whitespace-normal"
-                                              }`
-                                            : "text-slate-600"
-                                        }
-                                      >
-                                        {t(item.labelKey)}
-                                      </span>
+                                      {t(item.labelKey)}
+                                    </span>
                                     </button>
                                   </li>
                                 );
