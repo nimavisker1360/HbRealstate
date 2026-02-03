@@ -406,6 +406,7 @@ const AdminPanel = () => {
     summary_en: "",
     summary_tr: "",
     image: "",
+    video: "",
     images: [], // Multiple images for gallery
     published: true,
   });
@@ -598,13 +599,19 @@ const AdminPanel = () => {
   const blogWidgetRef = useRef();
   const [blogImageUploading, setBlogImageUploading] = useState(false);
 
+  // Cloudinary widget for blog video upload (optional)
+  const blogVideoWidgetRef = useRef();
+  const [blogVideoUploading, setBlogVideoUploading] = useState(false);
+
   // Cloudinary widget for blog gallery images (multiple)
   const blogGalleryWidgetRef = useRef();
   const [blogGalleryUploading, setBlogGalleryUploading] = useState(false);
   const blogBlockWidgetRef = useRef();
+  const blogBlockVideoWidgetRef = useRef();
   const activeBlockIndexRef = useRef(null);
   const activeBlockLangRef = useRef("en");
   const [blockImageUploadingIndex, setBlockImageUploadingIndex] = useState(null);
+  const [blockVideoUploadingIndex, setBlockVideoUploadingIndex] = useState(null);
 
   useEffect(() => {
     blogWidgetRef.current = cloudinaryRef.current?.createUploadWidget(
@@ -648,6 +655,32 @@ const AdminPanel = () => {
         }
         if (result.event === "close") {
           setBlogImageUploading(false);
+        }
+        }
+      );
+
+    blogVideoWidgetRef.current = cloudinaryRef.current?.createUploadWidget(
+      {
+        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
+        uploadPreset:
+          import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
+        maxFiles: 1,
+        multiple: false,
+        resourceType: "video",
+        clientAllowedFormats: ["mp4", "mov", "webm", "mkv", "avi", "m4v"],
+        sources: ["local", "url", "camera"],
+      },
+      (err, result) => {
+        if (result.event === "success") {
+          const videoUrl = result.info.secure_url;
+          setBlogForm((prev) => ({
+            ...prev,
+            video: videoUrl,
+          }));
+          setBlogVideoUploading(false);
+        }
+        if (result.event === "close") {
+          setBlogVideoUploading(false);
         }
       }
     );
@@ -728,7 +761,7 @@ const AdminPanel = () => {
               const field = getBlocksField(lang);
               const blocks = [...(prev[field] || [])];
               const target = blocks[index] || {};
-              blocks[index] = { ...target, image: croppedUrl };
+              blocks[index] = { ...target, image: croppedUrl, video: "" };
               return { ...prev, [field]: blocks };
             });
           }
@@ -739,11 +772,49 @@ const AdminPanel = () => {
         }
       }
     );
+
+    blogBlockVideoWidgetRef.current = cloudinaryRef.current?.createUploadWidget(
+      {
+        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
+        uploadPreset:
+          import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
+        maxFiles: 1,
+        multiple: false,
+        resourceType: "video",
+        clientAllowedFormats: ["mp4", "mov", "webm", "mkv", "avi", "m4v"],
+        sources: ["local", "url", "camera"],
+      },
+      (err, result) => {
+        if (result.event === "success") {
+          const videoUrl = result.info.secure_url;
+          const index = activeBlockIndexRef.current;
+          const lang = activeBlockLangRef.current || "en";
+          if (index !== null) {
+            setBlogForm((prev) => {
+              const field = getBlocksField(lang);
+              const blocks = [...(prev[field] || [])];
+              const target = blocks[index] || {};
+              blocks[index] = { ...target, video: videoUrl, image: "" };
+              return { ...prev, [field]: blocks };
+            });
+          }
+          setBlockVideoUploadingIndex(null);
+        }
+        if (result.event === "close") {
+          setBlockVideoUploadingIndex(null);
+        }
+      }
+    );
   }, []);
 
   const openBlogImageUpload = () => {
     setBlogImageUploading(true);
     blogWidgetRef.current?.open();
+  };
+
+  const openBlogVideoUpload = () => {
+    setBlogVideoUploading(true);
+    blogVideoWidgetRef.current?.open();
   };
 
   const openBlogGalleryUpload = () => {
@@ -753,6 +824,10 @@ const AdminPanel = () => {
 
   const removeBlogImage = () => {
     setBlogForm((prev) => ({ ...prev, image: "" }));
+  };
+
+  const removeBlogVideo = () => {
+    setBlogForm((prev) => ({ ...prev, video: "" }));
   };
 
   const removeBlogGalleryImage = (indexToRemove) => {
@@ -776,7 +851,7 @@ const AdminPanel = () => {
       ...prev,
       [getBlocksField(lang)]: [
         ...(prev[getBlocksField(lang)] || []),
-        { image: "", lines: [{ text: "", icon: "•", bold: false }] },
+        { image: "", video: "", lines: [{ text: "", icon: "•", bold: false }] },
       ],
     }));
   };
@@ -846,6 +921,13 @@ const AdminPanel = () => {
     blogBlockWidgetRef.current?.open();
   };
 
+  const openContentBlockVideoUpload = (index, lang = contentEditorLang) => {
+    activeBlockIndexRef.current = index;
+    activeBlockLangRef.current = lang;
+    setBlockVideoUploadingIndex(index);
+    blogBlockVideoWidgetRef.current?.open();
+  };
+
   const getSummaryBullets = (text) =>
     (text || "")
       .split("\n")
@@ -875,6 +957,11 @@ const AdminPanel = () => {
       );
       const blocks = blockNodes.map((node) => {
         const img = node.querySelector("img");
+        const video = node.querySelector("video");
+        const videoSrc =
+          video?.getAttribute("src") ||
+          video?.querySelector("source")?.getAttribute("src") ||
+          "";
         const paragraphs = Array.from(node.querySelectorAll("p"));
         const lines = paragraphs
           .map((p) => {
@@ -897,6 +984,7 @@ const AdminPanel = () => {
           .filter(Boolean);
         return {
           image: img?.getAttribute("src") || "",
+          video: videoSrc,
           lines: lines.length ? lines : [{ text: "", icon: "•", bold: false }],
         };
       });
@@ -1072,6 +1160,7 @@ const AdminPanel = () => {
       summary_en: "",
       summary_tr: "",
       image: "",
+      video: "",
       images: [],
       published: true,
     });
@@ -1086,7 +1175,7 @@ const AdminPanel = () => {
       .map((block, index) => {
         const lines = ensureBlockLines(block || {}).lines || [];
         const hasText = lines.some((line) => line.text?.trim());
-        if (!hasText && !block?.image) return "";
+        if (!hasText && !block?.image && !block?.video) return "";
         const textHtml = hasText
           ? `<div class="space-y-4">${lines
               .filter((line) => line.text?.trim())
@@ -1099,14 +1188,18 @@ const AdminPanel = () => {
               })
               .join("")}</div>`
           : "";
-        const imageHtml = block?.image
-          ? `<div class="w-full rounded-2xl overflow-hidden shadow-lg border border-slate-100"><img src="${block.image}" alt="Blog block ${index + 1}" class="w-full h-full object-cover" /></div>`
+        const videoHtml = block?.video
+          ? `<div class="w-full rounded-2xl overflow-hidden shadow-lg border border-slate-100"><video src="${block.video}" controls playsinline preload="metadata" class="w-full h-full object-cover"></video></div>`
           : "";
+        const imageHtml =
+          !block?.video && block?.image
+            ? `<div class="w-full rounded-2xl overflow-hidden shadow-lg border border-slate-100"><img src="${block.image}" alt="Blog block ${index + 1}" class="w-full h-full object-cover" /></div>`
+            : "";
 
-        const imageColumn = `<div>${imageHtml}</div>`;
+        const mediaColumn = `<div>${videoHtml || imageHtml}</div>`;
         const textColumn = `<div>${textHtml}</div>`;
 
-        return `<div class="not-prose blog-block flex flex-col gap-6 my-10">${imageColumn}${textColumn}</div>`;
+        return `<div class="not-prose blog-block flex flex-col gap-6 my-10">${mediaColumn}${textColumn}</div>`;
       })
       .filter(Boolean)
       .join("");
@@ -1118,11 +1211,19 @@ const AdminPanel = () => {
     if (!token) return;
     const hasBlocksEn = (blogForm.contentBlocks_en || []).some((block) => {
       const lines = ensureBlockLines(block || {}).lines || [];
-      return lines.some((line) => line.text?.trim()) || block?.image;
+      return (
+        lines.some((line) => line.text?.trim()) ||
+        block?.image ||
+        block?.video
+      );
     });
     const hasBlocksTr = (blogForm.contentBlocks_tr || []).some((block) => {
       const lines = ensureBlockLines(block || {}).lines || [];
-      return lines.some((line) => line.text?.trim()) || block?.image;
+      return (
+        lines.some((line) => line.text?.trim()) ||
+        block?.image ||
+        block?.video
+      );
     });
     const hasAnyContent =
       blogForm.content_en?.trim() ||
@@ -1210,6 +1311,7 @@ const AdminPanel = () => {
       summary_en: blog.summary_en || blog.summary || "",
       summary_tr: blog.summary_tr || "",
       image: fallbackImage || "",
+      video: blog.video || "",
       images: blog.images || [],
       published: blog.published !== undefined ? blog.published : true,
     });
@@ -1222,11 +1324,19 @@ const AdminPanel = () => {
 
     const hasBlocksEn = (blogForm.contentBlocks_en || []).some((block) => {
       const lines = ensureBlockLines(block || {}).lines || [];
-      return lines.some((line) => line.text?.trim()) || block?.image;
+      return (
+        lines.some((line) => line.text?.trim()) ||
+        block?.image ||
+        block?.video
+      );
     });
     const hasBlocksTr = (blogForm.contentBlocks_tr || []).some((block) => {
       const lines = ensureBlockLines(block || {}).lines || [];
-      return lines.some((line) => line.text?.trim()) || block?.image;
+      return (
+        lines.some((line) => line.text?.trim()) ||
+        block?.image ||
+        block?.video
+      );
     });
     const hasAnyContent =
       blogForm.content_en?.trim() ||
@@ -4486,7 +4596,7 @@ const AdminPanel = () => {
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
                     <Text size="sm" fw={600}>
-                      Content Blocks (Text + Image)
+                      Content Blocks (Text + Media)
                     </Text>
                     <div className="flex items-center gap-2 text-[11px] text-slate-500">
                       <span>Blocks language:</span>
@@ -4616,9 +4726,17 @@ const AdminPanel = () => {
                             Add Line
                           </Button>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-2">
                           <div className="h-16 w-20 rounded-lg border border-dashed border-slate-200 bg-white overflow-hidden flexCenter">
-                            {block.image ? (
+                            {block.video ? (
+                              <video
+                                src={block.video}
+                                className="w-full h-full object-cover"
+                                muted
+                                playsInline
+                                preload="metadata"
+                              />
+                            ) : block.image ? (
                               <img
                                 src={block.image}
                                 alt={`Block ${index + 1}`}
@@ -4639,14 +4757,22 @@ const AdminPanel = () => {
                           >
                             {block.image ? "Change Image" : "Upload Image"}
                           </Button>
+                          <Button
+                            size="xs"
+                            variant="light"
+                            onClick={() => openContentBlockVideoUpload(index, contentEditorLang)}
+                            loading={blockVideoUploadingIndex === index}
+                          >
+                            {block.video ? "Change Video" : "Upload Video"}
+                          </Button>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-xs text-slate-500 leading-relaxed">
-                    Add blocks to mix text and images in the article body.
-                  </div>
+                    <div className="text-xs text-slate-500 leading-relaxed">
+                      Add blocks to mix text and media in the article body.
+                    </div>
                 )}
               </div>
             </div>
@@ -4726,13 +4852,75 @@ const AdminPanel = () => {
                   </ul>
                 </div>
               </div>
-            </div>
+              </div>
 
-            {/* Blog Gallery Images */}
-            <div>
-              <Text size="sm" fw={500} mb={4}>
-                Gallery Images (Optional)
-              </Text>
+              {/* Blog Video */}
+              <div>
+                <Text size="sm" fw={500} mb={4}>
+                  Blog Video (Optional)
+                </Text>
+                <div className="grid gap-4 md:grid-cols-[1.2fr_0.8fr]">
+                  <div className="relative">
+                    {blogForm.video ? (
+                      <div className="relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-900/5">
+                        <video
+                          src={blogForm.video}
+                          className="w-full h-44 sm:h-56 object-cover"
+                          controls
+                          playsInline
+                          preload="metadata"
+                          poster={blogForm.image || blogForm.images?.[0] || undefined}
+                        />
+                        <ActionIcon
+                          variant="filled"
+                          color="red"
+                          size="sm"
+                          radius="xl"
+                          className="absolute top-3 right-3"
+                          onClick={removeBlogVideo}
+                        >
+                          <MdClose size={14} />
+                        </ActionIcon>
+                      </div>
+                    ) : (
+                      <div
+                        onClick={openBlogVideoUpload}
+                        className="w-full h-44 sm:h-56 rounded-2xl border-2 border-dashed border-gray-300 flexCenter flex-col cursor-pointer hover:border-teal-500 hover:bg-gray-50 transition-colors"
+                      >
+                        <MdOutlineCloudUpload size={32} className="text-gray-400" />
+                        <span className="text-sm text-gray-400 mt-2">
+                          Click to upload video
+                        </span>
+                      </div>
+                    )}
+                    {blogForm.video && (
+                      <Button
+                        variant="light"
+                        size="xs"
+                        mt="xs"
+                        onClick={openBlogVideoUpload}
+                        loading={blogVideoUploading}
+                      >
+                        Change Video
+                      </Button>
+                    )}
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400">
+                      Video Tips
+                    </p>
+                    <Text size="xs" c="dimmed" className="mt-2">
+                      Recommended formats: MP4 or WebM. Shorter clips load faster.
+                    </Text>
+                  </div>
+                </div>
+              </div>
+
+              {/* Blog Gallery Images */}
+              <div>
+                <Text size="sm" fw={500} mb={4}>
+                  Gallery Images (Optional)
+                </Text>
               <div className="flex flex-wrap gap-2 mb-2">
                 {blogForm.images && blogForm.images.map((img, index) => (
                   <div key={index} className="relative">
@@ -4981,7 +5169,7 @@ const AdminPanel = () => {
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
                     <Text size="sm" fw={600}>
-                      Content Blocks (Text + Image)
+                      Content Blocks (Text + Media)
                     </Text>
                     <div className="flex items-center gap-2 text-[11px] text-slate-500">
                       <span>Blocks language:</span>
@@ -5111,9 +5299,17 @@ const AdminPanel = () => {
                             Add Line
                           </Button>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-2">
                           <div className="h-16 w-20 rounded-lg border border-dashed border-slate-200 bg-white overflow-hidden flexCenter">
-                            {block.image ? (
+                            {block.video ? (
+                              <video
+                                src={block.video}
+                                className="w-full h-full object-cover"
+                                muted
+                                playsInline
+                                preload="metadata"
+                              />
+                            ) : block.image ? (
                               <img
                                 src={block.image}
                                 alt={`Block ${index + 1}`}
@@ -5134,14 +5330,22 @@ const AdminPanel = () => {
                           >
                             {block.image ? "Change Image" : "Upload Image"}
                           </Button>
+                          <Button
+                            size="xs"
+                            variant="light"
+                            onClick={() => openContentBlockVideoUpload(index, contentEditorLang)}
+                            loading={blockVideoUploadingIndex === index}
+                          >
+                            {block.video ? "Change Video" : "Upload Video"}
+                          </Button>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-xs text-slate-500 leading-relaxed">
-                    Add blocks to mix text and images in the article body.
-                  </div>
+                    <div className="text-xs text-slate-500 leading-relaxed">
+                      Add blocks to mix text and media in the article body.
+                    </div>
                 )}
               </div>
             </div>
@@ -5219,6 +5423,68 @@ const AdminPanel = () => {
                       </>
                     )}
                   </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* Blog Video */}
+            <div>
+              <Text size="sm" fw={500} mb={4}>
+                Blog Video (Optional)
+              </Text>
+              <div className="grid gap-4 md:grid-cols-[1.2fr_0.8fr]">
+                <div className="relative">
+                  {blogForm.video ? (
+                    <div className="relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-900/5">
+                      <video
+                        src={blogForm.video}
+                        className="w-full h-44 sm:h-56 object-cover"
+                        controls
+                        playsInline
+                        preload="metadata"
+                        poster={blogForm.image || blogForm.images?.[0] || undefined}
+                      />
+                      <ActionIcon
+                        variant="filled"
+                        color="red"
+                        size="sm"
+                        radius="xl"
+                        className="absolute top-3 right-3"
+                        onClick={removeBlogVideo}
+                      >
+                        <MdClose size={14} />
+                      </ActionIcon>
+                    </div>
+                  ) : (
+                    <div
+                      onClick={openBlogVideoUpload}
+                      className="w-full h-44 sm:h-56 rounded-2xl border-2 border-dashed border-gray-300 flexCenter flex-col cursor-pointer hover:border-blue-500 hover:bg-gray-50 transition-colors"
+                    >
+                      <MdOutlineCloudUpload size={32} className="text-gray-400" />
+                      <span className="text-sm text-gray-400 mt-2">
+                        Click to upload video
+                      </span>
+                    </div>
+                  )}
+                  {blogForm.video && (
+                    <Button
+                      variant="light"
+                      size="xs"
+                      mt="xs"
+                      onClick={openBlogVideoUpload}
+                      loading={blogVideoUploading}
+                    >
+                      Change Video
+                    </Button>
+                  )}
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400">
+                    Video Tips
+                  </p>
+                  <Text size="xs" c="dimmed" className="mt-2">
+                    Recommended formats: MP4 or WebM. Shorter clips load faster.
+                  </Text>
                 </div>
               </div>
             </div>

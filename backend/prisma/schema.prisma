@@ -166,6 +166,7 @@ model Blog {
     metaDescription_en String?
     metaDescription_tr String?
     image String?
+    video String?
     images String[] // Multiple images for blog gallery
     published Boolean @default(true)
     order Int @default(0)

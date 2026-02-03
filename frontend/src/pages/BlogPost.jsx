@@ -557,6 +557,26 @@ const BlogPost = () => {
               </div>
             )}
 
+            {blog.video && !isStatsBlog && (
+              <div className="mt-8 rounded-2xl border border-slate-200/70 bg-white/80 p-4 sm:p-5 shadow-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">
+                    Video
+                  </p>
+                </div>
+                <div className="aspect-video overflow-hidden rounded-xl bg-slate-900/10">
+                  <video
+                    src={blog.video}
+                    className="h-full w-full object-cover"
+                    controls
+                    playsInline
+                    preload="metadata"
+                    poster={blog.image || blog.images?.[0] || undefined}
+                  />
+                </div>
+              </div>
+            )}
+
             <div className="mt-8">
               <div className="prose prose-lg max-w-none blog-content">
                 {blog.content?.includes('<!-- HOUSING_STATS_CHART -->') ? (
