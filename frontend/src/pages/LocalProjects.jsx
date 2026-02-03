@@ -1,4 +1,4 @@
-import { useState, useMemo, useContext } from "react";
+﻿import { useState, useMemo, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -64,7 +64,7 @@ const CITY_DISTRICTS = {
     "Pendik", "Sancaktepe", "Sultanbeyli", "Şile", "Tuzla", "Ümraniye", "Üsküdar"
   ],
   "ankara": [
-    "Akyurt", "Altındağ", "Ayaş", "Balâ", "Beypazarı", "Çamlıdere", "Çankaya",
+    "Akyurt", "Altındağ", "Ayaş", "Bala", "Beypazarı", "Çamlıdere", "Çankaya",
     "Çubuk", "Elmadağ", "Etimesgut", "Evren", "Gölbaşı", "Güdül", "Haymana",
     "Kalecik", "Kahramankazan", "Keçiören", "Kızılcahamam", "Mamak", "Nallıhan",
     "Polatlı", "Pursaklar", "Sincan", "Şereflikoçhisar", "Yenimahalle"
@@ -305,7 +305,7 @@ const LocalProjects = () => {
   const normalizeCityName = (cityName) => {
     if (!cityName) return "";
     return cityName
-      .toLowerCase()
+      .toLocaleLowerCase("tr-TR")
       .replace(/ı/g, "i")
       .replace(/ğ/g, "g")
       .replace(/ü/g, "u")

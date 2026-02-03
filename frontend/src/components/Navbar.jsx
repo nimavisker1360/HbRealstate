@@ -299,6 +299,24 @@ const Navbar = ({
     closeMenu && closeMenu();
   };
 
+  const handleAboutUsClick = () => {
+    if (location.pathname === "/") {
+      const aboutSection = document.getElementById("about");
+      if (aboutSection) {
+        aboutSection.scrollIntoView({ behavior: "smooth" });
+      }
+    } else {
+      navigate("/");
+      setTimeout(() => {
+        const aboutSection = document.getElementById("about");
+        if (aboutSection) {
+          aboutSection.scrollIntoView({ behavior: "smooth" });
+        }
+      }, 100);
+    }
+    closeMenu && closeMenu();
+  };
+
   return (
     <nav
       className={`${containerStyles} flex flex-col lg:flex-row lg:items-center`}
@@ -912,12 +930,12 @@ const Navbar = ({
         </div>
       )}
 
-      <button type="button" className={simpleButtonClass(false)}>
+      <button
+        type="button"
+        className={simpleButtonClass(false)}
+        onClick={handleAboutUsClick}
+      >
         <span>{t("nav.aboutUs")}</span>
-        <MdKeyboardArrowDown
-          size={isMobile ? 20 : 16}
-          className="text-gray-500"
-        />
       </button>
 
       {/* Projects with Dropdown */}
