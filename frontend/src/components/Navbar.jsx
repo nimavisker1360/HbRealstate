@@ -512,8 +512,13 @@ const Navbar = ({
             <div className="pt-3">
               <div className="rounded-2xl border border-black/10 bg-[#e7e2d4] p-6 shadow-xl">
               <div className="grid grid-cols-5 gap-6">
-                {aboutTurkeyMenu.map((column) => (
-                  <div key={column.titleKey} className="min-w-0">
+                {aboutTurkeyMenu.map((column, index) => (
+                  <div
+                    key={column.titleKey}
+                    className={`min-w-0 ${
+                      index === 0 ? "" : "border-l border-black/10 pl-6"
+                    }`}
+                  >
                   <div className="mb-4">
                     <div className="flex items-center justify-between gap-3">
                       <h4 className="text-sm font-semibold text-red-500">
