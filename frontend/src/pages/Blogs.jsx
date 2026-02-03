@@ -207,6 +207,7 @@ const BlogsPage = () => {
             ))}
           </div>
         )}
+
       </div>
     </section>
   );

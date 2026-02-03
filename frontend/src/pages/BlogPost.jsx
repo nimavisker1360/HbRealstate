@@ -6,6 +6,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import HousingSalesChart from "../components/HousingSalesChart";
 import ForeignSalesChart from "../components/ForeignSalesChart";
+import BlogContactForm from "../components/BlogContactForm";
 import useBlogs from "../hooks/useBlogs";
 import { aboutTurkeyMenu } from "../constant/aboutTurkeyMenu";
 import { fixMojibake } from "../utils/text";
@@ -245,7 +246,7 @@ const BlogPost = () => {
             }`}
           >
             {!isStatsBlog && (
-              <aside className="order-2 lg:order-1 lg:col-start-1 mt-10 lg:mt-0 lg:sticky lg:top-28">
+              <aside className="order-2 w-full lg:order-1 lg:col-start-1 mt-10 lg:mt-0 lg:sticky lg:top-28">
                 <div className="border border-emerald-100/80 bg-white/90 p-5 shadow-[0_20px_50px_-40px_rgba(15,23,42,0.35)] rounded-none">
                   <div className="mb-4 flex items-center justify-between gap-3">
                     <h2 className="text-base font-bold text-slate-900">
@@ -350,7 +351,7 @@ const BlogPost = () => {
               </aside>
             )}
             <div
-              className={`min-w-0 ${
+              className={`min-w-0 w-full ${
                 isStatsBlog ? "w-full max-w-4xl" : "order-1 lg:order-2 lg:col-start-2"
               }`}
             >
@@ -644,6 +645,11 @@ const BlogPost = () => {
 
           </div>
         </article>
+        <BlogContactForm
+          contextTitle={getLocalizedContent("title")}
+          className="mt-4"
+          fullWidth={!isStatsBlog}
+        />
             </div>
           </div>
         </div>
