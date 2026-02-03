@@ -24,6 +24,7 @@ const Header = () => {
   const [contactModalOpen, setContactModalOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [searchOverlayOpen, setSearchOverlayOpen] = useState(false);
+  const headerRef = useRef(null);
   const { currencies, selectedCurrency, setSelectedCurrency } =
     useContext(CurrencyContext);
   const autoLoginTriggeredRef = useRef(false);
@@ -110,8 +111,33 @@ const Header = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const headerEl = headerRef.current;
+    if (!headerEl) return;
+
+    const updateHeaderHeight = () => {
+      const rect = headerEl.getBoundingClientRect();
+      const height = Math.ceil(rect.height);
+      document.documentElement.style.setProperty(
+        "--header-height",
+        `${height}px`
+      );
+    };
+
+    updateHeaderHeight();
+    const resizeObserver = new ResizeObserver(updateHeaderHeight);
+    resizeObserver.observe(headerEl);
+    window.addEventListener("resize", updateHeaderHeight);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", updateHeaderHeight);
+    };
+  }, []);
+
   return (
     <header
+      ref={headerRef}
       className={`relative w-full left-0 right-0 z-40 bg-white ${
         active ? "shadow-md" : "shadow-none"
       }`}

@@ -34,6 +34,7 @@ const Layout = () => {
     location.pathname.startsWith("/projects") ||
     location.pathname.startsWith("/blog");
 
+
   const { mutate } = useMutation({
     mutationKey: [user?.email],
     mutationFn: ({ userData, token }) => createUser(userData, token),

@@ -578,10 +578,10 @@ const Navbar = ({
           </button>
 
           <div
-            className={`absolute top-full left-1/2 z-50 w-[min(1100px,92vw)] -translate-x-1/2 overflow-hidden transition-all duration-300 ease-out origin-top ${
+            className={`fixed top-[var(--header-height)] left-1/2 z-50 w-[min(1100px,92vw)] -translate-x-1/2 overflow-x-hidden overflow-y-auto transition-all duration-300 ease-out origin-top ${
               aboutTurkeyDropdownOpen
-                ? "max-h-[1200px] translate-y-0"
-                : "max-h-0 -translate-y-2 pointer-events-none"
+                ? "max-h-[calc(100vh-var(--header-height)-12px)] translate-y-0 opacity-100"
+                : "max-h-0 -translate-y-2 opacity-0 pointer-events-none"
             }`}
             aria-hidden={!aboutTurkeyDropdownOpen}
           >
@@ -762,10 +762,10 @@ const Navbar = ({
           </button>
 
           <div
-            className={`absolute top-full left-1/2 z-50 w-[min(1100px,92vw)] -translate-x-1/2 overflow-hidden transition-all duration-300 ease-out origin-top ${
+            className={`fixed top-[var(--header-height)] left-1/2 z-50 w-[min(1100px,92vw)] -translate-x-1/2 overflow-x-hidden overflow-y-auto transition-all duration-300 ease-out origin-top ${
               buyerGuideDropdownOpen
-                ? "max-h-[1200px] translate-y-0"
-                : "max-h-0 -translate-y-2 pointer-events-none"
+                ? "max-h-[calc(100vh-var(--header-height)-12px)] translate-y-0 opacity-100"
+                : "max-h-0 -translate-y-2 opacity-0 pointer-events-none"
             }`}
             aria-hidden={!buyerGuideDropdownOpen}
           >
