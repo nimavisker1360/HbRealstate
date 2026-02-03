@@ -326,7 +326,7 @@ const Properties = () => {
           ref={headerRef}
           className={`text-center mb-14 transition-all duration-1000 ${headerVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
         >
-          <span className="inline-block px-4 py-1.5 bg-emerald-500 text-white text-sm font-medium rounded-full mb-4 shadow-md">
+          <span className="inline-block px-4 py-1.5 bg-emerald-500 text-white text-sm font-medium rounded-md mb-4 shadow-md">
             {t("properties.futureHomeAwaits")}
           </span>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-4">
