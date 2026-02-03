@@ -113,7 +113,7 @@ const Header = () => {
   return (
     <header
       className={`relative w-full left-0 right-0 z-40 bg-white ${
-        active ? "shadow-md" : "shadow-sm"
+        active ? "shadow-md" : "shadow-none"
       }`}
     >
       {/* Top Bar */}
@@ -195,7 +195,7 @@ const Header = () => {
       </div>
 
       {/* Navigation Row */}
-      <div className="border-b border-gray-200">
+      <div>
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-12">
           <div className="flex items-center justify-between gap-4 py-2">
             <div className="flex-1">

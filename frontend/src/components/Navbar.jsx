@@ -420,7 +420,7 @@ const Navbar = ({
           <MdKeyboardArrowDown
             size={20}
             className={`transition-transform duration-300 text-gray-500 ${
-              saleDropdownOpen ? "rotate-180" : ""
+              saleDropdownOpen ? "" : "rotate-180"
             }`}
             onClick={(e) => {
               if (window.innerWidth < 1024) {
@@ -431,34 +431,39 @@ const Navbar = ({
         </div>
 
         {/* Sale Dropdown */}
-        {saleDropdownOpen && (
-          <div className="lg:absolute lg:top-full lg:left-0 lg:z-50 bg-white lg:shadow-xl lg:border lg:border-gray-200 lg:rounded-lg lg:overflow-hidden lg:min-w-[210px]">
-            {propertyCategories.map((cat) => {
-              const IconComponent = cat.icon;
-              const isActive =
-                currentFilter === "sale" && currentCategory === cat.value;
-              return (
-                <div
-                  key={cat.value}
-                  onClick={() => handleCategoryClick("sale", cat.value)}
-                  className={`group flex items-center gap-3 px-8 lg:px-4 py-3 lg:py-2 cursor-pointer transition-colors border-b lg:border-b-0 border-gray-100 last:border-b-0 ${
-                    isActive
-                      ? "bg-secondary/15 text-secondary font-semibold"
-                      : "text-gray-700 hover:bg-[#00A86B] hover:text-white"
-                  }`}
-                >
-                  <IconComponent
-                    size={18}
-                    className="text-gray-500 group-hover:text-white"
-                  />
-                  <span className="text-sm lg:text-sm font-medium">
-                    {cat.label}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        )}
+        <div
+          className={`lg:absolute lg:top-full lg:left-0 lg:z-50 bg-white lg:rounded-lg lg:min-w-[210px] overflow-hidden transition-all duration-300 ease-out origin-top ${
+            saleDropdownOpen
+              ? "max-h-[500px] translate-y-0 lg:border lg:border-gray-200 lg:shadow-xl"
+              : "max-h-0 -translate-y-2 pointer-events-none lg:border-0 lg:shadow-none"
+          }`}
+          aria-hidden={!saleDropdownOpen}
+        >
+          {propertyCategories.map((cat) => {
+            const IconComponent = cat.icon;
+            const isActive =
+              currentFilter === "sale" && currentCategory === cat.value;
+            return (
+              <div
+                key={cat.value}
+                onClick={() => handleCategoryClick("sale", cat.value)}
+                className={`group flex items-center gap-3 px-8 lg:px-4 py-3 lg:py-2 cursor-pointer transition-colors border-b lg:border-b-0 border-gray-100 last:border-b-0 ${
+                  isActive
+                    ? "bg-secondary/15 text-secondary font-semibold"
+                    : "text-gray-700 hover:bg-[#00A86B] hover:text-white"
+                }`}
+              >
+                <IconComponent
+                  size={18}
+                  className="text-gray-500 group-hover:text-white"
+                />
+                <span className="text-sm lg:text-sm font-medium">
+                  {cat.label}
+                </span>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <button type="button" className={simpleButtonClass(false)}>
@@ -488,80 +493,92 @@ const Navbar = ({
             }}
           >
             <span>{t("nav.aboutTurkey")}</span>
-            <MdKeyboardArrowDown size={16} className="text-gray-500" />
+            <MdKeyboardArrowDown
+              size={16}
+              className={`text-gray-500 transition-transform duration-300 ${
+                aboutTurkeyDropdownOpen ? "" : "rotate-180"
+              }`}
+            />
           </button>
 
-          {aboutTurkeyDropdownOpen && (
-            <div className="absolute top-full left-1/2 z-50 w-[min(1100px,92vw)] -translate-x-1/2 pt-3">
+          <div
+            className={`absolute top-full left-1/2 z-50 w-[min(1100px,92vw)] -translate-x-1/2 overflow-hidden transition-all duration-300 ease-out origin-top ${
+              aboutTurkeyDropdownOpen
+                ? "max-h-[1200px] translate-y-0"
+                : "max-h-0 -translate-y-2 pointer-events-none"
+            }`}
+            aria-hidden={!aboutTurkeyDropdownOpen}
+          >
+            <div className="pt-3">
               <div className="rounded-2xl border border-black/10 bg-[#e7e2d4] p-6 shadow-xl">
-                <div className="grid grid-cols-5 gap-6">
-                  {aboutTurkeyMenu.map((column) => (
-                    <div key={column.titleKey} className="min-w-0">
-                    <div className="mb-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <h4 className="text-sm font-semibold text-red-500">
-                          {t(column.titleKey)}
-                        </h4>
-                        <MdKeyboardArrowDown
-                          size={18}
-                          className="text-red-500"
-                          aria-hidden="true"
-                        />
-                      </div>
-                      <div className="mt-2 h-0.5 w-10 bg-red-500"></div>
+              <div className="grid grid-cols-5 gap-6">
+                {aboutTurkeyMenu.map((column) => (
+                  <div key={column.titleKey} className="min-w-0">
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <h4 className="text-sm font-semibold text-red-500">
+                        {t(column.titleKey)}
+                      </h4>
+                      <MdKeyboardArrowDown
+                        size={18}
+                        className="text-red-500"
+                        aria-hidden="true"
+                      />
                     </div>
-                    <ul className="space-y-2">
-                      {column.items.map((item) => {
-                        const menuKey = item?.menuKey || item?.labelKey;
-                        const isBlogLink =
-                          Boolean(item.blogKey) ||
-                          (menuKey ? menuBlogMap.has(menuKey) : false);
-                        const isSingleLine = Boolean(item.singleLine);
-                        return (
-                          <li key={item.labelKey}>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (isBlogLink) {
-                                  handleAboutTurkeyItemClick(item);
-                                }
-                              }}
-                              className={`group flex w-full ${
-                                isBlogLink ? "items-start" : "items-center"
-                              } justify-between gap-3 px-3 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-[#00A86B] hover:text-white ${
-                                isBlogLink ? "cursor-pointer" : "cursor-default"
-                              }`}
+                    <div className="mt-2 h-0.5 w-10 bg-red-500"></div>
+                  </div>
+                  <ul className="space-y-2">
+                    {column.items.map((item) => {
+                      const menuKey = item?.menuKey || item?.labelKey;
+                      const isBlogLink =
+                        Boolean(item.blogKey) ||
+                        (menuKey ? menuBlogMap.has(menuKey) : false);
+                      const isSingleLine = Boolean(item.singleLine);
+                      return (
+                        <li key={item.labelKey}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (isBlogLink) {
+                                handleAboutTurkeyItemClick(item);
+                              }
+                            }}
+                            className={`group flex w-full ${
+                              isBlogLink ? "items-start" : "items-center"
+                            } justify-between gap-3 px-3 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-[#00A86B] hover:text-white ${
+                              isBlogLink ? "cursor-pointer" : "cursor-default"
+                            }`}
+                          >
+                            <span
+                              className={
+                                isBlogLink
+                                  ? `block text-[12px] font-semibold leading-5 text-emerald-500 group-hover:text-white ${
+                                      isSingleLine
+                                        ? "whitespace-nowrap text-[11px] tracking-tight overflow-visible"
+                                        : "whitespace-normal"
+                                    }`
+                                  : "text-slate-600"
+                              }
                             >
-                              <span
-                                className={
-                                  isBlogLink
-                                    ? `block text-[12px] font-semibold leading-5 text-emerald-500 group-hover:text-white ${
-                                        isSingleLine
-                                          ? "whitespace-nowrap text-[11px] tracking-tight overflow-visible"
-                                          : "whitespace-normal"
-                                      }`
-                                    : "text-slate-600"
-                                }
-                              >
-                                {t(item.labelKey)}
-                              </span>
-                              {item.hasChildren && (
-                                <MdKeyboardArrowRight
-                                  size={18}
-                                  className="text-gray-500"
-                                />
-                              )}
-                            </button>
-                          </li>
-                        );
-                      })}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
+                              {t(item.labelKey)}
+                            </span>
+                            {item.hasChildren && (
+                              <MdKeyboardArrowRight
+                                size={18}
+                                className="text-gray-500"
+                              />
+                            )}
+                          </button>
+                        </li>
+                      );
+                    })}
+                    </ul>
+                  </div>
+                ))}
+              </div>
               </div>
             </div>
-          )}
+          </div>
         </div>
       ) : (
         <div className="w-full">
@@ -575,55 +592,60 @@ const Navbar = ({
             <MdKeyboardArrowDown
               size={20}
               className={`text-gray-500 transition-transform duration-300 ${
-                aboutTurkeyDropdownOpen ? "rotate-180" : ""
+                aboutTurkeyDropdownOpen ? "" : "rotate-180"
               }`}
             />
           </button>
-          {aboutTurkeyDropdownOpen && (
-            <div className="border-b border-gray-200 bg-white">
-              {aboutTurkeyMenu.map((section) => (
-                <div
-                  key={section.titleKey}
-                  className="px-4 py-3 border-t border-gray-100"
-                >
-                  <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-red-500">
-                    <span>{t(section.titleKey)}</span>
-                    <MdKeyboardArrowDown
-                      size={16}
-                      className="text-red-500"
-                      aria-hidden="true"
-                    />
-                  </div>
-                  <div className="mt-2 space-y-1">
-                    {section.items.map((item) => {
-                      const menuKey = item?.menuKey || item?.labelKey;
-                      const isBlogLink =
-                        Boolean(item.blogKey) ||
-                        (menuKey ? menuBlogMap.has(menuKey) : false);
-                      return (
-                        <button
-                          key={item.labelKey}
-                          type="button"
-                          onClick={() => {
-                            if (isBlogLink) {
-                              handleAboutTurkeyItemClick(item);
-                            }
-                          }}
-                          className={`w-full rounded-md px-3 py-1.5 text-left text-[13px] transition-colors hover:bg-[#00A86B] hover:text-white ${
-                            isBlogLink
-                              ? "cursor-pointer font-semibold text-emerald-500"
-                              : "cursor-default text-gray-700"
-                          }`}
-                        >
-                          {t(item.labelKey)}
-                        </button>
-                      );
-                    })}
-                  </div>
+          <div
+            className={`border-b border-gray-200 bg-white overflow-hidden transition-all duration-300 ease-out origin-top ${
+              aboutTurkeyDropdownOpen
+                ? "max-h-[2000px] translate-y-0"
+                : "max-h-0 -translate-y-2 pointer-events-none"
+            }`}
+            aria-hidden={!aboutTurkeyDropdownOpen}
+          >
+            {aboutTurkeyMenu.map((section) => (
+              <div
+                key={section.titleKey}
+                className="px-4 py-3 border-t border-gray-100"
+              >
+                <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-red-500">
+                  <span>{t(section.titleKey)}</span>
+                  <MdKeyboardArrowDown
+                    size={16}
+                    className="text-red-500"
+                    aria-hidden="true"
+                  />
                 </div>
-              ))}
-            </div>
-          )}
+                <div className="mt-2 space-y-1">
+                  {section.items.map((item) => {
+                    const menuKey = item?.menuKey || item?.labelKey;
+                    const isBlogLink =
+                      Boolean(item.blogKey) ||
+                      (menuKey ? menuBlogMap.has(menuKey) : false);
+                    return (
+                      <button
+                        key={item.labelKey}
+                        type="button"
+                        onClick={() => {
+                          if (isBlogLink) {
+                            handleAboutTurkeyItemClick(item);
+                          }
+                        }}
+                        className={`w-full rounded-md px-3 py-1.5 text-left text-[13px] transition-colors hover:bg-[#00A86B] hover:text-white ${
+                          isBlogLink
+                            ? "cursor-pointer font-semibold text-emerald-500"
+                            : "cursor-default text-gray-700"
+                        }`}
+                      >
+                        {t(item.labelKey)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -672,7 +694,7 @@ const Navbar = ({
           <MdKeyboardArrowDown
             size={20}
             className={`transition-transform duration-300 text-gray-500 ${
-              projectsDropdownOpen ? "rotate-180" : ""
+              projectsDropdownOpen ? "" : "rotate-180"
             }`}
             onClick={(e) => {
               toggleProjectsDropdown(e);
@@ -681,34 +703,39 @@ const Navbar = ({
         </div>
 
         {/* Projects Dropdown */}
-        {projectsDropdownOpen && (
-          <div className="lg:absolute lg:top-full lg:left-0 lg:z-50 bg-white lg:shadow-xl lg:border lg:border-gray-200 lg:rounded-lg lg:overflow-hidden lg:min-w-[210px]">
-            {projectTypes.map((project) => {
-              const IconComponent = project.icon;
-              const isActive =
-                searchParams.get("projectType") === project.value;
-              return (
-                <div
-                  key={project.value}
-                  onClick={() => handleProjectClick(project.value)}
-                  className={`group flex items-center gap-3 px-8 lg:px-4 py-3 lg:py-2 cursor-pointer transition-colors border-b lg:border-b-0 border-gray-100 last:border-b-0 ${
-                    isActive
-                      ? "bg-secondary/15 text-secondary font-semibold"
-                      : "text-gray-700 hover:bg-[#00A86B] hover:text-white"
-                  }`}
-                >
-                  <IconComponent
-                    size={18}
-                    className="text-gray-500 group-hover:text-white"
-                  />
-                  <span className="text-sm lg:text-sm font-medium whitespace-nowrap">
-                    {project.label}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        )}
+        <div
+          className={`lg:absolute lg:top-full lg:left-0 lg:z-50 bg-white lg:rounded-lg lg:min-w-[210px] overflow-hidden transition-all duration-300 ease-out origin-top ${
+            projectsDropdownOpen
+              ? "max-h-[500px] translate-y-0 lg:border lg:border-gray-200 lg:shadow-xl"
+              : "max-h-0 -translate-y-2 pointer-events-none lg:border-0 lg:shadow-none"
+          }`}
+          aria-hidden={!projectsDropdownOpen}
+        >
+          {projectTypes.map((project) => {
+            const IconComponent = project.icon;
+            const isActive =
+              searchParams.get("projectType") === project.value;
+            return (
+              <div
+                key={project.value}
+                onClick={() => handleProjectClick(project.value)}
+                className={`group flex items-center gap-3 px-8 lg:px-4 py-3 lg:py-2 cursor-pointer transition-colors border-b lg:border-b-0 border-gray-100 last:border-b-0 ${
+                  isActive
+                    ? "bg-secondary/15 text-secondary font-semibold"
+                    : "text-gray-700 hover:bg-[#00A86B] hover:text-white"
+                }`}
+              >
+                <IconComponent
+                  size={18}
+                  className="text-gray-500 group-hover:text-white"
+                />
+                <span className="text-sm lg:text-sm font-medium whitespace-nowrap">
+                  {project.label}
+                </span>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Add Property - Admin Only */}
