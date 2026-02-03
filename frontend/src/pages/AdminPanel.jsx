@@ -37,6 +37,7 @@ import useConsultants from "../hooks/useConsultants";
 import useCountries from "../hooks/useCountries";
 import UserDetailContext from "../context/UserDetailContext";
 import { aboutTurkeyMenu } from "../constant/aboutTurkeyMenu";
+import { buyerGuideMenu } from "../constant/buyerGuideMenu";
 import {
   getAdminAllBookings,
   deleteResidency,
@@ -332,6 +333,26 @@ const AdminPanel = () => {
         options.push({
           value,
           label: `${sectionLabel} - ${t(item.labelKey)}`,
+        });
+      });
+    });
+    return options;
+  }, [t, i18n.language]);
+
+  const buyerGuideMenuOptions = useMemo(() => {
+    const seen = new Set();
+    const options = [];
+    buyerGuideMenu.forEach((column) => {
+      column.sections.forEach((section) => {
+        const sectionLabel = t(section.titleKey);
+        section.items.forEach((item) => {
+          const value = item.menuKey || item.labelKey;
+          if (!value || seen.has(value)) return;
+          seen.add(value);
+          options.push({
+            value,
+            label: `${sectionLabel} - ${t(item.labelKey)}`,
+          });
         });
       });
     });
@@ -4367,7 +4388,30 @@ const AdminPanel = () => {
               searchable
               clearable
               data={aboutTurkeyMenuOptions}
-              value={blogForm.menuKey || null}
+              value={
+                aboutTurkeyMenuOptions.some(
+                  (option) => option.value === blogForm.menuKey
+                )
+                  ? blogForm.menuKey
+                  : null
+              }
+              onChange={(value) =>
+                setBlogForm({ ...blogForm, menuKey: value || "" })
+              }
+            />
+            <Select
+              label="Buyer Guide menu (optional)"
+              placeholder="Link this post to a buyer guide item"
+              searchable
+              clearable
+              data={buyerGuideMenuOptions}
+              value={
+                buyerGuideMenuOptions.some(
+                  (option) => option.value === blogForm.menuKey
+                )
+                  ? blogForm.menuKey
+                  : null
+              }
               onChange={(value) =>
                 setBlogForm({ ...blogForm, menuKey: value || "" })
               }
@@ -4822,7 +4866,30 @@ const AdminPanel = () => {
               searchable
               clearable
               data={aboutTurkeyMenuOptions}
-              value={blogForm.menuKey || null}
+              value={
+                aboutTurkeyMenuOptions.some(
+                  (option) => option.value === blogForm.menuKey
+                )
+                  ? blogForm.menuKey
+                  : null
+              }
+              onChange={(value) =>
+                setBlogForm({ ...blogForm, menuKey: value || "" })
+              }
+            />
+            <Select
+              label="Buyer Guide menu (optional)"
+              placeholder="Link this post to a buyer guide item"
+              searchable
+              clearable
+              data={buyerGuideMenuOptions}
+              value={
+                buyerGuideMenuOptions.some(
+                  (option) => option.value === blogForm.menuKey
+                )
+                  ? blogForm.menuKey
+                  : null
+              }
               onChange={(value) =>
                 setBlogForm({ ...blogForm, menuKey: value || "" })
               }

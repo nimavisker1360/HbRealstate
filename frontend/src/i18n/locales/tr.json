@@ -2,7 +2,7 @@
   "common": {
     "loading": "Yükleniyor...",
     "login": "Giri�Y Yap",
-    "logout": "�?ıkı�Y Yap",
+    "logout": "Çıkış Yap",
     "cancel": "İptal",
     "save": "Kaydet",
     "delete": "Sil",
@@ -585,7 +585,7 @@
     "favourites": "Favoriler",
     "bookings": "Rezervasyonlar",
     "goBack": "Geri dön",
-    "logout": "�?ıkı�Y Yap"
+    "logout": "Çıkış Yap"
   },
   "propertyDetails": {
     "listingNo": "İlan No",
