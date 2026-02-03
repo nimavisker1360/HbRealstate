@@ -26,6 +26,7 @@ import useAuthCheck from "../hooks/useAuthCheck";
 import useBlogs from "../hooks/useBlogs";
 import userIcon from "../assets/user.svg";
 import { aboutTurkeyMenu } from "../constant/aboutTurkeyMenu";
+import { buyerGuideMenu } from "../constant/buyerGuideMenu";
 
 const Navbar = ({ 
   containerStyles, 
@@ -51,7 +52,9 @@ const Navbar = ({
   const [saleDropdownOpen, setSaleDropdownOpen] = useState(false);
   const [projectsDropdownOpen, setProjectsDropdownOpen] = useState(false);
   const [aboutTurkeyDropdownOpen, setAboutTurkeyDropdownOpen] = useState(false);
+  const [buyerGuideDropdownOpen, setBuyerGuideDropdownOpen] = useState(false);
   const aboutTurkeyCloseTimer = useRef(null);
+  const buyerGuideCloseTimer = useRef(null);
   const isDesktop = !isMobile;
   const desktopItemClass = (isActive = false) =>
     `flex items-center gap-1 px-2 py-1 text-[13px] font-semibold ${
@@ -176,6 +179,17 @@ const Navbar = ({
     closeMenu && closeMenu();
   };
 
+  const handleBuyerGuideItemClick = async (item) => {
+    const blogId = await getMenuBlogId(item);
+    if (blogId) {
+      navigate(`/blog/${blogId}`);
+    } else {
+      navigate("/blogs");
+    }
+    setBuyerGuideDropdownOpen(false);
+    closeMenu && closeMenu();
+  };
+
   const handleAddPropertyClick = () => {
     if (validateLogin()) {
       closeMenu && closeMenu();
@@ -215,6 +229,7 @@ const Navbar = ({
     setAboutTurkeyDropdownOpen((prev) => !prev);
     setSaleDropdownOpen(false);
     setProjectsDropdownOpen(false);
+    setBuyerGuideDropdownOpen(false);
   };
 
   const openAboutTurkeyMenu = () => {
@@ -223,6 +238,7 @@ const Navbar = ({
       aboutTurkeyCloseTimer.current = null;
     }
     setAboutTurkeyDropdownOpen(true);
+    setBuyerGuideDropdownOpen(false);
   };
 
   const scheduleCloseAboutTurkeyMenu = () => {
@@ -232,6 +248,34 @@ const Navbar = ({
     aboutTurkeyCloseTimer.current = setTimeout(() => {
       setAboutTurkeyDropdownOpen(false);
       aboutTurkeyCloseTimer.current = null;
+    }, 180);
+  };
+
+  const toggleBuyerGuideDropdown = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setBuyerGuideDropdownOpen((prev) => !prev);
+    setSaleDropdownOpen(false);
+    setProjectsDropdownOpen(false);
+    setAboutTurkeyDropdownOpen(false);
+  };
+
+  const openBuyerGuideMenu = () => {
+    if (buyerGuideCloseTimer.current) {
+      clearTimeout(buyerGuideCloseTimer.current);
+      buyerGuideCloseTimer.current = null;
+    }
+    setBuyerGuideDropdownOpen(true);
+    setAboutTurkeyDropdownOpen(false);
+  };
+
+  const scheduleCloseBuyerGuideMenu = () => {
+    if (buyerGuideCloseTimer.current) {
+      clearTimeout(buyerGuideCloseTimer.current);
+    }
+    buyerGuideCloseTimer.current = setTimeout(() => {
+      setBuyerGuideDropdownOpen(false);
+      buyerGuideCloseTimer.current = null;
     }, 180);
   };
 
@@ -654,13 +698,205 @@ const Navbar = ({
         </div>
       )}
 
-      <button type="button" className={simpleButtonClass(false)}>
-        <span>{t("nav.buyerGuide")}</span>
-        <MdKeyboardArrowDown
-          size={isMobile ? 20 : 16}
-          className="text-gray-500"
-        />
-      </button>
+      {isDesktop ? (
+        <div
+          className="relative"
+          onMouseEnter={() => window.innerWidth >= 1024 && openBuyerGuideMenu()}
+          onMouseLeave={() =>
+            window.innerWidth >= 1024 && scheduleCloseBuyerGuideMenu()
+          }
+        >
+          <button
+            type="button"
+            className={simpleButtonClass(false)}
+            aria-expanded={buyerGuideDropdownOpen}
+            onClick={(e) => {
+              e.preventDefault();
+              if (window.innerWidth < 1024) return;
+              if (buyerGuideDropdownOpen) {
+                scheduleCloseBuyerGuideMenu();
+              } else {
+                openBuyerGuideMenu();
+              }
+            }}
+          >
+            <span>{t("nav.buyerGuide")}</span>
+            <MdKeyboardArrowDown
+              size={16}
+              className={`text-gray-500 transition-transform duration-300 ${
+                buyerGuideDropdownOpen ? "" : "rotate-180"
+              }`}
+            />
+          </button>
+
+          <div
+            className={`absolute top-full left-1/2 z-50 w-[min(1100px,92vw)] -translate-x-1/2 overflow-hidden transition-all duration-300 ease-out origin-top ${
+              buyerGuideDropdownOpen
+                ? "max-h-[1200px] translate-y-0"
+                : "max-h-0 -translate-y-2 pointer-events-none"
+            }`}
+            aria-hidden={!buyerGuideDropdownOpen}
+          >
+            <div className="pt-3">
+              <div className="rounded-2xl border border-black/10 bg-[#e7e2d4] p-6 shadow-xl">
+                <div className="grid grid-cols-4 gap-6">
+                  {buyerGuideMenu.map((column, columnIndex) => (
+                    <div
+                      key={`buyer-guide-column-${columnIndex}`}
+                      className={`min-w-0 ${
+                        columnIndex === 0 ? "" : "border-l border-black/10 pl-6"
+                      }`}
+                    >
+                      {column.sections.map((section, sectionIndex) => (
+                        <div
+                          key={section.titleKey}
+                          className={sectionIndex === 0 ? "" : "mt-6"}
+                        >
+                          <div className="mb-4">
+                            <div className="flex items-center justify-between gap-3">
+                              <h4 className="text-sm font-semibold text-red-500">
+                                {t(section.titleKey)}
+                              </h4>
+                              {section.items.length > 0 && (
+                                <MdKeyboardArrowDown
+                                  size={18}
+                                  className="text-red-500"
+                                  aria-hidden="true"
+                                />
+                              )}
+                            </div>
+                            <div className="mt-2 h-0.5 w-10 bg-red-500"></div>
+                          </div>
+                          {section.items.length > 0 && (
+                            <ul className="space-y-2">
+                              {section.items.map((item) => {
+                                const menuKey =
+                                  item?.menuKey || item?.labelKey;
+                                const isBlogLink =
+                                  Boolean(item.blogKey) ||
+                                  (menuKey ? menuBlogMap.has(menuKey) : false);
+                                const isSingleLine = Boolean(item.singleLine);
+                                return (
+                                  <li key={item.labelKey}>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        if (isBlogLink) {
+                                          handleBuyerGuideItemClick(item);
+                                        }
+                                      }}
+                                      className={`group flex w-full ${
+                                        isBlogLink
+                                          ? "items-start"
+                                          : "items-center"
+                                      } justify-between gap-3 px-3 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-[#00A86B] hover:text-white ${
+                                        isBlogLink
+                                          ? "cursor-pointer"
+                                          : "cursor-default"
+                                      }`}
+                                    >
+                                      <span
+                                        className={
+                                          isBlogLink
+                                            ? `block text-[12px] font-semibold leading-5 text-emerald-500 group-hover:text-white ${
+                                                isSingleLine
+                                                  ? "whitespace-nowrap text-[11px] tracking-tight overflow-visible"
+                                                  : "whitespace-normal"
+                                              }`
+                                            : "text-slate-600"
+                                        }
+                                      >
+                                        {t(item.labelKey)}
+                                      </span>
+                                    </button>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="w-full">
+          <button
+            type="button"
+            className={simpleButtonClass(false)}
+            aria-expanded={buyerGuideDropdownOpen}
+            onClick={toggleBuyerGuideDropdown}
+          >
+            <span>{t("nav.buyerGuide")}</span>
+            <MdKeyboardArrowDown
+              size={20}
+              className={`text-gray-500 transition-transform duration-300 ${
+                buyerGuideDropdownOpen ? "" : "rotate-180"
+              }`}
+            />
+          </button>
+          <div
+            className={`border-b border-gray-200 bg-white overflow-hidden transition-all duration-300 ease-out origin-top ${
+              buyerGuideDropdownOpen
+                ? "max-h-[2400px] translate-y-0"
+                : "max-h-0 -translate-y-2 pointer-events-none"
+            }`}
+            aria-hidden={!buyerGuideDropdownOpen}
+          >
+            {buyerGuideMenu.map((column) =>
+              column.sections.map((section) => (
+                <div
+                  key={section.titleKey}
+                  className="px-4 py-3 border-t border-gray-100"
+                >
+                  <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-red-500">
+                    <span>{t(section.titleKey)}</span>
+                    {section.items.length > 0 && (
+                      <MdKeyboardArrowDown
+                        size={16}
+                        className="text-red-500"
+                        aria-hidden="true"
+                      />
+                    )}
+                  </div>
+                  {section.items.length > 0 && (
+                    <div className="mt-2 space-y-1">
+                      {section.items.map((item) => {
+                        const menuKey = item?.menuKey || item?.labelKey;
+                        const isBlogLink =
+                          Boolean(item.blogKey) ||
+                          (menuKey ? menuBlogMap.has(menuKey) : false);
+                        return (
+                          <button
+                            key={item.labelKey}
+                            type="button"
+                            onClick={() => {
+                              if (isBlogLink) {
+                                handleBuyerGuideItemClick(item);
+                              }
+                            }}
+                            className={`w-full rounded-md px-3 py-1.5 text-left text-[13px] transition-colors hover:bg-[#00A86B] hover:text-white ${
+                              isBlogLink
+                                ? "cursor-pointer font-semibold text-emerald-500"
+                                : "cursor-default text-gray-700"
+                            }`}
+                          >
+                            {t(item.labelKey)}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
 
       <button type="button" className={simpleButtonClass(false)}>
         <span>{t("nav.aboutUs")}</span>
