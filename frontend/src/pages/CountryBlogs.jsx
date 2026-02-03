@@ -7,6 +7,7 @@ import blog1 from "../assets/blog1.jpg";
 import blog2 from "../assets/blog2.jpg";
 import blog3 from "../assets/blog3.jpg";
 import blog4 from "../assets/blog4.jpg";
+import { fixMojibake } from "../utils/text";
 
 const placeholderImages = [blog1, blog2, blog3, blog4];
 
@@ -29,22 +30,24 @@ const CountryBlogs = () => {
   };
 
   const getLocalizedTitle = (blog) => {
-    if (language === "tr" && blog.title_tr) return blog.title_tr;
-    if (language === "en" && blog.title_en) return blog.title_en;
-    return blog.title || t("blogs.title", "Our Expert Blogs");
+    let value = blog.title || t("blogs.title", "Our Expert Blogs");
+    if (language === "tr" && blog.title_tr) value = blog.title_tr;
+    if (language === "en" && blog.title_en) value = blog.title_en;
+    return fixMojibake(value);
   };
 
   const getLocalizedCategory = (blog) => {
-    if (language === "tr" && blog.category_tr) return blog.category_tr;
-    if (language === "en" && blog.category_en) return blog.category_en;
-    return blog.category || t("common.all", "All");
+    let value = blog.category || t("common.all", "All");
+    if (language === "tr" && blog.category_tr) value = blog.category_tr;
+    if (language === "en" && blog.category_en) value = blog.category_en;
+    return fixMojibake(value);
   };
 
   const getLocalizedSummary = (blog) => {
-    if (language === "tr" && blog.summary_tr) return blog.summary_tr;
-    if (language === "en" && blog.summary_en) return blog.summary_en;
-    if (blog.summary) return blog.summary;
-    return t("blogs.subtitle", "Stay Updated with the Latest News!");
+    let value = blog.summary || t("blogs.subtitle", "Stay Updated with the Latest News!");
+    if (language === "tr" && blog.summary_tr) value = blog.summary_tr;
+    if (language === "en" && blog.summary_en) value = blog.summary_en;
+    return fixMojibake(value);
   };
 
   const toSlug = (value = "") =>

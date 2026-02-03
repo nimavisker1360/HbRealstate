@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import useBlogs from "../hooks/useBlogs";
 import { MdArticle, MdPublic, MdTrendingUp } from "react-icons/md";
 import { BLOGS } from "../constant/data";
+import { fixMojibake } from "../utils/text";
 import blog1 from "../assets/blog1.jpg";
 import blog2 from "../assets/blog2.jpg";
 import blog3 from "../assets/blog3.jpg";
@@ -33,9 +34,10 @@ const Blogs = ({ limit = null, showMore = false }) => {
 
   // Get localized content based on current language
   const getLocalizedTitle = (blog) => {
-    if (currentLang === "tr" && blog.title_tr) return blog.title_tr;
-    if (currentLang === "en" && blog.title_en) return blog.title_en;
-    return blog.title;
+    let value = blog.title;
+    if (currentLang === "tr" && blog.title_tr) value = blog.title_tr;
+    if (currentLang === "en" && blog.title_en) value = blog.title_en;
+    return fixMojibake(value);
   };
 
   const toSlug = (value = "") =>

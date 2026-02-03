@@ -7,6 +7,7 @@ import blog1 from "../assets/blog1.jpg";
 import blog2 from "../assets/blog2.jpg";
 import blog3 from "../assets/blog3.jpg";
 import blog4 from "../assets/blog4.jpg";
+import { fixMojibake } from "../utils/text";
 
 const placeholderImages = [blog1, blog2, blog3, blog4];
 
@@ -27,9 +28,10 @@ const BlogsPage = () => {
   };
 
   const getLocalizedTitle = (blog) => {
-    if (language === "tr" && blog.title_tr) return blog.title_tr;
-    if (language === "en" && blog.title_en) return blog.title_en;
-    return blog.title || t("blogs.title", "Our Expert Blogs");
+    let value = blog.title || t("blogs.title", "Our Expert Blogs");
+    if (language === "tr" && blog.title_tr) value = blog.title_tr;
+    if (language === "en" && blog.title_en) value = blog.title_en;
+    return fixMojibake(value);
   };
 
   const toSlug = (value = "") =>
