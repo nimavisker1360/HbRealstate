@@ -2,6 +2,8 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import PropTypes from "prop-types";
 import { MdLocationOn } from "react-icons/md";
+import { useContext } from "react";
+import CurrencyContext from "../context/CurrencyContext";
 
 // Get category display name (bilingual)
 const getCategoryLabel = (category, propertyType, lang = "tr") => {
@@ -44,6 +46,19 @@ const getCategoryLabel = (category, propertyType, lang = "tr") => {
 const PropertyGridCard = ({ property }) => {
   const navigate = useNavigate();
   const { i18n } = useTranslation();
+  const { selectedCurrency, baseCurrency, rates, convertAmount, formatMoney } =
+    useContext(CurrencyContext);
+  const sourceCurrency = property.currency || baseCurrency;
+  const displayCurrency =
+    selectedCurrency && (selectedCurrency === baseCurrency || rates?.[selectedCurrency])
+      ? selectedCurrency
+      : baseCurrency;
+  const convertedPrice = convertAmount(property.price, sourceCurrency, displayCurrency);
+  const formattedPrice = formatMoney(
+    convertedPrice,
+    displayCurrency,
+    i18n.language === "tr" ? "tr-TR" : "en-US"
+  );
 
   return (
     <div
@@ -64,7 +79,7 @@ const PropertyGridCard = ({ property }) => {
         
         {/* Price badge */}
         <div className="absolute top-2 right-2 px-2 py-1 bg-emerald-500 text-white text-xs font-semibold rounded-md shadow-lg">
-          ₺{property.price.toLocaleString()}
+          {formattedPrice}
         </div>
       </div>
 
@@ -105,6 +120,7 @@ PropertyGridCard.propTypes = {
     city: PropTypes.string,
     country: PropTypes.string,
     price: PropTypes.number,
+    currency: PropTypes.string,
     propertyType: PropTypes.string,
     category: PropTypes.string,
     facilities: PropTypes.shape({

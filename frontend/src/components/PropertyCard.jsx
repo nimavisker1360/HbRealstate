@@ -8,6 +8,7 @@ import { FaHeart, FaRegHeart, FaWhatsapp } from "react-icons/fa";
 import PropTypes from "prop-types";
 import { useContext } from "react";
 import UserDetailContext from "../context/UserDetailContext";
+import CurrencyContext from "../context/CurrencyContext";
 import { useMutation } from "react-query";
 import { toFav } from "../utils/api";
 import { useAuth0 } from "@auth0/auth0-react";
@@ -57,6 +58,8 @@ const PropertyCard = ({ property, onCardClick }) => {
   const { t, i18n } = useTranslation();
   const { user } = useAuth0();
   const { userDetails, setUserDetails } = useContext(UserDetailContext);
+  const { selectedCurrency, baseCurrency, rates, convertAmount, formatMoney } =
+    useContext(CurrencyContext);
   const isForSale = property.propertyType === "sale" || !property.propertyType;
   const isLocalProject = property.propertyType === "local-project";
   const isInternationalProject = property.propertyType === "international-project";
@@ -80,6 +83,31 @@ const PropertyCard = ({ property, onCardClick }) => {
   };
   
   const displayPrice = getDisplayPrice();
+  const sourceCurrency = property.currency || baseCurrency;
+  const displayCurrency =
+    selectedCurrency && (selectedCurrency === baseCurrency || rates?.[selectedCurrency])
+      ? selectedCurrency
+      : baseCurrency;
+  const convertedDisplayPrice = convertAmount(
+    displayPrice,
+    sourceCurrency,
+    displayCurrency
+  );
+  const convertedPrice = convertAmount(
+    property.price,
+    sourceCurrency,
+    displayCurrency
+  );
+  const formattedDisplayPrice = formatMoney(
+    convertedDisplayPrice,
+    displayCurrency,
+    i18n.language === "tr" ? "tr-TR" : "en-US"
+  );
+  const formattedPrice = formatMoney(
+    convertedPrice,
+    displayCurrency,
+    i18n.language === "tr" ? "tr-TR" : "en-US"
+  );
 
   // Get description based on current language
   const getDescription = () => {
@@ -132,7 +160,7 @@ const PropertyCard = ({ property, onCardClick }) => {
     const message = encodeURIComponent(
       `Hi, I'm interested in the property: ${
         property.title
-      } - ₺${property.price.toLocaleString()}`
+      } - ${formattedPrice}`
     );
     window.open(`https://wa.me/905551234567?text=${message}`, "_blank");
   };
@@ -197,7 +225,7 @@ const PropertyCard = ({ property, onCardClick }) => {
                 <div>
                   <span className="text-sm text-gray-500">{t("propertyCard.startingFrom", "Başlangıç fiyatı")}</span>
                   <span className="text-2xl font-bold text-green-600 ml-2">
-                    ₺{displayPrice.toLocaleString("tr-TR")}
+                    {formattedDisplayPrice}
                   </span>
                 </div>
               ) : (
@@ -207,7 +235,7 @@ const PropertyCard = ({ property, onCardClick }) => {
               // For regular properties
               <>
                 <span className="text-2xl font-bold text-green-600">
-                  ₺{property.price.toLocaleString()}
+                  {formattedPrice}
                 </span>
                 {!isForSale && (
                   <span className="text-sm text-gray-500 ml-1">/mo</span>
@@ -258,6 +286,7 @@ PropertyCard.propTypes = {
     country: PropTypes.string,
     description: PropTypes.string,
     price: PropTypes.number,
+    currency: PropTypes.string,
     propertyType: PropTypes.string,
     facilities: PropTypes.shape({
       bedrooms: PropTypes.number,

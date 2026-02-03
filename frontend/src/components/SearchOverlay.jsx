@@ -1,15 +1,18 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { MdClose, MdSearch } from "react-icons/md";
 import useProperties from "../hooks/useProperties";
+import CurrencyContext from "../context/CurrencyContext";
 
 const SearchOverlay = ({ isOpen, onClose }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [query, setQuery] = useState("");
   const [showResults, setShowResults] = useState(false);
   const [filteredResults, setFilteredResults] = useState([]);
   const { data: properties, isLoading } = useProperties();
+  const { selectedCurrency, baseCurrency, rates, convertAmount, formatMoney } =
+    useContext(CurrencyContext);
   const navigate = useNavigate();
   const searchRef = useRef(null);
 
@@ -163,7 +166,19 @@ const SearchOverlay = ({ isOpen, onClose }) => {
                         </p>
                       </div>
                       <div className="text-sm font-bold text-[#06a84e] flex-shrink-0">
-                        ${property.price.toLocaleString()}
+                        {formatMoney(
+                          convertAmount(
+                            property.price,
+                            property.currency || baseCurrency,
+                            selectedCurrency && (selectedCurrency === baseCurrency || rates?.[selectedCurrency])
+                              ? selectedCurrency
+                              : baseCurrency
+                          ),
+                          selectedCurrency && (selectedCurrency === baseCurrency || rates?.[selectedCurrency])
+                            ? selectedCurrency
+                            : baseCurrency,
+                          i18n.language === "tr" ? "tr-TR" : "en-US"
+                        )}
                       </div>
                     </li>
                   ))}

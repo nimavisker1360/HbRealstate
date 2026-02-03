@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Navbar from "./Navbar";
 import { MdArrowBack, MdClose, MdMenu, MdSearch } from "react-icons/md";
@@ -14,6 +14,7 @@ import LanguageSwitcher from "./LanguageSwitcher";
 import SearchOverlay from "./SearchOverlay";
 import logo from "../assets/logo.png";
 import { normalizeWhatsAppNumber } from "../utils/common";
+import CurrencyContext from "../context/CurrencyContext";
 
 const Header = () => {
   const { t } = useTranslation();
@@ -23,16 +24,13 @@ const Header = () => {
   const [contactModalOpen, setContactModalOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [searchOverlayOpen, setSearchOverlayOpen] = useState(false);
-  const [selectedCurrency, setSelectedCurrency] = useState("USD");
+  const { currencies, selectedCurrency, setSelectedCurrency } =
+    useContext(CurrencyContext);
   const autoLoginTriggeredRef = useRef(false);
   const loginPromptTimerRef = useRef(null);
   const whatsappNumber = normalizeWhatsAppNumber("+90 542 435 96 94");
   const whatsappLink = `https://wa.me/${whatsappNumber}`;
-  const currencies = [
-    { code: "EUR", symbol: "\u20AC" },
-    { code: "USD", symbol: "$" },
-    { code: "TRY", symbol: "\u20BA" },
-  ];
+
   const toggleMenu = () => setMenuOpened(!menuOpened);
   const { isAuthenticated, user, logout, isLoading } = useAuth0();
   const prevAuthRef = useRef(isAuthenticated);
@@ -304,3 +302,6 @@ const Header = () => {
 };
 
 export default Header;
+
+
+

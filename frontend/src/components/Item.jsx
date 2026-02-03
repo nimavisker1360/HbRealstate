@@ -4,6 +4,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import HeartBtn from "./HeartBtn";
 import PropTypes from "prop-types";
+import { useContext } from "react";
+import CurrencyContext from "../context/CurrencyContext";
 
 // Get category display name (bilingual)
 const getCategoryLabel = (category, propertyType, lang = "tr") => {
@@ -67,7 +69,24 @@ const formatDate = (dateString) => {
 const Item = ({ property }) => {
   const navigate = useNavigate();
   const { i18n } = useTranslation();
+  const { selectedCurrency, baseCurrency, rates, convertAmount, formatMoney } =
+    useContext(CurrencyContext);
   const isForSale = property.propertyType === "sale" || !property.propertyType;
+  const sourceCurrency = property.currency || baseCurrency;
+  const displayCurrency =
+    selectedCurrency && (selectedCurrency === baseCurrency || rates?.[selectedCurrency])
+      ? selectedCurrency
+      : baseCurrency;
+  const convertedPrice = convertAmount(
+    property.price,
+    sourceCurrency,
+    displayCurrency
+  );
+  const formattedPrice = formatMoney(
+    convertedPrice,
+    displayCurrency,
+    i18n.language === "tr" ? "tr-TR" : "en-US"
+  );
 
   return (
     <div
@@ -108,7 +127,7 @@ const Item = ({ property }) => {
       <p className="pt-2 mb-4 line-clamp-2">{property.description}</p>
       <div className="flexBetween flex-wrap gap-2">
         <div className="bold-18 sm:bold-20">
-          ₺{property.price.toLocaleString()}
+          {formattedPrice}
           {!isForSale && (
             <span className="text-sm font-normal text-gray-500">/ay</span>
           )}
@@ -131,6 +150,7 @@ Item.propTypes = {
     city: PropTypes.string,
     description: PropTypes.string,
     price: PropTypes.number,
+    currency: PropTypes.string,
     propertyType: PropTypes.string,
     updatedAt: PropTypes.string,
     createdAt: PropTypes.string,

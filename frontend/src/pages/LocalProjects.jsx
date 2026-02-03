@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -13,6 +13,7 @@ import {
 import { MdSearch, MdKeyboardArrowDown } from "react-icons/md";
 import heroBg from "../assets/img4.png";
 import useProperties from "../hooks/useProperties";
+import CurrencyContext from "../context/CurrencyContext";
 
 // Turkish cities data
 const TURKISH_CITIES = [
@@ -177,7 +178,13 @@ const PROJECT_STATUS = [
 
 const LocalProjects = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { selectedCurrency, baseCurrency, rates, convertAmount, formatMoney } =
+    useContext(CurrencyContext);
+  const displayCurrency =
+    selectedCurrency && (selectedCurrency === baseCurrency || rates?.[selectedCurrency])
+      ? selectedCurrency
+      : baseCurrency;
+  const { t, i18n } = useTranslation();
   const { data: allProperties, isLoading } = useProperties();
 
   // Filter local projects from all properties
@@ -728,7 +735,15 @@ const LocalProjects = () => {
                         {project.price > 0 ? (
                           <>
                             <span className="text-gray-500 font-normal">{t("localProjects.startingFrom", "Başlangıç")}: </span>
-                            {project.price.toLocaleString("tr-TR")} TL
+                            {formatMoney(
+                              convertAmount(
+                                project.price,
+                                project.currency || baseCurrency,
+                                displayCurrency
+                              ),
+                              displayCurrency,
+                              i18n.language === "tr" ? "tr-TR" : "en-US"
+                            )}
                           </>
                         ) : (
                           <span className="text-gray-500">{t("localProjects.contactForPrice", "Fiyat için iletişime geçin")}</span>
@@ -757,3 +772,4 @@ const LocalProjects = () => {
 };
 
 export default LocalProjects;
+

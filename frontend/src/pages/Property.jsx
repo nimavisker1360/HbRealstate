@@ -10,6 +10,7 @@ import { useAuth0 } from "@auth0/auth0-react";
 import BookingModal from "../components/BookingModal";
 import ContactModal from "../components/ContactModal";
 import UserDetailContext from "../context/UserDetailContext";
+import CurrencyContext from "../context/CurrencyContext";
 import { Button, Avatar } from "@mantine/core";
 import { toast } from "react-toastify";
 import { bilingualKey } from "../utils/bilingualToast";
@@ -233,6 +234,22 @@ const Property = () => {
   const { validateLogin } = useAuthCheck();
   const { user } = useAuth0();
   const whatsappNumber = normalizeWhatsAppNumber(data?.consultant?.whatsapp);
+  const { selectedCurrency, baseCurrency, rates, convertAmount, formatMoney } =
+    useContext(CurrencyContext);
+  const displayCurrency =
+    selectedCurrency && (selectedCurrency === baseCurrency || rates?.[selectedCurrency])
+      ? selectedCurrency
+      : baseCurrency;
+  const convertedPrice = convertAmount(
+    data?.price || 0,
+    data?.currency || baseCurrency,
+    displayCurrency
+  );
+  const formattedPrice = formatMoney(
+    convertedPrice,
+    displayCurrency,
+    i18n.language === "tr" ? "tr-TR" : "en-US"
+  );
 
   // Get all images - support both 'images' array and single 'image'
   const getPropertyImages = () => {
@@ -622,7 +639,7 @@ const Property = () => {
           <div className="flexBetween">
             <h4 className="medium-18">{data?.title}</h4>
             <div className="bold-20">
-              ₺{data?.price?.toLocaleString()}
+              {formattedPrice}
             </div>
           </div>
           {/* info */}

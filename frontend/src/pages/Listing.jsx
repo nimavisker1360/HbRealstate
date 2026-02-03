@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useContext } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import useProperties from "../hooks/useProperties";
@@ -17,12 +17,19 @@ import {
 import { FaLandmark, FaHome, FaBriefcase, FaHotel, FaUmbrellaBeach, FaCity } from "react-icons/fa";
 import { HiOutlineOfficeBuilding } from "react-icons/hi";
 import { BsBuildingsFill } from "react-icons/bs";
+import CurrencyContext from "../context/CurrencyContext";
 
 const Listing = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { data, isError, isLoading } = useProperties();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { selectedCurrency, baseCurrency, rates, convertAmount, formatMoney } =
+    useContext(CurrencyContext);
+  const displayCurrency =
+    selectedCurrency && (selectedCurrency === baseCurrency || rates?.[selectedCurrency])
+      ? selectedCurrency
+      : baseCurrency;
 
   // Dropdown states
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
@@ -231,8 +238,14 @@ const Listing = () => {
       return true;
     })
     .filter((property) => {
-      if (minPrice && property.price < parseInt(minPrice)) return false;
-      if (maxPrice && property.price > parseInt(maxPrice)) return false;
+      if (!minPrice && !maxPrice) return true;
+      const priceValue = convertAmount(
+        property.price || 0,
+        property.currency || baseCurrency,
+        displayCurrency
+      );
+      if (minPrice && priceValue < parseInt(minPrice)) return false;
+      if (maxPrice && priceValue > parseInt(maxPrice)) return false;
       return true;
     })
     .filter((property) => {
@@ -294,9 +307,28 @@ const Listing = () => {
   // Get price label
   const getPriceLabel = () => {
     if (minPrice || maxPrice) {
-      if (minPrice && maxPrice) return `₺${formatNumber(minPrice)} - ₺${formatNumber(maxPrice)}`;
-      if (minPrice) return `₺${formatNumber(minPrice)}+`;
-      if (maxPrice) return `${t('listing.maxPrice')}: ₺${formatNumber(maxPrice)}`;
+      if (minPrice && maxPrice)
+        return `${formatMoney(
+          Number(minPrice),
+          displayCurrency,
+          i18n.language === "tr" ? "tr-TR" : "en-US"
+        )} - ${formatMoney(
+          Number(maxPrice),
+          displayCurrency,
+          i18n.language === "tr" ? "tr-TR" : "en-US"
+        )}`;
+      if (minPrice)
+        return `${formatMoney(
+          Number(minPrice),
+          displayCurrency,
+          i18n.language === "tr" ? "tr-TR" : "en-US"
+        )}+`;
+      if (maxPrice)
+        return `${t('listing.maxPrice')}: ${formatMoney(
+          Number(maxPrice),
+          displayCurrency,
+          i18n.language === "tr" ? "tr-TR" : "en-US"
+        )}`;
     }
     return t('listing.price');
   };
@@ -308,10 +340,6 @@ const Listing = () => {
       return option ? option.label : t('listing.rooms');
     }
     return t('listing.rooms');
-  };
-
-  const formatNumber = (num) => {
-    return new Intl.NumberFormat('tr-TR').format(num);
   };
 
   return (

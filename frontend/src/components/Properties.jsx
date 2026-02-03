@@ -1,10 +1,11 @@
 import PropertyGridCard from "./PropertyGridCard";
 import { Link, useNavigate } from "react-router-dom";
 import useProperties from "../hooks/useProperties";
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef, useMemo, useContext } from "react";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { MdLocationOn, MdSearch, MdKeyboardArrowDown, MdFilterList, MdClose } from "react-icons/md";
+import CurrencyContext from "../context/CurrencyContext";
 
 // Animated Card wrapper with IntersectionObserver
 const AnimatedCard = ({ children, delay = 0 }) => {
@@ -49,11 +50,17 @@ AnimatedCard.propTypes = {
 };
 
 const Properties = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { data, isError, isLoading } = useProperties();
   const navigate = useNavigate();
   const [headerVisible, setHeaderVisible] = useState(false);
   const headerRef = useRef(null);
+  const { selectedCurrency, baseCurrency, rates, convertAmount, formatMoney } =
+    useContext(CurrencyContext);
+  const displayCurrency =
+    selectedCurrency && (selectedCurrency === baseCurrency || rates?.[selectedCurrency])
+      ? selectedCurrency
+      : baseCurrency;
 
   const [searchValue, setSearchValue] = useState("");
   const [typeFilter, setTypeFilter] = useState(null);
@@ -121,8 +128,12 @@ const Properties = () => {
     { value: "touristFacility", label: t("categories.touristFacility") },
   ];
 
-  const formatNumber = (num) => new Intl.NumberFormat("tr-TR").format(num);
-  const formatCurrency = (num) => `TRY ${formatNumber(num)}`;
+  const formatCurrency = (num) =>
+    formatMoney(
+      Number(num || 0),
+      displayCurrency,
+      i18n.language === "tr" ? "tr-TR" : "en-US"
+    );
 
   const getTypeLabel = () => {
     const current = propertyTypes.find((type) => type.value === typeFilter);
@@ -188,7 +199,11 @@ const Properties = () => {
       })
       .filter((property) => {
         if (!priceRange.min && !priceRange.max) return true;
-        const priceValue = Number(property.price || 0);
+        const priceValue = convertAmount(
+          property.price || 0,
+          property.currency || baseCurrency,
+          displayCurrency
+        );
         if (priceRange.min && priceValue < Number(priceRange.min)) return false;
         if (priceRange.max && priceValue > Number(priceRange.max)) return false;
         return true;
@@ -233,7 +248,17 @@ const Properties = () => {
           address.includes(query)
         );
       });
-  }, [data, searchValue, typeFilter, categoryFilter, priceRange, roomsFilter]);
+  }, [
+    data,
+    searchValue,
+    typeFilter,
+    categoryFilter,
+    priceRange,
+    roomsFilter,
+    baseCurrency,
+    displayCurrency,
+    convertAmount,
+  ]);
 
   const handleAllFilters = () => {
     const params = new URLSearchParams();

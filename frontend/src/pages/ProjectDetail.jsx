@@ -1,6 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import CurrencyContext from "../context/CurrencyContext";
 import { useQuery } from "react-query";
 import { toast } from "react-toastify";
 import { bilingualKey } from "../utils/bilingualToast";
@@ -240,6 +241,12 @@ const ProjectDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
+  const { selectedCurrency, baseCurrency, rates, convertAmount, formatMoney } =
+    useContext(CurrencyContext);
+  const displayCurrency =
+    selectedCurrency && (selectedCurrency === baseCurrency || rates?.[selectedCurrency])
+      ? selectedCurrency
+      : baseCurrency;
   
   const [activeTab, setActiveTab] = useState("all");
   const [featuresTab, setFeaturesTab] = useState("binaOzellikleri");
@@ -543,7 +550,15 @@ const ProjectDetail = () => {
                   {project.price > 0 && (
                     <div className="text-right">
                       <div className="text-xl md:text-2xl font-bold text-blue-600">
-                        {project.price.toLocaleString("tr-TR")} TL
+                        {formatMoney(
+                          convertAmount(
+                            project.price,
+                            project.currency || baseCurrency,
+                            displayCurrency
+                          ),
+                          displayCurrency,
+                          i18n.language === "tr" ? "tr-TR" : "en-US"
+                        )}
                       </div>
                       <div className="text-xs text-gray-500">{t("projectDetail.startingFrom")}</div>
                     </div>
@@ -688,7 +703,15 @@ const ProjectDetail = () => {
                       {plan.fiyat > 0 && (
                         <div className="mb-3">
                           <span className="text-blue-600 font-medium">
-                            {plan.fiyat.toLocaleString("tr-TR")} TL
+                            {formatMoney(
+                              convertAmount(
+                                plan.fiyat,
+                                project.currency || baseCurrency,
+                                displayCurrency
+                              ),
+                              displayCurrency,
+                              i18n.language === "tr" ? "tr-TR" : "en-US"
+                            )}
                           </span>
                         </div>
                       )}
@@ -1145,7 +1168,15 @@ const ProjectDetail = () => {
                 <div>
                   <p className="text-sm text-gray-500">{t("projectDetail.price") || "Fiyat"}</p>
                   <p className="font-bold text-blue-600 text-lg">
-                    {floorPlanModal.plan.fiyat?.toLocaleString("tr-TR")} TL
+                    {formatMoney(
+                      convertAmount(
+                        floorPlanModal.plan.fiyat,
+                        project.currency || baseCurrency,
+                        displayCurrency
+                      ),
+                      displayCurrency,
+                      i18n.language === "tr" ? "tr-TR" : "en-US"
+                    )}
                   </p>
                 </div>
               )}
@@ -1210,3 +1241,5 @@ const ProjectDetail = () => {
 };
 
 export default ProjectDetail;
+
+

@@ -1,9 +1,10 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useContext } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import * as ELG from "esri-leaflet-geocoder";
 import PropTypes from "prop-types";
+import CurrencyContext from "../context/CurrencyContext";
 
 // Custom green marker icon
 const createCustomIcon = () => {
@@ -100,6 +101,18 @@ MapAutoResize.propTypes = {
 const PropertyMarker = ({ property, onPropertyClick }) => {
   const [position, setPosition] = useState(null);
   const customIcon = useMemo(() => createCustomIcon(), []);
+  const { selectedCurrency, baseCurrency, rates, convertAmount, formatMoney } =
+    useContext(CurrencyContext);
+  const displayCurrency =
+    selectedCurrency && (selectedCurrency === baseCurrency || rates?.[selectedCurrency])
+      ? selectedCurrency
+      : baseCurrency;
+  const convertedPrice = convertAmount(
+    property.price,
+    property.currency || baseCurrency,
+    displayCurrency
+  );
+  const formattedPrice = formatMoney(convertedPrice, displayCurrency, "tr-TR");
 
   useEffect(() => {
     const address = `${property.address} ${property.city} ${property.country}`;
@@ -137,7 +150,7 @@ const PropertyMarker = ({ property, onPropertyClick }) => {
             {property.city}, {property.country}
           </p>
           <p className="text-sm font-bold text-green-600 mt-1">
-            ₺{property.price.toLocaleString()}
+            {formattedPrice}
           </p>
         </div>
       </Popup>
