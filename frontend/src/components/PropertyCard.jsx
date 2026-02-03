@@ -148,6 +148,8 @@ const PropertyCard = ({ property, onCardClick }) => {
           <img
             src={property.image}
             alt={property.title}
+            loading="lazy"
+            decoding="async"
             className="w-full h-full object-cover rounded-lg"
           />
           {/* Category Badge */}

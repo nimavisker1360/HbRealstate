@@ -120,9 +120,12 @@ const Hero = () => {
           key={activeTab}
           src={activeHeroImage}
           alt="city skyline"
-          className="w-full h-full object-cover object-center animate-hero-fade"
+          loading="eager"
+          decoding="async"
+          fetchpriority="high"
+          className="w-full h-full object-cover object-center animate-hero-fade hero-bg"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#101828]/70 via-[#101828]/40 to-[#101828]/80" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0f172a]/55 via-[#0f172a]/25 to-[#0f172a]/60" />
       </div>
 
       {/* Content */}

@@ -75,7 +75,13 @@ const Item = ({ property }) => {
       onClick={() => navigate(`../listing/${property.id}`)}
     >
       <div className="pb-2 relative">
-        <img src={property.image} alt={property.title} className="rounded-xl" />
+        <img
+          src={property.image}
+          alt={property.title}
+          loading="lazy"
+          decoding="async"
+          className="rounded-xl"
+        />
         {/* Category Badge */}
         <div className="absolute top-4 left-4">
           <span className="flexCenter gap-x-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-500 text-white">

@@ -55,6 +55,8 @@ const PropertyGridCard = ({ property }) => {
         <img
           src={property.image}
           alt={property.title}
+          loading="lazy"
+          decoding="async"
           className="w-full h-[140px] object-cover transition-transform duration-500 group-hover:scale-110"
         />
         {/* Overlay gradient */}

@@ -128,6 +128,8 @@ const PropertyMarker = ({ property, onPropertyClick }) => {
           <img
             src={property.image}
             alt={property.title}
+            loading="lazy"
+            decoding="async"
             className="w-full h-24 object-cover rounded mb-2"
           />
           <h4 className="font-semibold text-sm truncate">{property.title}</h4>
