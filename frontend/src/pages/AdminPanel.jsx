@@ -359,6 +359,11 @@ const AdminPanel = () => {
     return options;
   }, [t, i18n.language]);
 
+  const citizenshipMenuOptions = useMemo(
+    () => [{ value: "nav.citizenship", label: t("nav.citizenship") }],
+    [t, i18n.language]
+  );
+
   // Testimonials state
   const [testimonials, setTestimonials] = useState([]);
   const [testimonialsLoading, setTestimonialsLoading] = useState(true);
@@ -4416,6 +4421,23 @@ const AdminPanel = () => {
                 setBlogForm({ ...blogForm, menuKey: value || "" })
               }
             />
+            <Select
+              label="Turkish Citizenship (optional)"
+              placeholder="Link this post to Turkish Citizenship"
+              searchable
+              clearable
+              data={citizenshipMenuOptions}
+              value={
+                citizenshipMenuOptions.some(
+                  (option) => option.value === blogForm.menuKey
+                )
+                  ? blogForm.menuKey
+                  : null
+              }
+              onChange={(value) =>
+                setBlogForm({ ...blogForm, menuKey: value || "" })
+              }
+            />
 
             <div className="grid gap-3 md:grid-cols-2">
               <Textarea
@@ -4885,6 +4907,23 @@ const AdminPanel = () => {
               data={buyerGuideMenuOptions}
               value={
                 buyerGuideMenuOptions.some(
+                  (option) => option.value === blogForm.menuKey
+                )
+                  ? blogForm.menuKey
+                  : null
+              }
+              onChange={(value) =>
+                setBlogForm({ ...blogForm, menuKey: value || "" })
+              }
+            />
+            <Select
+              label="Turkish Citizenship (optional)"
+              placeholder="Link this post to Turkish Citizenship"
+              searchable
+              clearable
+              data={citizenshipMenuOptions}
+              value={
+                citizenshipMenuOptions.some(
                   (option) => option.value === blogForm.menuKey
                 )
                   ? blogForm.menuKey
@@ -5501,3 +5540,4 @@ const AdminPanel = () => {
 };
 
 export default AdminPanel;
+

@@ -190,6 +190,16 @@ const Navbar = ({
     closeMenu && closeMenu();
   };
 
+  const handleCitizenshipClick = async () => {
+    const blogId = await getMenuBlogId({ menuKey: "nav.citizenship" });
+    if (blogId) {
+      navigate(`/blog/${blogId}`);
+    } else {
+      navigate("/blogs");
+    }
+    closeMenu && closeMenu();
+  };
+
   const handleAddPropertyClick = () => {
     if (validateLogin()) {
       closeMenu && closeMenu();
@@ -510,7 +520,11 @@ const Navbar = ({
         </div>
       </div>
 
-      <button type="button" className={simpleButtonClass(false)}>
+      <button
+        type="button"
+        className={simpleButtonClass(false)}
+        onClick={handleCitizenshipClick}
+      >
         <span>{t("nav.citizenship")}</span>
       </button>
 
