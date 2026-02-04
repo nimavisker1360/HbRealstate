@@ -29,6 +29,7 @@ const AddPropertyModal = ({ opened, setOpened }) => {
       bathrooms: 0,
     },
     propertyType: "sale",
+    consultantId: null,
     userEmail: user?.email,
     // Turkish real estate fields
     listingNo: "",

@@ -764,6 +764,9 @@
     "errorName": "Please enter your name",
     "errorEmail": "Please enter your email address",
     "errorEmailInvalid": "Please enter a valid email address",
+    "consultant": "Project Consultant",
+    "consultantDescription": "Your dedicated advisor for this project",
+    "consultantUnavailable": "No consultant assigned to this project.",
     "location": "Location"
   }
 }

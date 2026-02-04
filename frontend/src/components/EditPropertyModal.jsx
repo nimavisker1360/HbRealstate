@@ -910,7 +910,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
         parkings: values.parkings || 0,
         bathrooms: values.bathrooms || 0,
       },
-      consultantId: isProject ? (property?.consultantId || null) : (selectedConsultantId || null),
+      consultantId: selectedConsultantId || null,
       interiorFeatures: isProject ? (property?.interiorFeatures || []) : interiorFeatures,
       exteriorFeatures: isProject ? (property?.exteriorFeatures || []) : exteriorFeatures,
       muhitFeatures: isProject ? (property?.muhitFeatures || []) : muhitFeatures,
@@ -1659,6 +1659,33 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
         {(form.values.propertyType === "local-project" || form.values.propertyType === "international-project") && (
           <>
             <Divider my="lg" label="Proje Bilgileri" labelPosition="center" color="blue" />
+
+            <Select
+              label="Danışman Ata"
+              placeholder="Bu proje için bir danışman seçin"
+              description="Danışman, bu proje için iletişim kişisi olarak gösterilecektir"
+              data={consultantOptions}
+              value={selectedConsultantId}
+              onChange={(value) => setSelectedConsultantId(value || "")}
+              clearable
+              searchable
+              disabled={consultantsLoading}
+              mt="md"
+              leftSection={<MdPerson size={16} />}
+              renderOption={({ option }) => (
+                <div className="flex items-center gap-2 py-1">
+                  <Avatar src={option.image} size="sm" radius="xl" />
+                  <div>
+                    <Text size="sm" fw={500}>
+                      {option.label}
+                    </Text>
+                    <Text size="xs" c="dimmed">
+                      {option.title}
+                    </Text>
+                  </div>
+                </div>
+              )}
+            />
 
             {/* İlan No & Kampanya */}
             <Grid>

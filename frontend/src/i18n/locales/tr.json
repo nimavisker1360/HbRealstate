@@ -765,6 +765,9 @@
     "errorName": "Lütfen adınızı girin",
     "errorEmail": "Lütfen e-posta adresinizi girin",
     "errorEmailInvalid": "Lütfen geçerli bir e-posta adresi girin",
+    "consultant": "Proje Danışmanı",
+    "consultantDescription": "Bu proje için atanmış danışman",
+    "consultantUnavailable": "Bu projeye danışman atanmamış.",
     "location": "İletişim"
   }
 }

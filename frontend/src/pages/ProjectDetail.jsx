@@ -14,6 +14,7 @@ import {
   Textarea,
   Modal,
   Loader,
+  Avatar,
 } from "@mantine/core";
 import {
   MdLocationOn,
@@ -29,6 +30,7 @@ import {
   MdClose,
 } from "react-icons/md";
 import { FaKey } from "react-icons/fa";
+import { FaPhone, FaWhatsapp } from "react-icons/fa6";
 import { 
   BsHouseDoor, 
   BsTree, 
@@ -39,6 +41,8 @@ import {
   BsGeoAlt 
 } from "react-icons/bs";
 import { getProperty, sendEmail } from "../utils/api";
+import useConsultants from "../hooks/useConsultants";
+import { normalizeWhatsAppNumber } from "../utils/common";
 
 // All possible Bina Özellikleri (Building Features)
 const ALL_BINA_OZELLIKLERI = [
@@ -293,6 +297,7 @@ const ProjectDetail = () => {
     () => getProperty(id),
     { enabled: !!id }
   );
+  const { data: consultants, isLoading: consultantsLoading } = useConsultants();
 
   // Transform property data to project format
   const project = useMemo(() => {
@@ -338,8 +343,25 @@ const ProjectDetail = () => {
       kampanya: propertyData.kampanya,
       mapImage: propertyData.mapImage,
       ilanNo: propertyData.ilanNo || "",
+      consultantId: propertyData.consultant?.id || propertyData.consultantId || "",
     };
   }, [propertyData]);
+
+  const projectConsultant = useMemo(() => {
+    if (!propertyData) return null;
+    if (propertyData.consultant) return propertyData.consultant;
+    const consultantId = propertyData.consultantId;
+    if (!consultantId || !Array.isArray(consultants)) return null;
+    return consultants.find((consultant) => consultant.id === consultantId) || null;
+  }, [propertyData, consultants]);
+
+  const consultantTitle =
+    projectConsultant &&
+    (i18n.language === "tr"
+      ? projectConsultant.title_tr || projectConsultant.title
+      : projectConsultant.title_en || projectConsultant.title);
+
+  const consultantWhatsApp = normalizeWhatsAppNumber(projectConsultant?.whatsapp);
 
   // Filter floor plans by room type
   const filteredPlans = useMemo(() => {
@@ -1125,6 +1147,72 @@ const ProjectDetail = () => {
                 </Button>
               </form>
             </Paper>
+
+            {(projectConsultant || project.consultantId) && (
+              <Paper shadow="sm" className="mt-6 p-6 border">
+                <h3 className="text-lg font-bold text-gray-900 mb-2">
+                  {t("projectDetail.consultant")}
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  {t("projectDetail.consultantDescription")}
+                </p>
+
+                {consultantsLoading && !projectConsultant && (
+                  <div className="flex items-center justify-center py-6">
+                    <Loader size="sm" />
+                  </div>
+                )}
+
+                {!consultantsLoading && !projectConsultant && (
+                  <p className="text-sm text-gray-500">
+                    {t("projectDetail.consultantUnavailable")}
+                  </p>
+                )}
+
+                {projectConsultant && (
+                  <>
+                    <div className="flex items-center gap-4 mb-4">
+                      <Avatar
+                        src={projectConsultant.image}
+                        alt={projectConsultant.name}
+                        size="lg"
+                        radius="xl"
+                      />
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-900">
+                          {projectConsultant.name}
+                        </h4>
+                        {consultantTitle && (
+                          <p className="text-sm text-gray-600">
+                            {consultantTitle}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      {projectConsultant.phone && (
+                        <div className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700">
+                          <FaPhone className="text-gray-500" />
+                          <span dir="ltr">{projectConsultant.phone}</span>
+                        </div>
+                      )}
+                      {consultantWhatsApp && (
+                        <a
+                          href={`https://wa.me/${consultantWhatsApp}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-center gap-2 rounded-lg bg-[#25D366] px-3 py-2 text-sm font-medium text-white hover:bg-[#20bd5a] transition-colors"
+                        >
+                          <FaWhatsapp />
+                          WhatsApp
+                        </a>
+                      )}
+                    </div>
+                  </>
+                )}
+              </Paper>
+            )}
           </Grid.Col>
         </Grid>
       </Container>
@@ -1297,7 +1385,3 @@ const ProjectDetail = () => {
 };
 
 export default ProjectDetail;
-
-
-
-

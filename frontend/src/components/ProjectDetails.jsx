@@ -5,9 +5,11 @@ import {
   Group,
   NumberInput,
   TextInput,
+  Select,
   Textarea,
   Text,
   Grid,
+  Avatar,
   Paper,
   Divider,
   ActionIcon,
@@ -26,9 +28,11 @@ import {
   MdInfo,
   MdMap,
   MdLocationOn,
+  MdPerson,
 } from "react-icons/md";
 import { BsBuilding, BsGrid, BsShield, BsTree, BsEye, BsPeople } from "react-icons/bs";
 import { FaWheelchair, FaShoppingCart } from "react-icons/fa";
+import useConsultants from "../hooks/useConsultants";
 
 // Feature categories for projects
 const BINA_OZELLIKLERI = [
@@ -141,6 +145,7 @@ const ProjectDetails = ({
   const [imageUploading, setImageUploading] = useState(false);
   const [mapImageUploading, setMapImageUploading] = useState(false);
   const [floorPlanUploading, setFloorPlanUploading] = useState(null); // Index of floor plan being uploaded
+  const { data: consultants, isLoading: consultantsLoading } = useConsultants();
 
   const form = useForm({
     initialValues: {
@@ -148,6 +153,8 @@ const ProjectDetails = ({
       projectName: propertyDetails.projectName || "",
       // İlan Numarası
       ilanNo: propertyDetails.ilanNo || "",
+      // Danışman
+      consultantId: propertyDetails.consultantId || "",
       // Proje Hakkında
       projeAlani: propertyDetails.projeHakkinda?.projeAlani || 0,
       yesilAlan: propertyDetails.projeHakkinda?.yesilAlan || 0,
@@ -294,6 +301,7 @@ const ProjectDetails = ({
       ...prev,
       projectName: form.values.projectName,
       ilanNo: form.values.ilanNo,
+      consultantId: form.values.consultantId || null,
       projeHakkinda: {
         projeAlani: form.values.projeAlani,
         yesilAlan: form.values.yesilAlan,
@@ -327,6 +335,14 @@ const ProjectDetails = ({
     nextStep();
   };
 
+  const consultantOptions =
+    consultants?.map((c) => ({
+      value: c.id,
+      label: c.name,
+      image: c.image,
+      title: c.title,
+    })) || [];
+
   return (
     <Box maw={"95%"} mx="auto" my={"md"}>
       <ScrollArea h="65vh" offsetScrollbars>
@@ -341,6 +357,32 @@ const ProjectDetails = ({
             <div className="flex items-center gap-2 mb-4">
               <Text fw={700} size="lg" c="orange"># İlan Numarası</Text>
             </div>
+            <Select
+              label="Danışman Ata"
+              placeholder="Bu proje için bir danışman seçin"
+              description="Danışman, bu proje için iletişim kişisi olarak gösterilecektir"
+              data={consultantOptions}
+              value={form.values.consultantId}
+              onChange={(value) => form.setFieldValue("consultantId", value)}
+              clearable
+              searchable
+              disabled={consultantsLoading}
+              mt="md"
+              leftSection={<MdPerson size={16} />}
+              renderOption={({ option }) => (
+                <div className="flex items-center gap-2 py-1">
+                  <Avatar src={option.image} size="sm" radius="xl" />
+                  <div>
+                    <Text size="sm" fw={500}>
+                      {option.label}
+                    </Text>
+                    <Text size="xs" c="dimmed">
+                      {option.title}
+                    </Text>
+                  </div>
+                </div>
+              )}
+            />
             <TextInput
               label="İlan No"
               placeholder="#1201651741"
