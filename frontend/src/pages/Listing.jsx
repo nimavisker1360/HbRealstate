@@ -1,13 +1,14 @@
-import { useState, useEffect, useRef, useContext } from "react";
+import { useState, useEffect, useRef, useContext, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import useProperties from "../hooks/useProperties";
+import useConsultants from "../hooks/useConsultants";
 import { PuffLoader } from "react-spinners";
 import PropertyCard from "../components/PropertyCard";
 import PropertiesMap from "../components/PropertiesMap";
 import { 
-  MdSell, 
   MdList, 
+  MdPerson,
   MdSearch, 
   MdClose,
   MdFilterList,
@@ -21,7 +22,8 @@ import CurrencyContext from "../context/CurrencyContext";
 
 const Listing = () => {
   const { t, i18n } = useTranslation();
-  const { data, isError, isLoading } = useProperties();
+  const { data: rawData = [], isError, isLoading } = useProperties();
+  const { data: consultants = [], isLoading: consultantsLoading } = useConsultants();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { selectedCurrency, baseCurrency, rates, convertAmount, formatMoney } =
@@ -67,16 +69,11 @@ const Listing = () => {
     { value: "touristFacility", label: t('categories.touristFacility'), icon: FaUmbrellaBeach },
   ];
 
-  // Property types (projects have their own dedicated pages)
-  const propertyTypes = [
-    { value: null, label: t('listing.all'), icon: MdList },
-    { value: "sale", label: t('listing.forSale'), icon: MdSell, color: "green" },
-  ];
-
   // Get filters from URL
   const typeFilter = searchParams.get("type");
   const projectTypeFilter = searchParams.get("projectType");
   const categoryFilter = searchParams.get("category");
+  const consultantFilter = searchParams.get("consultantId");
   const searchQuery = searchParams.get("search") || "";
   const minPrice = searchParams.get("minPrice") || "";
   const maxPrice = searchParams.get("maxPrice") || "";
@@ -129,13 +126,11 @@ const Listing = () => {
     setSearchParams(searchParams);
   };
 
-  const handleTypeFilter = (type) => {
-    searchParams.delete("projectType");
-    if (type === null) {
-      searchParams.delete("type");
-      searchParams.delete("category");
+  const handleConsultantFilter = (consultantId) => {
+    if (consultantId) {
+      searchParams.set("consultantId", consultantId);
     } else {
-      searchParams.set("type", type);
+      searchParams.delete("consultantId");
     }
     setSearchParams(searchParams);
     setShowTypeDropdown(false);
@@ -194,36 +189,24 @@ const Listing = () => {
     if (categoryFilter) count++;
     if (minPrice || maxPrice) count++;
     if (roomsFilter) count++;
+    if (consultantFilter) count++;
     if (filter) count++;
     return count;
   };
 
   const activeFiltersCount = getActiveFiltersCount();
 
-  if (isError) {
-    return (
-      <div className="h-screen flexCenter">
-        <span className="text-red-500">{t('listing.errorFetching')}</span>
-      </div>
-    );
-  }
+  const getPropertyConsultantId = (property) =>
+    property?.consultantId ||
+    property?.consultant?.id ||
+    property?.consultant?._id ||
+    null;
 
-  if (isLoading) {
-    return (
-      <div className="h-screen flexCenter">
-        <PuffLoader
-          height="80"
-          width="80"
-          radius={1}
-          color="#16a34a"
-          aria-label="puff-loading"
-        />
-      </div>
-    );
-  }
+  const normalizeId = (value) =>
+    value === null || value === undefined ? "" : String(value);
 
   // Filter properties
-  const filteredData = data
+  const baseFilteredData = rawData
     .filter((property) => {
       if (effectiveTypeFilter) {
         return property.propertyType === effectiveTypeFilter;
@@ -287,14 +270,74 @@ const Listing = () => {
         property.address.toLowerCase().includes(filter.toLowerCase())
     );
 
+  const consultantPropertyCounts = useMemo(() => {
+    const counts = {};
+    baseFilteredData.forEach((property) => {
+      const consultantId = normalizeId(getPropertyConsultantId(property));
+      if (!consultantId) return;
+      counts[consultantId] = (counts[consultantId] || 0) + 1;
+    });
+    return counts;
+  }, [baseFilteredData]);
+
+  const consultantOptions = useMemo(() => {
+    const list = Array.isArray(consultants) ? consultants : [];
+    const mapped = list
+      .map((consultant) => {
+        const id = normalizeId(consultant?.id || consultant?._id);
+        if (!id) return null;
+        return {
+          value: id,
+          label: consultant?.name || consultant?.fullName || t('listing.consultantUnknown'),
+          image: consultant?.image || consultant?.photo || consultant?.avatar || null,
+          icon: MdPerson,
+          count: consultantPropertyCounts[id] || 0,
+        };
+      })
+      .filter(Boolean);
+
+    return [{ value: null, label: t('listing.all'), icon: MdList }, ...mapped];
+  }, [consultants, consultantPropertyCounts, t]);
+
+  if (isError) {
+    return (
+      <div className="h-screen flexCenter">
+        <span className="text-red-500">{t('listing.errorFetching')}</span>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="h-screen flexCenter">
+        <PuffLoader
+          height="80"
+          width="80"
+          radius={1}
+          color="#16a34a"
+          aria-label="puff-loading"
+        />
+      </div>
+    );
+  }
+
+  const filteredData = baseFilteredData.filter((property) => {
+    if (!consultantFilter) return true;
+    const propertyConsultantId = normalizeId(getPropertyConsultantId(property));
+    return propertyConsultantId === normalizeId(consultantFilter);
+  });
+
   const handlePropertyClick = (id) => {
     navigate(`/listing/${id}`);
   };
 
-  // Get current type label
+  // Get current consultant label
   const getCurrentTypeLabel = () => {
-    const current = propertyTypes.find(t => t.value === effectiveTypeFilter);
-    return current ? current.label : t('listing.forSale');
+    if (!consultantFilter) return t('listing.all');
+    const current = consultantOptions.find(
+      (option) => normalizeId(option.value) === normalizeId(consultantFilter)
+    );
+    return current ? current.label : t('listing.consultantUnknown');
   };
 
   // Get current category label
@@ -385,12 +428,12 @@ const Listing = () => {
 
             {/* Filters Grid */}
             <div className="grid grid-cols-2 gap-2 w-full order-2 lg:order-2 lg:flex lg:flex-nowrap lg:items-center lg:gap-2 lg:flex-none">
-              {/* Type Filter Dropdown */}
+              {/* Consultant Filter Dropdown */}
               <div ref={typeRef} className="relative">
                 <button
                   onClick={() => setShowTypeDropdown(!showTypeDropdown)}
                   className={`flex w-full items-center justify-between gap-2 h-11 px-4 py-2.5 lg:px-4 lg:py-2.5 rounded-xl text-sm font-medium transition-all border lg:text-xs ${
-                    effectiveTypeFilter
+                    consultantFilter
                       ? "bg-teal-600 text-white border-teal-600 hover:bg-teal-700"
                       : "bg-white text-gray-700 border-gray-300 hover:border-gray-400"
                   }`}
@@ -399,23 +442,46 @@ const Listing = () => {
                   <MdKeyboardArrowDown className={`transition-transform ${showTypeDropdown ? 'rotate-180' : ''}`} />
                 </button>
                 
-                {showTypeDropdown && (
-                  <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-xl z-50 min-w-[220px] py-1 animate-fadeIn">
-                    {propertyTypes.map((type) => {
-                      const IconComponent = type.icon;
-                      const isActive = effectiveTypeFilter === type.value;
+                <div
+                  className={`absolute top-full left-0 mt-2 rounded-xl bg-white z-50 min-w-[220px] origin-top transition-all duration-300 ease-out ${
+                    showTypeDropdown
+                      ? "max-h-[320px] translate-y-0 opacity-100 border border-gray-200 shadow-xl py-1 pointer-events-auto"
+                      : "max-h-0 -translate-y-2 opacity-0 border border-transparent shadow-none py-0 pointer-events-none"
+                  }`}
+                >
+                  <div className="max-h-[320px] overflow-y-auto">
+                    {consultantOptions.map((option) => {
+                      const IconComponent = option.icon;
+                      const isActive = consultantFilter
+                        ? normalizeId(consultantFilter) === normalizeId(option.value)
+                        : option.value === null;
                       return (
                         <button
-                          key={type.value || 'all'}
-                          onClick={() => handleTypeFilter(type.value)}
+                          key={option.value || 'all'}
+                          onClick={() => handleConsultantFilter(option.value)}
                           className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm whitespace-nowrap transition-colors ${
                             isActive
                               ? "bg-teal-50 text-teal-700 font-medium"
                               : "text-gray-700 hover:bg-gray-50"
                           }`}
                         >
-                          <IconComponent className={`text-lg flex-shrink-0 ${isActive ? 'text-teal-600' : 'text-gray-400'}`} />
-                          <span className="flex-1 text-left">{type.label}</span>
+                          <div className="h-7 w-7 rounded-full bg-teal-50 text-teal-700 flex items-center justify-center overflow-hidden">
+                            {option.image ? (
+                              <img
+                                src={option.image}
+                                alt={option.label}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <IconComponent className="text-base" />
+                            )}
+                          </div>
+                          <span className="flex-1 text-left">{option.label}</span>
+                          {option.value && (
+                            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                              {option.count ?? 0}
+                            </span>
+                          )}
                           {isActive && (
                             <span className="w-2 h-2 bg-teal-500 rounded-full flex-shrink-0" />
                           )}
@@ -423,7 +489,7 @@ const Listing = () => {
                       );
                     })}
                   </div>
-                )}
+                </div>
               </div>
 
             {/* Category Filter Dropdown */}
@@ -740,20 +806,22 @@ const Listing = () => {
 
             {/* Modal Body */}
             <div className="p-4 space-y-6">
-              {/* Property Type */}
+              {/* Consultants */}
               <div>
                 <h3 className="font-medium text-gray-800 mb-3 flex items-center gap-2">
-                  <MdSell className="text-teal-600" />
-                  {t('admin.type')}
+                  <MdPerson className="text-teal-600" />
+                  {t('listing.consultants')}
                 </h3>
                 <div className="grid grid-cols-2 gap-2">
-                  {propertyTypes.map((type) => {
-                    const IconComponent = type.icon;
-                    const isActive = effectiveTypeFilter === type.value;
+                  {consultantOptions.map((option) => {
+                    const IconComponent = option.icon;
+                    const isActive = consultantFilter
+                      ? normalizeId(consultantFilter) === normalizeId(option.value)
+                      : option.value === null;
                     return (
                       <button
-                        key={type.value || 'all'}
-                        onClick={() => handleTypeFilter(type.value)}
+                        key={option.value || 'all'}
+                        onClick={() => handleConsultantFilter(option.value)}
                         className={`flex items-center gap-2 p-3 rounded-lg border transition-colors ${
                           isActive
                             ? "bg-teal-50 border-teal-500 text-teal-700"
@@ -761,11 +829,21 @@ const Listing = () => {
                         }`}
                       >
                         <IconComponent className={isActive ? 'text-teal-600' : 'text-gray-400'} />
-                        <span className="text-sm font-medium">{type.label}</span>
+                        <span className="text-sm font-medium">{option.label}</span>
+                        {option.value && (
+                          <span className="ml-auto text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                            {option.count ?? 0}
+                          </span>
+                        )}
                       </button>
                     );
                   })}
                 </div>
+                {!consultantsLoading && consultantOptions.length <= 1 && (
+                  <p className="text-sm text-gray-500 mt-2">
+                    {t('consultants.noConsultants')}
+                  </p>
+                )}
               </div>
 
               {/* Category */}

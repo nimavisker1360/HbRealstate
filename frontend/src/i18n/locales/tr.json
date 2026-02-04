@@ -528,6 +528,8 @@
     "forLease": "Kiralık",
     "forRent": "Kiralık",
     "allCategories": "Tüm Kategoriler",
+    "consultants": "Danışmanlar",
+    "consultantUnknown": "Bilinmeyen danışman",
     "noProperties": "İlan Bulunamadı",
     "tryAdjusting": "Arama veya filtrelerinizi değiştirmeyi deneyin",
     "errorFetching": "Veri çekilirken hata oluştu",

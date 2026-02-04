@@ -4,8 +4,9 @@ import useProperties from "../hooks/useProperties";
 import { useEffect, useState, useRef, useMemo, useContext } from "react";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
-import { MdLocationOn, MdSearch, MdKeyboardArrowDown, MdFilterList, MdClose } from "react-icons/md";
+import { MdLocationOn, MdSearch, MdKeyboardArrowDown, MdFilterList, MdClose, MdList, MdPerson } from "react-icons/md";
 import CurrencyContext from "../context/CurrencyContext";
+import useConsultants from "../hooks/useConsultants";
 
 // Animated Card wrapper with IntersectionObserver
 const AnimatedCard = ({ children, delay = 0 }) => {
@@ -52,6 +53,7 @@ AnimatedCard.propTypes = {
 const Properties = () => {
   const { t, i18n } = useTranslation();
   const { data, isError, isLoading } = useProperties();
+  const { data: consultants = [] } = useConsultants();
   const navigate = useNavigate();
   const [headerVisible, setHeaderVisible] = useState(false);
   const headerRef = useRef(null);
@@ -63,7 +65,7 @@ const Properties = () => {
       : baseCurrency;
 
   const [searchValue, setSearchValue] = useState("");
-  const [typeFilter, setTypeFilter] = useState(null);
+  const [consultantFilter, setConsultantFilter] = useState(null);
   const [categoryFilter, setCategoryFilter] = useState(null);
   const [priceRange, setPriceRange] = useState({ min: "", max: "" });
   const [roomsFilter, setRoomsFilter] = useState("");
@@ -112,11 +114,6 @@ const Properties = () => {
     { value: "5+", label: t("listing.room5plus") },
   ];
 
-  const propertyTypes = [
-    { value: null, label: t("listing.all") },
-    { value: "sale", label: t("listing.forSale") },
-  ];
-
   const propertyCategories = [
     { value: "residential", label: t("categories.residential") },
     { value: "villa", label: t("categories.villa") },
@@ -135,9 +132,125 @@ const Properties = () => {
       i18n.language === "tr" ? "tr-TR" : "en-US"
     );
 
-  const getTypeLabel = () => {
-    const current = propertyTypes.find((type) => type.value === typeFilter);
-    return current ? current.label : t("listing.all");
+  const getPropertyConsultantId = (property) =>
+    property?.consultantId ||
+    property?.consultant?.id ||
+    property?.consultant?._id ||
+    null;
+
+  const normalizeId = (value) =>
+    value === null || value === undefined ? "" : String(value);
+
+  const consultantPropertyCounts = useMemo(() => {
+    if (!Array.isArray(data)) return {};
+    const query = searchValue.trim().toLowerCase();
+    const counts = {};
+
+    data
+      .filter(
+        (property) =>
+          property.propertyType !== "local-project" &&
+          property.propertyType !== "international-project"
+      )
+      .filter((property) => {
+        if (categoryFilter) {
+          return property.category === categoryFilter;
+        }
+        return true;
+      })
+      .filter((property) => {
+        if (!priceRange.min && !priceRange.max) return true;
+        const priceValue = convertAmount(
+          property.price || 0,
+          property.currency || baseCurrency,
+          displayCurrency
+        );
+        if (priceRange.min && priceValue < Number(priceRange.min)) return false;
+        if (priceRange.max && priceValue > Number(priceRange.max)) return false;
+        return true;
+      })
+      .filter((property) => {
+        if (!roomsFilter) return true;
+
+        if (property.rooms) {
+          const roomsValue = property.rooms.toLowerCase();
+          const normalizedRooms = roomsValue.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+          const roomMatch = roomsValue.match(/^(\d+)/);
+          const roomCount = roomMatch ? parseInt(roomMatch[1], 10) : 0;
+
+          if (roomsFilter === "0") {
+            return (
+              normalizedRooms.includes("studyo") ||
+              normalizedRooms.includes("studio") ||
+              roomCount === 0
+            );
+          }
+          if (roomsFilter === "5+") {
+            return roomCount >= 5;
+          }
+          return roomCount === parseInt(roomsFilter, 10);
+        }
+
+        const bedrooms = property.facilities?.bedrooms || 0;
+        if (roomsFilter === "0") return bedrooms === 0;
+        if (roomsFilter === "5+") return bedrooms >= 5;
+        return bedrooms === parseInt(roomsFilter, 10);
+      })
+      .filter((property) => {
+        if (!query) return true;
+        const title = property.title?.toLowerCase() || "";
+        const city = property.city?.toLowerCase() || "";
+        const country = property.country?.toLowerCase() || "";
+        const address = property.address?.toLowerCase() || "";
+        return (
+          title.includes(query) ||
+          city.includes(query) ||
+          country.includes(query) ||
+          address.includes(query)
+        );
+      })
+      .forEach((property) => {
+        const consultantId = normalizeId(getPropertyConsultantId(property));
+        if (!consultantId) return;
+        counts[consultantId] = (counts[consultantId] || 0) + 1;
+      });
+
+    return counts;
+  }, [
+    data,
+    searchValue,
+    categoryFilter,
+    priceRange,
+    roomsFilter,
+    baseCurrency,
+    displayCurrency,
+    convertAmount,
+  ]);
+
+  const consultantOptions = useMemo(() => {
+    const list = Array.isArray(consultants) ? consultants : [];
+    const mapped = list
+      .map((consultant) => {
+        const id = normalizeId(consultant?.id || consultant?._id);
+        if (!id) return null;
+        return {
+          value: id,
+          label: consultant?.name || consultant?.fullName || t("listing.consultantUnknown"),
+          image: consultant?.image || consultant?.photo || consultant?.avatar || null,
+          count: consultantPropertyCounts[id] || 0,
+        };
+      })
+      .filter(Boolean);
+
+    return [{ value: null, label: t("listing.all"), icon: MdList }, ...mapped];
+  }, [consultants, consultantPropertyCounts, t]);
+
+  const getConsultantLabel = () => {
+    if (!consultantFilter) return t("listing.all");
+    const current = consultantOptions.find(
+      (option) => normalizeId(option.value) === normalizeId(consultantFilter)
+    );
+    return current ? current.label : t("listing.consultantUnknown");
   };
 
   const getCategoryLabel = () => {
@@ -168,14 +281,14 @@ const Properties = () => {
   const activeFiltersCount = useMemo(() => {
     let count = 0;
     if (searchValue.trim()) count += 1;
-    if (typeFilter) count += 1;
+    if (consultantFilter) count += 1;
     if (categoryFilter) count += 1;
     if (priceRange.min || priceRange.max) count += 1;
     if (roomsFilter) count += 1;
     return count;
-  }, [searchValue, typeFilter, categoryFilter, priceRange, roomsFilter]);
+  }, [searchValue, consultantFilter, categoryFilter, priceRange, roomsFilter]);
 
-  const filteredProperties = useMemo(() => {
+  const baseFilteredProperties = useMemo(() => {
     if (!Array.isArray(data)) return [];
     const query = searchValue.trim().toLowerCase();
 
@@ -185,12 +298,6 @@ const Properties = () => {
           property.propertyType !== "local-project" &&
           property.propertyType !== "international-project"
       )
-      .filter((property) => {
-        if (typeFilter) {
-          return property.propertyType === typeFilter;
-        }
-        return true;
-      })
       .filter((property) => {
         if (categoryFilter) {
           return property.category === categoryFilter;
@@ -251,7 +358,6 @@ const Properties = () => {
   }, [
     data,
     searchValue,
-    typeFilter,
     categoryFilter,
     priceRange,
     roomsFilter,
@@ -260,10 +366,18 @@ const Properties = () => {
     convertAmount,
   ]);
 
+  const filteredProperties = useMemo(() => {
+    if (!consultantFilter) return baseFilteredProperties;
+    return baseFilteredProperties.filter((property) => {
+      const consultantId = normalizeId(getPropertyConsultantId(property));
+      return consultantId === normalizeId(consultantFilter);
+    });
+  }, [baseFilteredProperties, consultantFilter]);
+
   const handleAllFilters = () => {
     const params = new URLSearchParams();
     if (searchValue.trim()) params.set("search", searchValue.trim());
-    if (typeFilter) params.set("type", typeFilter);
+    if (consultantFilter) params.set("consultantId", consultantFilter);
     if (categoryFilter) params.set("category", categoryFilter);
     if (priceRange.min) params.set("minPrice", priceRange.min);
     if (priceRange.max) params.set("maxPrice", priceRange.max);
@@ -311,14 +425,15 @@ const Properties = () => {
 
   return (
     <section 
-      className="relative py-20 xl:py-28 overflow-hidden"
+      className="relative py-20 xl:py-28 overflow-visible"
     >
       {/* Background - Clean White with subtle tint */}
-      <div className="absolute inset-0 bg-gradient-to-br from-white via-slate-50 to-white" />
-      
-      {/* Decorative elements */}
-      <div className="absolute top-0 left-0 w-72 h-72 bg-emerald-500/5 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
-      <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl translate-x-1/3 translate-y-1/3" />
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute inset-0 bg-gradient-to-br from-white via-slate-50 to-white" />
+        {/* Decorative elements */}
+        <div className="absolute top-0 left-0 w-72 h-72 bg-emerald-500/5 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl translate-x-1/3 translate-y-1/3" />
+      </div>
       
       <div className="max-padd-container relative z-10">
         {/* Section Header */}
@@ -365,40 +480,70 @@ const Properties = () => {
                   <MdSearch className="text-gray-400 text-lg flex-shrink-0" />
                 </div>
 
-                {/* Type Filter Dropdown */}
+                {/* Consultant Filter Dropdown */}
                 <div ref={typeRef} className="relative w-[96px] shrink-0 sm:w-auto">
                   <button
                     type="button"
                     onClick={() => setShowTypeDropdown((prev) => !prev)}
                     className="flex w-full items-center justify-between gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-700 transition hover:border-emerald-200 hover:bg-emerald-50"
                   >
-                    <span className="min-w-0 flex-1 truncate">{getTypeLabel()}</span>
+                    <span className="min-w-0 flex-1 truncate">{getConsultantLabel()}</span>
                     <MdKeyboardArrowDown
                       className={`transition-transform ${showTypeDropdown ? "rotate-180" : ""}`}
                     />
                   </button>
 
-                  {showTypeDropdown && (
-                    <div className="absolute top-full left-0 right-0 mt-2 rounded-lg border border-gray-200 bg-white py-1 shadow-lg z-30 sm:right-auto sm:min-w-[180px]">
-                      {propertyTypes.map((type) => (
-                        <button
-                          key={type.value ?? "all"}
-                          type="button"
-                          onClick={() => {
-                            setTypeFilter(type.value);
-                            setShowTypeDropdown(false);
-                          }}
-                          className={`w-full text-left px-4 py-2 text-sm transition-colors ${
-                            typeFilter === type.value
-                              ? "bg-emerald-50 text-emerald-700 font-medium"
-                              : "text-gray-700 hover:bg-emerald-50"
-                          }`}
-                        >
-                          {type.label}
-                        </button>
-                      ))}
+                  <div
+                    className={`absolute top-full left-0 right-0 mt-2 rounded-lg bg-white z-30 sm:right-auto sm:min-w-[220px] origin-top transition-all duration-300 ease-out ${
+                      showTypeDropdown
+                        ? "max-h-[320px] translate-y-0 opacity-100 border border-gray-200 shadow-lg py-1 pointer-events-auto"
+                        : "max-h-0 -translate-y-2 opacity-0 border border-transparent shadow-none py-0 pointer-events-none"
+                    }`}
+                  >
+                    <div className="max-h-[320px] overflow-y-auto">
+                      {consultantOptions.map((option) => {
+                        const IconComponent = option.icon || MdPerson;
+                        const isActive = consultantFilter
+                          ? normalizeId(consultantFilter) === normalizeId(option.value)
+                          : option.value === null;
+                        return (
+                          <button
+                            key={option.value ?? "all"}
+                            type="button"
+                            onClick={() => {
+                              setConsultantFilter(option.value);
+                              setShowTypeDropdown(false);
+                            }}
+                            className={`w-full px-4 py-2 text-sm transition-colors ${
+                              isActive
+                                ? "bg-emerald-50 text-emerald-700 font-medium"
+                                : "text-gray-700 hover:bg-emerald-50"
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="h-7 w-7 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center overflow-hidden">
+                                {option.image ? (
+                                  <img
+                                    src={option.image}
+                                    alt={option.label}
+                                    className="h-full w-full object-cover"
+                                  />
+                                ) : (
+                                  <IconComponent className="text-base" />
+                                )}
+                              </div>
+                              <span className="flex-1 min-w-0 truncate">{option.label}</span>
+                              {option.value && (
+                                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                                  {option.count ?? 0}
+                                </span>
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })}
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
 

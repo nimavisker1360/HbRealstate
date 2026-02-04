@@ -527,6 +527,8 @@
     "forLease": "For Lease",
     "forRent": "For Rent",
     "allCategories": "All Categories",
+    "consultants": "Consultants",
+    "consultantUnknown": "Unknown consultant",
     "noProperties": "No Properties Found",
     "tryAdjusting": "Try adjusting your search or filters",
     "errorFetching": "Error while fetching data",
