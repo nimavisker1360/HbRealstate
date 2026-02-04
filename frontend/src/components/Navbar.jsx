@@ -504,7 +504,7 @@ const Navbar = ({
 
         {/* Sale Dropdown */}
         <div
-          className={`lg:absolute lg:top-full lg:left-0 lg:z-50 bg-white lg:rounded-lg lg:min-w-[210px] overflow-hidden transition-all duration-300 ease-out origin-top ${
+          className={`lg:absolute lg:top-full lg:left-0 lg:z-50 bg-white lg:rounded-none lg:min-w-[210px] overflow-hidden transition-all duration-300 ease-out origin-top ${
             saleDropdownOpen
               ? "max-h-[500px] translate-y-0 lg:border lg:border-gray-200 lg:shadow-xl"
               : "max-h-0 -translate-y-2 pointer-events-none lg:border-0 lg:shadow-none"
@@ -585,8 +585,8 @@ const Navbar = ({
             }`}
             aria-hidden={!aboutTurkeyDropdownOpen}
           >
-            <div className="pt-3">
-              <div className="rounded-2xl border border-black/10 bg-[#e7e2d4] p-6 shadow-xl">
+            <div className="pt-0">
+              <div className="rounded-none border border-black/10 bg-[#e7e2d4] p-6 shadow-xl">
               <div className="grid grid-cols-5 gap-6">
                 {aboutTurkeyMenu.map((column, index) => (
                   <div
@@ -769,8 +769,8 @@ const Navbar = ({
             }`}
             aria-hidden={!buyerGuideDropdownOpen}
           >
-            <div className="pt-3">
-              <div className="rounded-2xl border border-black/10 bg-[#e7e2d4] p-6 shadow-xl">
+            <div className="pt-0">
+              <div className="rounded-none border border-black/10 bg-[#e7e2d4] p-6 shadow-xl">
                 <div className="grid grid-cols-4 gap-6">
                   {buyerGuideMenu.map((column, columnIndex) => (
                     <div
@@ -977,7 +977,7 @@ const Navbar = ({
 
         {/* Projects Dropdown */}
         <div
-          className={`lg:absolute lg:top-full lg:left-0 lg:z-50 bg-white lg:rounded-lg lg:min-w-[210px] overflow-hidden transition-all duration-300 ease-out origin-top ${
+          className={`lg:absolute lg:top-full lg:left-0 lg:z-50 bg-white lg:rounded-none lg:min-w-[210px] overflow-hidden transition-all duration-300 ease-out origin-top ${
             projectsDropdownOpen
               ? "max-h-[500px] translate-y-0 lg:border lg:border-gray-200 lg:shadow-xl"
               : "max-h-0 -translate-y-2 pointer-events-none lg:border-0 lg:shadow-none"
