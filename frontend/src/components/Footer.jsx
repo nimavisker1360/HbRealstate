@@ -86,13 +86,25 @@ const Footer = () => {
           {/* Social Icons */}
           <div className="flex items-start gap-4">
             {SOCIALS.links.map((link) => (
-              <Link
-                to="/"
-                key={link.id}
-                className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-[#06a84e] transition-colors"
-              >
-                {link.icon}
-              </Link>
+              link.url ? (
+                <a
+                  key={link.id}
+                  href={link.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-[#06a84e] transition-colors"
+                >
+                  {link.icon}
+                </a>
+              ) : (
+                <Link
+                  to="/"
+                  key={link.id}
+                  className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-[#06a84e] transition-colors"
+                >
+                  {link.icon}
+                </Link>
+              )
             ))}
           </div>
         </div>
