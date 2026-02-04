@@ -336,21 +336,7 @@ const ProjectDetails = ({
             handleSubmit();
           }}
         >
-          {/* PROJE ADI (Project Name) */}
-          <Paper p="lg" withBorder mb="lg" className="bg-purple-50">
-            <div className="flex items-center gap-2 mb-4">
-              <MdInfo size={24} className="text-purple-600" />
-              <Text fw={700} size="lg" c="grape">Proje Adı</Text>
-            </div>
-            <TextInput
-              label="Proje Adı"
-              placeholder="HP Yapı"
-              description="Projenin adını girin (örn: HP Yapı, Koza Mah Projesi)"
-              {...form.getInputProps("projectName")}
-            />
-          </Paper>
-
-          {/* İLAN NUMARASI (Listing Number) */}
+{/* İLAN NUMARASI (Listing Number) */}
           <Paper p="lg" withBorder mb="lg" className="bg-orange-50">
             <div className="flex items-center gap-2 mb-4">
               <Text fw={700} size="lg" c="orange"># İlan Numarası</Text>
@@ -956,3 +942,4 @@ ProjectDetails.propTypes = {
 };
 
 export default ProjectDetails;
+

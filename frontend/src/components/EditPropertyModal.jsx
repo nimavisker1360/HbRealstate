@@ -1659,16 +1659,6 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
         {(form.values.propertyType === "local-project" || form.values.propertyType === "international-project") && (
           <>
             <Divider my="lg" label="Proje Bilgileri" labelPosition="center" color="blue" />
-            
-            {/* Proje Adı */}
-            <TextInput
-              label="Proje Adı"
-              placeholder="HP Yapı"
-              description="Projenin adını girin (bina üstünde gösterilecek)"
-              value={projectName}
-              onChange={(e) => setProjectName(e.target.value)}
-              mb="sm"
-            />
 
             {/* İlan No & Kampanya */}
             <Grid>
@@ -2282,3 +2272,4 @@ EditPropertyModal.propTypes = {
 };
 
 export default EditPropertyModal;
+
