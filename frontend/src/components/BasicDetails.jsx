@@ -186,7 +186,7 @@ const BasicDetails = ({
     validate: {
       title: (value) => validateString(value),
       description_tr: (value) => validateString(value),
-      price: (value) => (value < 999 ? "En az 999 TL olmalı" : null),
+      price: (value) => (value < 999 ? "En az 999 $ olmalı" : null),
     },
   });
 
@@ -329,7 +329,7 @@ const BasicDetails = ({
           <Grid.Col span={6}>
             <NumberInput
               withAsterisk
-              label="Fiyat (₺)"
+              label="Fiyat ($)"
               placeholder="999"
               min={0}
               thousandSeparator="."

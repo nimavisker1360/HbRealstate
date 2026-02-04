@@ -548,7 +548,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
     validate: {
       title: (value, values) => values.propertyType === "sale" ? validateString(value) : null,
       description_tr: (value, values) => values.propertyType === "sale" ? validateString(value) : null,
-      price: (value, values) => values.propertyType === "sale" ? (value < 999 ? "En az 999 TL olmalı" : null) : null,
+      price: (value, values) => values.propertyType === "sale" ? (value < 999 ? "En az 999 $ olmalı" : null) : null,
       country: (value, values) => values.propertyType === "sale" ? validateString(value) : null,
       city: (value, values) => values.propertyType === "sale" ? validateString(value) : null,
       address: (value, values) => values.propertyType === "sale" ? validateString(value) : null,
@@ -1063,7 +1063,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
               />
               <NumberInput
                 withAsterisk
-                label="Fiyat (₺)"
+                label="Fiyat ($)"
                 placeholder="999"
                 min={0}
                 thousandSeparator="."
@@ -1893,7 +1893,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
                       <Grid.Col span={3}>
                         <NumberInput
                           size="xs"
-                          label="Başlangıç Fiyatı / Starting Price"
+                          label="Başlangıç Fiyatı / Starting Price ($)"
                           min={0}
                           thousandSeparator="."
                           decimalSeparator=","

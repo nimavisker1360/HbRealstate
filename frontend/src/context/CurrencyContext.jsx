@@ -2,8 +2,8 @@ import { createContext, useCallback, useEffect, useMemo, useState } from "react"
 
 const CurrencyContext = createContext(null);
 
-const BASE_CURRENCY = "TRY";
-const CACHE_KEY = "exchangeRatesCache_v2";
+const BASE_CURRENCY = "USD";
+const CACHE_KEY = "exchangeRatesCache_v3";
 const SELECTED_KEY = "selectedCurrency";
 const SUPPORTED_CURRENCIES = [
   { code: "EUR", symbol: "\u20AC" },
@@ -59,10 +59,20 @@ export const CurrencyProvider = ({ children }) => {
   useEffect(() => {
     const cached = readCache();
     const todayKey = getTodayKey();
-    const cacheHasRequiredRates =
-      cached?.rates?.USD && cached?.rates?.EUR && cached?.rates?.TRY;
+    const requiredCodes = SUPPORTED_CURRENCIES.map((c) => c.code).filter(
+      (code) => code !== BASE_CURRENCY
+    );
+    const cacheHasRequiredRates = requiredCodes.every(
+      (code) => cached?.rates?.[code]
+    );
+    const cacheMatchesBase = cached?.base === BASE_CURRENCY;
 
-    if (cached?.date === todayKey && cached?.rates && cacheHasRequiredRates) {
+    if (
+      cached?.date === todayKey &&
+      cached?.rates &&
+      cacheHasRequiredRates &&
+      cacheMatchesBase
+    ) {
       setRates({ [BASE_CURRENCY]: 1, ...cached.rates });
       setLastUpdated(cached.date || cached.fetchedAt || null);
       return;
@@ -177,7 +187,7 @@ export const CurrencyProvider = ({ children }) => {
     };
 
     fetchRates().catch(() => {
-      if (cached?.rates && cacheHasRequiredRates) {
+      if (cached?.rates && cacheHasRequiredRates && cacheMatchesBase) {
         setRates({ [BASE_CURRENCY]: 1, ...cached.rates });
         setLastUpdated(cached.date || cached.fetchedAt || null);
       }

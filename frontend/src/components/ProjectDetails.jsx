@@ -623,7 +623,7 @@ const ProjectDetails = ({
                         </Grid.Col>
                         <Grid.Col span={3}>
                           <NumberInput
-                            label="Başlangıç Fiyatı / Starting Price"
+                            label="Başlangıç Fiyatı / Starting Price ($)"
                             placeholder="10.850.000"
                             min={0}
                             thousandSeparator="."

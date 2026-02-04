@@ -2234,7 +2234,7 @@ const AdminPanel = () => {
                         </Table.Td>
                         <Table.Td>
                           <Text size="sm" fw={600} color="green">
-                            ₺{property.price?.toLocaleString()}
+                            ${property.price?.toLocaleString()}
                           </Text>
                         </Table.Td>
                         <Table.Td>
@@ -3309,7 +3309,7 @@ const AdminPanel = () => {
                     {propertyToDelete.city}, {propertyToDelete.country}
                   </Text>
                   <Text size="xs" color="green" fw={500}>
-                    ₺{propertyToDelete.price?.toLocaleString()}
+                    ${propertyToDelete.price?.toLocaleString()}
                   </Text>
                 </div>
               </div>
