@@ -241,12 +241,35 @@ const ProjectDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
-  const { selectedCurrency, baseCurrency, rates, convertAmount, formatMoney } =
-    useContext(CurrencyContext);
+  const {
+    currencies,
+    selectedCurrency,
+    baseCurrency,
+    rates,
+    convertAmount,
+    formatMoney,
+  } = useContext(CurrencyContext);
   const displayCurrency =
     selectedCurrency && (selectedCurrency === baseCurrency || rates?.[selectedCurrency])
       ? selectedCurrency
       : baseCurrency;
+  const priceLocale = i18n.language === "tr" ? "tr-TR" : "en-US";
+  const currencyCodes = useMemo(() => {
+    if (Array.isArray(currencies) && currencies.length > 0) {
+      return currencies.map((currency) => currency.code);
+    }
+    return ["TRY", "USD", "EUR"];
+  }, [currencies]);
+  const secondaryCurrencyCodes = useMemo(
+    () => currencyCodes.filter((code) => code !== displayCurrency),
+    [currencyCodes, displayCurrency]
+  );
+
+  const getSecondaryPrices = (amount, sourceCurrency) =>
+    secondaryCurrencyCodes.map((code) => ({
+      code,
+      label: formatMoney(convertAmount(amount, sourceCurrency, code), code, priceLocale),
+    }));
   
   const [activeTab, setActiveTab] = useState("all");
   const [featuresTab, setFeaturesTab] = useState("binaOzellikleri");
@@ -303,6 +326,7 @@ const ProjectDetail = () => {
       city: propertyData.city,
       district: propertyData.address?.split(",")[0]?.trim() || "",
       price: propertyData.price,
+      currency: propertyData.currency,
       deliveryDate: propertyData.deliveryDate || "",
       images: propertyData.images || [],
       videos: propertyData.videos || [],
@@ -695,40 +719,56 @@ const ProjectDetail = () => {
 
                 {/* Floor Plan Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredPlans.map((plan) => (
-                    <div key={plan.id} className="border border-gray-200 rounded-lg p-4">
-                      <h3 className="font-bold text-gray-900 text-lg mb-2">
-                        {plan.tip} - {plan.varyant}
-                      </h3>
-                      {plan.fiyat > 0 && (
-                        <div className="mb-3">
-                          <span className="text-blue-600 font-medium">
-                            {formatMoney(
-                              convertAmount(
-                                plan.fiyat,
-                                project.currency || baseCurrency,
-                                displayCurrency
-                              ),
-                              displayCurrency,
-                              i18n.language === "tr" ? "tr-TR" : "en-US"
+                  {filteredPlans.map((plan) => {
+                    const planSecondaryPrices = getSecondaryPrices(
+                      plan.fiyat,
+                      project.currency || baseCurrency
+                    );
+                    return (
+                      <div key={plan.id} className="border border-gray-200 rounded-lg p-4">
+                        <h3 className="font-bold text-gray-900 text-lg mb-2">
+                          {plan.tip} - {plan.varyant}
+                        </h3>
+                        {plan.fiyat > 0 && (
+                          <div className="mb-3">
+                            <span className="text-blue-600 font-medium">
+                              {formatMoney(
+                                convertAmount(
+                                  plan.fiyat,
+                                  project.currency || baseCurrency,
+                                  displayCurrency
+                                ),
+                                displayCurrency,
+                                priceLocale
+                              )}
+                            </span>
+                            {planSecondaryPrices.length > 0 && (
+                              <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500">
+                                {planSecondaryPrices.map((price) => (
+                                  <span key={price.code} className="whitespace-nowrap">
+                                    <span className="font-medium text-gray-600">{price.code}</span>{" "}
+                                    {price.label}
+                                  </span>
+                                ))}
+                              </div>
                             )}
-                          </span>
+                          </div>
+                        )}
+                        <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-2 text-gray-600">
+                            <span className="w-4 h-4 border border-gray-400 rounded-sm inline-block"></span>
+                            <span>{plan.metrekare} m²</span>
+                          </div>
+                          <button 
+                            className="text-blue-600 hover:underline"
+                            onClick={() => setFloorPlanModal({ open: true, plan })}
+                          >
+                            {t("projectDetail.details")}
+                          </button>
                         </div>
-                      )}
-                      <div className="flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-2 text-gray-600">
-                          <span className="w-4 h-4 border border-gray-400 rounded-sm inline-block"></span>
-                          <span>{plan.metrekare} m²</span>
-                        </div>
-                        <button 
-                          className="text-blue-600 hover:underline"
-                          onClick={() => setFloorPlanModal({ open: true, plan })}
-                        >
-                          {t("projectDetail.details")}
-                        </button>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </section>
             )}
@@ -1164,22 +1204,38 @@ const ProjectDetail = () => {
               </div>
             )}
             <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-              {floorPlanModal.plan.fiyat > 0 && (
-                <div>
-                  <p className="text-sm text-gray-500">{t("projectDetail.price") || "Fiyat"}</p>
-                  <p className="font-bold text-blue-600 text-lg">
-                    {formatMoney(
-                      convertAmount(
-                        floorPlanModal.plan.fiyat,
-                        project.currency || baseCurrency,
-                        displayCurrency
-                      ),
-                      displayCurrency,
-                      i18n.language === "tr" ? "tr-TR" : "en-US"
+              {floorPlanModal.plan.fiyat > 0 && (() => {
+                const modalSecondaryPrices = getSecondaryPrices(
+                  floorPlanModal.plan.fiyat,
+                  project.currency || baseCurrency
+                );
+                return (
+                  <div>
+                    <p className="text-sm text-gray-500">{t("projectDetail.price") || "Fiyat"}</p>
+                    <p className="font-bold text-blue-600 text-lg">
+                      {formatMoney(
+                        convertAmount(
+                          floorPlanModal.plan.fiyat,
+                          project.currency || baseCurrency,
+                          displayCurrency
+                        ),
+                        displayCurrency,
+                        priceLocale
+                      )}
+                    </p>
+                    {modalSecondaryPrices.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500">
+                        {modalSecondaryPrices.map((price) => (
+                          <span key={price.code} className="whitespace-nowrap">
+                            <span className="font-medium text-gray-600">{price.code}</span>{" "}
+                            {price.label}
+                          </span>
+                        ))}
+                      </div>
                     )}
-                  </p>
-                </div>
-              )}
+                  </div>
+                );
+              })()}
               <div>
                 <p className="text-sm text-gray-500">{t("projectDetail.area") || "Alan"}</p>
                 <p className="font-bold text-gray-900 text-lg">
@@ -1241,5 +1297,7 @@ const ProjectDetail = () => {
 };
 
 export default ProjectDetail;
+
+
 
 
