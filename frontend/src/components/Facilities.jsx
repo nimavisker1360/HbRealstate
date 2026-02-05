@@ -10,6 +10,13 @@ import { bilingualFromMessage, bilingualKey } from "../utils/bilingualToast";
 import { createResidency } from "../utils/api";
 import PropTypes from "prop-types";
 
+const getDefaultFiatCurrency = () => {
+  const currency = String(
+    import.meta.env.VITE_DEFAULT_FIAT_CURRENCY || "USD"
+  ).toUpperCase();
+  return ["USD", "EUR", "TRY"].includes(currency) ? currency : "USD";
+};
+
 const Facilities = ({
   prevStep,
   propertyDetails,
@@ -71,6 +78,7 @@ const Facilities = ({
         description_en: "",
         description_tr: "",
         price: 0,
+        currency: getDefaultFiatCurrency(),
         country: "",
         city: "",
         address: "",

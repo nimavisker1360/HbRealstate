@@ -157,6 +157,13 @@ const CURRENCY_SYMBOLS = {
 const getCurrencySymbol = (currencyCode) =>
   CURRENCY_SYMBOLS[String(currencyCode || "USD").toUpperCase()] || "$";
 
+const getDefaultFiatCurrency = () => {
+  const currency = String(
+    import.meta.env.VITE_DEFAULT_FIAT_CURRENCY || "USD"
+  ).toUpperCase();
+  return ["USD", "EUR", "TRY"].includes(currency) ? currency : "USD";
+};
+
 const AdminPanel = () => {
   const [active, setActive] = useState(0);
   const [activeTab, setActiveTab] = useState("bookings");
@@ -1148,6 +1155,7 @@ const AdminPanel = () => {
     title: "",
     description: "",
     price: 0,
+    currency: getDefaultFiatCurrency(),
     country: "",
     city: "",
     address: "",
@@ -1999,6 +2007,7 @@ const AdminPanel = () => {
       description_en: "",
       description_tr: "",
       price: 0,
+      currency: getDefaultFiatCurrency(),
       country: "",
       city: "",
       address: "",

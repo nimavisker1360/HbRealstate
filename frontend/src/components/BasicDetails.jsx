@@ -14,15 +14,18 @@ import {
   Paper,
   Checkbox,
   Tabs,
+  SegmentedControl,
 } from "@mantine/core";
 import { DateInput } from "@mantine/dates";
 import { useForm } from "@mantine/form";
 import { validateString } from "../utils/common";
 import PropTypes from "prop-types";
+import { useContext } from "react";
 import { MdPerson } from "react-icons/md";
 import { BsLightningCharge, BsGeoAlt, BsGrid, BsEye } from "react-icons/bs";
 import { FaLandmark, FaHome, FaBriefcase } from "react-icons/fa";
 import useConsultants from "../hooks/useConsultants";
+import CurrencyContext from "../context/CurrencyContext";
 
 // Property categories
 const propertyCategories = [
@@ -137,6 +140,30 @@ const MANZARA_FEATURES = [
   "Göl",
 ];
 
+const FIAT_CURRENCIES = [
+  { code: "USD", symbol: "$" },
+  { code: "EUR", symbol: "\u20AC" },
+  { code: "TRY", symbol: "\u20BA" },
+];
+
+const FIAT_CURRENCY_CODES = FIAT_CURRENCIES.map((currency) => currency.code);
+
+const FIAT_SYMBOLS = FIAT_CURRENCIES.reduce((acc, currency) => {
+  acc[currency.code] = currency.symbol;
+  return acc;
+}, {});
+
+const normalizeFiatCurrency = (currencyCode) => {
+  const defaultFromEnv = String(
+    import.meta.env.VITE_DEFAULT_FIAT_CURRENCY || "USD"
+  ).toUpperCase();
+  const fallback = FIAT_CURRENCY_CODES.includes(defaultFromEnv)
+    ? defaultFromEnv
+    : "USD";
+  const normalized = String(currencyCode || "").toUpperCase();
+  return FIAT_CURRENCY_CODES.includes(normalized) ? normalized : fallback;
+};
+
 const BasicDetails = ({
   prevStep,
   nextStep,
@@ -144,6 +171,7 @@ const BasicDetails = ({
   setPropertyDetails,
 }) => {
   const { data: consultants, isLoading: consultantsLoading } = useConsultants();
+  const { convertAmount } = useContext(CurrencyContext);
 
   const form = useForm({
     initialValues: {
@@ -152,6 +180,7 @@ const BasicDetails = ({
       description_en: propertyDetails.description_en || "",
       description_tr: propertyDetails.description_tr || "",
       price: propertyDetails.price,
+      currency: normalizeFiatCurrency(propertyDetails.currency),
       propertyType: propertyDetails.propertyType || "sale",
       category: propertyDetails.category || "residential",
       consultantId: propertyDetails.consultantId || "",
@@ -186,7 +215,7 @@ const BasicDetails = ({
     validate: {
       title: (value) => validateString(value),
       description_tr: (value) => validateString(value),
-      price: (value) => (value < 999 ? "En az 999 $ olmalı" : null),
+      price: (value) => (value < 999 ? "En az 999 olmalı" : null),
     },
   });
 
@@ -196,6 +225,7 @@ const BasicDetails = ({
     description_en,
     description_tr,
     price,
+    currency,
     propertyType,
     category,
     consultantId,
@@ -228,13 +258,16 @@ const BasicDetails = ({
   const handleSubmit = () => {
     const { hasErrors } = form.validate();
     if (!hasErrors) {
+      const normalizedCurrency = normalizeFiatCurrency(currency);
+      const normalizedPrice = Math.round(Number(price || 0));
       setPropertyDetails((prev) => ({
         ...prev,
         title,
         description: description_tr || description_en || description, // fallback for compatibility
         description_en,
         description_tr,
-        price,
+        price: normalizedPrice,
+        currency: normalizedCurrency,
         propertyType,
         category,
         consultantId: consultantId || null,
@@ -327,15 +360,62 @@ const BasicDetails = ({
             />
           </Grid.Col>
           <Grid.Col span={6}>
+            <Text size="sm" fw={500} mb={4}>
+              Fiat <span className="text-red-500">*</span>
+            </Text>
+            <SegmentedControl
+              fullWidth
+              value={normalizeFiatCurrency(form.values.currency)}
+              onChange={(nextCurrency) => {
+                const currentCurrency = normalizeFiatCurrency(form.values.currency);
+                const currentPrice = Number(form.values.price || 0);
+                const converted = convertAmount(currentPrice, currentCurrency, nextCurrency);
+                const convertedPrice = Number.isFinite(converted) ? Math.round(converted) : 0;
+                form.setFieldValue("currency", nextCurrency);
+                form.setFieldValue("price", convertedPrice);
+              }}
+              data={FIAT_CURRENCIES.map(({ code, symbol }) => ({
+                value: code,
+                label: `${code} (${symbol})`,
+              }))}
+            />
             <NumberInput
               withAsterisk
-              label="Fiyat ($)"
+              mt="sm"
+              label={`Fiyat (${FIAT_SYMBOLS[normalizeFiatCurrency(form.values.currency)] || normalizeFiatCurrency(form.values.currency)})`}
               placeholder="999"
               min={0}
               thousandSeparator="."
               decimalSeparator=","
-              {...form.getInputProps("price")}
+              value={form.values.price}
+              onChange={(value) => {
+                const numericValue = Number(value);
+                form.setFieldValue("price", Number.isFinite(numericValue) ? numericValue : 0);
+              }}
+              error={form.errors.price}
             />
+            <div className="mt-2 flex flex-wrap gap-2">
+              {FIAT_CURRENCIES.map(({ code, symbol }) => {
+                const converted = convertAmount(
+                  Number(form.values.price || 0),
+                  normalizeFiatCurrency(form.values.currency),
+                  code
+                );
+                const displayValue = Number.isFinite(converted)
+                  ? Math.round(converted).toLocaleString("tr-TR")
+                  : "0";
+                return (
+                  <Text
+                    key={code}
+                    size="xs"
+                    c={code === normalizeFiatCurrency(form.values.currency) ? "dark" : "dimmed"}
+                    fw={code === normalizeFiatCurrency(form.values.currency) ? 600 : 400}
+                  >
+                    {code}: {displayValue} {symbol}
+                  </Text>
+                );
+              })}
+            </div>
           </Grid.Col>
         </Grid>
 

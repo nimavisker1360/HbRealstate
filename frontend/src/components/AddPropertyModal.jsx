@@ -8,6 +8,13 @@ import Facilities from "./Facilities";
 import ProjectDetails from "./ProjectDetails";
 import PropTypes from "prop-types";
 
+const getDefaultFiatCurrency = () => {
+  const currency = String(
+    import.meta.env.VITE_DEFAULT_FIAT_CURRENCY || "USD"
+  ).toUpperCase();
+  return ["USD", "EUR", "TRY"].includes(currency) ? currency : "USD";
+};
+
 const AddPropertyModal = ({ opened, setOpened }) => {
   const [active, setActive] = useState(0);
   const { user } = useAuth0();
@@ -17,6 +24,7 @@ const AddPropertyModal = ({ opened, setOpened }) => {
     description_en: "",
     description_tr: "",
     price: 0,
+    currency: getDefaultFiatCurrency(),
     country: "",
     city: "",
     address: "",
