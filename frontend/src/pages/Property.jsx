@@ -250,6 +250,39 @@ const Property = () => {
     displayCurrency,
     i18n.language === "tr" ? "tr-TR" : "en-US"
   );
+  const toPositiveNumber = (value) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+  };
+
+  const roomText = typeof data?.rooms === "string" ? data.rooms.trim() : "";
+  const roomNumber = toPositiveNumber(data?.rooms);
+  const bedroomsCount = toPositiveNumber(data?.facilities?.bedrooms);
+  const bathroomsCount = toPositiveNumber(data?.bathrooms ?? data?.facilities?.bathrooms);
+  const parkingsCount = toPositiveNumber(data?.facilities?.parkings);
+  const grossArea = toPositiveNumber(data?.area?.gross);
+  const netArea = toPositiveNumber(data?.area?.net);
+  const areaValue = grossArea || netArea;
+
+  const hasRoomTextValue = roomText !== "" && roomText !== "0";
+  const roomDisplayValue = hasRoomTextValue
+    ? roomText
+    : roomNumber || bedroomsCount || null;
+
+  const propertyStats = [
+    roomDisplayValue
+      ? { key: "rooms", icon: MdOutlineBed, value: roomDisplayValue }
+      : null,
+    bathroomsCount > 0
+      ? { key: "bathrooms", icon: MdOutlineBathtub, value: bathroomsCount }
+      : null,
+    parkingsCount > 0
+      ? { key: "parkings", icon: MdOutlineGarage, value: parkingsCount }
+      : null,
+    areaValue > 0
+      ? { key: "area", icon: CgRuler, value: `${areaValue.toLocaleString()} m²` }
+      : null,
+  ].filter(Boolean);
 
   // Get all images - support both 'images' array and single 'image'
   const getPropertyImages = () => {
@@ -643,20 +676,25 @@ const Property = () => {
             </div>
           </div>
           {/* info */}
-          <div className="flex flex-wrap gap-2 sm:gap-x-4 py-2">
-            <div className="flexCenter gap-x-2 border-r-2 border-gray-900/80 pr-2 sm:pr-4 font-[500] text-sm sm:text-base">
-              <MdOutlineBed /> {data?.rooms || data?.facilities?.bedrooms}
+          {propertyStats.length > 0 && (
+            <div className="flex flex-wrap gap-2 sm:gap-x-4 py-2">
+              {propertyStats.map((stat, index) => {
+                const Icon = stat.icon;
+                const withSeparator = index < propertyStats.length - 1;
+
+                return (
+                  <div
+                    key={stat.key}
+                    className={`flexCenter gap-x-2 font-[500] text-sm sm:text-base ${
+                      withSeparator ? "border-r-2 border-gray-900/80 pr-2 sm:pr-4" : ""
+                    }`}
+                  >
+                    <Icon /> {stat.value}
+                  </div>
+                );
+              })}
             </div>
-            <div className="flexCenter gap-x-2 border-r-2 border-gray-900/80 pr-2 sm:pr-4 font-[500] text-sm sm:text-base">
-              <MdOutlineBathtub /> {data?.bathrooms || data?.facilities?.bathrooms}
-            </div>
-            <div className="flexCenter gap-x-2 border-r-2 border-gray-900/80 pr-2 sm:pr-4 font-[500] text-sm sm:text-base">
-              <MdOutlineGarage /> {data?.facilities?.parkings}
-            </div>
-            <div className="flexCenter gap-x-2 font-[500] text-sm sm:text-base">
-              <CgRuler /> {(data?.area?.gross || data?.area?.net || 0).toLocaleString()} m²
-            </div>
-          </div>
+          )}
           <p className="pt-2 mb-4">
             {i18n.language === "tr" 
               ? (data?.description_tr || data?.description) 
@@ -1289,3 +1327,4 @@ const Property = () => {
 };
 
 export default Property;
+
