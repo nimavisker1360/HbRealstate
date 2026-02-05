@@ -2,6 +2,13 @@ import asyncHandler from "express-async-handler";
 import { prisma, getMongoDb } from "../config/prismaConfig.js";
 import { ObjectId } from "mongodb";
 
+const SUPPORTED_CURRENCIES = ["USD", "EUR", "TRY"];
+
+const normalizeCurrency = (currencyCode) => {
+  const normalized = String(currencyCode || "").toUpperCase();
+  return SUPPORTED_CURRENCIES.includes(normalized) ? normalized : "USD";
+};
+
 export const createResidency = asyncHandler(async (req, res) => {
   const {
     title,
@@ -9,6 +16,7 @@ export const createResidency = asyncHandler(async (req, res) => {
     description_en,
     description_tr,
     price,
+    currency,
     address,
     city,
     country,
@@ -77,6 +85,7 @@ export const createResidency = asyncHandler(async (req, res) => {
   console.log("Address:", address);
   console.log("City:", city);
   console.log("Price:", price);
+  console.log("Currency:", normalizeCurrency(currency));
   console.log("Property Type:", propertyType);
   console.log("Category:", category);
   console.log("Owner Email:", userEmail);
@@ -105,6 +114,7 @@ export const createResidency = asyncHandler(async (req, res) => {
       description_en: description_en || null,
       description_tr: description_tr || null,
       price,
+      currency: normalizeCurrency(currency),
       address,
       city,
       country,
@@ -310,6 +320,7 @@ export const updateResidency = asyncHandler(async (req, res) => {
     description_en,
     description_tr,
     price,
+    currency,
     address,
     city,
     country,
@@ -376,6 +387,7 @@ export const updateResidency = asyncHandler(async (req, res) => {
   console.log("Residency ID:", id);
   console.log("Title:", title);
   console.log("Price:", price);
+  console.log("Currency:", normalizeCurrency(currency));
   console.log("Category:", category);
   console.log("Interior Features:", interiorFeatures?.length || 0);
   console.log("Exterior Features:", exteriorFeatures?.length || 0);
@@ -390,6 +402,7 @@ export const updateResidency = asyncHandler(async (req, res) => {
       description_en: description_en || null,
       description_tr: description_tr || null,
       price,
+      currency: normalizeCurrency(currency),
       address,
       city,
       country,

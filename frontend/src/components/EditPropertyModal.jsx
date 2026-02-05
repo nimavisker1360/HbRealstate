@@ -420,8 +420,33 @@ import PropTypes from "prop-types";
 import useCountries from "../hooks/useCountries";
 import useConsultants from "../hooks/useConsultants";
 import UserDetailContext from "../context/UserDetailContext";
+import CurrencyContext from "../context/CurrencyContext";
 import { updateResidency } from "../utils/api";
 import { validateString } from "../utils/common";
+
+const FIAT_CURRENCIES = [
+  { code: "USD", symbol: "$" },
+  { code: "EUR", symbol: "\u20AC" },
+  { code: "TRY", symbol: "\u20BA" },
+];
+
+const FIAT_CURRENCY_CODES = FIAT_CURRENCIES.map((currency) => currency.code);
+
+const FIAT_SYMBOLS = FIAT_CURRENCIES.reduce((acc, currency) => {
+  acc[currency.code] = currency.symbol;
+  return acc;
+}, {});
+
+const normalizeFiatCurrency = (currencyCode) => {
+  const defaultFromEnv = String(
+    import.meta.env.VITE_DEFAULT_FIAT_CURRENCY || "USD"
+  ).toUpperCase();
+  const fallback = FIAT_CURRENCY_CODES.includes(defaultFromEnv)
+    ? defaultFromEnv
+    : "USD";
+  const normalized = String(currencyCode || "").toUpperCase();
+  return FIAT_CURRENCY_CODES.includes(normalized) ? normalized : fallback;
+};
 
 const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
   const { getAll } = useCountries();
@@ -429,6 +454,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
   const {
     userDetails: { token },
   } = useContext(UserDetailContext);
+  const { convertAmount } = useContext(CurrencyContext);
 
   const [imageURLs, setImageURLs] = useState([]);
   const [videoURLs, setVideoURLs] = useState([]);
@@ -536,6 +562,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
       description_en: "",
       description_tr: "",
       price: 0,
+      currency: normalizeFiatCurrency(),
       country: "",
       city: "",
       address: "",
@@ -548,7 +575,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
     validate: {
       title: (value, values) => values.propertyType === "sale" ? validateString(value) : null,
       description_tr: (value, values) => values.propertyType === "sale" ? validateString(value) : null,
-      price: (value, values) => values.propertyType === "sale" ? (value < 999 ? "En az 999 $ olmalı" : null) : null,
+      price: (value, values) => values.propertyType === "sale" ? (value < 999 ? "En az 999 olmalı" : null) : null,
       country: (value, values) => values.propertyType === "sale" ? validateString(value) : null,
       city: (value, values) => values.propertyType === "sale" ? validateString(value) : null,
       address: (value, values) => values.propertyType === "sale" ? validateString(value) : null,
@@ -574,6 +601,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
         description_en: property.description_en || "",
         description_tr: property.description_tr || property.description || "",
         price: property.price || 0,
+        currency: normalizeFiatCurrency(property.currency),
         country: property.country || "",
         city: property.city || "",
         address: property.address || "",
@@ -890,13 +918,18 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
     }
 
     const values = form.values;
+    const normalizedCurrency = normalizeFiatCurrency(values.currency);
+    const normalizedPrice = Math.round(Number(values.price || 0));
     const data = {
       // For projects, keep existing values; for sale, use form values
       title: isProject ? (property?.title || values.title) : values.title,
       description: isProject ? (property?.description || projeHakkinda?.description) : (values.description_tr || values.description_en || values.description),
       description_en: isProject ? property?.description_en : values.description_en,
       description_tr: isProject ? (projeHakkinda?.description || property?.description_tr) : values.description_tr,
-      price: isProject ? (property?.price || 0) : values.price,
+      price: isProject ? (property?.price || 0) : normalizedPrice,
+      currency: isProject
+        ? normalizeFiatCurrency(property?.currency || normalizedCurrency)
+        : normalizedCurrency,
       country: isProject ? (property?.country || "Turkey TR") : values.country,
       city: isProject ? (property?.city || "") : values.city,
       address: isProject ? (property?.address || "") : values.address,
@@ -1061,15 +1094,64 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
                 placeholder="Mülk adı"
                 {...form.getInputProps("title")}
               />
-              <NumberInput
-                withAsterisk
-                label="Fiyat ($)"
-                placeholder="999"
-                min={0}
-                thousandSeparator="."
-                decimalSeparator=","
-                {...form.getInputProps("price")}
-              />
+              <div>
+                <Text size="sm" fw={500} mb={4}>
+                  Fiat <span className="text-red-500">*</span>
+                </Text>
+                <SegmentedControl
+                  fullWidth
+                  value={normalizeFiatCurrency(form.values.currency)}
+                  onChange={(nextCurrency) => {
+                    const currentCurrency = normalizeFiatCurrency(form.values.currency);
+                    const currentPrice = Number(form.values.price || 0);
+                    const converted = convertAmount(currentPrice, currentCurrency, nextCurrency);
+                    const convertedPrice = Number.isFinite(converted) ? Math.round(converted) : 0;
+                    form.setFieldValue("currency", nextCurrency);
+                    form.setFieldValue("price", convertedPrice);
+                  }}
+                  data={FIAT_CURRENCIES.map(({ code, symbol }) => ({
+                    value: code,
+                    label: `${code} (${symbol})`,
+                  }))}
+                />
+                <NumberInput
+                  withAsterisk
+                  mt="sm"
+                  label={`Fiyat (${FIAT_SYMBOLS[normalizeFiatCurrency(form.values.currency)] || normalizeFiatCurrency(form.values.currency)})`}
+                  placeholder="999"
+                  min={0}
+                  thousandSeparator="."
+                  decimalSeparator=","
+                  value={form.values.price}
+                  onChange={(value) => {
+                    const numericValue = Number(value);
+                    form.setFieldValue("price", Number.isFinite(numericValue) ? numericValue : 0);
+                  }}
+                  error={form.errors.price}
+                />
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {FIAT_CURRENCIES.map(({ code, symbol }) => {
+                    const converted = convertAmount(
+                      Number(form.values.price || 0),
+                      normalizeFiatCurrency(form.values.currency),
+                      code
+                    );
+                    const displayValue = Number.isFinite(converted)
+                      ? Math.round(converted).toLocaleString("tr-TR")
+                      : "0";
+                    return (
+                      <Text
+                        key={code}
+                        size="xs"
+                        c={code === normalizeFiatCurrency(form.values.currency) ? "dark" : "dimmed"}
+                        fw={code === normalizeFiatCurrency(form.values.currency) ? 600 : 400}
+                      >
+                        {code}: {displayValue} {symbol}
+                      </Text>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
 
             {/* Bilingual Description */}

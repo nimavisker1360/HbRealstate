@@ -148,6 +148,15 @@ SortableTableRow.propTypes = {
   children: PropTypes.node.isRequired,
 };
 
+const CURRENCY_SYMBOLS = {
+  USD: "$",
+  EUR: "\u20AC",
+  TRY: "\u20BA",
+};
+
+const getCurrencySymbol = (currencyCode) =>
+  CURRENCY_SYMBOLS[String(currencyCode || "USD").toUpperCase()] || "$";
+
 const AdminPanel = () => {
   const [active, setActive] = useState(0);
   const [activeTab, setActiveTab] = useState("bookings");
@@ -609,9 +618,12 @@ const AdminPanel = () => {
   const blogBlockWidgetRef = useRef();
   const blogBlockVideoWidgetRef = useRef();
   const activeBlockIndexRef = useRef(null);
+  const activeBlockLineIndexRef = useRef(null);
   const activeBlockLangRef = useRef("en");
   const [blockImageUploadingIndex, setBlockImageUploadingIndex] = useState(null);
   const [blockVideoUploadingIndex, setBlockVideoUploadingIndex] = useState(null);
+  const [lineImageUploadingKey, setLineImageUploadingKey] = useState(null);
+  const [lineVideoUploadingKey, setLineVideoUploadingKey] = useState(null);
 
   useEffect(() => {
     blogWidgetRef.current = cloudinaryRef.current?.createUploadWidget(
@@ -755,20 +767,38 @@ const AdminPanel = () => {
         if (result.event === "success") {
           const croppedUrl = buildCroppedUrl(result.info);
           const index = activeBlockIndexRef.current;
+          const lineIndex = activeBlockLineIndexRef.current;
           const lang = activeBlockLangRef.current || "en";
           if (index !== null) {
             setBlogForm((prev) => {
               const field = getBlocksField(lang);
               const blocks = [...(prev[field] || [])];
-              const target = blocks[index] || {};
-              blocks[index] = { ...target, image: croppedUrl, video: "" };
+              const target = ensureBlockLines(blocks[index] || {});
+              if (lineIndex !== null) {
+                const lines = [...(target.lines || [])];
+                const line = lines[lineIndex] || {
+                  text: "",
+                  icon: "â€¢",
+                  bold: false,
+                  image: "",
+                  video: "",
+                };
+                lines[lineIndex] = { ...line, image: croppedUrl };
+                blocks[index] = { ...target, lines };
+              } else {
+                blocks[index] = { ...target, image: croppedUrl };
+              }
               return { ...prev, [field]: blocks };
             });
           }
           setBlockImageUploadingIndex(null);
+          setLineImageUploadingKey(null);
+          activeBlockLineIndexRef.current = null;
         }
         if (result.event === "close") {
           setBlockImageUploadingIndex(null);
+          setLineImageUploadingKey(null);
+          activeBlockLineIndexRef.current = null;
         }
       }
     );
@@ -788,20 +818,38 @@ const AdminPanel = () => {
         if (result.event === "success") {
           const videoUrl = result.info.secure_url;
           const index = activeBlockIndexRef.current;
+          const lineIndex = activeBlockLineIndexRef.current;
           const lang = activeBlockLangRef.current || "en";
           if (index !== null) {
             setBlogForm((prev) => {
               const field = getBlocksField(lang);
               const blocks = [...(prev[field] || [])];
-              const target = blocks[index] || {};
-              blocks[index] = { ...target, video: videoUrl, image: "" };
+              const target = ensureBlockLines(blocks[index] || {});
+              if (lineIndex !== null) {
+                const lines = [...(target.lines || [])];
+                const line = lines[lineIndex] || {
+                  text: "",
+                  icon: "â€¢",
+                  bold: false,
+                  image: "",
+                  video: "",
+                };
+                lines[lineIndex] = { ...line, video: videoUrl };
+                blocks[index] = { ...target, lines };
+              } else {
+                blocks[index] = { ...target, video: videoUrl };
+              }
               return { ...prev, [field]: blocks };
             });
           }
           setBlockVideoUploadingIndex(null);
+          setLineVideoUploadingKey(null);
+          activeBlockLineIndexRef.current = null;
         }
         if (result.event === "close") {
           setBlockVideoUploadingIndex(null);
+          setLineVideoUploadingKey(null);
+          activeBlockLineIndexRef.current = null;
         }
       }
     );
@@ -851,24 +899,43 @@ const AdminPanel = () => {
       ...prev,
       [getBlocksField(lang)]: [
         ...(prev[getBlocksField(lang)] || []),
-        { image: "", video: "", lines: [{ text: "", icon: "•", bold: false }] },
+        {
+          image: "",
+          video: "",
+          lines: [{ text: "", icon: "•", bold: false, image: "", video: "" }],
+        },
       ],
     }));
   };
 
   const ensureBlockLines = (block) => {
-    if (Array.isArray(block.lines) && block.lines.length > 0) return block;
+    if (Array.isArray(block.lines) && block.lines.length > 0) {
+      return {
+        ...block,
+        lines: block.lines.map((line) => ({
+          text: line?.text || "",
+          icon: line?.icon ?? "•",
+          bold: !!line?.bold,
+          image: line?.image || "",
+          video: line?.video || "",
+        })),
+      };
+    }
+
     if (block.text) {
       const lines = block.text
         .split("\n")
         .map((line) => line.trim())
         .filter(Boolean)
-        .map((line) => ({ text: line, icon: "•", bold: false }));
+        .map((line) => ({ text: line, icon: "•", bold: false, image: "", video: "" }));
       return { ...block, lines };
     }
-    return { ...block, lines: [{ text: "", icon: "•", bold: false }] };
-  };
 
+    return {
+      ...block,
+      lines: [{ text: "", icon: "•", bold: false, image: "", video: "" }],
+    };
+  };
   const updateContentBlockLine = (blockIndex, lineIndex, data, lang = contentEditorLang) => {
     setBlogForm((prev) => {
       const blocks = [...(prev[getBlocksField(lang)] || [])];
@@ -886,12 +953,14 @@ const AdminPanel = () => {
       const block = ensureBlockLines(blocks[blockIndex] || {});
       blocks[blockIndex] = {
         ...block,
-        lines: [...(block.lines || []), { text: "", icon: "•", bold: false }],
+        lines: [
+          ...(block.lines || []),
+          { text: "", icon: "•", bold: false, image: "", video: "" },
+        ],
       };
       return { ...prev, [getBlocksField(lang)]: blocks };
     });
   };
-
   const removeContentBlockLine = (blockIndex, lineIndex, lang = contentEditorLang) => {
     setBlogForm((prev) => {
       const blocks = [...(prev[getBlocksField(lang)] || [])];
@@ -899,12 +968,13 @@ const AdminPanel = () => {
       const lines = block.lines.filter((_, idx) => idx !== lineIndex);
       blocks[blockIndex] = {
         ...block,
-        lines: lines.length ? lines : [{ text: "", icon: "•", bold: false }],
+        lines: lines.length
+          ? lines
+          : [{ text: "", icon: "•", bold: false, image: "", video: "" }],
       };
       return { ...prev, [getBlocksField(lang)]: blocks };
     });
   };
-
   const removeContentBlock = (index, lang = contentEditorLang) => {
     setBlogForm((prev) => ({
       ...prev,
@@ -916,15 +986,48 @@ const AdminPanel = () => {
 
   const openContentBlockImageUpload = (index, lang = contentEditorLang) => {
     activeBlockIndexRef.current = index;
+    activeBlockLineIndexRef.current = null;
     activeBlockLangRef.current = lang;
     setBlockImageUploadingIndex(index);
+    setLineImageUploadingKey(null);
     blogBlockWidgetRef.current?.open();
   };
 
   const openContentBlockVideoUpload = (index, lang = contentEditorLang) => {
     activeBlockIndexRef.current = index;
+    activeBlockLineIndexRef.current = null;
     activeBlockLangRef.current = lang;
     setBlockVideoUploadingIndex(index);
+    setLineVideoUploadingKey(null);
+    blogBlockVideoWidgetRef.current?.open();
+  };
+
+  const getLineUploadKey = (blockIndex, lineIndex, lang = contentEditorLang) =>
+    `${lang}-${blockIndex}-${lineIndex}`;
+
+  const openContentBlockLineImageUpload = (
+    blockIndex,
+    lineIndex,
+    lang = contentEditorLang
+  ) => {
+    activeBlockIndexRef.current = blockIndex;
+    activeBlockLineIndexRef.current = lineIndex;
+    activeBlockLangRef.current = lang;
+    setBlockImageUploadingIndex(null);
+    setLineImageUploadingKey(getLineUploadKey(blockIndex, lineIndex, lang));
+    blogBlockWidgetRef.current?.open();
+  };
+
+  const openContentBlockLineVideoUpload = (
+    blockIndex,
+    lineIndex,
+    lang = contentEditorLang
+  ) => {
+    activeBlockIndexRef.current = blockIndex;
+    activeBlockLineIndexRef.current = lineIndex;
+    activeBlockLangRef.current = lang;
+    setBlockVideoUploadingIndex(null);
+    setLineVideoUploadingKey(getLineUploadKey(blockIndex, lineIndex, lang));
     blogBlockVideoWidgetRef.current?.open();
   };
 
@@ -956,36 +1059,81 @@ const AdminPanel = () => {
         doc.body.querySelectorAll('div.not-prose.blog-block, div.not-prose.grid')
       );
       const blocks = blockNodes.map((node) => {
-        const img = node.querySelector("img");
-        const video = node.querySelector("video");
+        const blockMediaNode = node.querySelector(".blog-block-media");
+        const hasDedicatedBlockMedia = Boolean(blockMediaNode);
+        const img = blockMediaNode
+          ? blockMediaNode.querySelector("img")
+          : node.querySelector("img");
+        const video = blockMediaNode
+          ? blockMediaNode.querySelector("video")
+          : node.querySelector("video");
         const videoSrc =
           video?.getAttribute("src") ||
           video?.querySelector("source")?.getAttribute("src") ||
           "";
-        const paragraphs = Array.from(node.querySelectorAll("p"));
-        const lines = paragraphs
-          .map((p) => {
-            const text = (p.textContent || "").trim();
-            if (!text) return null;
-            const firstToken = text.split(" ")[0];
-            const iconMatch = blockIconOptions.find(
-              (option) => option.value === firstToken
-            );
-            const cleanedText = iconMatch
-              ? text.replace(firstToken, "").trim()
-              : text;
-            const isBold = p.querySelector("strong") !== null;
-            return {
-              text: cleanedText,
-              icon: iconMatch ? iconMatch.value : "•",
-              bold: isBold,
-            };
-          })
-          .filter(Boolean);
+
+        const lineNodes = Array.from(node.querySelectorAll(".blog-line-item"));
+        const lines =
+          lineNodes.length > 0
+            ? lineNodes
+                .map((lineNode) => {
+                  const paragraph = lineNode.querySelector("p");
+                  const text = (paragraph?.textContent || "").trim();
+                  const firstToken = text ? text.split(" ")[0] : "";
+                  const iconMatch = firstToken
+                    ? blockIconOptions.find((option) => option.value === firstToken)
+                    : null;
+                  const cleanedText = iconMatch
+                    ? text.replace(firstToken, "").trim()
+                    : text;
+                  const isBold = paragraph?.querySelector("strong") !== null;
+                  const lineVideo = lineNode.querySelector("video");
+                  const lineVideoSrc =
+                    lineVideo?.getAttribute("src") ||
+                    lineVideo?.querySelector("source")?.getAttribute("src") ||
+                    "";
+                  const lineImage = lineNode.querySelector("img");
+
+                  return {
+                    text: cleanedText,
+                    icon: iconMatch ? iconMatch.value : "•",
+                    bold: isBold,
+                    image: lineImage?.getAttribute("src") || "",
+                    video: lineVideoSrc,
+                  };
+                })
+                .filter((line) => line.text || line.image || line.video)
+            : Array.from(node.querySelectorAll("p"))
+                .map((p) => {
+                  const text = (p.textContent || "").trim();
+                  if (!text) return null;
+                  const firstToken = text.split(" ")[0];
+                  const iconMatch = blockIconOptions.find(
+                    (option) => option.value === firstToken
+                  );
+                  const cleanedText = iconMatch
+                    ? text.replace(firstToken, "").trim()
+                    : text;
+                  const isBold = p.querySelector("strong") !== null;
+                  return {
+                    text: cleanedText,
+                    icon: iconMatch ? iconMatch.value : "•",
+                    bold: isBold,
+                    image: "",
+                    video: "",
+                  };
+                })
+                .filter(Boolean);
+
         return {
-          image: img?.getAttribute("src") || "",
-          video: videoSrc,
-          lines: lines.length ? lines : [{ text: "", icon: "•", bold: false }],
+          image:
+            hasDedicatedBlockMedia || lineNodes.length === 0
+              ? img?.getAttribute("src") || ""
+              : "",
+          video: hasDedicatedBlockMedia || lineNodes.length === 0 ? videoSrc : "",
+          lines: lines.length
+            ? lines
+            : [{ text: "", icon: "•", bold: false, image: "", video: "" }],
         };
       });
 
@@ -996,7 +1144,6 @@ const AdminPanel = () => {
       return { baseContent: html, blocks: [] };
     }
   };
-
   const [propertyDetails, setPropertyDetails] = useState({
     title: "",
     description: "",
@@ -1174,32 +1321,48 @@ const AdminPanel = () => {
     const blockHtml = blocks
       .map((block, index) => {
         const lines = ensureBlockLines(block || {}).lines || [];
-        const hasText = lines.some((line) => line.text?.trim());
-        if (!hasText && !block?.image && !block?.video) return "";
-        const textHtml = hasText
-          ? `<div class="space-y-4">${lines
-              .filter((line) => line.text?.trim())
-              .map((line) => {
-                const icon = line.icon ? `${line.icon} ` : "";
-                const text = line.bold
-                  ? `<strong>${line.text}</strong>`
-                  : line.text;
-                return `<p>${icon}${text}</p>`;
-              })
-              .join("")}</div>`
+        const hasLineContent = lines.some(
+          (line) => line.text?.trim() || line?.image || line?.video
+        );
+        const hasBlockMedia = block?.image || block?.video;
+        if (!hasLineContent && !hasBlockMedia) return "";
+
+        const lineItemsHtml = lines
+          .filter((line) => line.text?.trim() || line?.image || line?.video)
+          .map((line, lineIndex) => {
+            const lineHasText = Boolean(line.text?.trim());
+            const icon = lineHasText && line.icon ? `${line.icon} ` : "";
+            const text = line.bold ? `<strong>${line.text}</strong>` : line.text || "";
+            const textHtml = lineHasText ? `<p>${icon}${text}</p>` : "";
+            const imageHtml = line?.image
+              ? `<div class="w-full rounded-2xl overflow-hidden shadow-lg border border-slate-100"><img src="${line.image}" alt="Blog block ${index + 1} line ${lineIndex + 1}" class="w-full h-full object-cover" /></div>`
+              : "";
+            const videoHtml = line?.video
+              ? `<div class="w-full rounded-2xl overflow-hidden shadow-lg border border-slate-100"><video src="${line.video}" controls playsinline preload="metadata" class="w-full h-full object-cover"></video></div>`
+              : "";
+            const mediaHtml = `${imageHtml}${videoHtml}`;
+
+            if (mediaHtml && textHtml) {
+              return `<div class="blog-line-item flex flex-col gap-4">${mediaHtml}<div>${textHtml}</div></div>`;
+            }
+            if (mediaHtml) {
+              return `<div class="blog-line-item">${mediaHtml}</div>`;
+            }
+            return `<div class="blog-line-item">${textHtml}</div>`;
+          })
+          .join("");
+
+        const blockImageHtml = block?.image
+          ? `<div class="w-full rounded-2xl overflow-hidden shadow-lg border border-slate-100"><img src="${block.image}" alt="Blog block ${index + 1}" class="w-full h-full object-cover" /></div>`
           : "";
-        const videoHtml = block?.video
+        const blockVideoHtml = block?.video
           ? `<div class="w-full rounded-2xl overflow-hidden shadow-lg border border-slate-100"><video src="${block.video}" controls playsinline preload="metadata" class="w-full h-full object-cover"></video></div>`
           : "";
-        const imageHtml =
-          !block?.video && block?.image
-            ? `<div class="w-full rounded-2xl overflow-hidden shadow-lg border border-slate-100"><img src="${block.image}" alt="Blog block ${index + 1}" class="w-full h-full object-cover" /></div>`
-            : "";
+        const blockMediaFallback = hasBlockMedia
+          ? `<div class="blog-block-media flex flex-col gap-4">${blockImageHtml}${blockVideoHtml}</div>`
+          : "";
 
-        const mediaColumn = `<div>${videoHtml || imageHtml}</div>`;
-        const textColumn = `<div>${textHtml}</div>`;
-
-        return `<div class="not-prose blog-block flex flex-col gap-6 my-10">${mediaColumn}${textColumn}</div>`;
+        return `<div class="not-prose blog-block flex flex-col gap-6 my-10">${blockMediaFallback}${lineItemsHtml ? `<div class="space-y-4">${lineItemsHtml}</div>` : ""}</div>`;
       })
       .filter(Boolean)
       .join("");
@@ -1207,24 +1370,19 @@ const AdminPanel = () => {
     return `${baseContent}${blockHtml ? `${baseContent ? "\n" : ""}${blockHtml}` : ""}`;
   };
 
+  const blockHasContent = (block) => {
+    const lines = ensureBlockLines(block || {}).lines || [];
+    return (
+      lines.some((line) => line.text?.trim() || line?.image || line?.video) ||
+      block?.image ||
+      block?.video
+    );
+  };
+
   const handleCreateBlog = async () => {
     if (!token) return;
-    const hasBlocksEn = (blogForm.contentBlocks_en || []).some((block) => {
-      const lines = ensureBlockLines(block || {}).lines || [];
-      return (
-        lines.some((line) => line.text?.trim()) ||
-        block?.image ||
-        block?.video
-      );
-    });
-    const hasBlocksTr = (blogForm.contentBlocks_tr || []).some((block) => {
-      const lines = ensureBlockLines(block || {}).lines || [];
-      return (
-        lines.some((line) => line.text?.trim()) ||
-        block?.image ||
-        block?.video
-      );
-    });
+    const hasBlocksEn = (blogForm.contentBlocks_en || []).some(blockHasContent);
+    const hasBlocksTr = (blogForm.contentBlocks_tr || []).some(blockHasContent);
     const hasAnyContent =
       blogForm.content_en?.trim() ||
       blogForm.content_tr?.trim() ||
@@ -1322,22 +1480,8 @@ const AdminPanel = () => {
   const handleUpdateBlog = async () => {
     if (!selectedBlog || !token) return;
 
-    const hasBlocksEn = (blogForm.contentBlocks_en || []).some((block) => {
-      const lines = ensureBlockLines(block || {}).lines || [];
-      return (
-        lines.some((line) => line.text?.trim()) ||
-        block?.image ||
-        block?.video
-      );
-    });
-    const hasBlocksTr = (blogForm.contentBlocks_tr || []).some((block) => {
-      const lines = ensureBlockLines(block || {}).lines || [];
-      return (
-        lines.some((line) => line.text?.trim()) ||
-        block?.image ||
-        block?.video
-      );
-    });
+    const hasBlocksEn = (blogForm.contentBlocks_en || []).some(blockHasContent);
+    const hasBlocksTr = (blogForm.contentBlocks_tr || []).some(blockHasContent);
     const hasAnyContent =
       blogForm.content_en?.trim() ||
       blogForm.content_tr?.trim() ||
@@ -2234,7 +2378,8 @@ const AdminPanel = () => {
                         </Table.Td>
                         <Table.Td>
                           <Text size="sm" fw={600} color="green">
-                            ${property.price?.toLocaleString()}
+                            {getCurrencySymbol(property.currency)}
+                            {property.price?.toLocaleString()}
                           </Text>
                         </Table.Td>
                         <Table.Td>
@@ -3309,7 +3454,8 @@ const AdminPanel = () => {
                     {propertyToDelete.city}, {propertyToDelete.country}
                   </Text>
                   <Text size="xs" color="green" fw={500}>
-                    ${propertyToDelete.price?.toLocaleString()}
+                    {getCurrencySymbol(propertyToDelete.currency)}
+                    {propertyToDelete.price?.toLocaleString()}
                   </Text>
                 </div>
               </div>
@@ -4715,6 +4861,64 @@ const AdminPanel = () => {
                                   )
                                 }
                               />
+                              <div className="flex flex-wrap items-center gap-2">
+                                <div className="h-14 w-20 rounded-lg border border-dashed border-slate-200 bg-white overflow-hidden flexCenter">
+                                  {line.video ? (
+                                    <video
+                                      src={line.video}
+                                      className="w-full h-full object-cover"
+                                      muted
+                                      playsInline
+                                      preload="metadata"
+                                    />
+                                  ) : line.image ? (
+                                    <img
+                                      src={line.image}
+                                      alt={`Line ${lineIndex + 1}`}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <MdOutlineCloudUpload
+                                      size={16}
+                                      className="text-slate-400"
+                                    />
+                                  )}
+                                </div>
+                                <Button
+                                  size="xs"
+                                  variant="light"
+                                  onClick={() =>
+                                    openContentBlockLineImageUpload(
+                                      index,
+                                      lineIndex,
+                                      contentEditorLang
+                                    )
+                                  }
+                                  loading={
+                                    lineImageUploadingKey ===
+                                    getLineUploadKey(index, lineIndex, contentEditorLang)
+                                  }
+                                >
+                                  {line.image ? "Change Line Image" : "Upload Line Image"}
+                                </Button>
+                                <Button
+                                  size="xs"
+                                  variant="light"
+                                  onClick={() =>
+                                    openContentBlockLineVideoUpload(
+                                      index,
+                                      lineIndex,
+                                      contentEditorLang
+                                    )
+                                  }
+                                  loading={
+                                    lineVideoUploadingKey ===
+                                    getLineUploadKey(index, lineIndex, contentEditorLang)
+                                  }
+                                >
+                                  {line.video ? "Change Line Video" : "Upload Line Video"}
+                                </Button>
+                              </div>
                             </div>
                           ))}
                           <Button
@@ -5288,6 +5492,64 @@ const AdminPanel = () => {
                                   )
                                 }
                               />
+                              <div className="flex flex-wrap items-center gap-2">
+                                <div className="h-14 w-20 rounded-lg border border-dashed border-slate-200 bg-white overflow-hidden flexCenter">
+                                  {line.video ? (
+                                    <video
+                                      src={line.video}
+                                      className="w-full h-full object-cover"
+                                      muted
+                                      playsInline
+                                      preload="metadata"
+                                    />
+                                  ) : line.image ? (
+                                    <img
+                                      src={line.image}
+                                      alt={`Line ${lineIndex + 1}`}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <MdOutlineCloudUpload
+                                      size={16}
+                                      className="text-slate-400"
+                                    />
+                                  )}
+                                </div>
+                                <Button
+                                  size="xs"
+                                  variant="light"
+                                  onClick={() =>
+                                    openContentBlockLineImageUpload(
+                                      index,
+                                      lineIndex,
+                                      contentEditorLang
+                                    )
+                                  }
+                                  loading={
+                                    lineImageUploadingKey ===
+                                    getLineUploadKey(index, lineIndex, contentEditorLang)
+                                  }
+                                >
+                                  {line.image ? "Change Line Image" : "Upload Line Image"}
+                                </Button>
+                                <Button
+                                  size="xs"
+                                  variant="light"
+                                  onClick={() =>
+                                    openContentBlockLineVideoUpload(
+                                      index,
+                                      lineIndex,
+                                      contentEditorLang
+                                    )
+                                  }
+                                  loading={
+                                    lineVideoUploadingKey ===
+                                    getLineUploadKey(index, lineIndex, contentEditorLang)
+                                  }
+                                >
+                                  {line.video ? "Change Line Video" : "Upload Line Video"}
+                                </Button>
+                              </div>
                             </div>
                           ))}
                           <Button
@@ -5806,4 +6068,3 @@ const AdminPanel = () => {
 };
 
 export default AdminPanel;
-
