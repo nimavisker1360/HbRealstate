@@ -587,7 +587,7 @@ const Navbar = ({
           >
             <div className="pt-0">
               <div className="rounded-none border border-black/10 bg-[#e7e2d4] p-6 shadow-xl">
-              <div className="grid grid-cols-5 gap-6">
+              <div className="grid grid-cols-4 gap-8">
                 {aboutTurkeyMenu.map((column, index) => (
                   <div
                     key={column.titleKey}
@@ -608,7 +608,7 @@ const Navbar = ({
                     </div>
                     <div className="mt-2 h-0.5 w-10 bg-red-500"></div>
                   </div>
-                  <ul className="space-y-2">
+                  <ul className="space-y-3">
                     {column.items.map((item) => {
                       const menuKey = item?.menuKey || item?.labelKey;
                       const isBlogLink =
@@ -626,7 +626,7 @@ const Navbar = ({
                             }}
                             className={`group flex w-full min-w-0 ${
                               isBlogLink ? "items-start" : "items-center"
-                            } justify-between gap-3 px-3 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-[#00A86B] hover:text-white ${
+                            } justify-between gap-3 px-3 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-[#00A86B] hover:text-white ${
                               isBlogLink ? "cursor-pointer" : "cursor-default"
                             }`}
                           >
@@ -800,7 +800,7 @@ const Navbar = ({
                             <div className="mt-2 h-0.5 w-10 bg-red-500"></div>
                           </div>
                           {section.items.length > 0 && (
-                            <ul className="space-y-2">
+                            <ul className="space-y-3">
                               {section.items.map((item) => {
                                 const menuKey =
                                   item?.menuKey || item?.labelKey;
@@ -821,7 +821,7 @@ const Navbar = ({
                                       isBlogLink
                                         ? "items-start"
                                         : "items-center"
-                                    } justify-between gap-3 px-3 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-[#00A86B] hover:text-white ${
+                                    } justify-between gap-3 px-3 py-2.5 text-left text-sm text-gray-700 transition-colors hover:bg-[#00A86B] hover:text-white ${
                                       isBlogLink
                                         ? "cursor-pointer"
                                         : "cursor-default"

@@ -23,19 +23,6 @@ export const aboutTurkeyMenu = [
     ],
   },
   {
-    titleKey: "aboutTurkeyMenu.marmaraRegion",
-    items: [
-      { labelKey: "aboutTurkeyMenu.livingInIstanbulDistrictGuide" },
-      { labelKey: "aboutTurkeyMenu.bestAreasBuyPropertyIstanbul2026" },
-      { labelKey: "aboutTurkeyMenu.istanbulRealEstateMarketForecast" },
-      { labelKey: "aboutTurkeyMenu.bursaAffordableAlternativeIstanbul" },
-      { labelKey: "aboutTurkeyMenu.yalovaPropertyInvestmentGuide" },
-      { labelKey: "aboutTurkeyMenu.costOfLivingMarmaraRegion" },
-      { labelKey: "aboutTurkeyMenu.istanbulVsAnkaraVsIzmirWhereInvest" },
-      { labelKey: "aboutTurkeyMenu.whyMarmaraEconomicHeart" },
-    ],
-  },
-  {
     titleKey: "aboutTurkeyMenu.aboutIstanbul",
     items: [
       { labelKey: "aboutTurkeyMenu.historicDayAtHagiaSophia" },
