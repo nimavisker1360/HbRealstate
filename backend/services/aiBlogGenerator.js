@@ -17,8 +17,8 @@ function getOpenAIClient() {
 /**
  * Generate a comprehensive real estate blog article with SEO optimization in English and Turkish
  * @param {Object} marketData - Real estate market data
- * @param {string} marketData.city - City name
- * @param {string} marketData.district - District name
+ * @param {string} marketData.city - City name (optional)
+ * @param {string} marketData.district - District name (optional)
  * @param {string} marketData.neighborhood - Neighborhood name (optional)
  * @param {number} marketData.avgSalePrice - Average sale price per m²
  * @param {number} marketData.avgRentalPrice - Average rental price
@@ -29,7 +29,7 @@ function getOpenAIClient() {
  * @param {Array<string>} marketData.newsHeadlines - Recent news headlines (optional)
  * @returns {Promise<Object>} Generated blog article with SEO data in both languages
  */
-export async function generateRealEstateBlog(marketData) {
+export async function generateRealEstateBlog(marketData = {}) {
   const {
     city,
     district,
@@ -42,15 +42,14 @@ export async function generateRealEstateBlog(marketData) {
   } = marketData;
 
   // Construct the location string
-  const location = neighborhood
-    ? `${neighborhood}, ${district}, ${city}`
-    : `${district}, ${city}`;
+  const locationParts = [neighborhood, district, city].filter(Boolean);
+  const location = locationParts.length > 0 ? locationParts.join(", ") : "Turkey (general market)";
 
   // Build the prompt for bilingual content (English and Turkish)
   const systemPrompt = `You are a professional SEO content engine and real estate market analyst.
 
 Your task:
-Generate a fully automated, SEO-optimized blog article about Turkish real estate (especially Istanbul) in BOTH English and Turkish languages.
+Generate a fully automated, SEO-optimized blog article about Turkish real estate in BOTH English and Turkish languages.
 
 Context:
 - Website built with React

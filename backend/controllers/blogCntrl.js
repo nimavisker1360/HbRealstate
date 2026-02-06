@@ -219,14 +219,9 @@ export const reorderBlogs = asyncHandler(async (req, res) => {
 
 // Generate AI blog (admin)
 export const generateAIBlog = asyncHandler(async (req, res) => {
-  const { marketData, autoPublish = false } = req.body;
+  const { marketData = {}, autoPublish = false, blogMeta = {} } = req.body || {};
 
-  // Validate required fields
-  if (!marketData || !marketData.city || !marketData.district) {
-    return res.status(400).send({ 
-      message: "Market data with city and district is required" 
-    });
-  }
+  // Market data is optional; AI can generate a general article if omitted.
 
   try {
     // Generate blog content using AI
@@ -239,13 +234,49 @@ export const generateAIBlog = asyncHandler(async (req, res) => {
       });
     }
 
+    const normalize = (value) =>
+      typeof value === "string" ? value.trim() : value;
+
+    const overrides = {
+      title_en: normalize(blogMeta.title_en),
+      title_tr: normalize(blogMeta.title_tr),
+      category: normalize(blogMeta.category),
+      country: normalize(blogMeta.country),
+      menuKey: normalize(blogMeta.menuKey),
+      summary_en: normalize(blogMeta.summary_en),
+      summary_tr: normalize(blogMeta.summary_tr),
+      image: normalize(blogMeta.image),
+    };
+
+    const resolvedTitleEn = overrides.title_en || result.data.title_en;
+    const resolvedTitleTr = overrides.title_tr || result.data.title_tr;
+    const resolvedTitle =
+      overrides.title_en || overrides.title_tr || result.data.title;
+    const resolvedCategory = overrides.category || result.data.category;
+    const resolvedCategoryEn = overrides.category
+      ? overrides.category
+      : result.data.category_en;
+    const resolvedCategoryTr = overrides.category
+      ? overrides.category
+      : result.data.category_tr;
+    const resolvedSummaryEn = overrides.summary_en || result.data.summary_en;
+    const resolvedSummaryTr = overrides.summary_tr || result.data.summary_tr;
+    const resolvedSummary =
+      overrides.summary_en || overrides.summary_tr || result.data.summary;
+
     // Create a unique slug
-    let slug = result.data.slug;
+    const slugBaseSource =
+      overrides.title_en || overrides.title_tr || result.data.slug || "";
+    let slugBase = toSlug(slugBaseSource);
+    if (!slugBase) {
+      slugBase = result.data.slug || `blog-${Date.now()}`;
+    }
+    let slug = slugBase;
     let slugExists = await prisma.blog.findUnique({ where: { slug } });
     let counter = 1;
-    
+
     while (slugExists) {
-      slug = `${result.data.slug}-${counter}`;
+      slug = `${slugBase}-${counter}`;
       slugExists = await prisma.blog.findUnique({ where: { slug } });
       counter++;
     }
@@ -259,22 +290,25 @@ export const generateAIBlog = asyncHandler(async (req, res) => {
     // Create blog in database with bilingual content
     const blog = await prisma.blog.create({
       data: {
-        title: result.data.title,
-        title_en: result.data.title_en,
-        title_tr: result.data.title_tr,
+        title: resolvedTitle,
+        title_en: resolvedTitleEn,
+        title_tr: resolvedTitleTr,
         slug: slug,
-        category: result.data.category,
-        category_en: result.data.category_en,
-        category_tr: result.data.category_tr,
+        menuKey: overrides.menuKey || null,
+        category: resolvedCategory,
+        category_en: resolvedCategoryEn,
+        category_tr: resolvedCategoryTr,
+        country: overrides.country || null,
         content: result.data.content,
         content_en: result.data.content_en,
         content_tr: result.data.content_tr,
-        summary: result.data.summary,
-        summary_en: result.data.summary_en,
-        summary_tr: result.data.summary_tr,
+        summary: resolvedSummary,
+        summary_en: resolvedSummaryEn,
+        summary_tr: resolvedSummaryTr,
         metaDescription: result.data.metaDescription,
         metaDescription_en: result.data.metaDescription_en,
         metaDescription_tr: result.data.metaDescription_tr,
+        image: overrides.image || "",
         faqSection: result.data.faqSection,
         faqSection_en: result.data.faqSection_en,
         faqSection_tr: result.data.faqSection_tr,

@@ -427,15 +427,18 @@ const AdminPanel = () => {
     published: true,
   });
 
+  const [aiBlogForm, setAiBlogForm] = useState({
+    title_en: "",
+    title_tr: "",
+    category: "",
+    country: "",
+    menuKey: "",
+    summary_en: "",
+    summary_tr: "",
+    image: "",
+  });
+
   const [aiMarketData, setAiMarketData] = useState({
-    city: "İstanbul",
-    district: "",
-    neighborhood: "",
-    avgSalePrice: "",
-    avgRentalPrice: "",
-    monthlyChange: "",
-    yearlyChange: "",
-    demandLevel: "متوسط",
     autoPublish: false,
   });
 
@@ -615,6 +618,10 @@ const AdminPanel = () => {
   const blogWidgetRef = useRef();
   const [blogImageUploading, setBlogImageUploading] = useState(false);
 
+  // Cloudinary widget for AI blog image upload
+  const aiBlogWidgetRef = useRef();
+  const [aiBlogImageUploading, setAiBlogImageUploading] = useState(false);
+
   // Cloudinary widget for blog video upload (optional)
   const blogVideoWidgetRef = useRef();
   const [blogVideoUploading, setBlogVideoUploading] = useState(false);
@@ -677,6 +684,51 @@ const AdminPanel = () => {
         }
         }
       );
+
+    aiBlogWidgetRef.current = cloudinaryRef.current?.createUploadWidget(
+      {
+        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
+        uploadPreset:
+          import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
+        maxFiles: 1,
+        multiple: false,
+        cropping: true,
+        croppingAspectRatio: 16 / 9,
+        croppingShowDimensions: true,
+        croppingCoordinatesMode: "custom",
+        showSkipCropButton: false,
+        resourceType: "image",
+        clientAllowedFormats: [
+          "jpg",
+          "jpeg",
+          "png",
+          "gif",
+          "webp",
+          "bmp",
+          "tiff",
+          "svg",
+          "heic",
+          "heif",
+          "avif",
+          "ico",
+          "raw",
+        ],
+        sources: ["local", "url", "camera"],
+      },
+      (err, result) => {
+        if (result.event === "success") {
+          const croppedUrl = buildCroppedUrl(result.info);
+          setAiBlogForm((prev) => ({
+            ...prev,
+            image: croppedUrl,
+          }));
+          setAiBlogImageUploading(false);
+        }
+        if (result.event === "close") {
+          setAiBlogImageUploading(false);
+        }
+      }
+    );
 
     blogVideoWidgetRef.current = cloudinaryRef.current?.createUploadWidget(
       {
@@ -867,6 +919,11 @@ const AdminPanel = () => {
     blogWidgetRef.current?.open();
   };
 
+  const openAiBlogImageUpload = () => {
+    setAiBlogImageUploading(true);
+    aiBlogWidgetRef.current?.open();
+  };
+
   const openBlogVideoUpload = () => {
     setBlogVideoUploading(true);
     blogVideoWidgetRef.current?.open();
@@ -879,6 +936,10 @@ const AdminPanel = () => {
 
   const removeBlogImage = () => {
     setBlogForm((prev) => ({ ...prev, image: "" }));
+  };
+
+  const removeAiBlogImage = () => {
+    setAiBlogForm((prev) => ({ ...prev, image: "" }));
   };
 
   const removeBlogVideo = () => {
@@ -1586,43 +1647,50 @@ const AdminPanel = () => {
 
   const resetAiMarketData = () => {
     setAiMarketData({
-      city: "İstanbul",
-      district: "",
-      neighborhood: "",
-      avgSalePrice: "",
-      avgRentalPrice: "",
-      monthlyChange: "",
-      yearlyChange: "",
-      demandLevel: "متوسط",
       autoPublish: false,
     });
   };
 
+  const resetAiBlogForm = () => {
+    setAiBlogForm({
+      title_en: "",
+      title_tr: "",
+      category: "",
+      country: "",
+      menuKey: "",
+      summary_en: "",
+      summary_tr: "",
+      image: "",
+    });
+    setAiBlogImageUploading(false);
+  };
+
   const handleGenerateAIBlog = async () => {
     if (!token) return;
-    if (!aiMarketData.city || !aiMarketData.district) {
-      toast.error(bilingualKey("toast.aiBlogMinFields"), {
-        position: "bottom-right",
-      });
-      return;
-    }
-
     setAiGenerating(true);
     try {
-      const marketData = {
-        city: aiMarketData.city,
-        district: aiMarketData.district,
-        neighborhood: aiMarketData.neighborhood || undefined,
-        avgSalePrice: aiMarketData.avgSalePrice ? parseFloat(aiMarketData.avgSalePrice) : undefined,
-        avgRentalPrice: aiMarketData.avgRentalPrice ? parseFloat(aiMarketData.avgRentalPrice) : undefined,
-        priceIndex: {
-          monthlyChange: aiMarketData.monthlyChange ? parseFloat(aiMarketData.monthlyChange) : undefined,
-          yearlyChange: aiMarketData.yearlyChange ? parseFloat(aiMarketData.yearlyChange) : undefined,
-        },
-        demandLevel: aiMarketData.demandLevel,
-      };
+      const marketData = {};
 
-      await generateAIBlog(marketData, aiMarketData.autoPublish, token);
+      const blogMeta = {
+        title_en: aiBlogForm.title_en?.trim(),
+        title_tr: aiBlogForm.title_tr?.trim(),
+        category: aiBlogForm.category?.trim(),
+        country: aiBlogForm.country?.trim(),
+        menuKey: aiBlogForm.menuKey?.trim(),
+        summary_en: aiBlogForm.summary_en?.trim(),
+        summary_tr: aiBlogForm.summary_tr?.trim(),
+        image: aiBlogForm.image?.trim(),
+      };
+      const sanitizedBlogMeta = Object.fromEntries(
+        Object.entries(blogMeta).filter(([, value]) => value)
+      );
+
+      await generateAIBlog(
+        marketData,
+        aiMarketData.autoPublish,
+        sanitizedBlogMeta,
+        token
+      );
       
       toast.success(bilingualKey("toast.aiBlogGeneratedSuccess"), {
         position: "bottom-right",
@@ -1631,6 +1699,7 @@ const AdminPanel = () => {
       
       setAiGenerateModalOpened(false);
       resetAiMarketData();
+      resetAiBlogForm();
       fetchBlogs();
     } catch (error) {
       console.error("AI generation error:", error);
@@ -3505,7 +3574,7 @@ const AdminPanel = () => {
               </div>
             </Text>
           }
-          size="lg"
+          size="xl"
           centered
         >
           <div className="space-y-4 py-2">
@@ -3810,7 +3879,7 @@ const AdminPanel = () => {
               </div>
             </Text>
           }
-          size="lg"
+          size="xl"
           centered
         >
           <div className="space-y-4 py-2">
@@ -4178,7 +4247,7 @@ const AdminPanel = () => {
               </div>
             </Text>
           }
-          size="lg"
+          size="xl"
           centered
         >
           <div className="space-y-4 py-2">
@@ -5916,107 +5985,220 @@ const AdminPanel = () => {
           onClose={() => {
             setAiGenerateModalOpened(false);
             resetAiMarketData();
+            resetAiBlogForm();
           }}
           title={
             <Text fw={600} className="flex items-center gap-2">
               <span className="text-2xl">🤖</span> AI Blog Generator
             </Text>
           }
-          size="lg"
+          size="xl"
           centered
         >
           <div className="space-y-4 py-2">
             <Text size="sm" color="dimmed" mb="md">
-              Provide real estate market data to automatically generate SEO-optimized blog articles in both English and Turkish.
+              Set optional blog details and generate SEO-optimized articles in both English and Turkish.
             </Text>
 
-            <div className="grid grid-cols-2 gap-4">
+            <Divider label="Blog Details (Optional)" />
+
+            <div className="grid gap-3 md:grid-cols-2">
               <TextInput
-                label="City (Şehir)"
-                placeholder="e.g., İstanbul"
-                required
-                value={aiMarketData.city}
+                label="Title (English)"
+                placeholder="Leave blank to auto-generate"
+                value={aiBlogForm.title_en}
                 onChange={(e) =>
-                  setAiMarketData({ ...aiMarketData, city: e.target.value })
+                  setAiBlogForm({ ...aiBlogForm, title_en: e.target.value })
                 }
               />
-
               <TextInput
-                label="District (İlçe)"
-                placeholder="e.g., Kadıköy"
-                required
-                value={aiMarketData.district}
+                label="Title (Turkish)"
+                placeholder="Leave blank to auto-generate"
+                value={aiBlogForm.title_tr}
                 onChange={(e) =>
-                  setAiMarketData({ ...aiMarketData, district: e.target.value })
+                  setAiBlogForm({ ...aiBlogForm, title_tr: e.target.value })
                 }
               />
             </div>
 
-            <TextInput
-              label="Neighborhood (Mahalle) - Optional"
-              placeholder="e.g., Moda"
-              value={aiMarketData.neighborhood}
-              onChange={(e) =>
-                setAiMarketData({ ...aiMarketData, neighborhood: e.target.value })
+            <div className="grid gap-3 md:grid-cols-2">
+              <TextInput
+                label="Category"
+                placeholder="e.g., Real Estate, Investment, Tips"
+                value={aiBlogForm.category}
+                onChange={(e) =>
+                  setAiBlogForm({ ...aiBlogForm, category: e.target.value })
+                }
+              />
+              <Select
+                label="Country"
+                placeholder="e.g., Greece"
+                searchable
+                clearable
+                data={countryOptions}
+                value={aiBlogForm.country || null}
+                onChange={(value) =>
+                  setAiBlogForm({ ...aiBlogForm, country: value || "" })
+                }
+              />
+            </div>
+
+            <Select
+              label="About Turkey menu (optional)"
+              placeholder="Link this post to a navbar title"
+              searchable
+              clearable
+              data={aboutTurkeyMenuOptions}
+              value={
+                aboutTurkeyMenuOptions.some(
+                  (option) => option.value === aiBlogForm.menuKey
+                )
+                  ? aiBlogForm.menuKey
+                  : null
+              }
+              onChange={(value) =>
+                setAiBlogForm({ ...aiBlogForm, menuKey: value || "" })
+              }
+            />
+            <Select
+              label="Buyer Guide menu (optional)"
+              placeholder="Link this post to a buyer guide item"
+              searchable
+              clearable
+              data={buyerGuideMenuOptions}
+              value={
+                buyerGuideMenuOptions.some(
+                  (option) => option.value === aiBlogForm.menuKey
+                )
+                  ? aiBlogForm.menuKey
+                  : null
+              }
+              onChange={(value) =>
+                setAiBlogForm({ ...aiBlogForm, menuKey: value || "" })
+              }
+            />
+            <Select
+              label="Turkish Citizenship (optional)"
+              placeholder="Link this post to Turkish Citizenship"
+              searchable
+              clearable
+              data={citizenshipMenuOptions}
+              value={
+                citizenshipMenuOptions.some(
+                  (option) => option.value === aiBlogForm.menuKey
+                )
+                  ? aiBlogForm.menuKey
+                  : null
+              }
+              onChange={(value) =>
+                setAiBlogForm({ ...aiBlogForm, menuKey: value || "" })
               }
             />
 
-            <Divider label="Price Data (Optional)" />
-
-            <div className="grid grid-cols-2 gap-4">
-              <NumberInput
-                label="Avg Sale Price per m² (TRY)"
-                placeholder="e.g., 85000"
-                hideControls
-                value={aiMarketData.avgSalePrice}
-                onChange={(value) =>
-                  setAiMarketData({ ...aiMarketData, avgSalePrice: value })
+            <div className="grid gap-3 md:grid-cols-2">
+              <Textarea
+                label="Summary (English) - Optional"
+                placeholder="Leave blank to auto-generate"
+                rows={3}
+                value={aiBlogForm.summary_en}
+                onChange={(e) =>
+                  setAiBlogForm({ ...aiBlogForm, summary_en: e.target.value })
                 }
               />
-
-              <NumberInput
-                label="Avg Rental Price (TRY)"
-                placeholder="e.g., 15000"
-                hideControls
-                value={aiMarketData.avgRentalPrice}
-                onChange={(value) =>
-                  setAiMarketData({ ...aiMarketData, avgRentalPrice: value })
+              <Textarea
+                label="Summary (Turkish) - Optional"
+                placeholder="Leave blank to auto-generate"
+                rows={3}
+                value={aiBlogForm.summary_tr}
+                onChange={(e) =>
+                  setAiBlogForm({ ...aiBlogForm, summary_tr: e.target.value })
                 }
               />
             </div>
 
-            <Divider label="Price Index Changes (Optional)" />
+            <Text size="xs" color="dimmed">
+              Leave fields blank to let AI generate titles, categories, and summaries.
+            </Text>
 
-            <div className="grid grid-cols-2 gap-4">
-              <NumberInput
-                label="Monthly Change (%)"
-                placeholder="e.g., 2.5"
-                precision={2}
-                value={aiMarketData.monthlyChange}
-                onChange={(value) =>
-                  setAiMarketData({ ...aiMarketData, monthlyChange: value })
-                }
-              />
-
-              <NumberInput
-                label="Yearly Change (%)"
-                placeholder="e.g., 25.3"
-                precision={2}
-                value={aiMarketData.yearlyChange}
-                onChange={(value) =>
-                  setAiMarketData({ ...aiMarketData, yearlyChange: value })
-                }
-              />
+            <div>
+              <Text size="sm" fw={500} mb={4}>
+                Featured Image (Optional)
+              </Text>
+              <div className="grid gap-4 md:grid-cols-[1.2fr_0.8fr]">
+                <div className="relative">
+                  {aiBlogForm.image ? (
+                    <div className="relative rounded-2xl overflow-hidden border border-slate-200">
+                      <img
+                        src={aiBlogForm.image}
+                        alt="Blog"
+                        className="w-full h-44 sm:h-56 object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+                      <div className="absolute bottom-3 left-4 right-4 text-white">
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-white/70">
+                          Featured Image
+                        </p>
+                        <h4 className="text-base font-semibold leading-snug">
+                          {aiBlogForm.title_en ||
+                            aiBlogForm.title_tr ||
+                            "Blog cover preview"}
+                        </h4>
+                      </div>
+                      <ActionIcon
+                        variant="filled"
+                        color="red"
+                        size="sm"
+                        radius="xl"
+                        className="absolute top-3 right-3"
+                        onClick={removeAiBlogImage}
+                      >
+                        <MdClose size={14} />
+                      </ActionIcon>
+                    </div>
+                  ) : (
+                    <div
+                      onClick={openAiBlogImageUpload}
+                      className="w-full h-44 sm:h-56 rounded-2xl border-2 border-dashed border-gray-300 flexCenter flex-col cursor-pointer hover:border-teal-500 hover:bg-gray-50 transition-colors"
+                    >
+                      <MdOutlineCloudUpload size={32} className="text-gray-400" />
+                      <span className="text-sm text-gray-400 mt-2">
+                        Click to upload cover image
+                      </span>
+                    </div>
+                  )}
+                  {aiBlogForm.image && (
+                    <Button
+                      variant="light"
+                      size="xs"
+                      mt="xs"
+                      onClick={openAiBlogImageUpload}
+                      loading={aiBlogImageUploading}
+                    >
+                      Change Image
+                    </Button>
+                  )}
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400">
+                    Preview Notes
+                  </p>
+                  <ul className="mt-3 space-y-2 text-sm text-slate-600">
+                    {getSummaryBullets(
+                      aiBlogForm.summary_en || aiBlogForm.summary_tr
+                    ).length > 0 ? (
+                      getSummaryBullets(
+                        aiBlogForm.summary_en || aiBlogForm.summary_tr
+                      ).map((item, idx) => <li key={idx}>- {item}</li>)
+                    ) : (
+                      <>
+                        <li>- Add summary lines to preview the layout.</li>
+                        <li>- Each line becomes a bullet point.</li>
+                      </>
+                    )}
+                  </ul>
+                </div>
+              </div>
             </div>
-
-            <TextInput
-              label="Demand Level (Talep Seviyesi)"
-              placeholder="low / medium / high"
-              value={aiMarketData.demandLevel}
-              onChange={(e) =>
-                setAiMarketData({ ...aiMarketData, demandLevel: e.target.value })
-              }
-            />
 
             <Switch
               label="Publish immediately after generation"
@@ -6054,6 +6236,7 @@ const AdminPanel = () => {
                 onClick={() => {
                   setAiGenerateModalOpened(false);
                   resetAiMarketData();
+                  resetAiBlogForm();
                 }}
                 disabled={aiGenerating}
               >

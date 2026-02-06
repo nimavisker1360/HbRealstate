@@ -664,11 +664,11 @@ export const reorderBlogs = async (orderedIds, token) => {
 };
 
 // Generate AI blog (admin)
-export const generateAIBlog = async (marketData, autoPublish, token) => {
+export const generateAIBlog = async (marketData, autoPublish, blogMeta, token) => {
   try {
     const response = await api.post(
       `/blog/generate-ai`,
-      { marketData, autoPublish },
+      { marketData, autoPublish, blogMeta },
       {
         headers: {
           Authorization: `Bearer ${token}`,
