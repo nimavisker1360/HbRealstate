@@ -364,7 +364,7 @@ const LocalProjects = () => {
   }, [localProjects, selectedCity, selectedDistricts, projectStatus]);
 
   return (
-    <div className="min-h-screen pt-20" style={{ backgroundColor: "#0c1a2b" }}>
+    <div className="min-h-screen pt-24 pb-16 bg-[#f7f3ea]">
       {/* Hero Section - Compact */}
       <Container size="lg" className="py-4">
         <div className="relative rounded-xl overflow-hidden h-auto min-h-[450px] md:min-h-[280px]">
@@ -585,14 +585,14 @@ const LocalProjects = () => {
         {/* Active Filters Summary */}
         {(selectedCity || selectedDistricts.length > 0) && (
           <div className="flex flex-wrap items-center gap-2 mb-4">
-            <span className="text-gray-400 text-sm">{t("localProjects.activeFilters")}:</span>
+            <span className="text-slate-500 text-sm">{t("localProjects.activeFilters")}:</span>
             
             {selectedCity && (
-              <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-500/20 text-blue-400 rounded text-xs">
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 border border-blue-100 rounded text-xs">
                 {TURKISH_CITIES.find(c => c.value === selectedCity)?.label}
                 <button
                   onClick={() => handleCityChange("")}
-                  className="ml-1 hover:text-white"
+                  className="ml-1 hover:text-blue-900"
                 >
                   ×
                 </button>
@@ -600,11 +600,11 @@ const LocalProjects = () => {
             )}
             
             {selectedDistricts.map(district => (
-              <span key={district} className="inline-flex items-center gap-1 px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs">
+              <span key={district} className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded text-xs">
                 {district}
                 <button
                   onClick={() => toggleDistrict(district)}
-                  className="ml-1 hover:text-white"
+                  className="ml-1 hover:text-emerald-900"
                 >
                   ×
                 </button>
@@ -617,7 +617,7 @@ const LocalProjects = () => {
                 setSelectedDistricts([]);
                 setProjectStatus("");
               }}
-              className="text-xs text-red-400 hover:text-red-300 underline ml-2"
+              className="text-xs text-rose-600 hover:text-rose-700 underline ml-2"
             >
               {t("localProjects.clearAll")}
             </button>
@@ -625,17 +625,17 @@ const LocalProjects = () => {
         )}
 
         {/* Results Count */}
-        <div className="text-gray-400 text-sm mb-4">
+        <div className="text-slate-600 text-sm mb-4">
           {filteredProjects.length} {t("localProjects.projectsFound")}
         </div>
 
         {/* Tabs */}
-        <div className="flex items-center gap-1 mb-6 border-b border-gray-600">
+        <div className="flex items-center gap-1 mb-6 border-b border-slate-200">
           <button
             className={`px-4 py-2 text-sm font-medium transition-colors ${
               !projectStatus
-                ? "text-white border-b-2 border-blue-500"
-                : "text-gray-400 hover:text-white"
+                ? "text-slate-900 border-b-2 border-blue-600"
+                : "text-slate-500 hover:text-slate-800"
             }`}
             onClick={() => setProjectStatus("")}
           >
@@ -644,8 +644,8 @@ const LocalProjects = () => {
           <button
             className={`px-4 py-2 text-sm font-medium transition-colors ${
               projectStatus === "devam-ediyor"
-                ? "text-white border-b-2 border-blue-500"
-                : "text-gray-400 hover:text-white"
+                ? "text-slate-900 border-b-2 border-blue-600"
+                : "text-slate-500 hover:text-slate-800"
             }`}
             onClick={() => setProjectStatus("devam-ediyor")}
           >
@@ -654,8 +654,8 @@ const LocalProjects = () => {
           <button
             className={`px-4 py-2 text-sm font-medium transition-colors ${
               projectStatus === "tamamlandi"
-                ? "text-white border-b-2 border-blue-500"
-                : "text-gray-400 hover:text-white"
+                ? "text-slate-900 border-b-2 border-blue-600"
+                : "text-slate-500 hover:text-slate-800"
             }`}
             onClick={() => setProjectStatus("tamamlandi")}
           >
@@ -762,7 +762,7 @@ const LocalProjects = () => {
 
         {/* Show message if no projects */}
         {!isLoading && filteredProjects.length === 0 && (
-          <div className="text-center py-12 text-gray-400">
+          <div className="text-center py-12 text-slate-500">
             <p>{t("localProjects.noProjectsFound")}</p>
           </div>
         )}
