@@ -23,6 +23,7 @@ const AddPropertyModal = ({ opened, setOpened }) => {
     description: "",
     description_en: "",
     description_tr: "",
+    description_ru: "",
     price: 0,
     currency: getDefaultFiatCurrency(),
     country: "",

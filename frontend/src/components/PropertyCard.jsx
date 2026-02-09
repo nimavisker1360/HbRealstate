@@ -111,8 +111,16 @@ const PropertyCard = ({ property, onCardClick }) => {
 
   // Get description based on current language
   const getDescription = () => {
-    if (i18n.language === "tr") {
+    if (i18n.language?.startsWith("tr")) {
       return property.description_tr || property.description;
+    }
+    if (i18n.language?.startsWith("ru")) {
+      return (
+        property.description_ru ||
+        property.description_en ||
+        property.description_tr ||
+        property.description
+      );
     }
     return property.description_en || property.description_tr || property.description;
   };

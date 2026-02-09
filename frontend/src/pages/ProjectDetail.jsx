@@ -666,7 +666,14 @@ const ProjectDetail = () => {
 
               {/* Description - Bilingual */}
               {(() => {
-                const description = i18n.language === "en" 
+                const description = i18n.language?.startsWith("ru")
+                  ? (
+                      project.projeHakkinda?.description_ru ||
+                      project.projeHakkinda?.description_en ||
+                      project.projeHakkinda?.description_tr ||
+                      project.projeHakkinda?.description
+                    )
+                  : i18n.language?.startsWith("en")
                   ? (project.projeHakkinda?.description_en || project.projeHakkinda?.description)
                   : (project.projeHakkinda?.description_tr || project.projeHakkinda?.description);
                 

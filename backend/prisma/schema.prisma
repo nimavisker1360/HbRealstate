@@ -28,6 +28,7 @@ model Residency {
     description String?
     description_en String?
     description_tr String?
+    description_ru String?
     price Int
     currency String @default("USD")
     address String?
@@ -150,21 +151,26 @@ model Blog {
     title String
     title_en String?
     title_tr String?
+    title_ru String?
     slug String? // SEO-friendly URL slug (will be unique after migration)
     menuKey String? // Optional key to link blog to About Turkey menu items
     category String
     category_en String?
     category_tr String?
+    category_ru String?
     country String?
     content String
     content_en String?
     content_tr String?
+    content_ru String?
     summary String?
     summary_en String?
     summary_tr String?
+    summary_ru String?
     metaDescription String? // SEO meta description (max 160 chars)
     metaDescription_en String?
     metaDescription_tr String?
+    metaDescription_ru String?
     image String?
     video String?
     images String[] // Multiple images for blog gallery
@@ -175,6 +181,7 @@ model Blog {
     faqSection Json? // Array of {question, answer} objects
     faqSection_en Json? // English FAQ
     faqSection_tr Json? // Turkish FAQ
+    faqSection_ru Json? // Russian FAQ
     internalLinks String[] // Suggested internal links
     
     // Market data used for generation

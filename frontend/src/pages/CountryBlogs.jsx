@@ -16,7 +16,13 @@ const CountryBlogs = () => {
   const navigate = useNavigate();
   const { countrySlug } = useParams();
   const { data: blogs, isLoading } = useBlogs();
-  const language = i18n.language?.toLowerCase().startsWith("tr") ? "tr" : "en";
+  const normalizedLang = i18n.language?.toLowerCase() || "en";
+  const language = normalizedLang.startsWith("tr")
+    ? "tr"
+    : normalizedLang.startsWith("ru")
+    ? "ru"
+    : "en";
+  const dateLocale = language === "tr" ? "tr-TR" : language === "ru" ? "ru-RU" : "en-US";
 
   const displayBlogs = Array.isArray(blogs) && blogs.length > 0 ? blogs : BLOGS;
   const normalizedSlug = (countrySlug || "").toLowerCase();
@@ -32,6 +38,7 @@ const CountryBlogs = () => {
   const getLocalizedTitle = (blog) => {
     let value = blog.title || t("blogs.title", "Our Expert Blogs");
     if (language === "tr" && blog.title_tr) value = blog.title_tr;
+    if (language === "ru" && blog.title_ru) value = blog.title_ru;
     if (language === "en" && blog.title_en) value = blog.title_en;
     return fixMojibake(value);
   };
@@ -39,6 +46,7 @@ const CountryBlogs = () => {
   const getLocalizedCategory = (blog) => {
     let value = blog.category || t("common.all", "All");
     if (language === "tr" && blog.category_tr) value = blog.category_tr;
+    if (language === "ru" && blog.category_ru) value = blog.category_ru;
     if (language === "en" && blog.category_en) value = blog.category_en;
     return fixMojibake(value);
   };
@@ -46,6 +54,7 @@ const CountryBlogs = () => {
   const getLocalizedSummary = (blog) => {
     let value = blog.summary || t("blogs.subtitle", "Stay Updated with the Latest News!");
     if (language === "tr" && blog.summary_tr) value = blog.summary_tr;
+    if (language === "ru" && blog.summary_ru) value = blog.summary_ru;
     if (language === "en" && blog.summary_en) value = blog.summary_en;
     return fixMojibake(value);
   };
@@ -76,6 +85,7 @@ const CountryBlogs = () => {
     const candidates = [
       blog.title_en,
       blog.title_tr,
+      blog.title_ru,
       blog.title,
       getLocalizedTitle(blog),
     ].filter(Boolean);
@@ -198,14 +208,11 @@ const CountryBlogs = () => {
                       {blog.createdAt && (
                         <span className="inline-flex items-center gap-1.5 text-xs text-slate-500">
                           <MdCalendarToday className="text-emerald-500" />
-                          {new Date(blog.createdAt).toLocaleDateString(
-                            language === "tr" ? "tr-TR" : "en-US",
-                            {
-                              year: "numeric",
-                              month: "short",
-                              day: "numeric",
-                            }
-                          )}
+                          {new Date(blog.createdAt).toLocaleDateString(dateLocale, {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          })}
                         </span>
                       )}
                     </div>

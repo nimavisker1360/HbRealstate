@@ -385,7 +385,7 @@ const LocalProjects = () => {
             </h1>
 
             {/* Search Box */}
-            <div className="bg-white rounded-md shadow-lg flex flex-col md:flex-row items-stretch md:items-center divide-y md:divide-y-0 md:divide-x divide-gray-200 w-full max-w-4xl mx-4">
+            <div className="bg-white rounded-lg border-[3px] border-slate-200 shadow-[0_20px_55px_rgba(15,23,42,0.28)] ring-2 ring-white/70 flex flex-col md:flex-row items-stretch md:items-center divide-y md:divide-y-0 md:divide-x divide-gray-200 w-full max-w-4xl mx-4">
               {/* City Select */}
               <Popover
                 opened={cityPopoverOpened}

@@ -4,9 +4,10 @@ const LanguageSwitcher = ({ className = '' }) => {
   const { i18n } = useTranslation();
   const currentLang = i18n.language?.toLowerCase() || 'en';
   
-  // Check if language starts with 'en' or 'tr' (handles 'en-US', 'tr-TR', etc.)
+  // Handles locale variants like 'en-US', 'tr-TR', 'ru-RU'
   const isEnglish = currentLang.startsWith('en');
   const isTurkish = currentLang.startsWith('tr');
+  const isRussian = currentLang.startsWith('ru');
 
   const handleLanguageChange = (langCode) => {
     i18n.changeLanguage(langCode);
@@ -32,6 +33,16 @@ const LanguageSwitcher = ({ className = '' }) => {
         type="button"
       >
         TR
+      </button>
+      <span className="text-gray-300">|</span>
+      <button
+        onClick={() => handleLanguageChange('ru')}
+        className={`transition-colors ${
+          isRussian ? 'text-secondaryRed' : 'text-gray-700 hover:text-secondaryRed'
+        }`}
+        type="button"
+      >
+        RU
       </button>
     </div>
   );

@@ -11,6 +11,76 @@ const buildInitials = (name) => {
   return name.trim().charAt(0).toUpperCase();
 };
 
+const normalizeLanguage = (language = "en") =>
+  language.split("-")[0].toLowerCase();
+
+const ROLE_LABELS = {
+  tr: {
+    investor: "Yatirimci",
+    buyer: "Alici",
+    corporate: "Kurumsal musteri",
+    tenant: "Kiraci",
+  },
+  ru: {
+    investor: "Инвестор",
+    buyer: "Покупатель",
+    corporate: "Корпоративный клиент",
+    tenant: "Арендатор",
+  },
+};
+
+const STAFF_BEHAVIOR_LABELS = {
+  tr: {
+    professional: "Profesyonel",
+    friendly: "Dostca",
+    responsive: "Hizli donus",
+    helpful: "Yardimsever",
+  },
+  ru: {
+    professional: "Профессионально",
+    friendly: "Дружелюбно",
+    responsive: "Оперативно",
+    helpful: "Полезно",
+  },
+};
+
+const RU_COMMENT_FALLBACKS = {
+  "Clear guidance and fast communication. The team supported every step and closed early.":
+    "Четкие рекомендации и быстрая коммуникация. Команда поддерживала нас на каждом этапе и помогла закрыть сделку раньше.",
+  "They listened to our priorities and brought us real options instead of random listings.":
+    "Они учли наши приоритеты и предложили действительно подходящие варианты вместо случайных объявлений.",
+  "Strong marketing plan, transparent process, and fast feedback on every question.":
+    "Сильный маркетинговый план, прозрачный процесс и быстрые ответы на каждый вопрос.",
+  "Viewings were easy to schedule and the team was respectful and helpful.":
+    "Просмотры было легко планировать, а команда работала уважительно и очень полезно.",
+  "Clear pricing guidance and honest feedback. We felt confident throughout the process.":
+    "Четкие рекомендации по цене и честная обратная связь. Мы чувствовали уверенность на всем этапе.",
+  "Fast responses, solid market insight, and smooth paperwork support.":
+    "Быстрые ответы, глубокая экспертиза рынка и аккуратная поддержка по документам.",
+  "They helped us find a great place quickly and made the viewing schedule easy.":
+    "Они быстро помогли найти отличный вариант и удобно организовали график просмотров.",
+  "We appreciated the clear explanations and fast follow-ups after each visit.":
+    "Мы оценили понятные объяснения и быстрые последующие ответы после каждого просмотра.",
+  "Excellent market knowledge and smooth closing support. Very reliable team.":
+    "Отличное знание рынка и спокойное сопровождение закрытия сделки. Очень надежная команда.",
+  "The process was organized and transparent. Scheduling was easy and quick.":
+    "Процесс был организованным и прозрачным. Все встречи планировались быстро и удобно.",
+  "The team guided us with clarity and speed. Every step felt transparent and we closed earlier than expected.":
+    "Команда вела нас четко и быстро. Каждый этап был прозрачным, и мы закрыли сделку раньше ожидаемого.",
+  "They listened to our priorities and matched us with options we actually wanted to see. Great experience overall.":
+    "Они учли наши приоритеты и подобрали именно те варианты, которые мы хотели смотреть. В целом отличный опыт.",
+  "Fast responses, strong negotiation support, and a clear marketing plan. We felt supported throughout.":
+    "Быстрые ответы, сильная поддержка в переговорах и понятный маркетинговый план. Мы чувствовали поддержку на всем пути.",
+  "Scheduling viewings was easy and the team was respectful. They helped us finalize quickly.":
+    "Организовать просмотры было легко, команда работала уважительно и помогла быстро завершить процесс.",
+};
+
+const localizeKnownValue = (value, language, dictionary) => {
+  if (!value) return "";
+  const normalized = value.trim().toLowerCase();
+  return dictionary[language]?.[normalized] || value;
+};
+
 const TestimonialsSection = ({
   testimonials,
   limit = 8,
@@ -21,7 +91,8 @@ const TestimonialsSection = ({
   className = "",
 }) => {
   const { t, i18n } = useTranslation();
-  const currentLang = i18n.language === "tr" ? "tr" : "en";
+  const languageCode = normalizeLanguage(i18n.language);
+  const currentLang = ["tr", "ru"].includes(languageCode) ? languageCode : "en";
   const useRemote = !Array.isArray(testimonials);
   const { data, isLoading } = useTestimonials({ enabled: useRemote });
 
@@ -210,6 +281,16 @@ const TestimonialsSection = ({
     : 0;
 
   const resolveComment = (testimonial) => {
+    if (currentLang === "ru") {
+      const fallbackComment =
+        testimonial.comment_ru ||
+        testimonial.comment_en ||
+        testimonial.comment ||
+        testimonial.comment_tr ||
+        "";
+      return RU_COMMENT_FALLBACKS[fallbackComment] || fallbackComment;
+    }
+
     if (currentLang === "tr") {
       return (
         testimonial.comment_tr ||
@@ -222,6 +303,108 @@ const TestimonialsSection = ({
       testimonial.comment_en ||
       testimonial.comment ||
       testimonial.comment_tr ||
+      ""
+    );
+  };
+
+  const resolveRole = (testimonial) => {
+    if (currentLang === "ru") {
+      return (
+        testimonial.role_ru ||
+        localizeKnownValue(
+          testimonial.role_en || testimonial.role,
+          "ru",
+          ROLE_LABELS
+        ) ||
+        testimonial.role_tr ||
+        ""
+      );
+    }
+
+    if (currentLang === "tr") {
+      return (
+        testimonial.role_tr ||
+        localizeKnownValue(
+          testimonial.role_en || testimonial.role,
+          "tr",
+          ROLE_LABELS
+        ) ||
+        testimonial.role ||
+        ""
+      );
+    }
+
+    return (
+      testimonial.role_en ||
+      testimonial.role ||
+      testimonial.role_tr ||
+      testimonial.role_ru ||
+      ""
+    );
+  };
+
+  const resolveCompany = (testimonial) => {
+    if (currentLang === "ru") {
+      return (
+        testimonial.company_ru ||
+        testimonial.company_en ||
+        testimonial.company ||
+        testimonial.company_tr ||
+        ""
+      );
+    }
+
+    if (currentLang === "tr") {
+      return (
+        testimonial.company_tr ||
+        testimonial.company ||
+        testimonial.company_en ||
+        testimonial.company_ru ||
+        ""
+      );
+    }
+
+    return (
+      testimonial.company_en ||
+      testimonial.company ||
+      testimonial.company_tr ||
+      testimonial.company_ru ||
+      ""
+    );
+  };
+
+  const resolveStaffBehavior = (testimonial) => {
+    if (currentLang === "ru") {
+      return (
+        testimonial.staffBehavior_ru ||
+        localizeKnownValue(
+          testimonial.staffBehavior_en || testimonial.staffBehavior,
+          "ru",
+          STAFF_BEHAVIOR_LABELS
+        ) ||
+        testimonial.staffBehavior_tr ||
+        ""
+      );
+    }
+
+    if (currentLang === "tr") {
+      return (
+        testimonial.staffBehavior_tr ||
+        localizeKnownValue(
+          testimonial.staffBehavior_en || testimonial.staffBehavior,
+          "tr",
+          STAFF_BEHAVIOR_LABELS
+        ) ||
+        testimonial.staffBehavior ||
+        ""
+      );
+    }
+
+    return (
+      testimonial.staffBehavior_en ||
+      testimonial.staffBehavior ||
+      testimonial.staffBehavior_tr ||
+      testimonial.staffBehavior_ru ||
       ""
     );
   };
@@ -355,7 +538,7 @@ const TestimonialsSection = ({
               </p>
               <div className="mt-6 flex flex-wrap items-center gap-4">
                 <div className="flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-xs uppercase tracking-wide text-emerald-700">
-                  <span>Avg</span>
+                  <span>{t("testimonials.avg")}</span>
                   <span className="text-emerald-900">{averageRating.toFixed(1)}</span>
                   <div className="flex items-center gap-0.5">
                     {[...Array(5)].map((_, index) => (
@@ -371,7 +554,9 @@ const TestimonialsSection = ({
                   </div>
                 </div>
                 <span className="text-xs text-gray-500">
-                  {resolvedTestimonials.length} reviews
+                  {t("testimonials.reviewsLabel", {
+                    count: resolvedTestimonials.length,
+                  })}
                 </span>
               </div>
             </div>
@@ -433,76 +618,82 @@ const TestimonialsSection = ({
                     className="flex gap-4 sm:gap-6"
                     style={{ width: 'max-content', minWidth: '100%' }}
                   >
-                  {sliderItems.map((testimonial) => (
-                    <article
-                      key={testimonial.id || testimonial._dupKey || testimonial.name}
-                      data-testimonial-card
-                      className="group relative w-[260px] sm:w-[300px] lg:w-[340px] flex-none overflow-hidden rounded-2xl border border-[#1b2a3a] bg-gradient-to-br from-[#142030] via-[#1b2a3a] to-[#0f1a28] p-5 shadow-md transition hover:-translate-y-1 hover:border-emerald-400/40 snap-center sm:snap-start"
-                      style={{ scrollSnapAlign: 'center', scrollSnapStop: 'always' }}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                          {testimonial.image ? (
-                            <img
-                              src={testimonial.image}
-                              alt={testimonial.name}
-                              className="h-12 w-12 rounded-2xl object-cover ring-2 ring-white/10"
-                            />
-                          ) : (
-                            <div className="h-12 w-12 rounded-2xl bg-white/10 flex items-center justify-center font-semibold text-white">
-                              {buildInitials(testimonial.name)}
-                            </div>
-                          )}
-                          <div>
-                            <p className="font-semibold text-white">
-                              {testimonial.name}
-                            </p>
-                            {(testimonial.role || testimonial.company) && (
-                              <p className="text-xs text-white/60">
-                                {[testimonial.role, testimonial.company]
-                                  .filter(Boolean)
-                                  .join(" | ")}
-                              </p>
+                  {sliderItems.map((testimonial) => {
+                    const displayRole = resolveRole(testimonial);
+                    const displayCompany = resolveCompany(testimonial);
+                    const displayStaffBehavior = resolveStaffBehavior(testimonial);
+
+                    return (
+                      <article
+                        key={testimonial.id || testimonial._dupKey || testimonial.name}
+                        data-testimonial-card
+                        className="group relative w-[260px] sm:w-[300px] lg:w-[340px] flex-none overflow-hidden rounded-2xl border border-[#1b2a3a] bg-gradient-to-br from-[#142030] via-[#1b2a3a] to-[#0f1a28] p-5 shadow-md transition hover:-translate-y-1 hover:border-emerald-400/40 snap-center sm:snap-start"
+                        style={{ scrollSnapAlign: "center", scrollSnapStop: "always" }}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            {testimonial.image ? (
+                              <img
+                                src={testimonial.image}
+                                alt={testimonial.name}
+                                className="h-12 w-12 rounded-2xl object-cover ring-2 ring-white/10"
+                              />
+                            ) : (
+                              <div className="h-12 w-12 rounded-2xl bg-white/10 flex items-center justify-center font-semibold text-white">
+                                {buildInitials(testimonial.name)}
+                              </div>
                             )}
+                            <div>
+                              <p className="font-semibold text-white">
+                                {testimonial.name}
+                              </p>
+                              {(displayRole || displayCompany) && (
+                                <p className="text-xs text-white/60">
+                                  {[displayRole, displayCompany]
+                                    .filter(Boolean)
+                                    .join(" | ")}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-1 text-xs text-amber-300">
+                            <FaStar className="text-amber-400" />
+                            <span className="text-amber-200">
+                              {testimonial.rating || 0}
+                            </span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-1 text-xs text-amber-300">
-                          <FaStar className="text-amber-400" />
-                          <span className="text-amber-200">
-                            {testimonial.rating || 0}
-                          </span>
-                        </div>
-                      </div>
 
-                      <p className="mt-4 text-sm text-white/70 leading-relaxed">
-                        {resolveComment(testimonial)}
-                      </p>
+                        <p className="mt-4 text-sm text-white/70 leading-relaxed">
+                          {resolveComment(testimonial)}
+                        </p>
 
-                      <div className="mt-4 flex flex-wrap items-center gap-3">
-                        <div className="flex items-center gap-1">
-                          {[...Array(5)].map((_, index) => (
-                            <FaStar
-                              key={index}
-                              className={`text-xs ${
-                                index < Math.round(testimonial.rating || 0)
-                                  ? "text-amber-400"
-                                  : "text-white/20"
-                              }`}
-                            />
-                          ))}
-                          <span className="text-xs text-white/60 ml-1">
-                            {testimonial.rating || 0}/5
-                          </span>
+                        <div className="mt-4 flex flex-wrap items-center gap-3">
+                          <div className="flex items-center gap-1">
+                            {[...Array(5)].map((_, index) => (
+                              <FaStar
+                                key={index}
+                                className={`text-xs ${
+                                  index < Math.round(testimonial.rating || 0)
+                                    ? "text-amber-400"
+                                    : "text-white/20"
+                                }`}
+                              />
+                            ))}
+                            <span className="text-xs text-white/60 ml-1">
+                              {testimonial.rating || 0}/5
+                            </span>
+                          </div>
+                          {displayStaffBehavior && (
+                            <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[11px] uppercase tracking-wide text-white/70">
+                              {t("testimonials.staffBehavior")}:{" "}
+                              {displayStaffBehavior}
+                            </span>
+                          )}
                         </div>
-                        {testimonial.staffBehavior && (
-                          <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[11px] uppercase tracking-wide text-white/70">
-                            {t("testimonials.staffBehavior")}:{" "}
-                            {testimonial.staffBehavior}
-                          </span>
-                        )}
-                      </div>
-                    </article>
-                  ))}
+                      </article>
+                    );
+                  })}
                   </div>
                 </div>
               </div>

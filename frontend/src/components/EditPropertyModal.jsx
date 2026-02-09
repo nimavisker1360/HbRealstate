@@ -521,6 +521,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
     description: "",
     description_tr: "",
     description_en: "",
+    description_ru: "",
   });
   const [dairePlanlari, setDairePlanlari] = useState([]);
   const [vaziyetPlani, setVaziyetPlani] = useState("");
@@ -561,6 +562,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
       description: "",
       description_en: "",
       description_tr: "",
+      description_ru: "",
       price: 0,
       currency: normalizeFiatCurrency(),
       country: "",
@@ -600,6 +602,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
         description: property.description || "",
         description_en: property.description_en || "",
         description_tr: property.description_tr || property.description || "",
+        description_ru: property.description_ru || "",
         price: property.price || 0,
         currency: normalizeFiatCurrency(property.currency),
         country: property.country || "",
@@ -670,6 +673,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
         description: property.projeHakkinda?.description || "",
         description_tr: property.projeHakkinda?.description_tr || property.projeHakkinda?.description || "",
         description_en: property.projeHakkinda?.description_en || "",
+        description_ru: property.projeHakkinda?.description_ru || "",
       });
       setDairePlanlari(property.dairePlanlari || []);
       setVaziyetPlani(property.vaziyetPlani || "");
@@ -923,9 +927,24 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
     const data = {
       // For projects, keep existing values; for sale, use form values
       title: isProject ? (property?.title || values.title) : values.title,
-      description: isProject ? (property?.description || projeHakkinda?.description) : (values.description_tr || values.description_en || values.description),
-      description_en: isProject ? property?.description_en : values.description_en,
-      description_tr: isProject ? (projeHakkinda?.description || property?.description_tr) : values.description_tr,
+      description: isProject
+        ? (
+            projeHakkinda?.description_tr ||
+            projeHakkinda?.description_en ||
+            projeHakkinda?.description_ru ||
+            projeHakkinda?.description ||
+            property?.description
+          )
+        : (values.description_tr || values.description_en || values.description_ru || values.description),
+      description_en: isProject
+        ? (projeHakkinda?.description_en || property?.description_en)
+        : values.description_en,
+      description_tr: isProject
+        ? (projeHakkinda?.description_tr || projeHakkinda?.description || property?.description_tr)
+        : values.description_tr,
+      description_ru: isProject
+        ? (projeHakkinda?.description_ru || property?.description_ru)
+        : values.description_ru,
       price: isProject ? (property?.price || 0) : normalizedPrice,
       currency: isProject
         ? normalizeFiatCurrency(property?.currency || normalizedCurrency)
@@ -1167,6 +1186,9 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
                   <Tabs.Tab value="en" leftSection={<span>🇬🇧</span>}>
                     English
                   </Tabs.Tab>
+                  <Tabs.Tab value="ru" leftSection={<span>🇷🇺</span>}>
+                    Russian
+                  </Tabs.Tab>
                 </Tabs.List>
 
                 <Tabs.Panel value="tr" pt="xs">
@@ -1183,6 +1205,13 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
                     placeholder="English property description (optional)"
                     minRows={4}
                     {...form.getInputProps("description_en")}
+                  />
+                </Tabs.Panel>
+                <Tabs.Panel value="ru" pt="xs">
+                  <Textarea
+                    placeholder="Russian property description (optional)"
+                    minRows={4}
+                    {...form.getInputProps("description_ru")}
                   />
                 </Tabs.Panel>
               </Tabs>
@@ -1850,7 +1879,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
                 </Grid.Col>
               </Grid>
               <Grid mt="sm">
-                <Grid.Col span={6}>
+                <Grid.Col span={4}>
                   <Textarea
                     label="Proje Açıklaması (Türkçe)"
                     placeholder="Şehrin merkezinde, bahçeli bir yaşam..."
@@ -1859,13 +1888,22 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
                     onChange={(e) => setProjeHakkinda({ ...projeHakkinda, description_tr: e.target.value, description: e.target.value })}
                   />
                 </Grid.Col>
-                <Grid.Col span={6}>
+                <Grid.Col span={4}>
                   <Textarea
                     label="Project Description (English)"
                     placeholder="A garden life in the city center..."
                     minRows={4}
                     value={projeHakkinda.description_en}
                     onChange={(e) => setProjeHakkinda({ ...projeHakkinda, description_en: e.target.value })}
+                  />
+                </Grid.Col>
+                <Grid.Col span={4}>
+                  <Textarea
+                    label="Project Description (Russian)"
+                    placeholder="Description in Russian..."
+                    minRows={4}
+                    value={projeHakkinda.description_ru || ""}
+                    onChange={(e) => setProjeHakkinda({ ...projeHakkinda, description_ru: e.target.value })}
                   />
                 </Grid.Col>
               </Grid>

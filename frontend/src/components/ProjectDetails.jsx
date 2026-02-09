@@ -161,6 +161,7 @@ const ProjectDetails = ({
       konutSayisi: propertyDetails.projeHakkinda?.konutSayisi || 0,
       projeAciklama_tr: propertyDetails.projeHakkinda?.description_tr || propertyDetails.projeHakkinda?.description || "",
       projeAciklama_en: propertyDetails.projeHakkinda?.description_en || "",
+      projeAciklama_ru: propertyDetails.projeHakkinda?.description_ru || "",
       // Kampanya
       kampanya: propertyDetails.kampanya || "",
       // Teslim Tarihi ve Proje Durumu
@@ -306,9 +307,14 @@ const ProjectDetails = ({
         projeAlani: form.values.projeAlani,
         yesilAlan: form.values.yesilAlan,
         konutSayisi: form.values.konutSayisi,
-        description: form.values.projeAciklama_tr,
+        description:
+          form.values.projeAciklama_tr ||
+          form.values.projeAciklama_en ||
+          form.values.projeAciklama_ru ||
+          "",
         description_tr: form.values.projeAciklama_tr,
         description_en: form.values.projeAciklama_en,
+        description_ru: form.values.projeAciklama_ru,
         yakinMesafeler: form.values.yakinMesafeler.filter((m) => m.yer.trim() !== ""),
       },
       kampanya: form.values.kampanya,
@@ -431,7 +437,7 @@ const ProjectDetails = ({
 
             {/* Proje Açıklaması - İki Dil */}
             <Grid mt="md">
-              <Grid.Col span={6}>
+              <Grid.Col span={4}>
                 <Textarea
                   label="Proje Açıklaması (Türkçe)"
                   placeholder="Şehrin merkezinde, bahçeli bir yaşam!&#10;&#10;Şehrin tam kalbinde, keyifli bir yaşam sizi bekliyor..."
@@ -439,12 +445,20 @@ const ProjectDetails = ({
                   {...form.getInputProps("projeAciklama_tr")}
                 />
               </Grid.Col>
-              <Grid.Col span={6}>
+              <Grid.Col span={4}>
                 <Textarea
                   label="Project Description (English)"
                   placeholder="A garden life in the city center!&#10;&#10;An enjoyable life awaits you in the heart of the city..."
                   minRows={6}
                   {...form.getInputProps("projeAciklama_en")}
+                />
+              </Grid.Col>
+              <Grid.Col span={4}>
+                <Textarea
+                  label="Project Description (Russian)"
+                  placeholder="Description in Russian..."
+                  minRows={6}
+                  {...form.getInputProps("projeAciklama_ru")}
                 />
               </Grid.Col>
             </Grid>

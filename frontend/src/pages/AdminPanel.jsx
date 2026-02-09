@@ -409,18 +409,22 @@ const AdminPanel = () => {
     title: "",
     title_en: "",
     title_tr: "",
+    title_ru: "",
     category: "",
     country: "",
     menuKey: "",
     content: "",
     content_en: "",
     content_tr: "",
+    content_ru: "",
     contentBlocks: [],
     contentBlocks_en: [],
     contentBlocks_tr: [],
+    contentBlocks_ru: [],
     summary: "",
     summary_en: "",
     summary_tr: "",
+    summary_ru: "",
     image: "",
     video: "",
     images: [], // Multiple images for gallery
@@ -960,7 +964,11 @@ const AdminPanel = () => {
     }));
   };
 
-  const getBlocksField = (lang) => (lang === "tr" ? "contentBlocks_tr" : "contentBlocks_en");
+  const getBlocksField = (lang) => {
+    if (lang === "tr") return "contentBlocks_tr";
+    if (lang === "ru") return "contentBlocks_ru";
+    return "contentBlocks_en";
+  };
 
   const addContentBlock = (lang = contentEditorLang) => {
     setBlogForm((prev) => ({
@@ -1215,6 +1223,9 @@ const AdminPanel = () => {
   const [propertyDetails, setPropertyDetails] = useState({
     title: "",
     description: "",
+    description_en: "",
+    description_tr: "",
+    description_ru: "",
     price: 0,
     currency: getDefaultFiatCurrency(),
     country: "",
@@ -1363,18 +1374,22 @@ const AdminPanel = () => {
       title: "",
       title_en: "",
       title_tr: "",
+      title_ru: "",
       category: "",
       country: "",
       menuKey: "",
       content: "",
       content_en: "",
       content_tr: "",
+      content_ru: "",
       contentBlocks: [],
       contentBlocks_en: [],
       contentBlocks_tr: [],
+      contentBlocks_ru: [],
       summary: "",
       summary_en: "",
       summary_tr: "",
+      summary_ru: "",
       image: "",
       video: "",
       images: [],
@@ -1452,12 +1467,15 @@ const AdminPanel = () => {
     if (!token) return;
     const hasBlocksEn = (blogForm.contentBlocks_en || []).some(blockHasContent);
     const hasBlocksTr = (blogForm.contentBlocks_tr || []).some(blockHasContent);
+    const hasBlocksRu = (blogForm.contentBlocks_ru || []).some(blockHasContent);
     const hasAnyContent =
       blogForm.content_en?.trim() ||
       blogForm.content_tr?.trim() ||
+      blogForm.content_ru?.trim() ||
       blogForm.content?.trim() ||
       hasBlocksEn ||
-      hasBlocksTr;
+      hasBlocksTr ||
+      hasBlocksRu;
 
     const hasRequiredSummary = blogForm.summary_en?.trim() && blogForm.summary_tr?.trim();
     if (
@@ -1483,13 +1501,19 @@ const AdminPanel = () => {
         blogForm.content_tr,
         blogForm.contentBlocks_tr
       );
+      const content_ru = buildContentWithBlocks(
+        blogForm.content_ru,
+        blogForm.contentBlocks_ru
+      );
       const payload = {
         ...blogForm,
-        title: blogForm.title_en || blogForm.title_tr || blogForm.title,
-        summary: blogForm.summary_en || blogForm.summary_tr || blogForm.summary,
-        content: content_en || content_tr || blogForm.content,
+        title: blogForm.title_en || blogForm.title_tr || blogForm.title_ru || blogForm.title,
+        summary:
+          blogForm.summary_en || blogForm.summary_tr || blogForm.summary_ru || blogForm.summary,
+        content: content_en || content_tr || content_ru || blogForm.content,
         content_en,
         content_tr,
+        content_ru,
       };
       if (!payload.image && payload.images?.length) {
         payload.image = payload.images[0];
@@ -1497,6 +1521,7 @@ const AdminPanel = () => {
       delete payload.contentBlocks;
       delete payload.contentBlocks_en;
       delete payload.contentBlocks_tr;
+      delete payload.contentBlocks_ru;
       await createBlog(payload, token);
       toast.success(bilingualKey("toast.blogCreatedSuccess"), {
         position: "bottom-right",
@@ -1520,23 +1545,30 @@ const AdminPanel = () => {
     const { baseContent: baseTr, blocks: blocksTr } = extractBlocksFromContent(
       blog.content_tr || ""
     );
+    const { baseContent: baseRu, blocks: blocksRu } = extractBlocksFromContent(
+      blog.content_ru || ""
+    );
     setSelectedBlog(blog);
     setBlogForm({
       title: blog.title || "",
       title_en: blog.title_en || blog.title || "",
       title_tr: blog.title_tr || "",
+      title_ru: blog.title_ru || "",
       category: blog.category || "",
       country: blog.country || "",
       menuKey: blog.menuKey || "",
       content: blog.content || baseEn || "",
       content_en: baseEn,
       content_tr: baseTr,
+      content_ru: baseRu,
       contentBlocks: [],
       contentBlocks_en: blocksEn || [],
       contentBlocks_tr: blocksTr || [],
+      contentBlocks_ru: blocksRu || [],
       summary: blog.summary || "",
       summary_en: blog.summary_en || blog.summary || "",
       summary_tr: blog.summary_tr || "",
+      summary_ru: blog.summary_ru || "",
       image: fallbackImage || "",
       video: blog.video || "",
       images: blog.images || [],
@@ -1551,12 +1583,15 @@ const AdminPanel = () => {
 
     const hasBlocksEn = (blogForm.contentBlocks_en || []).some(blockHasContent);
     const hasBlocksTr = (blogForm.contentBlocks_tr || []).some(blockHasContent);
+    const hasBlocksRu = (blogForm.contentBlocks_ru || []).some(blockHasContent);
     const hasAnyContent =
       blogForm.content_en?.trim() ||
       blogForm.content_tr?.trim() ||
+      blogForm.content_ru?.trim() ||
       blogForm.content?.trim() ||
       hasBlocksEn ||
-      hasBlocksTr;
+      hasBlocksTr ||
+      hasBlocksRu;
     const hasRequiredSummary = blogForm.summary_en?.trim() && blogForm.summary_tr?.trim();
 
     if (
@@ -1582,13 +1617,19 @@ const AdminPanel = () => {
         blogForm.content_tr,
         blogForm.contentBlocks_tr
       );
+      const content_ru = buildContentWithBlocks(
+        blogForm.content_ru,
+        blogForm.contentBlocks_ru
+      );
       const payload = {
         ...blogForm,
-        title: blogForm.title_en || blogForm.title_tr || blogForm.title,
-        summary: blogForm.summary_en || blogForm.summary_tr || blogForm.summary,
-        content: content_en || content_tr || blogForm.content,
+        title: blogForm.title_en || blogForm.title_tr || blogForm.title_ru || blogForm.title,
+        summary:
+          blogForm.summary_en || blogForm.summary_tr || blogForm.summary_ru || blogForm.summary,
+        content: content_en || content_tr || content_ru || blogForm.content,
         content_en,
         content_tr,
+        content_ru,
       };
       if (!payload.image && payload.images?.length) {
         payload.image = payload.images[0];
@@ -1596,6 +1637,7 @@ const AdminPanel = () => {
       delete payload.contentBlocks;
       delete payload.contentBlocks_en;
       delete payload.contentBlocks_tr;
+      delete payload.contentBlocks_ru;
       await updateBlog(selectedBlog.id, payload, token);
       toast.success(bilingualKey("toast.blogUpdatedSuccess"), {
         position: "bottom-right",
@@ -2075,6 +2117,7 @@ const AdminPanel = () => {
       description: "",
       description_en: "",
       description_tr: "",
+      description_ru: "",
       price: 0,
       currency: getDefaultFiatCurrency(),
       country: "",
@@ -4677,7 +4720,7 @@ const AdminPanel = () => {
           centered
         >
           <div className="space-y-4 py-2">
-            <div className="grid gap-3 md:grid-cols-2">
+            <div className="grid gap-3 md:grid-cols-3">
               <TextInput
                 label="Title (English)"
                 placeholder="Blog title in English"
@@ -4694,6 +4737,14 @@ const AdminPanel = () => {
                 value={blogForm.title_tr}
                 onChange={(e) =>
                   setBlogForm({ ...blogForm, title_tr: e.target.value })
+                }
+              />
+              <TextInput
+                label="Title (Russian)"
+                placeholder="Blog title in Russian"
+                value={blogForm.title_ru}
+                onChange={(e) =>
+                  setBlogForm({ ...blogForm, title_ru: e.target.value })
                 }
               />
             </div>
@@ -4773,7 +4824,7 @@ const AdminPanel = () => {
               }
             />
 
-            <div className="grid gap-3 md:grid-cols-2">
+            <div className="grid gap-3 md:grid-cols-3">
               <Textarea
                 label="Summary (English)"
                 placeholder="Brief summary in English"
@@ -4790,6 +4841,15 @@ const AdminPanel = () => {
                 value={blogForm.summary_tr}
                 onChange={(e) =>
                   setBlogForm({ ...blogForm, summary_tr: e.target.value })
+                }
+              />
+              <Textarea
+                label="Summary (Russian)"
+                placeholder="Brief summary in Russian"
+                rows={3}
+                value={blogForm.summary_ru}
+                onChange={(e) =>
+                  setBlogForm({ ...blogForm, summary_ru: e.target.value })
                 }
               />
             </div>
@@ -4812,6 +4872,15 @@ const AdminPanel = () => {
                   value={blogForm.content_tr}
                   onChange={(e) =>
                     setBlogForm({ ...blogForm, content_tr: e.target.value })
+                  }
+                />
+                <Textarea
+                  label="Content (Russian)"
+                  placeholder="Full blog content in Russian..."
+                  rows={10}
+                  value={blogForm.content_ru}
+                  onChange={(e) =>
+                    setBlogForm({ ...blogForm, content_ru: e.target.value })
                   }
                 />
               </div>
@@ -4837,6 +4906,13 @@ const AdminPanel = () => {
                         onClick={() => setContentEditorLang("tr")}
                       >
                         Turkish
+                      </button>
+                      <button
+                        type="button"
+                        className={`px-2 py-1 rounded-full border ${contentEditorLang === "ru" ? "bg-sky-600 text-white border-sky-600" : "border-slate-200 text-slate-600"}`}
+                        onClick={() => setContentEditorLang("ru")}
+                      >
+                        Russian
                       </button>
                     </div>
                   </div>
@@ -5079,7 +5155,7 @@ const AdminPanel = () => {
                           Featured Image
                         </p>
                         <h4 className="text-base font-semibold leading-snug">
-                          {blogForm.title_en || blogForm.title_tr || "Blog cover preview"}
+                          {blogForm.title_en || blogForm.title_tr || blogForm.title_ru || "Blog cover preview"}
                         </h4>
                       </div>
                       <ActionIcon
@@ -5121,8 +5197,8 @@ const AdminPanel = () => {
                     Preview Notes
                   </p>
                   <ul className="mt-3 space-y-2 text-sm text-slate-600">
-                    {getSummaryBullets(blogForm.summary_en || blogForm.summary_tr || blogForm.summary).length > 0 ? (
-                      getSummaryBullets(blogForm.summary_en || blogForm.summary_tr || blogForm.summary).map((item, idx) => (
+                    {getSummaryBullets(blogForm.summary_en || blogForm.summary_tr || blogForm.summary_ru || blogForm.summary).length > 0 ? (
+                      getSummaryBullets(blogForm.summary_en || blogForm.summary_tr || blogForm.summary_ru || blogForm.summary).map((item, idx) => (
                         <li key={idx}>• {item}</li>
                       ))
                     ) : (
@@ -5308,7 +5384,7 @@ const AdminPanel = () => {
           centered
         >
           <div className="space-y-4 py-2">
-            <div className="grid gap-3 md:grid-cols-2">
+            <div className="grid gap-3 md:grid-cols-3">
               <TextInput
                 label="Title (English)"
                 placeholder="Blog title in English"
@@ -5325,6 +5401,14 @@ const AdminPanel = () => {
                 value={blogForm.title_tr}
                 onChange={(e) =>
                   setBlogForm({ ...blogForm, title_tr: e.target.value })
+                }
+              />
+              <TextInput
+                label="Title (Russian)"
+                placeholder="Blog title in Russian"
+                value={blogForm.title_ru}
+                onChange={(e) =>
+                  setBlogForm({ ...blogForm, title_ru: e.target.value })
                 }
               />
             </div>
@@ -5404,7 +5488,7 @@ const AdminPanel = () => {
               }
             />
 
-            <div className="grid gap-3 md:grid-cols-2">
+            <div className="grid gap-3 md:grid-cols-3">
               <Textarea
                 label="Summary (English)"
                 placeholder="Brief summary in English"
@@ -5421,6 +5505,15 @@ const AdminPanel = () => {
                 value={blogForm.summary_tr}
                 onChange={(e) =>
                   setBlogForm({ ...blogForm, summary_tr: e.target.value })
+                }
+              />
+              <Textarea
+                label="Summary (Russian)"
+                placeholder="Brief summary in Russian"
+                rows={3}
+                value={blogForm.summary_ru}
+                onChange={(e) =>
+                  setBlogForm({ ...blogForm, summary_ru: e.target.value })
                 }
               />
             </div>
@@ -5443,6 +5536,15 @@ const AdminPanel = () => {
                   value={blogForm.content_tr}
                   onChange={(e) =>
                     setBlogForm({ ...blogForm, content_tr: e.target.value })
+                  }
+                />
+                <Textarea
+                  label="Content (Russian)"
+                  placeholder="Full blog content in Russian..."
+                  rows={10}
+                  value={blogForm.content_ru}
+                  onChange={(e) =>
+                    setBlogForm({ ...blogForm, content_ru: e.target.value })
                   }
                 />
               </div>
@@ -5468,6 +5570,13 @@ const AdminPanel = () => {
                         onClick={() => setContentEditorLang("tr")}
                       >
                         Turkish
+                      </button>
+                      <button
+                        type="button"
+                        className={`px-2 py-1 rounded-full border ${contentEditorLang === "ru" ? "bg-sky-600 text-white border-sky-600" : "border-slate-200 text-slate-600"}`}
+                        onClick={() => setContentEditorLang("ru")}
+                      >
+                        Russian
                       </button>
                     </div>
                   </div>
@@ -5710,7 +5819,7 @@ const AdminPanel = () => {
                           Featured Image
                         </p>
                         <h4 className="text-base font-semibold leading-snug">
-                          {blogForm.title_en || blogForm.title_tr || "Blog cover preview"}
+                          {blogForm.title_en || blogForm.title_tr || blogForm.title_ru || "Blog cover preview"}
                         </h4>
                       </div>
                       <ActionIcon
@@ -5752,8 +5861,8 @@ const AdminPanel = () => {
                     Preview Notes
                   </p>
                   <ul className="mt-3 space-y-2 text-sm text-slate-600">
-                    {getSummaryBullets(blogForm.summary_en || blogForm.summary_tr || blogForm.summary).length > 0 ? (
-                      getSummaryBullets(blogForm.summary_en || blogForm.summary_tr || blogForm.summary).map((item, idx) => (
+                    {getSummaryBullets(blogForm.summary_en || blogForm.summary_tr || blogForm.summary_ru || blogForm.summary).length > 0 ? (
+                      getSummaryBullets(blogForm.summary_en || blogForm.summary_tr || blogForm.summary_ru || blogForm.summary).map((item, idx) => (
                         <li key={idx}>• {item}</li>
                       ))
                     ) : (

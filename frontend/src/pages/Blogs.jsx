@@ -15,7 +15,12 @@ const BlogsPage = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { data: blogs, isLoading } = useBlogs();
-  const language = i18n.language?.toLowerCase().startsWith("tr") ? "tr" : "en";
+  const normalizedLang = i18n.language?.toLowerCase() || "en";
+  const language = normalizedLang.startsWith("tr")
+    ? "tr"
+    : normalizedLang.startsWith("ru")
+    ? "ru"
+    : "en";
 
   const displayBlogs = Array.isArray(blogs) && blogs.length > 0 ? blogs : BLOGS;
 
@@ -30,6 +35,7 @@ const BlogsPage = () => {
   const getLocalizedTitle = (blog) => {
     let value = blog.title || t("blogs.title", "Our Expert Blogs");
     if (language === "tr" && blog.title_tr) value = blog.title_tr;
+    if (language === "ru" && blog.title_ru) value = blog.title_ru;
     if (language === "en" && blog.title_en) value = blog.title_en;
     return fixMojibake(value);
   };
@@ -60,6 +66,7 @@ const BlogsPage = () => {
     const candidates = [
       blog.title_en,
       blog.title_tr,
+      blog.title_ru,
       blog.title,
       getLocalizedTitle(blog),
     ].filter(Boolean);

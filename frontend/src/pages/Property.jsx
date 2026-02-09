@@ -696,8 +696,10 @@ const Property = () => {
             </div>
           )}
           <p className="pt-2 mb-4">
-            {i18n.language === "tr" 
-              ? (data?.description_tr || data?.description) 
+            {i18n.language?.startsWith("tr")
+              ? (data?.description_tr || data?.description)
+              : i18n.language?.startsWith("ru")
+              ? (data?.description_ru || data?.description_en || data?.description_tr || data?.description)
               : (data?.description_en || data?.description_tr || data?.description)}
           </p>
           <div className="flexStart gap-x-2 my-5">

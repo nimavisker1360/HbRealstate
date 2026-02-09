@@ -179,6 +179,7 @@ const BasicDetails = ({
       description: propertyDetails.description,
       description_en: propertyDetails.description_en || "",
       description_tr: propertyDetails.description_tr || "",
+      description_ru: propertyDetails.description_ru || "",
       price: propertyDetails.price,
       currency: normalizeFiatCurrency(propertyDetails.currency),
       propertyType: propertyDetails.propertyType || "sale",
@@ -224,6 +225,7 @@ const BasicDetails = ({
     description,
     description_en,
     description_tr,
+    description_ru,
     price,
     currency,
     propertyType,
@@ -263,9 +265,10 @@ const BasicDetails = ({
       setPropertyDetails((prev) => ({
         ...prev,
         title,
-        description: description_tr || description_en || description, // fallback for compatibility
+        description: description_tr || description_en || description_ru || description, // fallback for compatibility
         description_en,
         description_tr,
+        description_ru,
         price: normalizedPrice,
         currency: normalizedCurrency,
         propertyType,
@@ -432,6 +435,9 @@ const BasicDetails = ({
               <Tabs.Tab value="en" leftSection={<span>🇬🇧</span>}>
                 English
               </Tabs.Tab>
+              <Tabs.Tab value="ru" leftSection={<span>🇷🇺</span>}>
+                Russian
+              </Tabs.Tab>
             </Tabs.List>
 
             <Tabs.Panel value="tr" pt="xs">
@@ -448,6 +454,13 @@ const BasicDetails = ({
                 placeholder="English property description (optional)"
                 minRows={4}
                 {...form.getInputProps("description_en")}
+              />
+            </Tabs.Panel>
+            <Tabs.Panel value="ru" pt="xs">
+              <Textarea
+                placeholder="Russian property description (optional)"
+                minRows={4}
+                {...form.getInputProps("description_ru")}
               />
             </Tabs.Panel>
           </Tabs>

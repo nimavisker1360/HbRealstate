@@ -15,7 +15,28 @@ const BlogPost = () => {
   const { blogId } = useParams();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
-  const language = i18n.language?.toLowerCase().startsWith("tr") ? "tr" : "en";
+  const currentLang = i18n.language?.toLowerCase() || "en";
+  const isTurkish = currentLang.startsWith("tr");
+  const isRussian = currentLang.startsWith("ru");
+  const language = isTurkish ? "tr" : isRussian ? "ru" : "en";
+  const dateLocale = isTurkish ? "tr-TR" : isRussian ? "ru-RU" : "en-US";
+  const uiText = {
+    linkCopied: isTurkish ? "Link kopyalandı!" : isRussian ? "Ссылка скопирована!" : "Link copied!",
+    loadingArticle: isTurkish ? "Makale yükleniyor..." : isRussian ? "Загрузка статьи..." : "Loading article...",
+    notFoundTitle: isTurkish ? "Blog yazısı bulunamadı" : isRussian ? "Публикация не найдена" : "Blog post not found",
+    notFoundDesc: isTurkish
+      ? "Aradığınız blog yazısı bulunamadı veya kaldırılmış olabilir."
+      : isRussian
+      ? "Публикация, которую вы ищете, не существует или была удалена."
+      : "The blog post you're looking for doesn't exist or has been removed.",
+    back: isTurkish ? "Geri" : isRussian ? "Назад" : "Back",
+    share: isTurkish ? "Paylaş" : isRussian ? "Поделиться" : "Share",
+    categories: isTurkish ? "Kategoriler" : isRussian ? "Категории" : "Categories",
+    minRead: isTurkish ? "dk okuma" : isRussian ? "мин чтения" : "min read",
+    faq: isTurkish ? "Sık Sorulan Sorular" : isRussian ? "Часто задаваемые вопросы" : "Frequently Asked Questions",
+    related: isTurkish ? "İlgili Makaleler" : isRussian ? "Похожие статьи" : "Related Articles",
+    video: isTurkish ? "Video" : isRussian ? "Видео" : "Video",
+  };
   const [selectedImage, setSelectedImage] = useState(null); // For lightbox
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
@@ -64,7 +85,7 @@ const BlogPost = () => {
   const findBlogIdByMarker = (list, marker) => {
     if (!marker || !Array.isArray(list)) return null;
     const match = list.find((blogItem) =>
-      [blogItem?.content, blogItem?.content_en, blogItem?.content_tr]
+      [blogItem?.content, blogItem?.content_en, blogItem?.content_tr, blogItem?.content_ru]
         .filter((content) => typeof content === "string")
         .some((content) => content.includes(marker))
     );
@@ -179,7 +200,7 @@ const BlogPost = () => {
       }
     } else {
       navigator.clipboard.writeText(url);
-      alert(language === "tr" ? "Link kopyalandı!" : "Link copied!");
+      alert(uiText.linkCopied);
     }
   };
 
@@ -191,7 +212,7 @@ const BlogPost = () => {
             <div className="w-16 h-16 border-4 border-emerald-200 rounded-full animate-pulse"></div>
             <div className="absolute top-0 left-0 w-16 h-16 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
           </div>
-          <p className="text-slate-600 mt-4 font-medium">Loading article...</p>
+          <p className="text-slate-600 mt-4 font-medium">{uiText.loadingArticle}</p>
         </div>
       </div>
     );
@@ -206,13 +227,13 @@ const BlogPost = () => {
               <MdErrorOutline className="text-red-500 text-4xl" />
             </div>
           </div>
-          <h2 className="text-2xl font-bold mb-3 text-gray-800">Blog post not found</h2>
-          <p className="text-gray-500 mb-8">The blog post you're looking for doesn't exist or has been removed.</p>
+          <h2 className="text-2xl font-bold mb-3 text-gray-800">{uiText.notFoundTitle}</h2>
+          <p className="text-gray-500 mb-8">{uiText.notFoundDesc}</p>
           <button
             onClick={() => navigate(-1)}
             className="inline-flex items-center justify-center rounded-full bg-emerald-600 px-8 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-200/60 transition hover:bg-emerald-700"
           >
-            {language === "tr" ? "Geri" : "Back"}
+            {uiText.back}
           </button>
         </div>
       </div>
@@ -225,7 +246,22 @@ const BlogPost = () => {
   const isStatsBlog = isHousingStatsBlog || isForeignSalesBlog;
   const isStatsTheme = false;
   const readingTime = calculateReadingTime(getLocalizedContent("content"));
-  const categoryLabel = getLocalizedContent("category");
+  const getLocalizedCategoryLabel = (value) => {
+    const raw = fixMojibake(value || "");
+    if (!raw || !isRussian) return raw;
+    const normalized = raw.toLowerCase().trim();
+    const categoryMap = {
+      investment: "Инвестиции",
+      investments: "Инвестиции",
+      "market analysis": "Аналитика рынка",
+      guide: "Гид",
+      lifestyle: "Образ жизни",
+      news: "Новости",
+      citizenship: "Гражданство",
+    };
+    return categoryMap[normalized] || raw;
+  };
+  const categoryLabel = getLocalizedCategoryLabel(getLocalizedContent("category"));
 
   return (
     <div className={`min-h-screen pt-24 pb-20 relative overflow-hidden ${isStatsTheme ? 'bg-slate-950' : 'bg-[#f7f3ea]'}`}>
@@ -253,7 +289,7 @@ const BlogPost = () => {
                       {t("nav.aboutTurkey")}
                     </h2>
                     <span className="text-[11px] font-semibold uppercase tracking-wide text-emerald-600">
-                      {language === "tr" ? "Kategoriler" : "Categories"}
+                      {uiText.categories}
                     </span>
                   </div>
                   <div className="hidden space-y-4 lg:block">
@@ -366,7 +402,7 @@ const BlogPost = () => {
               }`}
             >
               <MdArrowBack size={18} />
-              <span>{language === "tr" ? "Geri" : "Back"}</span>
+              <span>{uiText.back}</span>
             </button>
             {!isStatsBlog && (
               <button
@@ -374,7 +410,7 @@ const BlogPost = () => {
                 className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:border-emerald-600 hover:bg-emerald-600 hover:text-white"
               >
                 <MdShare size={18} />
-                <span>{language === "tr" ? "Paylaş" : "Share"}</span>
+                <span>{uiText.share}</span>
               </button>
             )}
           </div>
@@ -528,7 +564,7 @@ const BlogPost = () => {
               <div className="flex items-center gap-1.5">
                 <MdCalendarToday size={14} className={isStatsTheme ? "text-emerald-400" : "text-emerald-600"} />
                 <span>
-                  {new Date(blog.createdAt).toLocaleDateString(language === "tr" ? "tr-TR" : "en-US", {
+                  {new Date(blog.createdAt).toLocaleDateString(dateLocale, {
                     year: "numeric",
                     month: "long",
                     day: "numeric",
@@ -538,7 +574,7 @@ const BlogPost = () => {
               <div className="flex items-center gap-1.5">
                 <MdAccessTime size={14} className={isStatsTheme ? "text-emerald-400" : "text-emerald-600"} />
                 <span>
-                  {readingTime} {language === "tr" ? "dk okuma" : "min read"}
+                  {readingTime} {uiText.minRead}
                 </span>
               </div>
             </div>
@@ -561,7 +597,7 @@ const BlogPost = () => {
               <div className="mt-8 rounded-2xl border border-slate-200/70 bg-white/80 p-4 sm:p-5 shadow-sm">
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">
-                    Video
+                    {uiText.video}
                   </p>
                 </div>
                 <div className="aspect-video overflow-hidden rounded-xl bg-slate-900/10">
@@ -613,7 +649,7 @@ const BlogPost = () => {
                     <span className="text-xl">?</span>
                   </div>
                   <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
-                    {language === "tr" ? "Sık Sorulan Sorular" : "Frequently Asked Questions"}
+                    {uiText.faq}
                   </h2>
                 </div>
                 <div className="space-y-3">
@@ -649,7 +685,7 @@ const BlogPost = () => {
                     <MdArticle size={20} />
                   </div>
                   <h3 className="text-lg sm:text-xl font-bold text-slate-900">
-                    {language === "tr" ? "İlgili Makaleler" : "Related Articles"}
+                    {uiText.related}
                   </h3>
                 </div>
                 <ul className="space-y-3">
