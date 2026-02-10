@@ -1107,6 +1107,42 @@ const AdminPanel = () => {
     blogBlockVideoWidgetRef.current?.open();
   };
 
+  const removeContentBlockLineImage = (
+    blockIndex,
+    lineIndex,
+    lang = contentEditorLang
+  ) => {
+    updateContentBlockLine(blockIndex, lineIndex, { image: "" }, lang);
+  };
+
+  const removeContentBlockLineVideo = (
+    blockIndex,
+    lineIndex,
+    lang = contentEditorLang
+  ) => {
+    updateContentBlockLine(blockIndex, lineIndex, { video: "" }, lang);
+  };
+
+  const removeContentBlockImage = (blockIndex, lang = contentEditorLang) => {
+    setBlogForm((prev) => {
+      const field = getBlocksField(lang);
+      const blocks = [...(prev[field] || [])];
+      const block = ensureBlockLines(blocks[blockIndex] || {});
+      blocks[blockIndex] = { ...block, image: "" };
+      return { ...prev, [field]: blocks };
+    });
+  };
+
+  const removeContentBlockVideo = (blockIndex, lang = contentEditorLang) => {
+    setBlogForm((prev) => {
+      const field = getBlocksField(lang);
+      const blocks = [...(prev[field] || [])];
+      const block = ensureBlockLines(blocks[blockIndex] || {});
+      blocks[blockIndex] = { ...block, video: "" };
+      return { ...prev, [field]: blocks };
+    });
+  };
+
   const getSummaryBullets = (text) =>
     (text || "")
       .split("\n")
@@ -5060,6 +5096,22 @@ const AdminPanel = () => {
                                 >
                                   {line.image ? "Change Line Image" : "Upload Line Image"}
                                 </Button>
+                                {line.image ? (
+                                  <Button
+                                    size="xs"
+                                    color="red"
+                                    variant="light"
+                                    onClick={() =>
+                                      removeContentBlockLineImage(
+                                        index,
+                                        lineIndex,
+                                        contentEditorLang
+                                      )
+                                    }
+                                  >
+                                    Delete Line Image
+                                  </Button>
+                                ) : null}
                                 <Button
                                   size="xs"
                                   variant="light"
@@ -5077,6 +5129,22 @@ const AdminPanel = () => {
                                 >
                                   {line.video ? "Change Line Video" : "Upload Line Video"}
                                 </Button>
+                                {line.video ? (
+                                  <Button
+                                    size="xs"
+                                    color="red"
+                                    variant="light"
+                                    onClick={() =>
+                                      removeContentBlockLineVideo(
+                                        index,
+                                        lineIndex,
+                                        contentEditorLang
+                                      )
+                                    }
+                                  >
+                                    Delete Line Video
+                                  </Button>
+                                ) : null}
                               </div>
                             </div>
                           ))}
@@ -5120,6 +5188,18 @@ const AdminPanel = () => {
                           >
                             {block.image ? "Change Image" : "Upload Image"}
                           </Button>
+                          {block.image ? (
+                            <Button
+                              size="xs"
+                              color="red"
+                              variant="light"
+                              onClick={() =>
+                                removeContentBlockImage(index, contentEditorLang)
+                              }
+                            >
+                              Delete Image
+                            </Button>
+                          ) : null}
                           <Button
                             size="xs"
                             variant="light"
@@ -5128,6 +5208,18 @@ const AdminPanel = () => {
                           >
                             {block.video ? "Change Video" : "Upload Video"}
                           </Button>
+                          {block.video ? (
+                            <Button
+                              size="xs"
+                              color="red"
+                              variant="light"
+                              onClick={() =>
+                                removeContentBlockVideo(index, contentEditorLang)
+                              }
+                            >
+                              Delete Video
+                            </Button>
+                          ) : null}
                         </div>
                       </div>
                     ))}
@@ -5724,6 +5816,22 @@ const AdminPanel = () => {
                                 >
                                   {line.image ? "Change Line Image" : "Upload Line Image"}
                                 </Button>
+                                {line.image ? (
+                                  <Button
+                                    size="xs"
+                                    color="red"
+                                    variant="light"
+                                    onClick={() =>
+                                      removeContentBlockLineImage(
+                                        index,
+                                        lineIndex,
+                                        contentEditorLang
+                                      )
+                                    }
+                                  >
+                                    Delete Line Image
+                                  </Button>
+                                ) : null}
                                 <Button
                                   size="xs"
                                   variant="light"
@@ -5741,6 +5849,22 @@ const AdminPanel = () => {
                                 >
                                   {line.video ? "Change Line Video" : "Upload Line Video"}
                                 </Button>
+                                {line.video ? (
+                                  <Button
+                                    size="xs"
+                                    color="red"
+                                    variant="light"
+                                    onClick={() =>
+                                      removeContentBlockLineVideo(
+                                        index,
+                                        lineIndex,
+                                        contentEditorLang
+                                      )
+                                    }
+                                  >
+                                    Delete Line Video
+                                  </Button>
+                                ) : null}
                               </div>
                             </div>
                           ))}
@@ -5784,6 +5908,18 @@ const AdminPanel = () => {
                           >
                             {block.image ? "Change Image" : "Upload Image"}
                           </Button>
+                          {block.image ? (
+                            <Button
+                              size="xs"
+                              color="red"
+                              variant="light"
+                              onClick={() =>
+                                removeContentBlockImage(index, contentEditorLang)
+                              }
+                            >
+                              Delete Image
+                            </Button>
+                          ) : null}
                           <Button
                             size="xs"
                             variant="light"
@@ -5792,6 +5928,18 @@ const AdminPanel = () => {
                           >
                             {block.video ? "Change Video" : "Upload Video"}
                           </Button>
+                          {block.video ? (
+                            <Button
+                              size="xs"
+                              color="red"
+                              variant="light"
+                              onClick={() =>
+                                removeContentBlockVideo(index, contentEditorLang)
+                              }
+                            >
+                              Delete Video
+                            </Button>
+                          ) : null}
                         </div>
                       </div>
                     ))}
