@@ -32,9 +32,6 @@ export const aboutTurkeyMenu = [
       { labelKey: "aboutTurkeyMenu.guideToDolmabahcePalaceIstanbul" },
       { labelKey: "aboutTurkeyMenu.topkapiPalaceInfoTravelGuide" },
       { labelKey: "aboutTurkeyMenu.shoppingAtGrandBazaar" },
-      { labelKey: "aboutTurkeyMenu.byzantineBasilicaCisternInfo" },
-      { labelKey: "aboutTurkeyMenu.galataTowerIstanbulGuide" },
-      { labelKey: "aboutTurkeyMenu.aboutSultanAhmedMosqueBlueMosque" },
     ],
   },
   {
