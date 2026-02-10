@@ -64,6 +64,11 @@ const PropertyCard = ({ property, onCardClick }) => {
   const isLocalProject = property.propertyType === "local-project";
   const isInternationalProject = property.propertyType === "international-project";
   const isProject = isLocalProject || isInternationalProject;
+  const getPropertyRoute = (targetProperty) =>
+    targetProperty?.propertyType === "local-project" ||
+    targetProperty?.propertyType === "international-project"
+      ? `/projects/${targetProperty.id}`
+      : `/listing/${targetProperty.id}`;
 
   // Get display price - for projects, use minimum floor plan price if main price is 0
   const getDisplayPrice = () => {
@@ -157,9 +162,9 @@ const PropertyCard = ({ property, onCardClick }) => {
 
   const handleCardClick = () => {
     if (onCardClick) {
-      onCardClick(property.id);
+      onCardClick(property.id, property.propertyType);
     } else {
-      navigate(`/listing/${property.id}`);
+      navigate(getPropertyRoute(property));
     }
   };
 

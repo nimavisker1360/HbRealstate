@@ -87,11 +87,16 @@ const Item = ({ property }) => {
     displayCurrency,
     i18n.language === "tr" ? "tr-TR" : "en-US"
   );
+  const propertyRoute =
+    property?.propertyType === "local-project" ||
+    property?.propertyType === "international-project"
+      ? `/projects/${property.id}`
+      : `/listing/${property.id}`;
 
   return (
     <div
       className="rounded-2xl p-5 bg-white cursor-pointer hover:shadow-lg transition-shadow"
-      onClick={() => navigate(`../listing/${property.id}`)}
+      onClick={() => navigate(propertyRoute)}
     >
       <div className="pb-2 relative">
         <img

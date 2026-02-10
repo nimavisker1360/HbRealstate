@@ -327,8 +327,16 @@ const Listing = () => {
     return propertyConsultantId === normalizeId(consultantFilter);
   });
 
-  const handlePropertyClick = (id) => {
-    navigate(`/listing/${id}`);
+  const handlePropertyClick = (id, propertyType) => {
+    const resolvedType =
+      propertyType ||
+      rawData.find((property) => property.id === id)?.propertyType ||
+      "";
+    const targetRoute =
+      resolvedType === "local-project" || resolvedType === "international-project"
+        ? `/projects/${id}`
+        : `/listing/${id}`;
+    navigate(targetRoute);
   };
 
   // Get current consultant label

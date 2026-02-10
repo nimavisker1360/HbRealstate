@@ -1,6 +1,6 @@
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import { useMutation, useQuery } from "react-query";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { PuffLoader } from "react-spinners";
 import Map from "../components/Map";
@@ -218,12 +218,22 @@ const formatDate = (dateString, showFullDate = false, locale = "en") => {
 const Property = () => {
   const { t, i18n } = useTranslation();
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   // console.log(pathname);
   const id = pathname.split("/").slice(-1)[0];
   // console.log(id)
   const { data, isLoading, isError } = useQuery(["resd", id], () =>
     getProperty(id)
   );
+
+  useEffect(() => {
+    if (
+      data?.propertyType === "local-project" ||
+      data?.propertyType === "international-project"
+    ) {
+      navigate(`/projects/${id}`, { replace: true });
+    }
+  }, [data?.propertyType, id, navigate]);
   // console.log(data)
   const [modalOpened, setModalOpened] = useState(false);
   const [galleryOpened, setGalleryOpened] = useState(false);

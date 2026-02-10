@@ -2568,7 +2568,12 @@ const AdminPanel = () => {
                               variant="subtle"
                               size="xs"
                               onClick={() =>
-                                navigate(`/listing/${property.id}`)
+                                navigate(
+                                  property.propertyType === "local-project" ||
+                                    property.propertyType === "international-project"
+                                    ? `/projects/${property.id}`
+                                    : `/listing/${property.id}`
+                                )
                               }
                             >
                               Görüntüle

@@ -448,6 +448,21 @@ const normalizeFiatCurrency = (currencyCode) => {
   return FIAT_CURRENCY_CODES.includes(normalized) ? normalized : fallback;
 };
 
+const FLOOR_PLAN_PRICE_FIELDS = {
+  USD: "fiyatUSD",
+  EUR: "fiyatEUR",
+  TRY: "fiyatTRY",
+};
+
+const hasOwnField = (obj, field) =>
+  Object.prototype.hasOwnProperty.call(obj || {}, field);
+
+const toRoundedPrice = (value) => {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue) || numericValue <= 0) return 0;
+  return Math.round(numericValue);
+};
+
 const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
   const { getAll } = useCountries();
   const { data: consultants, isLoading: consultantsLoading } = useConsultants();
@@ -585,6 +600,51 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
     },
   });
 
+  const floorPlanBaseCurrency = normalizeFiatCurrency(
+    property?.currency || form.values.currency
+  );
+
+  const getFloorPlanPriceByCurrency = (plan, targetCurrency) => {
+    const fieldKey = FLOOR_PLAN_PRICE_FIELDS[targetCurrency];
+    if (hasOwnField(plan, fieldKey)) {
+      return toRoundedPrice(plan[fieldKey]);
+    }
+
+    const legacyPrice = toRoundedPrice(plan?.fiyat);
+    if (!legacyPrice) return 0;
+
+    const sourceCurrency = normalizeFiatCurrency(
+      plan?.currency || floorPlanBaseCurrency
+    );
+    return toRoundedPrice(
+      convertAmount(legacyPrice, sourceCurrency, targetCurrency)
+    );
+  };
+
+  const updateFloorPlanPrices = (index, sourceCurrency, value) => {
+    setDairePlanlari((prevPlans) => {
+      const nextPlans = [...prevPlans];
+      const currentPlan = { ...(nextPlans[index] || {}) };
+      const sourceValue = toRoundedPrice(value);
+
+      FIAT_CURRENCY_CODES.forEach((currencyCode) => {
+        const fieldKey = FLOOR_PLAN_PRICE_FIELDS[currencyCode];
+        const convertedValue =
+          currencyCode === sourceCurrency
+            ? sourceValue
+            : convertAmount(sourceValue, sourceCurrency, currencyCode);
+        currentPlan[fieldKey] = toRoundedPrice(convertedValue);
+      });
+
+      const baseFieldKey = FLOOR_PLAN_PRICE_FIELDS[floorPlanBaseCurrency];
+      currentPlan.fiyat = toRoundedPrice(currentPlan[baseFieldKey]);
+      currentPlan.currency = floorPlanBaseCurrency;
+      nextPlans[index] = currentPlan;
+
+      return nextPlans;
+    });
+  };
+
   // Prepare consultant options for select
   const consultantOptions =
     consultants?.map((c) => ({
@@ -675,7 +735,14 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
         description_en: property.projeHakkinda?.description_en || "",
         description_ru: property.projeHakkinda?.description_ru || "",
       });
-      setDairePlanlari(property.dairePlanlari || []);
+      setDairePlanlari(
+        (property.dairePlanlari || []).map((plan) => ({
+          ...plan,
+          currency: normalizeFiatCurrency(
+            plan?.currency || property?.currency || floorPlanBaseCurrency
+          ),
+        }))
+      );
       setVaziyetPlani(property.vaziyetPlani || "");
       setIletisim(property.iletisim || {
         telefonlar: [""],
@@ -1989,7 +2056,23 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
                   size="xs"
                   variant="light"
                   color="green"
-                  onClick={() => setDairePlanlari([...dairePlanlari, { id: Date.now(), tip: "", varyant: "", fiyat: 0, metrekare: 0, image: "" }])}
+                  onClick={() =>
+                    setDairePlanlari([
+                      ...dairePlanlari,
+                      {
+                        id: Date.now(),
+                        tip: "",
+                        varyant: "",
+                        fiyat: 0,
+                        fiyatUSD: 0,
+                        fiyatEUR: 0,
+                        fiyatTRY: 0,
+                        currency: floorPlanBaseCurrency,
+                        metrekare: 0,
+                        image: "",
+                      },
+                    ])
+                  }
                 >
                   + Plan Ekle
                 </Button>
@@ -2011,7 +2094,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
                       </Button>
                     </div>
                     <Grid>
-                      <Grid.Col span={3}>
+                      <Grid.Col span={2}>
                         <TextInput
                           size="xs"
                           label="Daire Tipi"
@@ -2024,7 +2107,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
                           }}
                         />
                       </Grid.Col>
-                      <Grid.Col span={3}>
+                      <Grid.Col span={2}>
                         <TextInput
                           size="xs"
                           label="Varyant"
@@ -2037,25 +2120,49 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
                           }}
                         />
                       </Grid.Col>
-                      <Grid.Col span={3}>
+                      <Grid.Col span={2}>
                         <NumberInput
                           size="xs"
-                          label="Başlangıç Fiyatı / Starting Price ($)"
+                          label="USD ($)"
                           min={0}
                           thousandSeparator="."
                           decimalSeparator=","
-                          value={plan.fiyat}
-                          onChange={(value) => {
-                            const updated = [...dairePlanlari];
-                            updated[index].fiyat = value || 0;
-                            setDairePlanlari(updated);
-                          }}
+                          value={getFloorPlanPriceByCurrency(plan, "USD")}
+                          onChange={(value) =>
+                            updateFloorPlanPrices(index, "USD", value)
+                          }
                         />
                       </Grid.Col>
-                      <Grid.Col span={3}>
+                      <Grid.Col span={2}>
                         <NumberInput
                           size="xs"
-                          label="m²"
+                          label="EUR"
+                          min={0}
+                          thousandSeparator="."
+                          decimalSeparator=","
+                          value={getFloorPlanPriceByCurrency(plan, "EUR")}
+                          onChange={(value) =>
+                            updateFloorPlanPrices(index, "EUR", value)
+                          }
+                        />
+                      </Grid.Col>
+                      <Grid.Col span={2}>
+                        <NumberInput
+                          size="xs"
+                          label="TRY (TL)"
+                          min={0}
+                          thousandSeparator="."
+                          decimalSeparator=","
+                          value={getFloorPlanPriceByCurrency(plan, "TRY")}
+                          onChange={(value) =>
+                            updateFloorPlanPrices(index, "TRY", value)
+                          }
+                        />
+                      </Grid.Col>
+                      <Grid.Col span={2}>
+                        <NumberInput
+                          size="xs"
+                          label="m2"
                           min={0}
                           value={plan.metrekare}
                           onChange={(value) => {
@@ -2419,4 +2526,3 @@ EditPropertyModal.propTypes = {
 };
 
 export default EditPropertyModal;
-

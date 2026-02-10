@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useContext } from "react";
 import {
   Box,
   Button,
@@ -33,6 +33,7 @@ import {
 import { BsBuilding, BsGrid, BsShield, BsTree, BsEye, BsPeople } from "react-icons/bs";
 import { FaWheelchair, FaShoppingCart } from "react-icons/fa";
 import useConsultants from "../hooks/useConsultants";
+import CurrencyContext from "../context/CurrencyContext";
 
 // Feature categories for projects
 const BINA_OZELLIKLERI = [
@@ -133,6 +134,33 @@ const MUHIT = [
   "Sağlık Ocağı",
 ];
 
+const FIAT_CURRENCIES = ["USD", "EUR", "TRY"];
+const FLOOR_PLAN_PRICE_FIELDS = {
+  USD: "fiyatUSD",
+  EUR: "fiyatEUR",
+  TRY: "fiyatTRY",
+};
+
+const normalizeFiatCurrency = (currencyCode) => {
+  const defaultFromEnv = String(
+    import.meta.env.VITE_DEFAULT_FIAT_CURRENCY || "USD"
+  ).toUpperCase();
+  const fallback = FIAT_CURRENCIES.includes(defaultFromEnv)
+    ? defaultFromEnv
+    : "USD";
+  const normalized = String(currencyCode || "").toUpperCase();
+  return FIAT_CURRENCIES.includes(normalized) ? normalized : fallback;
+};
+
+const hasOwnField = (obj, field) =>
+  Object.prototype.hasOwnProperty.call(obj || {}, field);
+
+const toRoundedPrice = (value) => {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue) || numericValue <= 0) return 0;
+  return Math.round(numericValue);
+};
+
 const ProjectDetails = ({
   prevStep,
   nextStep,
@@ -146,6 +174,8 @@ const ProjectDetails = ({
   const [mapImageUploading, setMapImageUploading] = useState(false);
   const [floorPlanUploading, setFloorPlanUploading] = useState(null); // Index of floor plan being uploaded
   const { data: consultants, isLoading: consultantsLoading } = useConsultants();
+  const { convertAmount } = useContext(CurrencyContext);
+  const floorPlanBaseCurrency = normalizeFiatCurrency(propertyDetails.currency);
 
   const form = useForm({
     initialValues: {
@@ -174,7 +204,12 @@ const ProjectDetails = ({
       // Yakın Mesafeler
       yakinMesafeler: propertyDetails.projeHakkinda?.yakinMesafeler || [],
       // Daire Planları
-      dairePlanlari: propertyDetails.dairePlanlari || [],
+      dairePlanlari: (propertyDetails.dairePlanlari || []).map((plan) => ({
+        ...plan,
+        currency: normalizeFiatCurrency(
+          plan?.currency || propertyDetails.currency
+        ),
+      })),
       // Vaziyet Planı
       vaziyetPlani: propertyDetails.vaziyetPlani || "",
       // Harita Görseli
@@ -189,6 +224,44 @@ const ProjectDetails = ({
       muhit: propertyDetails.ozellikler?.muhit || [],
     },
   });
+
+  const getFloorPlanPriceByCurrency = (plan, targetCurrency) => {
+    const fieldKey = FLOOR_PLAN_PRICE_FIELDS[targetCurrency];
+    if (hasOwnField(plan, fieldKey)) {
+      return toRoundedPrice(plan[fieldKey]);
+    }
+
+    const legacyPrice = toRoundedPrice(plan?.fiyat);
+    if (!legacyPrice) return 0;
+
+    const sourceCurrency = normalizeFiatCurrency(
+      plan?.currency || floorPlanBaseCurrency
+    );
+    return toRoundedPrice(
+      convertAmount(legacyPrice, sourceCurrency, targetCurrency)
+    );
+  };
+
+  const updateFloorPlanPrices = (index, sourceCurrency, value) => {
+    const plans = [...form.values.dairePlanlari];
+    const currentPlan = { ...(plans[index] || {}) };
+    const sourceValue = toRoundedPrice(value);
+
+    FIAT_CURRENCIES.forEach((currencyCode) => {
+      const fieldKey = FLOOR_PLAN_PRICE_FIELDS[currencyCode];
+      const convertedValue =
+        currencyCode === sourceCurrency
+          ? sourceValue
+          : convertAmount(sourceValue, sourceCurrency, currencyCode);
+      currentPlan[fieldKey] = toRoundedPrice(convertedValue);
+    });
+
+    const baseFieldKey = FLOOR_PLAN_PRICE_FIELDS[floorPlanBaseCurrency];
+    currentPlan.fiyat = toRoundedPrice(currentPlan[baseFieldKey]);
+    currentPlan.currency = floorPlanBaseCurrency;
+    plans[index] = currentPlan;
+    form.setFieldValue("dairePlanlari", plans);
+  };
 
   // Initialize Cloudinary widgets for site plan and map image
   useEffect(() => {
@@ -277,6 +350,10 @@ const ProjectDetails = ({
       tip: "",
       varyant: "",
       fiyat: 0,
+      fiyatUSD: 0,
+      fiyatEUR: 0,
+      fiyatTRY: 0,
+      currency: floorPlanBaseCurrency,
       metrekare: 0,
       image: "",
     };
@@ -653,7 +730,7 @@ const ProjectDetails = ({
                     {/* Floor Plan Details */}
                     <div className="flex-1">
                       <Grid>
-                        <Grid.Col span={3}>
+                        <Grid.Col span={2}>
                           <TextInput
                             label="Daire Tipi"
                             placeholder="2+1"
@@ -665,7 +742,7 @@ const ProjectDetails = ({
                             }}
                           />
                         </Grid.Col>
-                        <Grid.Col span={3}>
+                        <Grid.Col span={2}>
                           <TextInput
                             label="Varyant"
                             placeholder="A"
@@ -677,24 +754,48 @@ const ProjectDetails = ({
                             }}
                           />
                         </Grid.Col>
-                        <Grid.Col span={3}>
+                        <Grid.Col span={2}>
                           <NumberInput
-                            label="Başlangıç Fiyatı / Starting Price ($)"
+                            label="USD ($)"
                             placeholder="10.850.000"
                             min={0}
                             thousandSeparator="."
                             decimalSeparator=","
-                            value={plan.fiyat}
-                            onChange={(value) => {
-                              const plans = [...form.values.dairePlanlari];
-                              plans[index].fiyat = value || 0;
-                              form.setFieldValue("dairePlanlari", plans);
-                            }}
+                            value={getFloorPlanPriceByCurrency(plan, "USD")}
+                            onChange={(value) =>
+                              updateFloorPlanPrices(index, "USD", value)
+                            }
                           />
                         </Grid.Col>
-                        <Grid.Col span={3}>
+                        <Grid.Col span={2}>
                           <NumberInput
-                            label="Metrekare (m²)"
+                            label="EUR"
+                            placeholder="9.950.000"
+                            min={0}
+                            thousandSeparator="."
+                            decimalSeparator=","
+                            value={getFloorPlanPriceByCurrency(plan, "EUR")}
+                            onChange={(value) =>
+                              updateFloorPlanPrices(index, "EUR", value)
+                            }
+                          />
+                        </Grid.Col>
+                        <Grid.Col span={2}>
+                          <NumberInput
+                            label="TRY (TL)"
+                            placeholder="405.000.000"
+                            min={0}
+                            thousandSeparator="."
+                            decimalSeparator=","
+                            value={getFloorPlanPriceByCurrency(plan, "TRY")}
+                            onChange={(value) =>
+                              updateFloorPlanPrices(index, "TRY", value)
+                            }
+                          />
+                        </Grid.Col>
+                        <Grid.Col span={2}>
+                          <NumberInput
+                            label="Metrekare (m2)"
                             placeholder="57"
                             min={0}
                             value={plan.metrekare}
@@ -998,4 +1099,3 @@ ProjectDetails.propTypes = {
 };
 
 export default ProjectDetails;
-

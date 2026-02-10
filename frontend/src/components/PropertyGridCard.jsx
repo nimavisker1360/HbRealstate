@@ -59,11 +59,16 @@ const PropertyGridCard = ({ property }) => {
     displayCurrency,
     i18n.language === "tr" ? "tr-TR" : "en-US"
   );
+  const propertyRoute =
+    property?.propertyType === "local-project" ||
+    property?.propertyType === "international-project"
+      ? `/projects/${property.id}`
+      : `/listing/${property.id}`;
 
   return (
     <div
       className="group bg-white rounded-xl overflow-hidden cursor-pointer transition-all duration-500 hover:shadow-xl hover:shadow-gray-300/50 border border-gray-400 hover:border-gray-500"
-      onClick={() => navigate(`/listing/${property.id}`)}
+      onClick={() => navigate(propertyRoute)}
     >
       {/* Image */}
       <div className="relative overflow-hidden">
