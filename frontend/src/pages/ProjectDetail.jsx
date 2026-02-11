@@ -344,6 +344,7 @@ const ProjectDetail = () => {
       mapImage: propertyData.mapImage,
       ilanNo: propertyData.ilanNo || "",
       consultantId: propertyData.consultant?.id || propertyData.consultantId || "",
+      gyo: Boolean(propertyData.gyo),
     };
   }, [propertyData]);
 
@@ -592,6 +593,15 @@ const ProjectDetail = () => {
 
                 {/* Right: Price and Delivery */}
                 <div className="flex items-center gap-6 md:gap-10">
+                  {project.gyo && (
+                    <button
+                      type="button"
+                      className="min-w-[120px] rounded-md bg-emerald-600 px-8 py-2.5 text-center text-base font-semibold text-white"
+                    >
+                      GYO
+                    </button>
+                  )}
+
                   {/* Price - Only show if greater than 0 */}
                   {project.price > 0 && (
                     <div className="text-right">
