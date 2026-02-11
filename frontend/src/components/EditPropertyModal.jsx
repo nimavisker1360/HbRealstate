@@ -518,6 +518,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
   const [kampanya, setKampanya] = useState("");
   const [deliveryDate, setDeliveryDate] = useState("");
   const [projectStatus, setProjectStatus] = useState("devam-ediyor");
+  const [gyo, setGyo] = useState(false);
   const [mapImage, setMapImage] = useState("");
   
   // Project-specific features
@@ -715,6 +716,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
       setKampanya(property.kampanya || "");
       setDeliveryDate(property.deliveryDate || "");
       setProjectStatus(property.projectStatus || "devam-ediyor");
+      setGyo(Boolean(property.gyo));
       setMapImage(property.mapImage || "");
       
       // Project-specific features
@@ -1064,6 +1066,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
       kampanya: (values.propertyType === "local-project" || values.propertyType === "international-project") ? kampanya : "",
       deliveryDate: (values.propertyType === "local-project" || values.propertyType === "international-project") ? deliveryDate : "",
       projectStatus: (values.propertyType === "local-project" || values.propertyType === "international-project") ? projectStatus : "",
+      gyo: (values.propertyType === "local-project" || values.propertyType === "international-project") ? gyo : false,
       mapImage: (values.propertyType === "local-project" || values.propertyType === "international-project") ? mapImage : "",
       projeHakkinda: (values.propertyType === "local-project" || values.propertyType === "international-project") ? projeHakkinda : null,
       dairePlanlari: (values.propertyType === "local-project" || values.propertyType === "international-project") ? dairePlanlari : [],
@@ -1887,7 +1890,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
 
             {/* Delivery Date & Project Status */}
             <Grid mt="sm">
-              <Grid.Col span={6}>
+              <Grid.Col span={4}>
                 <TextInput
                   label="Teslim Tarihi"
                   placeholder="Mayıs 2027"
@@ -1895,7 +1898,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
                   onChange={(e) => setDeliveryDate(e.target.value)}
                 />
               </Grid.Col>
-              <Grid.Col span={6}>
+              <Grid.Col span={4}>
                 <Select
                   label="Proje Durumu"
                   placeholder="Seçin"
@@ -1905,6 +1908,14 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
                   ]}
                   value={projectStatus}
                   onChange={setProjectStatus}
+                />
+              </Grid.Col>
+              <Grid.Col span={4}>
+                <Checkbox
+                  label="GYO"
+                  mt={36}
+                  checked={gyo}
+                  onChange={(e) => setGyo(e.currentTarget.checked)}
                 />
               </Grid.Col>
             </Grid>

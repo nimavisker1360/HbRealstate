@@ -1314,6 +1314,7 @@ const AdminPanel = () => {
     vaziyetPlani: "",
     iletisim: null,
     ozellikler: null,
+    gyo: false,
   });
 
   // Check if current property type is local-project or international-project
@@ -2206,6 +2207,7 @@ const AdminPanel = () => {
       vaziyetPlani: "",
       iletisim: null,
       ozellikler: null,
+      gyo: false,
     });
     setActive(0);
   };

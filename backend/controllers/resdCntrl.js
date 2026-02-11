@@ -70,6 +70,7 @@ export const createResidency = asyncHandler(async (req, res) => {
     mapImage,
     deliveryDate,
     projectStatus,
+    gyo,
     // Project-specific features (Özellikler tabs)
     binaOzellikleri,
     disOzellikler,
@@ -169,6 +170,7 @@ export const createResidency = asyncHandler(async (req, res) => {
       mapImage: mapImage || null,
       deliveryDate: deliveryDate || null,
       projectStatus: projectStatus || "devam-ediyor",
+      gyo: Boolean(gyo),
       // Project-specific features (Özellikler tabs)
       binaOzellikleri: binaOzellikleri || [],
       disOzellikler: disOzellikler || [],
@@ -375,6 +377,7 @@ export const updateResidency = asyncHandler(async (req, res) => {
     mapImage,
     deliveryDate,
     projectStatus,
+    gyo,
     // Project-specific features (Özellikler tabs)
     binaOzellikleri,
     disOzellikler,
@@ -458,6 +461,7 @@ export const updateResidency = asyncHandler(async (req, res) => {
       mapImage: mapImage || null,
       deliveryDate: deliveryDate || null,
       projectStatus: projectStatus || "devam-ediyor",
+      gyo: Boolean(gyo),
       // Project-specific features (Özellikler tabs)
       binaOzellikleri: binaOzellikleri || [],
       disOzellikler: disOzellikler || [],

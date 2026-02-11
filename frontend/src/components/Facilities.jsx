@@ -130,6 +130,7 @@ const Facilities = ({
         vaziyetPlani: "",
         iletisim: null,
         ozellikler: null,
+        gyo: false,
       });
 
       if (isPageMode) {

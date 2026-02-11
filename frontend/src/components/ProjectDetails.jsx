@@ -197,6 +197,7 @@ const ProjectDetails = ({
       // Teslim Tarihi ve Proje Durumu
       deliveryDate: propertyDetails.deliveryDate || "",
       projectStatus: propertyDetails.projectStatus || "devam-ediyor",
+      gyo: Boolean(propertyDetails.gyo),
       // Facilities
       bedrooms: propertyDetails.facilities?.bedrooms || 0,
       bathrooms: propertyDetails.facilities?.bathrooms || 0,
@@ -397,6 +398,7 @@ const ProjectDetails = ({
       kampanya: form.values.kampanya,
       deliveryDate: form.values.deliveryDate,
       projectStatus: form.values.projectStatus,
+      gyo: form.values.gyo,
       facilities: {
         bedrooms: form.values.bedrooms || 0,
         bathrooms: form.values.bathrooms || 0,
@@ -550,18 +552,25 @@ const ProjectDetails = ({
 
             {/* Teslim Tarihi ve Proje Durumu */}
             <Grid mt="md">
-              <Grid.Col span={6}>
+              <Grid.Col span={4}>
                 <TextInput
                   label="Teslim Tarihi"
                   placeholder="Mayıs 2027"
                   {...form.getInputProps("deliveryDate")}
                 />
               </Grid.Col>
-              <Grid.Col span={6}>
+              <Grid.Col span={4}>
                 <TextInput
                   label="Proje Durumu"
                   placeholder="devam-ediyor veya tamamlandi"
                   {...form.getInputProps("projectStatus")}
+                />
+              </Grid.Col>
+              <Grid.Col span={4}>
+                <Checkbox
+                  label="GYO"
+                  mt={36}
+                  {...form.getInputProps("gyo", { type: "checkbox" })}
                 />
               </Grid.Col>
             </Grid>

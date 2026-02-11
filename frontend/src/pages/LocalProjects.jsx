@@ -220,6 +220,7 @@ const LocalProjects = () => {
         ozellikler: p.ozellikler,
         kampanya: p.kampanya,
         mapImage: p.mapImage,
+        gyo: Boolean(p.gyo),
       };
     });
   }, [allProperties]);
@@ -754,6 +755,13 @@ const LocalProjects = () => {
                       </div>
                     </div>
                   </div>
+                  {project.gyo && (
+                    <div className="flex items-center justify-end md:justify-center px-3 pb-3 md:pb-0">
+                      <div className="min-w-[60px] rounded-md border border-emerald-600 bg-emerald-600 px-3 py-1 text-center text-xs font-semibold text-white">
+                        GYO
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
