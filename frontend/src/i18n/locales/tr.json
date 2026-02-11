@@ -188,11 +188,11 @@
     "shouldUseSolicitor": "Türkiye'de gayrimenkul alırken avukat kullanmalı mıyım",
     "powerOfAttorney": "Türkiye'de vekaletname",
     "financeForProperty": "Türkiye'de gayrimenkul finansmanı",
-    "propertyInspectionTrips": "Property Turkey inceleme gezileri",
+    "propertyInspectionTrips": "HB international inceleme gezileri",
     "propertyMaintenanceFees": "Türkiye gayrimenkul aidat ve giderleri",
     "designAndBuildYourOwn": "Kendi tasarımınızı ve inşaatınızı nasıl yaparsınız",
     "howToGetTitleDeed": "Türk tapusu (TAPU) nasıl alınır",
-    "virtualTourWithPropertyTurkey": "Property Turkey ile sanal tur",
+    "virtualTourWithPropertyTurkey": "HB international ile sanal tur",
     "residencyPermitsAndVisas": "İkamet izinleri ve vizeler",
     "residencePermitAndVisaInfo": "İkamet izni ve Türk vizesi bilgileri",
     "workPermitsInTurkey": "Türkiye'de çalışma izinleri",
@@ -771,7 +771,5 @@
     "location": "İletişim"
   }
 }
-
-
 
 
