@@ -3,13 +3,24 @@ import { createContext, useCallback, useEffect, useMemo, useState } from "react"
 const CurrencyContext = createContext(null);
 
 const BASE_CURRENCY = "USD";
-const CACHE_KEY = "exchangeRatesCache_v3";
-const SELECTED_KEY = "selectedCurrency";
+const CACHE_KEY = "exchangeRatesCache_v4";
+const LEGACY_CACHE_KEYS = ["exchangeRatesCache_v3"];
+const SELECTED_KEY = "selectedCurrency_v2";
+const MIGRATION_KEY = "selectedCurrency_migrated_v1";
 const SUPPORTED_CURRENCIES = [
   { code: "EUR", symbol: "\u20AC" },
   { code: "USD", symbol: "$" },
   { code: "TRY", symbol: "\u20BA" },
 ];
+
+const getDefaultSelectedCurrency = () => {
+  const configured = String(
+    import.meta.env.VITE_DEFAULT_FIAT_CURRENCY || BASE_CURRENCY
+  ).toUpperCase();
+  return SUPPORTED_CURRENCIES.some((currency) => currency.code === configured)
+    ? configured
+    : BASE_CURRENCY;
+};
 
 const getTodayKey = () => {
   try {
@@ -20,16 +31,20 @@ const getTodayKey = () => {
 };
 
 const readCache = () => {
-  try {
-    const raw = localStorage.getItem(CACHE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object") return null;
-    if (!parsed.rates || typeof parsed.rates !== "object") return null;
-    return parsed;
-  } catch {
-    return null;
+  const keysToCheck = [CACHE_KEY, ...LEGACY_CACHE_KEYS];
+  for (const key of keysToCheck) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object") continue;
+      if (!parsed.rates || typeof parsed.rates !== "object") continue;
+      return parsed;
+    } catch {
+      // continue
+    }
   }
+  return null;
 };
 
 const writeCache = (data) => {
@@ -40,16 +55,51 @@ const writeCache = (data) => {
   }
 };
 
+const toPositiveNumber = (value) => {
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) && numericValue > 0 ? numericValue : null;
+};
+
+const readRateFromMap = (ratesMap, code) => {
+  if (!ratesMap || typeof ratesMap !== "object") return null;
+  const upperCode = String(code || "").toUpperCase();
+  return (
+    toPositiveNumber(ratesMap?.[upperCode]) ??
+    toPositiveNumber(ratesMap?.[upperCode.toLowerCase()]) ??
+    null
+  );
+};
+
 export const CurrencyProvider = ({ children }) => {
-  const [selectedCurrency, setSelectedCurrency] = useState("USD");
+  const [selectedCurrency, setSelectedCurrency] = useState(
+    getDefaultSelectedCurrency
+  );
   const [rates, setRates] = useState({ [BASE_CURRENCY]: 1 });
   const [lastUpdated, setLastUpdated] = useState(null);
 
   useEffect(() => {
     const saved = localStorage.getItem(SELECTED_KEY);
-    if (saved && SUPPORTED_CURRENCIES.some((c) => c.code === saved)) {
+    const defaultCurrency = getDefaultSelectedCurrency();
+    const isSupported =
+      saved && SUPPORTED_CURRENCIES.some((c) => c.code === saved);
+    const hasMigrated = Boolean(localStorage.getItem(MIGRATION_KEY));
+
+    if (isSupported) {
+      if (
+        !hasMigrated &&
+        saved === BASE_CURRENCY &&
+        defaultCurrency !== BASE_CURRENCY
+      ) {
+        setSelectedCurrency(defaultCurrency);
+        localStorage.setItem(SELECTED_KEY, defaultCurrency);
+        localStorage.setItem(MIGRATION_KEY, "1");
+        return;
+      }
       setSelectedCurrency(saved);
+      return;
     }
+
+    setSelectedCurrency(defaultCurrency);
   }, []);
 
   useEffect(() => {
@@ -96,8 +146,8 @@ export const CurrencyProvider = ({ children }) => {
       });
       if (apiKey) liveParams.set("access_key", apiKey);
 
-      const requestOnce = async (url, params) => {
-        const response = await fetch(`${url}?${params.toString()}`, {
+      const requestJson = async (url) => {
+        const response = await fetch(url, {
           signal: controller.signal,
         });
         if (!response.ok) throw new Error("Failed to fetch exchange rates");
@@ -105,41 +155,33 @@ export const CurrencyProvider = ({ children }) => {
         if (payload?.success === false) {
           throw new Error(payload?.error?.info || "Exchange rate API error");
         }
+        if (payload?.result === "error") {
+          throw new Error(payload?.error || "Exchange rate API error");
+        }
         return payload;
       };
 
       const normalizeRates = (payload) => {
-        if (payload?.rates) {
-          return {
-            base: payload.base || BASE_CURRENCY,
-            rates: payload.rates,
-            date: payload.date,
-          };
-        }
-        if (payload?.quotes) {
-          const source = payload.source || "USD";
-          const quotes = payload.quotes;
-          const getQuote = (code) => {
-            if (code === source) return 1;
-            return quotes?.[`${source}${code}`];
-          };
-          const sourceToBase = getQuote(BASE_CURRENCY);
+        const buildUsdBasedRates = (sourceCurrency, getSourceToCurrency, date) => {
+          const normalizedSource = String(sourceCurrency || BASE_CURRENCY).toUpperCase();
+          const sourceToBase =
+            normalizedSource === BASE_CURRENCY
+              ? 1
+              : toPositiveNumber(getSourceToCurrency(BASE_CURRENCY));
+
           if (!sourceToBase) {
             throw new Error("Missing base currency quote");
           }
 
           const computedRates = {};
-          SUPPORTED_CURRENCIES.forEach((currency) => {
-            const code = currency.code;
-            if (code === BASE_CURRENCY) {
-              computedRates[code] = 1;
-              return;
-            }
-            if (code === source) {
-              computedRates[code] = 1 / sourceToBase;
-              return;
-            }
-            const sourceToCode = getQuote(code);
+          SUPPORTED_CURRENCIES.forEach(({ code }) => {
+            if (code === BASE_CURRENCY) return;
+
+            const sourceToCode =
+              code === normalizedSource
+                ? 1
+                : toPositiveNumber(getSourceToCurrency(code));
+
             if (!sourceToCode) return;
             computedRates[code] = sourceToCode / sourceToBase;
           });
@@ -147,30 +189,65 @@ export const CurrencyProvider = ({ children }) => {
           return {
             base: BASE_CURRENCY,
             rates: computedRates,
-            date: payload?.date,
+            date: date || null,
           };
+        };
+
+        if (payload?.rates && typeof payload.rates === "object") {
+          const source = String(
+            payload.base || payload.base_code || payload.source || BASE_CURRENCY
+          ).toUpperCase();
+          return buildUsdBasedRates(
+            source,
+            (code) => {
+              if (String(code).toUpperCase() === source) return 1;
+              return readRateFromMap(payload.rates, code);
+            },
+            payload.date
+          );
         }
+
+        if (payload?.quotes && typeof payload.quotes === "object") {
+          const source = String(payload.source || BASE_CURRENCY).toUpperCase();
+          return buildUsdBasedRates(
+            source,
+            (code) => {
+              if (String(code).toUpperCase() === source) return 1;
+              return payload.quotes?.[`${source}${code}`];
+            },
+            payload.date
+          );
+        }
+
         throw new Error("Invalid exchange rate response");
       };
 
-      let payload;
-      try {
-        payload = await requestOnce(
-          "https://api.exchangerate.host/latest",
-          latestParams
-        );
-      } catch {
+      const providers = [
+        `https://api.exchangerate.host/latest?${latestParams.toString()}`,
+        `https://api.exchangerate.host/live?${liveParams.toString()}`,
+        `https://exchangerate.host/latest?${latestParams.toString()}`,
+        "https://open.er-api.com/v6/latest/USD",
+        "https://api.exchangerate-api.com/v4/latest/USD",
+        `https://api.frankfurter.app/latest?from=${BASE_CURRENCY}&to=${symbolsParam}`,
+      ];
+
+      let normalized;
+      let lastError = null;
+
+      for (const url of providers) {
         try {
-          payload = await requestOnce(
-            "https://api.exchangerate.host/live",
-            liveParams
-          );
-        } catch {
-          payload = await requestOnce("https://exchangerate.host/latest", latestParams);
+          const payload = await requestJson(url);
+          normalized = normalizeRates(payload);
+          break;
+        } catch (error) {
+          lastError = error;
         }
       }
 
-      const normalized = normalizeRates(payload);
+      if (!normalized) {
+        throw lastError || new Error("No exchange rate provider available");
+      }
+
       const nextRates = { [BASE_CURRENCY]: 1, ...normalized.rates };
       const cachePayload = {
         date: normalized?.date || todayKey,
@@ -202,8 +279,8 @@ export const CurrencyProvider = ({ children }) => {
   const convertAmount = useCallback(
     (amount, fromCurrency = BASE_CURRENCY, toCurrency = selectedCurrency) => {
       const value = Number(amount || 0);
-      const fromCode = fromCurrency || BASE_CURRENCY;
-      const toCode = toCurrency || selectedCurrency;
+      const fromCode = String(fromCurrency || BASE_CURRENCY).toUpperCase();
+      const toCode = String(toCurrency || selectedCurrency).toUpperCase();
 
       if (!Number.isFinite(value)) return 0;
       if (fromCode === toCode) return value;
