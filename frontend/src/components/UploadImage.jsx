@@ -225,7 +225,10 @@ const UploadImage = ({
         <Button variant="default" onClick={prevStep}>
           Back
         </Button>
-        <Button onClick={handleNext} disabled={imageURLs.length === 0}>
+        <Button
+          onClick={handleNext}
+          disabled={imageURLs.length === 0 && videoURLs.length === 0}
+        >
           Next
         </Button>
       </Group>
