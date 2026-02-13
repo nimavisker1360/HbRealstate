@@ -180,6 +180,134 @@ function normalizeCurrencyCode(value) {
   return SUPPORTED_BUDGET_CURRENCIES.has(code) ? code : "";
 }
 
+function normalizeRoomToken(value = "") {
+  const normalized = normalizeString(value).toLowerCase();
+  if (!normalized) return "";
+  const match = normalized.match(/(\d+)\s*\+\s*(\d+)/);
+  if (!match) return "";
+  return `${match[1]}+${match[2]}`;
+}
+
+function normalizePropertyScope(value = "") {
+  const normalized = normalizeString(value).toLowerCase();
+  if (!normalized) return "all";
+
+  if (
+    [
+      "project",
+      "projects",
+      "proje",
+      "projeler",
+      "local-project",
+      "international-project",
+      "project-only",
+      "only-projects",
+    ].includes(normalized)
+  ) {
+    return "projects";
+  }
+
+  if (
+    [
+      "listing",
+      "listings",
+      "ilan",
+      "ilanlar",
+      "sale",
+      "rent",
+      "resale",
+      "only-listings",
+    ].includes(normalized)
+  ) {
+    return "listings";
+  }
+
+  return "all";
+}
+
+function extractFloorPlanItems(property = {}) {
+  return Array.isArray(property?.dairePlanlari)
+    ? property.dairePlanlari.filter((item) => item && typeof item === "object")
+    : [];
+}
+
+function hasPositiveNumber(value) {
+  const n = normalizeNumber(value, NaN);
+  return Number.isFinite(n) && n > 0;
+}
+
+function collectFloorPlanPrices(property = {}, roomFilter = "") {
+  const plans = extractFloorPlanItems(property);
+  const targetRoom = normalizeRoomToken(roomFilter);
+  const prices = [];
+
+  for (const plan of plans) {
+    const planRoom = normalizeRoomToken(plan?.tip || plan?.rooms || plan?.room);
+    if (targetRoom && planRoom && planRoom !== targetRoom) continue;
+    if (targetRoom && !planRoom) continue;
+
+    if (hasPositiveNumber(plan?.fiyatUSD)) {
+      prices.push({ value: normalizeNumber(plan.fiyatUSD, 0), currency: "USD" });
+    }
+    if (hasPositiveNumber(plan?.fiyatEUR)) {
+      prices.push({ value: normalizeNumber(plan.fiyatEUR, 0), currency: "EUR" });
+    }
+    if (hasPositiveNumber(plan?.fiyatTRY)) {
+      prices.push({ value: normalizeNumber(plan.fiyatTRY, 0), currency: "TRY" });
+    }
+
+    const legacyPrice = normalizeNumber(plan?.fiyat, NaN);
+    if (Number.isFinite(legacyPrice) && legacyPrice > 0) {
+      const sourceCurrency = normalizeCurrencyCode(plan?.currency) || normalizeCurrencyCode(property?.currency);
+      if (sourceCurrency) {
+        prices.push({ value: legacyPrice, currency: sourceCurrency });
+      }
+    }
+  }
+
+  return prices;
+}
+
+function propertyMatchesRoomFilter(property = {}, roomFilter = "") {
+  const targetRoom = normalizeRoomToken(roomFilter);
+  if (!targetRoom) return true;
+
+  const directRoom = normalizeRoomToken(property?.rooms);
+  if (directRoom && directRoom === targetRoom) return true;
+
+  const plans = extractFloorPlanItems(property);
+  return plans.some((plan) => normalizeRoomToken(plan?.tip || plan?.rooms || plan?.room) === targetRoom);
+}
+
+function collectComparablePrices(property = {}, budgetCurrency = "USD", roomFilter = "") {
+  const values = [];
+  const normalizedBudgetCurrency = normalizeCurrencyCode(budgetCurrency) || "USD";
+  const targetRoom = normalizeRoomToken(roomFilter);
+
+  const directPrice = normalizeNumber(property?.price, NaN);
+  const directCurrency = normalizeCurrencyCode(property?.currency);
+  const directRoom = normalizeRoomToken(property?.rooms);
+  const includeDirect =
+    !targetRoom || !directRoom || directRoom === targetRoom;
+
+  if (includeDirect && Number.isFinite(directPrice) && directPrice > 0 && directCurrency) {
+    const converted = convertPrice(directPrice, directCurrency, normalizedBudgetCurrency);
+    if (Number.isFinite(converted)) {
+      values.push(converted);
+    }
+  }
+
+  const planPrices = collectFloorPlanPrices(property, targetRoom);
+  for (const item of planPrices) {
+    const converted = convertPrice(item.value, item.currency, normalizedBudgetCurrency);
+    if (Number.isFinite(converted)) {
+      values.push(converted);
+    }
+  }
+
+  return values;
+}
+
 function convertPrice(value, fromCurrency, toCurrency) {
   const amount = normalizeNumber(value, NaN);
   const from = normalizeCurrencyCode(fromCurrency);
@@ -222,8 +350,22 @@ function extractSizeM2(property) {
 function toPriceFields(property) {
   const price = normalizeNumber(property?.price, 0);
   const currency = normalizeString(property?.currency).toUpperCase();
-  const asUsd = convertPrice(price, currency, "USD");
-  const asTry = convertPrice(price, currency, "TRY");
+  let asUsd = convertPrice(price, currency, "USD");
+  let asTry = convertPrice(price, currency, "TRY");
+
+  if ((!Number.isFinite(asUsd) || asUsd <= 0) && (!Number.isFinite(asTry) || asTry <= 0)) {
+    const planPrices = collectFloorPlanPrices(property);
+    if (planPrices.length > 0) {
+      const usdValues = planPrices
+        .map((item) => convertPrice(item.value, item.currency, "USD"))
+        .filter((v) => Number.isFinite(v) && v > 0);
+      const tryValues = planPrices
+        .map((item) => convertPrice(item.value, item.currency, "TRY"))
+        .filter((v) => Number.isFinite(v) && v > 0);
+      if (usdValues.length > 0) asUsd = Math.min(...usdValues);
+      if (tryValues.length > 0) asTry = Math.min(...tryValues);
+    }
+  }
 
   return {
     price_usd: Number.isFinite(asUsd) ? Math.round(asUsd) : 0,
@@ -288,6 +430,9 @@ function normalizePropertyRecord(property) {
   const imageUrl =
     normalizeString(property?.image) ||
     (Array.isArray(property?.images) ? normalizeString(property.images[0]) : "");
+  const fallbackPlanRoom = extractFloorPlanItems(property)
+    .map((plan) => normalizeRoomToken(plan?.tip || plan?.rooms || plan?.room))
+    .find(Boolean);
 
   return {
     id,
@@ -296,7 +441,7 @@ function normalizePropertyRecord(property) {
     district,
     price_usd,
     price_try,
-    rooms: normalizeString(property?.rooms),
+    rooms: normalizeString(property?.rooms) || fallbackPlanRoom,
     size_m2: normalizeNumber(extractSizeM2(property), 0),
     delivery_date: normalizeDateLike(property?.deliveryDate || property?.listingDate),
     payment_plan: paymentPlanRaw,
@@ -395,10 +540,19 @@ function normalizeSearchArgs(args = {}) {
     budgetMin: args?.budgetMin ?? args?.budget_min,
     budgetMax: args?.budgetMax ?? args?.budget_max,
     budgetExact: args?.budgetExact ?? args?.budget_exact,
+    budgetFlexPercent:
+      args?.budgetFlexPercent ?? args?.budget_flex_percent ?? args?.budgetTolerancePercent,
     exactPrice:
       args?.exactPrice ?? args?.exact_price ?? args?.strictPriceMatch ?? args?.strict_price_match,
     budgetCurrency:
       args?.budgetCurrency ?? args?.budget_currency ?? args?.currency,
+    propertyScope:
+      args?.propertyScope ??
+      args?.property_scope ??
+      args?.scope ??
+      args?.search_scope ??
+      args?.propertyType ??
+      args?.property_type,
     rooms: args?.rooms,
     city: args?.city,
     district: args?.district,
@@ -598,6 +752,11 @@ async function searchProperties(rawArgs = {}) {
   let budgetMax = normalizeNumber(args.budgetMax, NaN);
   const budgetExact = normalizeNumber(args.budgetExact, NaN);
   const requestedExactPrice = normalizeBoolean(args.exactPrice, false) || Number.isFinite(budgetExact);
+  const rawFlexPercent = normalizeNumber(args.budgetFlexPercent, NaN);
+  const defaultBudgetFlexPercent = readPositiveEnvNumber("ASSISTANT_BUDGET_FLEX_PERCENT", 15);
+  const budgetFlexPercent = Number.isFinite(rawFlexPercent)
+    ? Math.max(0, Math.min(rawFlexPercent, 40))
+    : Math.max(0, Math.min(defaultBudgetFlexPercent, 40));
   const budgetCurrency = normalizeCurrencyCode(args.budgetCurrency) || "USD";
   const exactPriceTarget = Number.isFinite(budgetExact)
     ? budgetExact
@@ -616,16 +775,43 @@ async function searchProperties(rawArgs = {}) {
     budgetMax = exactPriceTarget;
   }
 
+  if (!requestedExactPrice && budgetFlexPercent > 0) {
+    const flexRatio = budgetFlexPercent / 100;
+    const hasEqualBounds =
+      Number.isFinite(budgetMin) &&
+      Number.isFinite(budgetMax) &&
+      Math.abs(budgetMin - budgetMax) <= 1;
+
+    if (hasEqualBounds) {
+      const center = (budgetMin + budgetMax) / 2;
+      budgetMin = Math.max(0, center * (1 - flexRatio));
+      budgetMax = center * (1 + flexRatio);
+    } else if (Number.isFinite(budgetMax) && !Number.isFinite(budgetMin)) {
+      budgetMax = budgetMax * (1 + flexRatio);
+    } else if (Number.isFinite(budgetMin) && !Number.isFinite(budgetMax)) {
+      budgetMin = Math.max(0, budgetMin * (1 - flexRatio));
+    }
+  }
+
   const hasBudgetFilter =
     Number.isFinite(budgetMin) || Number.isFinite(budgetMax) || Number.isFinite(exactPriceTarget);
   const exactPriceEnabled = requestedExactPrice && Number.isFinite(exactPriceTarget);
+  const roomFilter = normalizeRoomToken(args.rooms);
+  const propertyScope = normalizePropertyScope(args.propertyScope);
 
   // Budget filtering is applied after fetch so mixed listing currencies (USD/TRY/EUR)
   // can be normalized to one budget currency reliably.
 
-  if (normalizeString(args.rooms)) {
+  if (propertyScope === "projects") {
     baseAndConditions.push({
-      rooms: { $regex: `^${escapeRegex(normalizeString(args.rooms))}$`, $options: "i" },
+      propertyType: { $in: Array.from(PROJECT_PROPERTY_TYPES) },
+    });
+  } else if (propertyScope === "listings") {
+    baseAndConditions.push({
+      $or: [
+        { propertyType: { $exists: false } },
+        { propertyType: { $nin: Array.from(PROJECT_PROPERTY_TYPES) } },
+      ],
     });
   }
 
@@ -712,7 +898,8 @@ async function searchProperties(rawArgs = {}) {
     return andConditions.length > 0 ? { $and: andConditions } : {};
   };
   const fetchLimit = Math.min(Math.max(normalizeNumber(args.limit, 6), 1), 20);
-  const prefetchLimit = exactPriceEnabled ? 1200 : hasBudgetFilter ? 500 : 80;
+  const prefetchLimit =
+    exactPriceEnabled ? 1200 : hasBudgetFilter || roomFilter || propertyScope === "projects" ? 500 : 80;
 
   let docs = await db
     .collection("Residency")
@@ -733,36 +920,34 @@ async function searchProperties(rawArgs = {}) {
 
   const budgetFiltered = hasBudgetFilter
     ? docs.filter((doc) => {
-        const sourceCurrency = normalizeCurrencyCode(doc?.currency);
-        const sourcePrice = normalizeNumber(doc?.price, NaN);
-        if (!sourceCurrency || !Number.isFinite(sourcePrice)) return false;
+        const comparablePrices = collectComparablePrices(doc, budgetCurrency, roomFilter);
+        if (comparablePrices.length === 0) return false;
 
         if (exactPriceEnabled) {
-          if (sourceCurrency === budgetCurrency) {
-            return Math.abs(sourcePrice - exactPriceTarget) <= 0.0001;
-          }
-          const convertedExact = convertPrice(sourcePrice, sourceCurrency, budgetCurrency);
-          if (!Number.isFinite(convertedExact)) return false;
           const tolerance = budgetCurrency === "TRY" ? 1 : 0.5;
-          return Math.abs(convertedExact - exactPriceTarget) <= tolerance;
+          return comparablePrices.some((value) => Math.abs(value - exactPriceTarget) <= tolerance);
         }
 
-        const converted = convertPrice(sourcePrice, sourceCurrency, budgetCurrency);
-        if (!Number.isFinite(converted)) return false;
-        if (Number.isFinite(budgetMin) && converted < budgetMin) return false;
-        if (Number.isFinite(budgetMax) && converted > budgetMax) return false;
-        return true;
+        return comparablePrices.some((value) => {
+          if (Number.isFinite(budgetMin) && value < budgetMin) return false;
+          if (Number.isFinite(budgetMax) && value > budgetMax) return false;
+          return true;
+        });
       })
     : docs;
 
+  const roomFiltered = roomFilter
+    ? budgetFiltered.filter((doc) => propertyMatchesRoomFilter(doc, roomFilter))
+    : budgetFiltered;
+
   const deliveryDate = parseDeliveryDate(args.deliveryDate);
   const filtered = deliveryDate
-    ? budgetFiltered.filter((doc) => {
+    ? roomFiltered.filter((doc) => {
         const d = parseDeliveryDate(doc?.deliveryDate || doc?.listingDate);
         if (!d) return false;
         return d.getTime() <= deliveryDate.getTime();
       })
-    : budgetFiltered;
+    : roomFiltered;
 
   return filtered.slice(0, fetchLimit).map(normalizePropertyRecord);
 }
@@ -1040,6 +1225,8 @@ Behavior rules:
 - Extract filters where possible (budget, rooms, city/district/neighborhood/site name, delivery date, installment, feature keywords).
 - Property search must cover all property inventory records (listing and project types together).
 - If user asks exact/specific price, pass "budget_exact" and set "exact_price": true.
+- For rough budgets (e.g., only a number like 400000 USD without under/over), you may pass "budget_flex_percent" (10-20) to allow around-range matches.
+- If user says "in projects" or equivalent, pass "property_scope": "projects". If user asks only listings, pass "property_scope": "listings".
 - For consultant intent, call searchConsultants and return consultant profiles in "consultants".
 - For blog/legal/tax content requests, call searchBlogs and return matching posts in "blogs".
 - If user asks for property search, price, rooms, budget, payment plan, or location, do NOT call searchBlogs and keep "blogs" as [].
@@ -1297,8 +1484,10 @@ const tools = [
           budget_min: { type: "number" },
           budget_max: { type: "number" },
           budget_exact: { type: "number" },
+          budget_flex_percent: { type: "number" },
           exact_price: { type: "boolean" },
           budget_currency: { type: "string", enum: ["USD", "TRY", "EUR"] },
+          property_scope: { type: "string", enum: ["all", "projects", "listings"] },
           rooms: { type: "string" },
           city: { type: "string" },
           district: { type: "string" },
@@ -1430,6 +1619,30 @@ function detectBudgetCurrencyFromText(text = "") {
   return "";
 }
 
+function detectPropertyScopeFromText(text = "") {
+  const value = String(text || "").toLowerCase();
+
+  if (
+    /\b(in projects|project only|only projects|projects)\b/.test(value) ||
+    /\b(proje|projeler|sadece proje|projelerde)\b/.test(value) ||
+    /\b(в проектах|проекты|только проекты)\b/.test(value) ||
+    /\b(پروژه|پروژه ها|فقط پروژه)\b/.test(value)
+  ) {
+    return "projects";
+  }
+
+  if (
+    /\b(listing|listings|resale|only listings)\b/.test(value) ||
+    /\b(ilan|ilanlar|sadece ilan)\b/.test(value) ||
+    /\b(листинг|листинги|перепродажа)\b/.test(value) ||
+    /\b(لیستینگ|آگهی|آگهی ها)\b/.test(value)
+  ) {
+    return "listings";
+  }
+
+  return "all";
+}
+
 function hasExactPriceIntent(text = "") {
   const value = String(text || "").toLowerCase();
   return (
@@ -1437,6 +1650,17 @@ function hasExactPriceIntent(text = "") {
     /\b(tam|tam olarak|net fiyat|birebir|ayni fiyat)\b/.test(value) ||
     /\b(точно|ровно|именно)\b/.test(value) ||
     /\b(دقیق|دقیقا|عینا|عین|قیمت دقیق)\b/.test(value)
+  );
+}
+
+function hasStrictBudgetIntent(text = "") {
+  const value = String(text || "").toLowerCase();
+  return (
+    /\b(under|below|less than|at most|max|maximum|up to|between|from)\b/.test(value) ||
+    /\b(over|above|more than|at least|min|minimum)\b/.test(value) ||
+    /\b(alti|altı|kadar|en cok|en çok|maksimum|en az|ustu|üstü)\b/.test(value) ||
+    /\b(до|ниже|меньше|максимум|выше|больше|минимум|от|между)\b/.test(value) ||
+    /\b(زیر|کمتر از|حداکثر|حداقل|بیشتر از|بالای|بین)\b/.test(value)
   );
 }
 
@@ -1452,7 +1676,9 @@ export async function runRealEstateAssistant({ message, history = [] }) {
   const safeHistory = normalizeHistory(history);
   const fallback = FALLBACK_MESSAGES[language] || FALLBACK_MESSAGES.en;
   const inferredBudgetCurrency = detectBudgetCurrencyFromText(userMessage);
+  const inferredPropertyScope = detectPropertyScopeFromText(userMessage);
   const exactPriceIntent = hasExactPriceIntent(userMessage);
+  const strictBudgetIntent = hasStrictBudgetIntent(userMessage);
 
   const openai = getOpenAIClient();
   const messages = [
@@ -1560,6 +1786,17 @@ export async function runRealEstateAssistant({ message, history = [] }) {
             ? { ...args, budget_currency: inferredBudgetCurrency }
             : args;
 
+        if (
+          inferredPropertyScope !== "all" &&
+          !normalizeString(searchArgs?.property_scope) &&
+          !normalizeString(searchArgs?.propertyScope)
+        ) {
+          searchArgs = {
+            ...searchArgs,
+            property_scope: inferredPropertyScope,
+          };
+        }
+
         if (exactPriceIntent) {
           const exactCandidate = normalizeNumber(
             searchArgs?.budget_exact ?? searchArgs?.budgetExact,
@@ -1594,6 +1831,19 @@ export async function runRealEstateAssistant({ message, history = [] }) {
             searchArgs.budget_min = resolvedExact;
             searchArgs.budget_max = resolvedExact;
           }
+        }
+
+        if (
+          hasBudget &&
+          !exactPriceIntent &&
+          !strictBudgetIntent &&
+          !Number.isFinite(normalizeNumber(searchArgs?.budget_flex_percent, NaN)) &&
+          !Number.isFinite(normalizeNumber(searchArgs?.budgetFlexPercent, NaN))
+        ) {
+          searchArgs = {
+            ...searchArgs,
+            budget_flex_percent: 15,
+          };
         }
 
         const hasExplicitLocation =
