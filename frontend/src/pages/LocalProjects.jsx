@@ -797,10 +797,8 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
                         </div>
 
                         {project.kampanya && (
-                          <div className="mb-2 flex justify-end">
-                            <div className="line-clamp-1 text-right text-base font-extrabold text-rose-700">
-                              {project.kampanya}
-                            </div>
+                          <div className="mb-2 line-clamp-1 text-xs text-rose-700">
+                            {project.kampanya}
                           </div>
                         )}
 
