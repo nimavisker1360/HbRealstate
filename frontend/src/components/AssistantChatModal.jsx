@@ -1,10 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Modal } from "@mantine/core";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
-import { MdClose, MdRefresh, MdSend } from "react-icons/md";
+import { MdClose, MdPerson, MdRefresh, MdSend } from "react-icons/md";
 import { FaWhatsapp } from "react-icons/fa";
-import { chatWithRealEstateAssistant } from "../utils/api";
+import { useAuth0 } from "@auth0/auth0-react";
+import UserDetailContext from "../context/UserDetailContext";
+import aiRobotAvatar from "../assets/ai-robot-avatar.svg";
+import { chatWithRealEstateAssistant, getUserProfile } from "../utils/api";
 import { normalizeWhatsAppNumber } from "../utils/common";
 
 const UI_TEXT = {
@@ -31,6 +34,12 @@ const UI_TEXT = {
     consultantExperience: "Experience",
     consultantEmail: "Email",
     consultantWhatsApp: "WhatsApp",
+    viewBlog: "Read blog",
+    blogLink: "Blog link",
+    blogCategory: "Category",
+    blogCountry: "Country",
+    userAvatar: "User",
+    assistantAvatar: "AI Assistant",
   },
   tr: {
     title: "AI Emlak Asistani",
@@ -55,6 +64,12 @@ const UI_TEXT = {
     consultantExperience: "Deneyim",
     consultantEmail: "E-posta",
     consultantWhatsApp: "WhatsApp",
+    viewBlog: "Blogu oku",
+    blogLink: "Blog linki",
+    blogCategory: "Kategori",
+    blogCountry: "Ulke",
+    userAvatar: "Kullanici",
+    assistantAvatar: "AI Asistan",
   },
   ru: {
     title: "AI Assistant po Nedvizhimosti",
@@ -79,6 +94,12 @@ const UI_TEXT = {
     consultantExperience: "Opyt",
     consultantEmail: "Email",
     consultantWhatsApp: "WhatsApp",
+    viewBlog: "Chitat blog",
+    blogLink: "Ssylka na blog",
+    blogCategory: "Kategoriya",
+    blogCountry: "Strana",
+    userAvatar: "Polzovatel",
+    assistantAvatar: "AI Assistant",
   },
 };
 
@@ -125,15 +146,58 @@ const resolveConsultantProfileUrl = (item) => {
   return "/consultants";
 };
 
+const resolveBlogUrl = (item) => {
+  const link = String(item?.blog_url || "").trim();
+  if (link) return link;
+  const id = String(item?.id || "").trim();
+  return id ? `/blog/${id}` : "";
+};
+
 const AssistantChatModal = ({ opened, onClose }) => {
   const { i18n } = useTranslation();
+  const { user: auth0User, isAuthenticated } = useAuth0();
+  const { userDetails } = useContext(UserDetailContext);
+  const token = userDetails?.token;
+  const profileImageFromContext = String(userDetails?.profile?.image || "").trim();
+
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [userProfileImage, setUserProfileImage] = useState("");
   const endRef = useRef(null);
 
   const uiLang = detectUiLang(i18n.language);
   const labels = useMemo(() => UI_TEXT[uiLang] || UI_TEXT.en, [uiLang]);
+  const userAvatarSrc = useMemo(
+    () =>
+      String(
+        userProfileImage || profileImageFromContext || auth0User?.picture || ""
+      ).trim(),
+    [auth0User?.picture, profileImageFromContext, userProfileImage]
+  );
+
+  useEffect(() => {
+    let active = true;
+
+    if (profileImageFromContext) {
+      setUserProfileImage(profileImageFromContext);
+    }
+
+    const loadUserProfileImage = async () => {
+      if (!opened || !isAuthenticated || !auth0User?.email || !token) return;
+      const profileData = await getUserProfile(auth0User.email, token);
+      const image = String(profileData?.image || "").trim();
+      if (active && image) {
+        setUserProfileImage(image);
+      }
+    };
+
+    loadUserProfileImage();
+
+    return () => {
+      active = false;
+    };
+  }, [auth0User?.email, isAuthenticated, opened, profileImageFromContext, token]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -145,7 +209,7 @@ const AssistantChatModal = ({ opened, onClose }) => {
 
     const nextMessages = [
       ...messages,
-      { role: "user", content: prompt, results: [], consultants: [] },
+      { role: "user", content: prompt, results: [], consultants: [], blogs: [] },
     ];
     setMessages(nextMessages);
     setInput("");
@@ -168,12 +232,19 @@ const AssistantChatModal = ({ opened, onClose }) => {
           content: chunks.join("\n\n"),
           results: Array.isArray(response?.results) ? response.results : [],
           consultants: Array.isArray(response?.consultants) ? response.consultants : [],
+          blogs: Array.isArray(response?.blogs) ? response.blogs : [],
         },
       ]);
     } catch {
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: labels.error, results: [], consultants: [] },
+        {
+          role: "assistant",
+          content: labels.error,
+          results: [],
+          consultants: [],
+          blogs: [],
+        },
       ]);
     } finally {
       setLoading(false);
@@ -257,164 +328,262 @@ const AssistantChatModal = ({ opened, onClose }) => {
                     style={{ animationDelay: `${Math.min(index * 45, 220)}ms` }}
                   >
                     <div
-                      className={`ai-chat-bubble max-w-[90%] px-4 py-3 text-sm leading-relaxed ${
-                        isUser ? "ai-chat-bubble-user" : "ai-chat-bubble-assistant"
+                      className={`flex max-w-[96%] items-end gap-2 ${
+                        isUser ? "flex-row-reverse" : "flex-row"
                       }`}
                     >
-                      <div className="whitespace-pre-line">{msg.content || labels.empty}</div>
+                      <div
+                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-sm shadow-sm ${
+                          isUser
+                            ? "border-emerald-200 bg-white text-emerald-600"
+                            : "border-emerald-500 bg-emerald-50 text-emerald-600"
+                        }`}
+                        title={isUser ? labels.userAvatar : labels.assistantAvatar}
+                        aria-label={isUser ? labels.userAvatar : labels.assistantAvatar}
+                      >
+                        {isUser ? (
+                          userAvatarSrc ? (
+                            <img
+                              src={userAvatarSrc}
+                              alt={labels.userAvatar}
+                              className="h-full w-full rounded-full object-cover"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <MdPerson size={18} />
+                          )
+                        ) : (
+                          <img
+                            src={aiRobotAvatar}
+                            alt={labels.assistantAvatar}
+                            className="h-full w-full rounded-full object-cover"
+                            loading="lazy"
+                          />
+                        )}
+                      </div>
+                      <div
+                        className={`ai-chat-bubble max-w-[90%] px-4 py-3 text-sm leading-relaxed ${
+                          isUser ? "ai-chat-bubble-user" : "ai-chat-bubble-assistant"
+                        }`}
+                      >
+                        <div className="whitespace-pre-line">{msg.content || labels.empty}</div>
 
-                      {!isUser && Array.isArray(msg.results) && msg.results.length > 0 && (
-                        <div className="mt-3 space-y-3">
-                          {msg.results.map((item) => (
-                            <div
-                              key={item.id}
-                              className="ai-chat-result-card overflow-hidden rounded-xl border border-emerald-100 bg-white"
-                            >
-                              {item.image_url ? (
-                                <div className="relative overflow-hidden">
-                                  <img
-                                    src={item.image_url}
-                                    alt={item.title || "project"}
-                                    className="h-44 w-full object-cover"
-                                    loading="lazy"
-                                  />
-                                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/25 to-transparent" />
-                                </div>
-                              ) : null}
-                              <div className="space-y-2 p-3">
-                                <p className="text-sm font-semibold text-gray-900">
-                                  {item.title}
-                                </p>
-                                <p className="text-xs text-gray-600">
-                                  {[item.city, item.district].filter(Boolean).join(" - ")}
-                                </p>
-                                <p className="text-sm font-semibold text-emerald-600">
-                                  {formatPrice(item.price_usd, item.price_try, labels)}
-                                </p>
-                                <div className="flex flex-wrap gap-2 text-xs text-gray-600">
-                                  {item.rooms ? <span>{labels.rooms}: {item.rooms}</span> : null}
-                                  {item.size_m2 ? <span>{labels.size}: {item.size_m2} m2</span> : null}
-                                  {item.delivery_date ? <span>{labels.delivery}: {item.delivery_date}</span> : null}
-                                </div>
-                                {resolveDetailUrl(item) ? (
-                                  <div className="space-y-1 pt-1">
-                                    <a
-                                      href={resolveDetailUrl(item)}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      className="ai-chat-link-btn inline-flex rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
-                                    >
-                                      {labels.viewProject}
-                                    </a>
-                                    <p className="break-all text-[11px] text-gray-500">
-                                      {labels.projectLink}: {resolveAbsoluteUrl(resolveDetailUrl(item))}
-                                    </p>
-                                  </div>
-                                ) : null}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {!isUser &&
-                        Array.isArray(msg.consultants) &&
-                        msg.consultants.length > 0 && (
+                        {!isUser && Array.isArray(msg.results) && msg.results.length > 0 && (
                           <div className="mt-3 space-y-3">
-                            {msg.consultants.map((consultant, consultantIndex) => {
-                              const whatsappNumber = normalizeWhatsAppNumber(
-                                consultant?.whatsapp
-                              );
-                              const profileUrl = resolveConsultantProfileUrl(consultant);
-
-                              return (
-                                <div
-                                  key={`${consultant.id || consultant.email || "consultant"}-${consultantIndex}`}
-                                  className="ai-chat-result-card overflow-hidden rounded-xl border border-emerald-100 bg-white"
-                                >
-                                  <div className="flex items-start gap-3 p-3">
+                            {msg.results.map((item) => (
+                              <div
+                                key={item.id}
+                                className="ai-chat-result-card overflow-hidden rounded-xl border border-emerald-100 bg-white"
+                              >
+                                {item.image_url ? (
+                                  <div className="relative overflow-hidden">
                                     <img
-                                      src={
-                                        consultant.image_url ||
-                                        "https://via.placeholder.com/120x120?text=Consultant"
-                                      }
-                                      alt={consultant.name || "consultant"}
-                                      className="h-16 w-16 rounded-lg object-cover"
+                                      src={item.image_url}
+                                      alt={item.title || "project"}
+                                      className="h-44 w-full object-cover"
                                       loading="lazy"
                                     />
-                                    <div className="min-w-0 flex-1 space-y-1.5">
-                                      <p className="truncate text-sm font-semibold text-gray-900">
-                                        {consultant.name || labels.consultantProfile}
+                                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/25 to-transparent" />
+                                  </div>
+                                ) : null}
+                                <div className="space-y-2 p-3">
+                                  <p className="text-sm font-semibold text-gray-900">
+                                    {item.title}
+                                  </p>
+                                  <p className="text-xs text-gray-600">
+                                    {[item.city, item.district].filter(Boolean).join(" - ")}
+                                  </p>
+                                  <p className="text-sm font-semibold text-emerald-600">
+                                    {formatPrice(item.price_usd, item.price_try, labels)}
+                                  </p>
+                                  <div className="flex flex-wrap gap-2 text-xs text-gray-600">
+                                    {item.rooms ? <span>{labels.rooms}: {item.rooms}</span> : null}
+                                    {item.size_m2 ? <span>{labels.size}: {item.size_m2} m2</span> : null}
+                                    {item.delivery_date ? <span>{labels.delivery}: {item.delivery_date}</span> : null}
+                                  </div>
+                                  {resolveDetailUrl(item) ? (
+                                    <div className="space-y-1 pt-1">
+                                      <a
+                                        href={resolveDetailUrl(item)}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="ai-chat-link-btn inline-flex rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
+                                      >
+                                        {labels.viewProject}
+                                      </a>
+                                      <p className="break-all text-[11px] text-gray-500">
+                                        {labels.projectLink}: {resolveAbsoluteUrl(resolveDetailUrl(item))}
                                       </p>
-                                      {consultant.title ? (
-                                        <p className="text-xs text-gray-600">{consultant.title}</p>
+                                    </div>
+                                  ) : null}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {!isUser && Array.isArray(msg.blogs) && msg.blogs.length > 0 && (
+                          <div className="mt-3 space-y-3">
+                            {msg.blogs.map((blog, blogIndex) => {
+                              const blogUrl = resolveBlogUrl(blog);
+                              return (
+                                <div
+                                  key={`${blog.id || blog.title || "blog"}-${blogIndex}`}
+                                  className="ai-chat-result-card overflow-hidden rounded-xl border border-emerald-100 bg-white"
+                                >
+                                  {blog.image_url ? (
+                                    <div className="relative overflow-hidden">
+                                      <img
+                                        src={blog.image_url}
+                                        alt={blog.title || "blog"}
+                                        className="h-40 w-full object-cover"
+                                        loading="lazy"
+                                      />
+                                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                                    </div>
+                                  ) : null}
+                                  <div className="space-y-2 p-3">
+                                    <p className="text-sm font-semibold text-gray-900">
+                                      {blog.title}
+                                    </p>
+                                    {blog.summary ? (
+                                      <p className="line-clamp-3 text-xs text-gray-600">
+                                        {blog.summary}
+                                      </p>
+                                    ) : null}
+                                    <div className="flex flex-wrap gap-2 text-[11px] text-gray-600">
+                                      {blog.category ? (
+                                        <span>
+                                          {labels.blogCategory}: {blog.category}
+                                        </span>
                                       ) : null}
-                                      {consultant.specialty ? (
-                                        <p className="text-xs text-gray-500">
-                                          {consultant.specialty}
-                                        </p>
-                                      ) : null}
-                                      <div className="flex flex-wrap gap-2 text-[11px] text-gray-600">
-                                        {consultant.rating ? (
-                                          <span>
-                                            {labels.consultantRating}: {consultant.rating}
-                                          </span>
-                                        ) : null}
-                                        {consultant.experience ? (
-                                          <span>
-                                            {labels.consultantExperience}: {consultant.experience}
-                                          </span>
-                                        ) : null}
-                                        {Array.isArray(consultant.languages) &&
-                                        consultant.languages.length > 0 ? (
-                                          <span>
-                                            {labels.consultantLanguages}:{" "}
-                                            {consultant.languages.join(", ")}
-                                          </span>
-                                        ) : null}
-                                      </div>
-                                      <div className="flex flex-wrap gap-2 pt-1">
-                                        {whatsappNumber ? (
-                                          <a
-                                            href={`https://wa.me/${whatsappNumber}`}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="ai-chat-link-btn inline-flex rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
-                                          >
-                                            {labels.consultantWhatsApp}
-                                          </a>
-                                        ) : null}
-                                        {consultant.email ? (
-                                          <a
-                                            href={`mailto:${consultant.email}`}
-                                            className="inline-flex rounded-lg border border-emerald-200 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50"
-                                          >
-                                            {labels.consultantEmail}
-                                          </a>
-                                        ) : null}
-                                        {profileUrl ? (
-                                          <a
-                                            href={profileUrl}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="inline-flex rounded-lg border border-emerald-200 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50"
-                                          >
-                                            {labels.consultantProfile}
-                                          </a>
-                                        ) : null}
-                                      </div>
-                                      {profileUrl ? (
-                                        <p className="break-all text-[11px] text-gray-500">
-                                          {resolveAbsoluteUrl(profileUrl)}
-                                        </p>
+                                      {blog.country ? (
+                                        <span>
+                                          {labels.blogCountry}: {blog.country}
+                                        </span>
                                       ) : null}
                                     </div>
+                                    {blogUrl ? (
+                                      <div className="space-y-1 pt-1">
+                                        <a
+                                          href={blogUrl}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="ai-chat-link-btn inline-flex rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
+                                        >
+                                          {labels.viewBlog}
+                                        </a>
+                                        <p className="break-all text-[11px] text-gray-500">
+                                          {labels.blogLink}: {resolveAbsoluteUrl(blogUrl)}
+                                        </p>
+                                      </div>
+                                    ) : null}
                                   </div>
                                 </div>
                               );
                             })}
                           </div>
                         )}
+
+                        {!isUser &&
+                          Array.isArray(msg.consultants) &&
+                          msg.consultants.length > 0 && (
+                            <div className="mt-3 space-y-3">
+                              {msg.consultants.map((consultant, consultantIndex) => {
+                                const whatsappNumber = normalizeWhatsAppNumber(
+                                  consultant?.whatsapp
+                                );
+                                const profileUrl = resolveConsultantProfileUrl(consultant);
+
+                                return (
+                                  <div
+                                    key={`${consultant.id || consultant.email || "consultant"}-${consultantIndex}`}
+                                    className="ai-chat-result-card overflow-hidden rounded-xl border border-emerald-100 bg-white"
+                                  >
+                                    <div className="flex items-start gap-3 p-3">
+                                      <img
+                                        src={
+                                          consultant.image_url ||
+                                          "https://via.placeholder.com/120x120?text=Consultant"
+                                        }
+                                        alt={consultant.name || "consultant"}
+                                        className="h-16 w-16 rounded-lg object-cover"
+                                        loading="lazy"
+                                      />
+                                      <div className="min-w-0 flex-1 space-y-1.5">
+                                        <p className="truncate text-sm font-semibold text-gray-900">
+                                          {consultant.name || labels.consultantProfile}
+                                        </p>
+                                        {consultant.title ? (
+                                          <p className="text-xs text-gray-600">{consultant.title}</p>
+                                        ) : null}
+                                        {consultant.specialty ? (
+                                          <p className="text-xs text-gray-500">
+                                            {consultant.specialty}
+                                          </p>
+                                        ) : null}
+                                        <div className="flex flex-wrap gap-2 text-[11px] text-gray-600">
+                                          {consultant.rating ? (
+                                            <span>
+                                              {labels.consultantRating}: {consultant.rating}
+                                            </span>
+                                          ) : null}
+                                          {consultant.experience ? (
+                                            <span>
+                                              {labels.consultantExperience}: {consultant.experience}
+                                            </span>
+                                          ) : null}
+                                          {Array.isArray(consultant.languages) &&
+                                          consultant.languages.length > 0 ? (
+                                            <span>
+                                              {labels.consultantLanguages}: {" "}
+                                              {consultant.languages.join(", ")}
+                                            </span>
+                                          ) : null}
+                                        </div>
+                                        <div className="flex flex-wrap gap-2 pt-1">
+                                          {whatsappNumber ? (
+                                            <a
+                                              href={`https://wa.me/${whatsappNumber}`}
+                                              target="_blank"
+                                              rel="noreferrer"
+                                              className="ai-chat-link-btn inline-flex rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
+                                            >
+                                              {labels.consultantWhatsApp}
+                                            </a>
+                                          ) : null}
+                                          {consultant.email ? (
+                                            <a
+                                              href={`mailto:${consultant.email}`}
+                                              className="inline-flex rounded-lg border border-emerald-200 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50"
+                                            >
+                                              {labels.consultantEmail}
+                                            </a>
+                                          ) : null}
+                                          {profileUrl ? (
+                                            <a
+                                              href={profileUrl}
+                                              target="_blank"
+                                              rel="noreferrer"
+                                              className="inline-flex rounded-lg border border-emerald-200 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50"
+                                            >
+                                              {labels.consultantProfile}
+                                            </a>
+                                          ) : null}
+                                        </div>
+                                        {profileUrl ? (
+                                          <p className="break-all text-[11px] text-gray-500">
+                                            {resolveAbsoluteUrl(profileUrl)}
+                                          </p>
+                                        ) : null}
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                      </div>
                     </div>
                   </div>
                 );
@@ -422,13 +591,27 @@ const AssistantChatModal = ({ opened, onClose }) => {
 
               {loading && (
                 <div className="flex justify-start">
-                  <div className="ai-chat-bubble ai-chat-bubble-assistant max-w-[220px] px-4 py-3">
-                    <div className="ai-chat-typing">
-                      <span />
-                      <span />
-                      <span />
+                  <div className="flex items-end gap-2">
+                    <div
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-emerald-500 bg-emerald-50 text-emerald-600 shadow-sm"
+                      title={labels.assistantAvatar}
+                      aria-label={labels.assistantAvatar}
+                    >
+                      <img
+                        src={aiRobotAvatar}
+                        alt={labels.assistantAvatar}
+                        className="h-full w-full rounded-full object-cover"
+                        loading="lazy"
+                      />
                     </div>
-                    <p className="mt-1 text-xs text-gray-500">{labels.sending}</p>
+                    <div className="ai-chat-bubble ai-chat-bubble-assistant max-w-[220px] px-4 py-3">
+                      <div className="ai-chat-typing">
+                        <span />
+                        <span />
+                        <span />
+                      </div>
+                      <p className="mt-1 text-xs text-gray-500">{labels.sending}</p>
+                    </div>
                   </div>
                 </div>
               )}

@@ -492,6 +492,35 @@ export const chatWithRealEstateAssistant = async (message, history = []) => {
   }
 };
 
+export const transcribeRealEstateAssistantAudio = async (
+  audioBase64,
+  mimeType,
+  language
+) => {
+  try {
+    const response = await api.post(
+      "/assistant/transcribe",
+      {
+        audio_base64: audioBase64,
+        mime_type: mimeType,
+        language,
+      },
+      { timeout: 45000 }
+    );
+    return response.data;
+  } catch (error) {
+    const apiMessage =
+      error?.response?.data?.error ||
+      error?.response?.data?.message ||
+      error?.message ||
+      "Voice transcription failed";
+    const wrapped = new Error(String(apiMessage));
+    wrapped.status = error?.response?.status || 0;
+    console.error("Error transcribing assistant audio:", apiMessage, error);
+    throw wrapped;
+  }
+};
+
 // Get All Contact Messages
 export const getAllContactMessages = async (token) => {
   try {

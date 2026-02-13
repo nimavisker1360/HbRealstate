@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { toFile } from "openai";
 import { ObjectId } from "mongodb";
 import { getMongoDb } from "../config/prismaConfig.js";
 
@@ -7,21 +8,21 @@ let openaiClient = null;
 const FALLBACK_MESSAGES = {
   en: {
     noData: "I don't have that information in the system right now.",
-    noMatch: "No matching properties were found in the current inventory.",
+    noMatch: "No matching records were found in the current system data.",
     found: "I found matching records in the system.",
     leadPrompt:
       "To proceed, please share your name, country, WhatsApp or email, and budget range.",
   },
   tr: {
     noData: "Bu bilgi su anda sistemde mevcut degil.",
-    noMatch: "Mevcut portfoyde eslesen bir ilan bulunamadi.",
+    noMatch: "Mevcut sistem verisinde eslesen bir kayit bulunamadi.",
     found: "Sistemde eslesen kayitlar bulundu.",
     leadPrompt:
       "Ilerlemek icin lutfen adinizi, ulkenizi, WhatsApp veya e-posta bilginizi ve butce araliginizi paylasin.",
   },
   ru: {
     noData: "Seychas v sisteme net etoy informatsii.",
-    noMatch: "V tekushchey baze net podkhodyashchikh obektov.",
+    noMatch: "V tekushchikh dannykh sistemy net podkhodyashchikh zapisey.",
     found: "V sisteme naydeny podkhodyashchie dannye.",
     leadPrompt:
       "Dlya prodolzheniya ukazhite, pozhaluysta, imya, stranu, WhatsApp ili email i byudzhetnyy diapazon.",
@@ -32,6 +33,7 @@ const TOOL_NAMES = {
   searchProperties: "searchProperties",
   getPropertyById: "getPropertyById",
   searchConsultants: "searchConsultants",
+  searchBlogs: "searchBlogs",
   createLead: "createLead",
 };
 
@@ -61,6 +63,67 @@ function getOpenAIClient() {
     openaiClient = new OpenAI({ apiKey });
   }
   return openaiClient;
+}
+
+function mapTranscriptionLanguage(language = "") {
+  const normalized = normalizeString(language).toLowerCase();
+  if (normalized.startsWith("tr")) return "tr";
+  if (normalized.startsWith("ru")) return "ru";
+  if (normalized.startsWith("en")) return "en";
+  return "";
+}
+
+function getTranscriptionPrompt(language = "en") {
+  if (language === "tr") {
+    return "Gayrimenkul konusmasi. Dogru yazim kullan: Istanbul, Bahcesehir, Kozapark, Basaksehir, Esenyurt, Beylikduzu, 1+1, 2+1, USD, EUR, TRY, TL, tapu, taksit, proje, daire, villa.";
+  }
+  if (language === "ru") {
+    return "Tema: nedvizhimost v Turcii. Sokhranyay tochnye nazvaniya: Istanbul, Bahcesehir, Kozapark, Basaksehir, Esenyurt, Beylikduzu, 1+1, 2+1, USD, EUR, TRY, tapu, rassrochka, proekt, kvartira, villa.";
+  }
+  return "Real-estate conversation. Keep spelling accurate for: Istanbul, Bahcesehir, Kozapark, Basaksehir, Esenyurt, Beylikduzu, 1+1, 2+1, USD, EUR, TRY, title deed, installment, project, apartment, villa.";
+}
+
+function mimeTypeToExtension(mimeType = "") {
+  const normalized = normalizeString(mimeType).toLowerCase();
+  if (normalized.includes("webm")) return "webm";
+  if (normalized.includes("mp4")) return "mp4";
+  if (normalized.includes("mpeg")) return "mp3";
+  if (normalized.includes("wav")) return "wav";
+  if (normalized.includes("ogg")) return "ogg";
+  if (normalized.includes("m4a")) return "m4a";
+  return "webm";
+}
+
+function decodeBase64Audio(value = "") {
+  const raw = normalizeString(value);
+  if (!raw) return Buffer.alloc(0);
+  const base64Part = raw.includes(",") ? raw.split(",").pop() : raw;
+  return Buffer.from(base64Part || "", "base64");
+}
+
+async function createTranscriptionWithFallback(openai, payload) {
+  const preferred = process.env.REAL_ESTATE_STT_MODEL || "gpt-4o-transcribe";
+  const candidates = [preferred, "gpt-4o-mini-transcribe", "whisper-1"];
+  let lastError = null;
+
+  for (const model of candidates) {
+    try {
+      return await openai.audio.transcriptions.create({
+        ...payload,
+        model,
+      });
+    } catch (error) {
+      lastError = error;
+      const msg = String(error?.message || "").toLowerCase();
+      const modelRelated =
+        msg.includes("model") || msg.includes("not found") || msg.includes("does not exist");
+      if (!modelRelated || model === candidates[candidates.length - 1]) {
+        throw error;
+      }
+    }
+  }
+
+  throw lastError;
 }
 
 function detectLanguage(text = "") {
@@ -271,6 +334,37 @@ function normalizeConsultantRecord(consultant, language = "en") {
   };
 }
 
+function getLocalizedBlogField(blog, field, language = "en") {
+  const lang = normalizeString(language).toLowerCase();
+  const localizedKey = `${field}_${lang}`;
+  const localizedValue = normalizeString(blog?.[localizedKey]);
+  if (localizedValue) return localizedValue;
+  return normalizeString(blog?.[field]);
+}
+
+function normalizeBlogRecord(blog, language = "en") {
+  const id = blog?._id?.toString?.() || blog?.id || "";
+  const title = getLocalizedBlogField(blog, "title", language);
+  const summary =
+    getLocalizedBlogField(blog, "summary", language) ||
+    getLocalizedBlogField(blog, "metaDescription", language);
+  const category = getLocalizedBlogField(blog, "category", language);
+  const imageUrl =
+    normalizeString(blog?.image) ||
+    (Array.isArray(blog?.images) ? normalizeString(blog.images[0]) : "");
+
+  return {
+    id: normalizeString(id),
+    title,
+    summary,
+    category,
+    country: normalizeString(blog?.country),
+    image_url: imageUrl,
+    blog_url: id ? `/blog/${id}` : "",
+    published_at: normalizeDateLike(blog?.createdAt),
+  };
+}
+
 function escapeRegex(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -313,6 +407,16 @@ function normalizeConsultantSearchArgs(args = {}) {
     specialty: args?.specialty,
     language: args?.language ?? args?.spoken_language,
     available: args?.available,
+    keywords: Array.isArray(args?.keywords) ? args.keywords : [],
+    limit: args?.limit,
+  };
+}
+
+function normalizeBlogSearchArgs(args = {}) {
+  return {
+    query: args?.query,
+    country: args?.country,
+    category: args?.category,
     keywords: Array.isArray(args?.keywords) ? args.keywords : [],
     limit: args?.limit,
   };
@@ -380,6 +484,51 @@ function inferLocationTokensFromText(text = "") {
     .filter((token) => !/^\d+$/.test(token))
     .filter((token) => !stopwords.has(token))
     .slice(0, 3);
+}
+
+function inferBlogKeywordsFromText(text = "") {
+  const normalized = String(text || "")
+    .toLowerCase()
+    .replace(/[^0-9a-z\u00c0-\u024f\u0400-\u04ff\u0600-\u06ff\s-]/gi, " ");
+
+  const stopwords = new Set([
+    "what",
+    "which",
+    "where",
+    "tell",
+    "about",
+    "show",
+    "find",
+    "blog",
+    "article",
+    "guide",
+    "law",
+    "legal",
+    "tax",
+    "and",
+    "the",
+    "for",
+    "with",
+    "turkey",
+    "turkish",
+    "istanbul",
+    "nedir",
+    "hakkinda",
+    "blog",
+    "makale",
+    "rehber",
+    "vergi",
+    "kanun",
+    "yasa",
+  ]);
+
+  return normalized
+    .split(/\s+/)
+    .map((token) => token.trim())
+    .filter((token) => token.length >= 3)
+    .filter((token) => !/^\d+$/.test(token))
+    .filter((token) => !stopwords.has(token))
+    .slice(0, 8);
 }
 
 function toAsciiSearchForm(value = "") {
@@ -649,6 +798,87 @@ async function searchConsultants(rawArgs = {}, language = "en") {
   return docs.map((item) => normalizeConsultantRecord(item, language));
 }
 
+async function searchBlogs(rawArgs = {}, language = "en") {
+  const args = normalizeBlogSearchArgs(rawArgs);
+  const db = await getMongoDb();
+  const andConditions = [{ published: true }];
+
+  if (normalizeString(args.country)) {
+    const pattern = escapeRegex(normalizeString(args.country));
+    andConditions.push({ country: { $regex: pattern, $options: "i" } });
+  }
+
+  if (normalizeString(args.category)) {
+    const pattern = escapeRegex(normalizeString(args.category));
+    andConditions.push({
+      $or: [
+        { category: { $regex: pattern, $options: "i" } },
+        { category_en: { $regex: pattern, $options: "i" } },
+        { category_tr: { $regex: pattern, $options: "i" } },
+        { category_ru: { $regex: pattern, $options: "i" } },
+      ],
+    });
+  }
+
+  const explicitKeywords = (Array.isArray(args.keywords) ? args.keywords : [])
+    .map((k) => normalizeString(k))
+    .filter(Boolean)
+    .slice(0, 8);
+  const queryKeywords = [
+    ...inferBlogKeywordsFromText(args.query),
+    normalizeString(args.query),
+  ].filter(Boolean);
+  const mergedKeywords = Array.from(new Set([...explicitKeywords, ...queryKeywords]));
+
+  if (mergedKeywords.length > 0) {
+    const keywordConditions = [];
+
+    for (const rawKeyword of mergedKeywords) {
+      const variants = expandKeywordVariants(rawKeyword);
+      for (const variant of variants) {
+        const pattern = escapeRegex(variant);
+        keywordConditions.push(
+          { title: { $regex: pattern, $options: "i" } },
+          { title_en: { $regex: pattern, $options: "i" } },
+          { title_tr: { $regex: pattern, $options: "i" } },
+          { title_ru: { $regex: pattern, $options: "i" } },
+          { summary: { $regex: pattern, $options: "i" } },
+          { summary_en: { $regex: pattern, $options: "i" } },
+          { summary_tr: { $regex: pattern, $options: "i" } },
+          { summary_ru: { $regex: pattern, $options: "i" } },
+          { content: { $regex: pattern, $options: "i" } },
+          { content_en: { $regex: pattern, $options: "i" } },
+          { content_tr: { $regex: pattern, $options: "i" } },
+          { content_ru: { $regex: pattern, $options: "i" } },
+          { metaDescription: { $regex: pattern, $options: "i" } },
+          { metaDescription_en: { $regex: pattern, $options: "i" } },
+          { metaDescription_tr: { $regex: pattern, $options: "i" } },
+          { metaDescription_ru: { $regex: pattern, $options: "i" } },
+          { category: { $regex: pattern, $options: "i" } },
+          { category_en: { $regex: pattern, $options: "i" } },
+          { category_tr: { $regex: pattern, $options: "i" } },
+          { category_ru: { $regex: pattern, $options: "i" } },
+          { country: { $regex: pattern, $options: "i" } }
+        );
+      }
+    }
+
+    andConditions.push({ $or: keywordConditions });
+  }
+
+  const query = andConditions.length > 0 ? { $and: andConditions } : {};
+  const limit = Math.min(Math.max(normalizeNumber(args.limit, 3), 1), 8);
+
+  const docs = await db
+    .collection("Blog")
+    .find(query)
+    .sort({ order: 1, createdAt: -1 })
+    .limit(limit)
+    .toArray();
+
+  return docs.map((item) => normalizeBlogRecord(item, language));
+}
+
 async function getPropertyById(id) {
   if (!ObjectId.isValid(id)) return null;
   const db = await getMongoDb();
@@ -678,6 +908,47 @@ async function createLead(data = {}) {
   };
 }
 
+export async function transcribeAssistantAudio({
+  audio_base64,
+  mime_type,
+  language,
+} = {}) {
+  const base64Audio = normalizeString(audio_base64);
+  if (!base64Audio) {
+    throw new Error("audio_base64 is required");
+  }
+
+  const audioBuffer = decodeBase64Audio(base64Audio);
+  if (!audioBuffer.length) {
+    throw new Error("audio payload is empty");
+  }
+
+  const maxBytes = 15 * 1024 * 1024;
+  if (audioBuffer.length > maxBytes) {
+    throw new Error("audio payload is too large");
+  }
+
+  const contentType = normalizeString(mime_type) || "audio/webm";
+  const extension = mimeTypeToExtension(contentType);
+  const file = await toFile(audioBuffer, `voice-input.${extension}`, {
+    type: contentType,
+  });
+
+  const transcriptionLanguage = mapTranscriptionLanguage(language);
+  const promptLanguage = transcriptionLanguage || detectLanguage(language || "");
+  const openai = getOpenAIClient();
+  const response = await createTranscriptionWithFallback(openai, {
+    file,
+    language: transcriptionLanguage || undefined,
+    prompt: getTranscriptionPrompt(promptLanguage || "en"),
+    response_format: "json",
+    temperature: 0,
+  });
+
+  const text = normalizeString(response?.text);
+  return { text };
+}
+
 function normalizeHistory(history = []) {
   if (!Array.isArray(history)) return [];
   return history
@@ -692,7 +963,7 @@ function normalizeHistory(history = []) {
 function getSystemPrompt(language) {
   const noData = FALLBACK_MESSAGES[language]?.noData || FALLBACK_MESSAGES.en.noData;
 
-  return `You are a multilingual AI real estate assistant integrated with a MongoDB property database.
+  return `You are a multilingual AI real estate assistant integrated with MongoDB property and blog databases.
 
 Supported languages: English (EN), Turkish (TR), Russian (RU).
 Language rules:
@@ -709,6 +980,7 @@ Intents to handle:
 - Property search
 - Property details
 - Consultant search / advisor recommendation
+- Blog content questions (tax, legal, market insights, guides)
 - Payment plan inquiry
 - Investment/citizenship eligibility
 - Location questions
@@ -717,6 +989,8 @@ Intents to handle:
 Behavior rules:
 - Extract filters where possible (budget, rooms, city/district/neighborhood/site name, delivery date, installment, feature keywords).
 - For consultant intent, call searchConsultants and return consultant profiles in "consultants".
+- For blog/legal/tax content requests, call searchBlogs and return matching posts in "blogs".
+- If user asks for property search, price, rooms, budget, payment plan, or location, do NOT call searchBlogs and keep "blogs" as [].
 - Detect budget currency among USD, TRY, EUR and pass it as "budget_currency" in search tool calls.
 - If required details are missing, ask maximum one short clarification question using "next_question".
 - If user shows buying intent, include a short "lead_prompt" asking for name, country, WhatsApp/email, and budget range.
@@ -765,10 +1039,22 @@ Output rules:
       "profile_url": "..."
     }
   ],
+  "blogs": [
+    {
+      "id": "blog_id",
+      "title": "...",
+      "summary": "...",
+      "category": "...",
+      "country": "...",
+      "image_url": "...",
+      "blog_url": "...",
+      "published_at": "..."
+    }
+  ],
   "next_question": "...",
   "lead_prompt": "..."
 }
-- If no matches: "results" must be [] and "consultants" must be [] and reply must politely explain no match.
+- If no matches: "results" must be [] and "consultants" must be [] and "blogs" must be [] and reply must politely explain no match.
 - Keep data fields grounded in tool outputs only.`;
 }
 
@@ -788,6 +1074,23 @@ function hasConsultantIntent(text = "") {
     /\b(meslek|uzman|danisman|danışman|emlakci|emlakçı|satis temsilcisi)\b/.test(normalized) ||
     /\b(konsultant|agent)\b/.test(normalized) ||
     /\b(مشاور|کارشناس|ادمین فروش|ایجنت)\b/.test(normalized)
+  );
+}
+
+function hasBlogIntent(text = "") {
+  const normalized = String(text || "").toLowerCase();
+  return (
+    /\b(blog|article|news)\b/.test(normalized) ||
+    /\b(tax|taxes|taxation|legal|law|laws|regulation|regulations|citizenship law)\b/.test(
+      normalized
+    ) ||
+    /\b(blog|makale|rehber|haber|yazi|yazı|yazilar|yazılar)\b/.test(normalized) ||
+    /\b(vergi|vergiler|vergilendirme|kanun|kanunlar|yasa|mevzuat)\b/.test(normalized) ||
+    /\b(مالیات|قانون|مقاله|بلاگ|خبر|راهنما)\b/.test(normalized) ||
+    /[\u0400-\u04FF]/.test(normalized) &&
+      /\b(блог|статья|новость|гайд|налог|налоги|закон|законы|право|регламент)\b/.test(
+        normalized
+      )
   );
 }
 
@@ -866,6 +1169,19 @@ function normalizeConsultantItem(item = {}) {
   };
 }
 
+function normalizeBlogItem(item = {}) {
+  return {
+    id: normalizeString(item.id),
+    title: normalizeString(item.title),
+    summary: normalizeString(item.summary),
+    category: normalizeString(item.category),
+    country: normalizeString(item.country),
+    image_url: normalizeString(item.image_url),
+    blog_url: normalizeString(item.blog_url),
+    published_at: normalizeString(item.published_at),
+  };
+}
+
 async function enrichAssistantResults(results = []) {
   const enriched = await Promise.all(
     results.map(async (item) => {
@@ -905,6 +1221,7 @@ function normalizeAssistantPayload(payload) {
     consultants: Array.isArray(payload?.consultants)
       ? payload.consultants.map(normalizeConsultantItem)
       : [],
+    blogs: Array.isArray(payload?.blogs) ? payload.blogs.map(normalizeBlogItem) : [],
   };
 
   const nextQuestion = normalizeString(payload?.next_question);
@@ -984,6 +1301,28 @@ const tools = [
   {
     type: "function",
     function: {
+      name: TOOL_NAMES.searchBlogs,
+      description:
+        "Search published blog posts by topic, tax/legal keywords, market insights, category or country.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string" },
+          country: { type: "string" },
+          category: { type: "string" },
+          keywords: {
+            type: "array",
+            items: { type: "string" },
+          },
+          limit: { type: "number" },
+        },
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
       name: TOOL_NAMES.createLead,
       description: "Create a lead when user shares contact and budget details.",
       parameters: {
@@ -1045,6 +1384,7 @@ export async function runRealEstateAssistant({ message, history = [] }) {
 
   const language = detectLanguage(userMessage);
   const consultantIntent = hasConsultantIntent(userMessage);
+  const blogIntent = hasBlogIntent(userMessage);
   const safeHistory = normalizeHistory(history);
   const fallback = FALLBACK_MESSAGES[language] || FALLBACK_MESSAGES.en;
   const inferredBudgetCurrency = detectBudgetCurrencyFromText(userMessage);
@@ -1079,11 +1419,18 @@ export async function runRealEstateAssistant({ message, history = [] }) {
       const normalized = normalizeAssistantPayload(parsed);
       normalized.results = await enrichAssistantResults(normalized.results);
 
+      if (!blogIntent) {
+        normalized.blogs = [];
+      }
+
       if (!usedTool && normalized.results.length > 0) {
         normalized.results = [];
       }
       if (!usedTool && normalized.consultants.length > 0) {
         normalized.consultants = [];
+      }
+      if (!usedTool && normalized.blogs.length > 0) {
+        normalized.blogs = [];
       }
 
       if (consultantIntent && normalized.consultants.length === 0) {
@@ -1098,9 +1445,25 @@ export async function runRealEstateAssistant({ message, history = [] }) {
           normalized.consultants = consultantFallback;
         }
       }
+      if (blogIntent && normalized.blogs.length === 0) {
+        const blogFallback = await searchBlogs(
+          {
+            query: userMessage,
+            keywords: inferBlogKeywordsFromText(userMessage),
+            limit: 3,
+          },
+          language
+        );
+        if (blogFallback.length > 0) {
+          normalized.blogs = blogFallback;
+        }
+      }
 
       if (!normalized.reply) {
-        normalized.reply = normalized.results.length > 0 || normalized.consultants.length > 0
+        normalized.reply =
+          normalized.results.length > 0 ||
+          normalized.consultants.length > 0 ||
+          normalized.blogs.length > 0
           ? fallback.found
           : fallback.noMatch;
       }
@@ -1157,6 +1520,8 @@ export async function runRealEstateAssistant({ message, history = [] }) {
         toolOutput = await getPropertyById(args.id);
       } else if (name === TOOL_NAMES.searchConsultants) {
         toolOutput = await searchConsultants(args, language);
+      } else if (name === TOOL_NAMES.searchBlogs) {
+        toolOutput = blogIntent ? await searchBlogs(args, language) : [];
       } else if (name === TOOL_NAMES.createLead) {
         toolOutput = await createLead(args);
       } else {
@@ -1175,11 +1540,25 @@ export async function runRealEstateAssistant({ message, history = [] }) {
     reply: fallback.noData,
     results: [],
     consultants: [],
+    blogs: [],
   };
   if (consultantIntent) {
     response.consultants = await searchConsultants({ limit: 4 }, language);
     response.reply =
       response.consultants.length > 0 ? fallback.found : fallback.noMatch;
+  }
+  if (blogIntent) {
+    response.blogs = await searchBlogs(
+      {
+        query: userMessage,
+        keywords: inferBlogKeywordsFromText(userMessage),
+        limit: 3,
+      },
+      language
+    );
+    if (!response.consultants.length) {
+      response.reply = response.blogs.length > 0 ? fallback.found : fallback.noMatch;
+    }
   }
   if (hasBuyingIntent(userMessage)) {
     response.lead_prompt = fallback.leadPrompt;
