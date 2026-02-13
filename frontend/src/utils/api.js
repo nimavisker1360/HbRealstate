@@ -477,6 +477,21 @@ export const sendEmail = async (emailData) => {
   }
 };
 
+// Real estate AI assistant chat
+export const chatWithRealEstateAssistant = async (message, history = []) => {
+  try {
+    const response = await api.post(
+      "/assistant/chat",
+      { message, history },
+      { timeout: 45000 }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error calling real estate assistant:", error);
+    throw error;
+  }
+};
+
 // Get All Contact Messages
 export const getAllContactMessages = async (token) => {
   try {

@@ -9,6 +9,7 @@ import { emailRoute } from "./routes/emailRoute.js";
 import { blogRoute } from "./routes/blogRoute.js";
 import { housingSalesRoute } from "./routes/housingSalesRoute.js";
 import { testimonialRoute } from "./routes/testimonialRoute.js";
+import { assistantRoute } from "./routes/assistantRoute.js";
 
 dotenv.config();
 
@@ -26,5 +27,6 @@ app.use("/api/email", emailRoute);
 app.use("/api/blog", blogRoute);
 app.use("/api/housing-sales", housingSalesRoute);
 app.use("/api/testimonial", testimonialRoute);
+app.use("/api/assistant", assistantRoute);
 
 export default app;
