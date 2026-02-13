@@ -164,6 +164,17 @@ function normalizeNumber(value, fallback = 0) {
   return fallback;
 }
 
+function normalizeBoolean(value, fallback = false) {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value === 1 ? true : value === 0 ? false : fallback;
+  if (typeof value === "string") {
+    const v = value.trim().toLowerCase();
+    if (["true", "1", "yes", "y"].includes(v)) return true;
+    if (["false", "0", "no", "n"].includes(v)) return false;
+  }
+  return fallback;
+}
+
 function normalizeCurrencyCode(value) {
   const code = normalizeString(value).toUpperCase();
   return SUPPORTED_BUDGET_CURRENCIES.has(code) ? code : "";
@@ -383,6 +394,9 @@ function normalizeSearchArgs(args = {}) {
   const mapped = {
     budgetMin: args?.budgetMin ?? args?.budget_min,
     budgetMax: args?.budgetMax ?? args?.budget_max,
+    budgetExact: args?.budgetExact ?? args?.budget_exact,
+    exactPrice:
+      args?.exactPrice ?? args?.exact_price ?? args?.strictPriceMatch ?? args?.strict_price_match,
     budgetCurrency:
       args?.budgetCurrency ?? args?.budget_currency ?? args?.currency,
     rooms: args?.rooms,
@@ -580,10 +594,31 @@ async function searchProperties(rawArgs = {}) {
   const db = await getMongoDb();
 
   const baseAndConditions = [];
-  const budgetMin = normalizeNumber(args.budgetMin, NaN);
-  const budgetMax = normalizeNumber(args.budgetMax, NaN);
-  const hasBudgetFilter = Number.isFinite(budgetMin) || Number.isFinite(budgetMax);
+  let budgetMin = normalizeNumber(args.budgetMin, NaN);
+  let budgetMax = normalizeNumber(args.budgetMax, NaN);
+  const budgetExact = normalizeNumber(args.budgetExact, NaN);
+  const requestedExactPrice = normalizeBoolean(args.exactPrice, false) || Number.isFinite(budgetExact);
   const budgetCurrency = normalizeCurrencyCode(args.budgetCurrency) || "USD";
+  const exactPriceTarget = Number.isFinite(budgetExact)
+    ? budgetExact
+    : Number.isFinite(budgetMin) && !Number.isFinite(budgetMax)
+    ? budgetMin
+    : Number.isFinite(budgetMax) && !Number.isFinite(budgetMin)
+    ? budgetMax
+    : Number.isFinite(budgetMin) &&
+      Number.isFinite(budgetMax) &&
+      Math.abs(budgetMin - budgetMax) <= 1
+    ? budgetMin
+    : NaN;
+
+  if (requestedExactPrice && Number.isFinite(exactPriceTarget)) {
+    budgetMin = exactPriceTarget;
+    budgetMax = exactPriceTarget;
+  }
+
+  const hasBudgetFilter =
+    Number.isFinite(budgetMin) || Number.isFinite(budgetMax) || Number.isFinite(exactPriceTarget);
+  const exactPriceEnabled = requestedExactPrice && Number.isFinite(exactPriceTarget);
 
   // Budget filtering is applied after fetch so mixed listing currencies (USD/TRY/EUR)
   // can be normalized to one budget currency reliably.
@@ -677,12 +712,13 @@ async function searchProperties(rawArgs = {}) {
     return andConditions.length > 0 ? { $and: andConditions } : {};
   };
   const fetchLimit = Math.min(Math.max(normalizeNumber(args.limit, 6), 1), 20);
+  const prefetchLimit = exactPriceEnabled ? 1200 : hasBudgetFilter ? 500 : 80;
 
   let docs = await db
     .collection("Residency")
     .find(buildQuery(true))
     .sort({ createdAt: -1 })
-    .limit(40)
+    .limit(prefetchLimit)
     .toArray();
 
   // Retry with base filters if keyword matching is too strict for mixed languages.
@@ -691,13 +727,27 @@ async function searchProperties(rawArgs = {}) {
       .collection("Residency")
       .find(buildQuery(false))
       .sort({ createdAt: -1 })
-      .limit(40)
+      .limit(prefetchLimit)
       .toArray();
   }
 
   const budgetFiltered = hasBudgetFilter
     ? docs.filter((doc) => {
-        const converted = convertPrice(doc?.price, doc?.currency, budgetCurrency);
+        const sourceCurrency = normalizeCurrencyCode(doc?.currency);
+        const sourcePrice = normalizeNumber(doc?.price, NaN);
+        if (!sourceCurrency || !Number.isFinite(sourcePrice)) return false;
+
+        if (exactPriceEnabled) {
+          if (sourceCurrency === budgetCurrency) {
+            return Math.abs(sourcePrice - exactPriceTarget) <= 0.0001;
+          }
+          const convertedExact = convertPrice(sourcePrice, sourceCurrency, budgetCurrency);
+          if (!Number.isFinite(convertedExact)) return false;
+          const tolerance = budgetCurrency === "TRY" ? 1 : 0.5;
+          return Math.abs(convertedExact - exactPriceTarget) <= tolerance;
+        }
+
+        const converted = convertPrice(sourcePrice, sourceCurrency, budgetCurrency);
         if (!Number.isFinite(converted)) return false;
         if (Number.isFinite(budgetMin) && converted < budgetMin) return false;
         if (Number.isFinite(budgetMax) && converted > budgetMax) return false;
@@ -988,6 +1038,8 @@ Intents to handle:
 
 Behavior rules:
 - Extract filters where possible (budget, rooms, city/district/neighborhood/site name, delivery date, installment, feature keywords).
+- Property search must cover all property inventory records (listing and project types together).
+- If user asks exact/specific price, pass "budget_exact" and set "exact_price": true.
 - For consultant intent, call searchConsultants and return consultant profiles in "consultants".
 - For blog/legal/tax content requests, call searchBlogs and return matching posts in "blogs".
 - If user asks for property search, price, rooms, budget, payment plan, or location, do NOT call searchBlogs and keep "blogs" as [].
@@ -1244,6 +1296,8 @@ const tools = [
         properties: {
           budget_min: { type: "number" },
           budget_max: { type: "number" },
+          budget_exact: { type: "number" },
+          exact_price: { type: "boolean" },
           budget_currency: { type: "string", enum: ["USD", "TRY", "EUR"] },
           rooms: { type: "string" },
           city: { type: "string" },
@@ -1376,6 +1430,16 @@ function detectBudgetCurrencyFromText(text = "") {
   return "";
 }
 
+function hasExactPriceIntent(text = "") {
+  const value = String(text || "").toLowerCase();
+  return (
+    /\b(exact|exactly|precise|specific|same price|equal to)\b/.test(value) ||
+    /\b(tam|tam olarak|net fiyat|birebir|ayni fiyat)\b/.test(value) ||
+    /\b(точно|ровно|именно)\b/.test(value) ||
+    /\b(دقیق|دقیقا|عینا|عین|قیمت دقیق)\b/.test(value)
+  );
+}
+
 export async function runRealEstateAssistant({ message, history = [] }) {
   const userMessage = normalizeString(message);
   if (!userMessage) {
@@ -1388,6 +1452,7 @@ export async function runRealEstateAssistant({ message, history = [] }) {
   const safeHistory = normalizeHistory(history);
   const fallback = FALLBACK_MESSAGES[language] || FALLBACK_MESSAGES.en;
   const inferredBudgetCurrency = detectBudgetCurrencyFromText(userMessage);
+  const exactPriceIntent = hasExactPriceIntent(userMessage);
 
   const openai = getOpenAIClient();
   const messages = [
@@ -1485,13 +1550,51 @@ export async function runRealEstateAssistant({ message, history = [] }) {
         const hasBudget =
           args?.budget_min !== undefined ||
           args?.budget_max !== undefined ||
+          args?.budget_exact !== undefined ||
           args?.budgetMin !== undefined ||
-          args?.budgetMax !== undefined;
+          args?.budgetMax !== undefined ||
+          args?.budgetExact !== undefined;
 
         let searchArgs =
           hasBudget && inferredBudgetCurrency && !args?.budget_currency && !args?.budgetCurrency
             ? { ...args, budget_currency: inferredBudgetCurrency }
             : args;
+
+        if (exactPriceIntent) {
+          const exactCandidate = normalizeNumber(
+            searchArgs?.budget_exact ?? searchArgs?.budgetExact,
+            NaN
+          );
+          const minCandidate = normalizeNumber(
+            searchArgs?.budget_min ?? searchArgs?.budgetMin,
+            NaN
+          );
+          const maxCandidate = normalizeNumber(
+            searchArgs?.budget_max ?? searchArgs?.budgetMax,
+            NaN
+          );
+          const resolvedExact = Number.isFinite(exactCandidate)
+            ? exactCandidate
+            : Number.isFinite(minCandidate) && !Number.isFinite(maxCandidate)
+            ? minCandidate
+            : Number.isFinite(maxCandidate) && !Number.isFinite(minCandidate)
+            ? maxCandidate
+            : Number.isFinite(minCandidate) &&
+              Number.isFinite(maxCandidate) &&
+              Math.abs(minCandidate - maxCandidate) <= 1
+            ? minCandidate
+            : NaN;
+
+          searchArgs = {
+            ...searchArgs,
+            exact_price: true,
+          };
+          if (Number.isFinite(resolvedExact)) {
+            searchArgs.budget_exact = resolvedExact;
+            searchArgs.budget_min = resolvedExact;
+            searchArgs.budget_max = resolvedExact;
+          }
+        }
 
         const hasExplicitLocation =
           normalizeString(searchArgs?.city) ||
