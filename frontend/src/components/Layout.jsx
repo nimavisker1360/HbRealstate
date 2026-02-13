@@ -31,6 +31,7 @@ const Layout = () => {
     location.pathname === "/listing" ||
     location.pathname === "/admin" ||
     location.pathname === "/addresses" ||
+    location.pathname === "/special-offers" ||
     location.pathname.startsWith("/projects") ||
     location.pathname.startsWith("/blog");
 

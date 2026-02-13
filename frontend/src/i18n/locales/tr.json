@@ -83,6 +83,7 @@
     "home": "Ana Sayfa",
     "homeSubtitle": "SAGLAM DANISMANLIK",
     "listing": "İlanlar",
+    "featuredProperties": "Özel Fırsatlar",
     "forSale": "Satılık",
     "projects": "Projeler",
     "citizenship": "Turk Vatandasligi",
@@ -771,5 +772,3 @@
     "location": "İletişim"
   }
 }
-
-

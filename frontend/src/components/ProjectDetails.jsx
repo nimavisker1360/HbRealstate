@@ -176,6 +176,7 @@ const ProjectDetails = ({
   const { data: consultants, isLoading: consultantsLoading } = useConsultants();
   const { convertAmount } = useContext(CurrencyContext);
   const floorPlanBaseCurrency = normalizeFiatCurrency(propertyDetails.currency);
+  const isSpecialOffer = propertyDetails.propertyType === "special-offer";
 
   const form = useForm({
     initialValues: {
@@ -215,6 +216,31 @@ const ProjectDetails = ({
       vaziyetPlani: propertyDetails.vaziyetPlani || "",
       // Harita Görseli
       mapImage: propertyDetails.mapImage || "",
+      specialOfferTitle:
+        propertyDetails.projeHakkinda?.specialOffer?.title ||
+        propertyDetails.projectName ||
+        "",
+      specialOfferRoomType:
+        propertyDetails.projeHakkinda?.specialOffer?.roomType ||
+        propertyDetails.dairePlanlari?.[0]?.tip ||
+        "",
+      specialOfferAreaM2:
+        propertyDetails.projeHakkinda?.specialOffer?.areaM2 ||
+        propertyDetails.dairePlanlari?.[0]?.metrekare ||
+        0,
+      specialOfferPriceUSD:
+        propertyDetails.projeHakkinda?.specialOffer?.priceUSD ||
+        propertyDetails.dairePlanlari?.[0]?.fiyatUSD ||
+        propertyDetails.dairePlanlari?.[0]?.fiyat ||
+        0,
+      specialOfferDownPaymentPercent:
+        propertyDetails.projeHakkinda?.specialOffer?.downPaymentPercent || 0,
+      specialOfferInstallmentMonths:
+        propertyDetails.projeHakkinda?.specialOffer?.installmentMonths || 0,
+      specialOfferLocationLabel:
+        propertyDetails.projeHakkinda?.specialOffer?.locationLabel || "",
+      specialOfferLocationMinutes:
+        propertyDetails.projeHakkinda?.specialOffer?.locationMinutes || 0,
       // Özellikler
       binaOzellikleri: propertyDetails.ozellikler?.binaOzellikleri || [],
       disOzellikler: propertyDetails.ozellikler?.disOzellikler || [],
@@ -376,9 +402,85 @@ const ProjectDetails = ({
   };
 
   const handleSubmit = () => {
+    const specialPriceUSD = toRoundedPrice(form.values.specialOfferPriceUSD);
+    const specialAreaM2 = Number(form.values.specialOfferAreaM2) || 0;
+    const specialDownPaymentPercent =
+      Number(form.values.specialOfferDownPaymentPercent) || 0;
+    const specialInstallmentMonths =
+      Number(form.values.specialOfferInstallmentMonths) || 0;
+    const specialLocationLabel = String(
+      form.values.specialOfferLocationLabel || ""
+    ).trim();
+    const specialLocationMinutes =
+      Number(form.values.specialOfferLocationMinutes) || 0;
+
+    const projectNameValue = isSpecialOffer
+      ? form.values.specialOfferTitle || form.values.projectName
+      : form.values.projectName;
+
+    let nextFloorPlans = [...form.values.dairePlanlari];
+    if (
+      isSpecialOffer &&
+      (form.values.specialOfferRoomType || specialAreaM2 > 0 || specialPriceUSD > 0)
+    ) {
+      const firstPlan = nextFloorPlans[0]
+        ? { ...nextFloorPlans[0] }
+        : {
+            id: Date.now(),
+            varyant: "",
+            image: "",
+          };
+
+      firstPlan.tip = form.values.specialOfferRoomType || firstPlan.tip || "";
+      firstPlan.metrekare = specialAreaM2 || firstPlan.metrekare || 0;
+      firstPlan.currency = "USD";
+      firstPlan.fiyatUSD = specialPriceUSD;
+      firstPlan.fiyatEUR = toRoundedPrice(
+        convertAmount(specialPriceUSD, "USD", "EUR")
+      );
+      firstPlan.fiyatTRY = toRoundedPrice(
+        convertAmount(specialPriceUSD, "USD", "TRY")
+      );
+      firstPlan.fiyat = specialPriceUSD;
+
+      if (nextFloorPlans.length > 0) {
+        nextFloorPlans[0] = firstPlan;
+      } else {
+        nextFloorPlans = [firstPlan];
+      }
+    }
+
+    let nextYakinMesafeler = form.values.yakinMesafeler.filter(
+      (m) => m.yer.trim() !== ""
+    );
+    if (isSpecialOffer && specialLocationLabel) {
+      nextYakinMesafeler = [
+        ...nextYakinMesafeler.filter(
+          (item) =>
+            String(item?.yer || "").trim().toLowerCase() !==
+            specialLocationLabel.toLowerCase()
+        ),
+        {
+          yer: specialLocationLabel,
+          mesafe: `${specialLocationMinutes} min`,
+        },
+      ];
+    }
+
+    const generatedCampaign = [];
+    if (specialDownPaymentPercent > 0) {
+      generatedCampaign.push(`${specialDownPaymentPercent}% down payment`);
+    }
+    if (specialInstallmentMonths > 0) {
+      generatedCampaign.push(`${specialInstallmentMonths} months installments`);
+    }
+
     setPropertyDetails((prev) => ({
       ...prev,
-      projectName: form.values.projectName,
+      title: isSpecialOffer ? projectNameValue || prev.title : prev.title,
+      projectName: projectNameValue,
+      price: isSpecialOffer ? specialPriceUSD : prev.price,
+      currency: isSpecialOffer ? "USD" : prev.currency,
       ilanNo: form.values.ilanNo,
       consultantId: form.values.consultantId || null,
       projeHakkinda: {
@@ -393,9 +495,23 @@ const ProjectDetails = ({
         description_tr: form.values.projeAciklama_tr,
         description_en: form.values.projeAciklama_en,
         description_ru: form.values.projeAciklama_ru,
-        yakinMesafeler: form.values.yakinMesafeler.filter((m) => m.yer.trim() !== ""),
+        yakinMesafeler: nextYakinMesafeler,
+        specialOffer: isSpecialOffer
+          ? {
+              title: projectNameValue || "",
+              roomType: form.values.specialOfferRoomType || "",
+              areaM2: specialAreaM2,
+              priceUSD: specialPriceUSD,
+              downPaymentPercent: specialDownPaymentPercent,
+              installmentMonths: specialInstallmentMonths,
+              locationLabel: specialLocationLabel,
+              locationMinutes: specialLocationMinutes,
+            }
+          : prev.projeHakkinda?.specialOffer || null,
       },
-      kampanya: form.values.kampanya,
+      kampanya:
+        form.values.kampanya ||
+        (isSpecialOffer ? generatedCampaign.join(" - ") : ""),
       deliveryDate: form.values.deliveryDate,
       projectStatus: form.values.projectStatus,
       gyo: form.values.gyo,
@@ -404,7 +520,7 @@ const ProjectDetails = ({
         bathrooms: form.values.bathrooms || 0,
         parkings: form.values.parkings || 0,
       },
-      dairePlanlari: form.values.dairePlanlari,
+      dairePlanlari: nextFloorPlans,
       vaziyetPlani: form.values.vaziyetPlani,
       mapImage: form.values.mapImage,
       ozellikler: {
@@ -437,6 +553,89 @@ const ProjectDetails = ({
             handleSubmit();
           }}
         >
+          {isSpecialOffer && (
+            <Paper p="lg" withBorder mb="lg" className="bg-red-50">
+              <div className="flex items-center gap-2 mb-4">
+                <Text fw={700} size="lg" c="red">
+                  Special Offer
+                </Text>
+              </div>
+
+              <Grid>
+                <Grid.Col span={6}>
+                  <TextInput
+                    label="Offer Title"
+                    placeholder="TOPKAPI"
+                    {...form.getInputProps("specialOfferTitle")}
+                  />
+                </Grid.Col>
+                <Grid.Col span={3}>
+                  <TextInput
+                    label="Unit Type"
+                    placeholder="1+1"
+                    {...form.getInputProps("specialOfferRoomType")}
+                  />
+                </Grid.Col>
+                <Grid.Col span={3}>
+                  <NumberInput
+                    label="Area (m2)"
+                    placeholder="69"
+                    min={0}
+                    {...form.getInputProps("specialOfferAreaM2")}
+                  />
+                </Grid.Col>
+              </Grid>
+
+              <Grid mt="sm">
+                <Grid.Col span={3}>
+                  <NumberInput
+                    label="Price (USD)"
+                    placeholder="299000"
+                    min={0}
+                    thousandSeparator="."
+                    decimalSeparator=","
+                    {...form.getInputProps("specialOfferPriceUSD")}
+                  />
+                </Grid.Col>
+                <Grid.Col span={3}>
+                  <NumberInput
+                    label="Down Payment (%)"
+                    placeholder="50"
+                    min={0}
+                    max={100}
+                    {...form.getInputProps("specialOfferDownPaymentPercent")}
+                  />
+                </Grid.Col>
+                <Grid.Col span={3}>
+                  <NumberInput
+                    label="Installment (Months)"
+                    placeholder="18"
+                    min={0}
+                    {...form.getInputProps("specialOfferInstallmentMonths")}
+                  />
+                </Grid.Col>
+                <Grid.Col span={3}>
+                  <TextInput
+                    label="Location Label"
+                    placeholder="E5"
+                    {...form.getInputProps("specialOfferLocationLabel")}
+                  />
+                </Grid.Col>
+              </Grid>
+
+              <Grid mt="sm">
+                <Grid.Col span={3}>
+                  <NumberInput
+                    label="Location Minutes"
+                    placeholder="0"
+                    min={0}
+                    {...form.getInputProps("specialOfferLocationMinutes")}
+                  />
+                </Grid.Col>
+              </Grid>
+            </Paper>
+          )}
+
 {/* İLAN NUMARASI (Listing Number) */}
           <Paper p="lg" withBorder mb="lg" className="bg-orange-50">
             <div className="flex items-center gap-2 mb-4">

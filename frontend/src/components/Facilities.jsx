@@ -9,6 +9,7 @@ import { toast } from "react-toastify";
 import { bilingualFromMessage, bilingualKey } from "../utils/bilingualToast";
 import { createResidency } from "../utils/api";
 import PropTypes from "prop-types";
+import { useNavigate } from "react-router-dom";
 
 const getDefaultFiatCurrency = () => {
   const currency = String(
@@ -47,6 +48,7 @@ const Facilities = ({
 
   //   Upload
   const { user } = useAuth0();
+  const navigate = useNavigate();
   const {
     userDetails: { token },
   } = useContext(UserDetailContext);
@@ -135,6 +137,12 @@ const Facilities = ({
 
       if (isPageMode) {
         // For page mode (admin panel)
+        if (propertyDetails.propertyType === "special-offer") {
+          if (onSuccess) onSuccess();
+          navigate("/special-offers");
+          refetchProperties();
+          return;
+        }
         setActiveStep(4); // Go to completed step
         if (onSuccess) onSuccess();
       } else {

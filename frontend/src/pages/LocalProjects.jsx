@@ -1,6 +1,7 @@
 ﻿import { useState, useMemo, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import PropTypes from "prop-types";
 import {
   Container,
   Button,
@@ -176,7 +177,7 @@ const PROJECT_STATUS = [
   { value: "tamamlandi", label: "Tamamlandı" },
 ];
 
-const LocalProjects = () => {
+const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
   const navigate = useNavigate();
   const { selectedCurrency, baseCurrency, rates, convertAmount, formatMoney } =
     useContext(CurrencyContext);
@@ -186,6 +187,7 @@ const LocalProjects = () => {
       : baseCurrency;
   const { t, i18n } = useTranslation();
   const { data: allProperties, isLoading } = useProperties();
+  const isSpecialOffersPage = projectType === "special-offer";
 
   // Filter local projects from all properties
   const localProjects = useMemo(() => {
@@ -193,27 +195,61 @@ const LocalProjects = () => {
     
     // Only filter properties with propertyType === "local-project"
     const filtered = allProperties.filter((p) => {
-      return p.propertyType === "local-project";
+      return p.propertyType === projectType;
     });
     
     return filtered.map((p) => {
-      // Calculate starting price from floor plans if main price is 0
-      const floorPlanPrices = p.dairePlanlari?.map((d) => d.fiyat || 0).filter(price => price > 0) || [];
-      const startingPrice = p.price > 0 ? p.price : (floorPlanPrices.length > 0 ? Math.min(...floorPlanPrices) : 0);
-      
+      const specialOffer = p.projeHakkinda?.specialOffer || {};
+      const floorPlanPrices =
+        p.dairePlanlari
+          ?.map((d) => Number(d.fiyat || d.fiyatUSD || 0))
+          .filter((price) => price > 0) || [];
+      const specialOfferPrice = Number(specialOffer.priceUSD || 0);
+      const startingPrice =
+        Number(p.price || 0) > 0
+          ? Number(p.price || 0)
+          : specialOfferPrice > 0
+          ? specialOfferPrice
+          : floorPlanPrices.length > 0
+          ? Math.min(...floorPlanPrices)
+          : 0;
+      const startingCurrency =
+        Number(p.price || 0) > 0
+          ? p.currency || baseCurrency
+          : specialOfferPrice > 0
+          ? "USD"
+          : p.currency || baseCurrency;
+
+      const roomTypes = [
+        ...(p.dairePlanlari?.map((d) => d.tip).filter(Boolean) || []),
+        ...(specialOffer.roomType ? [specialOffer.roomType] : []),
+      ].filter((value, index, arr) => arr.indexOf(value) === index);
+
+      const areaValues = [
+        ...(p.dairePlanlari?.map((d) => Number(d.metrekare || 0)) || []),
+        ...(Number(specialOffer.areaM2 || 0) > 0
+          ? [Number(specialOffer.areaM2)]
+          : []),
+      ].filter((value) => value > 0);
+
+      const areaMin = areaValues.length > 0 ? Math.min(...areaValues) : 0;
+      const areaMax = areaValues.length > 0 ? Math.max(...areaValues) : 0;
+
       return {
         id: p.id,
-        name: p.title,
+        name: specialOffer.title || p.title,
         city: p.city || "",
         district: p.address || "",
         address: p.address || "",
-        rooms: p.dairePlanlari?.map((d) => d.tip).filter((v, i, a) => a.indexOf(v) === i) || [],
-        areaMin: Math.min(...(p.dairePlanlari?.map((d) => d.metrekare) || [0])),
-        areaMax: Math.max(...(p.dairePlanlari?.map((d) => d.metrekare) || [0])),
+        rooms: roomTypes,
+        areaMin,
+        areaMax,
         price: startingPrice,
+        currency: startingCurrency,
         deliveryDate: p.deliveryDate || "",
         status: p.projectStatus || "devam-ediyor",
         image: p.images?.[0] || "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400&h=300&fit=crop",
+        propertyType: p.propertyType,
         projeHakkinda: p.projeHakkinda,
         dairePlanlari: p.dairePlanlari,
         vaziyetPlani: p.vaziyetPlani,
@@ -221,9 +257,19 @@ const LocalProjects = () => {
         kampanya: p.kampanya,
         mapImage: p.mapImage,
         gyo: Boolean(p.gyo),
+        specialOffer: {
+          title: specialOffer.title || p.projectName || p.title || "",
+          roomType: specialOffer.roomType || roomTypes[0] || "",
+          areaM2: Number(specialOffer.areaM2 || areaMin || 0),
+          priceUSD: specialOfferPrice || startingPrice || 0,
+          downPaymentPercent: Number(specialOffer.downPaymentPercent || 0),
+          installmentMonths: Number(specialOffer.installmentMonths || 0),
+          locationLabel: specialOffer.locationLabel || "",
+          locationMinutes: Number(specialOffer.locationMinutes || 0),
+        },
       };
     });
-  }, [allProperties]);
+  }, [allProperties, projectType, baseCurrency]);
 
   // Filter states
   const [selectedCity, setSelectedCity] = useState("");
@@ -355,6 +401,17 @@ const LocalProjects = () => {
         if (!matchesDistrict) return false;
       }
 
+      // Filter by room types
+      if (selectedRooms.length > 0) {
+        const projectRooms = (project.rooms || []).map((room) =>
+          String(room || "").trim()
+        );
+        const matchesRoom = selectedRooms.some((room) =>
+          projectRooms.some((projectRoom) => projectRoom.includes(room))
+        );
+        if (!matchesRoom) return false;
+      }
+
       // Filter by project status
       if (projectStatus && project.status !== projectStatus) {
         return false;
@@ -362,7 +419,7 @@ const LocalProjects = () => {
 
       return true;
     });
-  }, [localProjects, selectedCity, selectedDistricts, projectStatus]);
+  }, [localProjects, selectedCity, selectedDistricts, selectedRooms, projectStatus]);
 
   return (
     <div className="min-h-screen pt-24 pb-16 bg-[#f7f3ea]">
@@ -382,7 +439,7 @@ const LocalProjects = () => {
           {/* Content */}
           <div className="relative h-full flex flex-col items-center justify-center px-4 py-6 md:py-4">
             <h1 className="text-white text-xl md:text-2xl font-medium mb-6 text-center drop-shadow-lg">
-              {t("localProjects.heroTitle")}
+              {heroTitle || (isSpecialOffersPage ? t("nav.featuredProperties") : t("localProjects.heroTitle"))}
             </h1>
 
             {/* Search Box */}
@@ -674,21 +731,109 @@ const LocalProjects = () => {
           {filteredProjects.map((project) => (
               <div
                 key={project.id}
-                className="bg-white rounded-md overflow-hidden hover:shadow-md transition-shadow cursor-pointer border border-gray-200"
+                className={`overflow-hidden transition-shadow cursor-pointer border ${
+                  isSpecialOffersPage
+                    ? "bg-white rounded-xl border-rose-200 hover:shadow-lg hover:shadow-rose-100"
+                    : "bg-white rounded-md border-gray-200 hover:shadow-md"
+                }`}
                 onClick={() => navigate(`/projects/${project.id}`)}
               >
-                <div className="flex flex-col md:flex-row">
+                <div className={`flex flex-col md:flex-row ${isSpecialOffersPage ? "relative" : ""}`}>
                   {/* Project Image */}
-                  <div className="w-full md:w-40 h-32 md:h-24 flex-shrink-0">
+                  <div className={`w-full flex-shrink-0 ${isSpecialOffersPage ? "md:w-52 h-32 md:h-24" : "md:w-40 h-32 md:h-24"}`}>
                     <img
                       src={project.image}
                       alt={project.name}
                       className="w-full h-full object-cover"
                     />
+                    {isSpecialOffersPage && (
+                      <div className="absolute left-3 top-3 rounded-md bg-rose-600 px-2.5 py-1 text-[11px] font-bold tracking-wide text-white">
+                        SPECIAL OFFER
+                      </div>
+                    )}
                   </div>
 
                   {/* Project Info */}
-                  <div className="flex-1 p-3">
+                  <div className={`flex-1 ${isSpecialOffersPage ? "p-3" : "p-3"}`}>
+                    {isSpecialOffersPage ? (
+                      <>
+                        <div className="mb-2 flex flex-wrap items-center gap-5 text-sm text-gray-600">
+                          <div className="flex items-center gap-1">
+                            <svg className="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/projects/${project.id}`);
+                              }}
+                              className="text-blue-500 underline hover:text-blue-600 transition-colors"
+                            >
+                              {project.city}, {project.district}
+                            </button>
+                          </div>
+
+                          <div className="flex items-center gap-1">
+                            <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                            <span>{project.specialOffer?.roomType || project.rooms.join(" ") || "-"}</span>
+                          </div>
+
+                          <div className="flex items-center gap-1">
+                            <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                            </svg>
+                            <span>
+                              {project.specialOffer?.areaM2 > 0
+                                ? `${project.specialOffer.areaM2} m²`
+                                : project.areaMin === project.areaMax
+                                ? `${project.areaMin} m²`
+                                : `${project.areaMin} - ${project.areaMax} m²`}{" "}
+                              <span className="text-gray-400">({t("localProjects.gross")})</span>
+                            </span>
+                          </div>
+                        </div>
+
+                        {project.kampanya && (
+                          <div className="mb-2 flex justify-end">
+                            <div className="line-clamp-1 text-right text-base font-extrabold text-rose-700">
+                              {project.kampanya}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-between">
+                          <div>
+                            {project.price > 0 ? (
+                              <>
+                                <span className="text-gray-500 font-normal">{t("localProjects.startingFrom", "Başlangıç")}: </span>
+                                <span className="text-sm font-semibold text-gray-800">
+                                  {formatMoney(
+                                    convertAmount(
+                                      project.price,
+                                      project.currency || "USD",
+                                      "TRY"
+                                    ),
+                                    "TRY",
+                                    "tr-TR"
+                                  )}
+                                </span>
+                              </>
+                            ) : (
+                              <span className="text-gray-500">
+                                {t("localProjects.contactForPrice", "Fiyat için iletişime geçin")}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {project.deliveryDate}
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
                     {/* Top Row: Location, Rooms, Area */}
                     <div className="flex flex-wrap items-center gap-6 text-sm text-gray-600 mb-2">
                       {/* Location */}
@@ -713,7 +858,7 @@ const LocalProjects = () => {
                         <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                         </svg>
-                        <span>{project.rooms.join(" ")}</span>
+                        <span>{project.rooms.join(" ") || "-"}</span>
                       </div>
 
                       {/* Area */}
@@ -754,6 +899,8 @@ const LocalProjects = () => {
                         {project.deliveryDate}
                       </div>
                     </div>
+                      </>
+                    )}
                   </div>
                   {project.gyo && (
                     <div className="flex items-center justify-end md:justify-center px-3 pb-3 md:pb-0">
@@ -779,5 +926,9 @@ const LocalProjects = () => {
   );
 };
 
-export default LocalProjects;
+LocalProjects.propTypes = {
+  projectType: PropTypes.string,
+  heroTitle: PropTypes.string,
+};
 
+export default LocalProjects;

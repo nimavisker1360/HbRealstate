@@ -317,6 +317,11 @@ const Navbar = ({
     closeMenu && closeMenu();
   };
 
+  const handleFeaturedPropertiesClick = () => {
+    navigate("/special-offers");
+    closeMenu && closeMenu();
+  };
+
   return (
     <nav
       className={`${containerStyles} flex flex-col lg:flex-row lg:items-center`}
@@ -461,6 +466,16 @@ const Navbar = ({
           <span>{t("nav.listing")}</span>
         </div>
       </NavLink>
+
+      <button
+        type="button"
+        className={`${simpleButtonClass(
+          location.pathname === "/special-offers"
+        )} text-secondaryRed hover:text-secondaryRed`}
+        onClick={handleFeaturedPropertiesClick}
+      >
+        <span>{t("nav.featuredProperties")}</span>
+      </button>
 
       {/* For Sale with Dropdown */}
       <div

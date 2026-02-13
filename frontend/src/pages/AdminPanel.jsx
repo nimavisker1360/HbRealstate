@@ -189,7 +189,7 @@ const AdminPanel = () => {
     isLoading: propertiesLoading,
     refetch: refetchProperties,
   } = useProperties();
-  const [propertyFilter, setPropertyFilter] = useState("all"); // all, sale, local-project, international-project
+  const [propertyFilter, setPropertyFilter] = useState("all"); // all, sale, local-project, international-project, special-offer
   const [editModalOpened, setEditModalOpened] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [deleteModalOpened, setDeleteModalOpened] = useState(false);
@@ -1317,9 +1317,10 @@ const AdminPanel = () => {
     gyo: false,
   });
 
-  // Check if current property type is local-project or international-project
+  // Check if current property type is local-project, international-project or special-offer
   const isLocalProject = propertyDetails.propertyType === "local-project";
   const isInternationalProject = propertyDetails.propertyType === "international-project";
+  const isSpecialOffer = propertyDetails.propertyType === "special-offer";
 
   // Fetch all bookings
   const fetchBookings = useCallback(async () => {
@@ -2472,6 +2473,14 @@ const AdminPanel = () => {
               >
                 Yurt Dışı Projeler ({properties?.filter((p) => p.propertyType === "international-project").length || 0})
               </Button>
+              <Button
+                variant={propertyFilter === "special-offer" ? "filled" : "light"}
+                color="red"
+                size="sm"
+                onClick={() => setPropertyFilter("special-offer")}
+              >
+                Special Offers ({properties?.filter((p) => p.propertyType === "special-offer").length || 0})
+              </Button>
             </div>
 
             <Divider className="mb-6" />
@@ -2548,7 +2557,9 @@ const AdminPanel = () => {
                                 ? "green"
                                 : property.propertyType === "local-project"
                                 ? "blue"
-                                : "grape"
+                                : property.propertyType === "international-project"
+                                ? "grape"
+                                : "red"
                             }
                             variant="light"
                           >
@@ -2556,7 +2567,9 @@ const AdminPanel = () => {
                               ? "SATILIK"
                               : property.propertyType === "local-project"
                               ? "YURT İÇİ PROJE"
-                              : "YURT DIŞI PROJE"}
+                              : property.propertyType === "international-project"
+                              ? "YURT DIŞI PROJE"
+                              : "SPECIAL OFFER"}
                           </Badge>
                         </Table.Td>
                         <Table.Td>
@@ -2608,7 +2621,8 @@ const AdminPanel = () => {
                               onClick={() =>
                                 navigate(
                                   property.propertyType === "local-project" ||
-                                    property.propertyType === "international-project"
+                                    property.propertyType === "international-project" ||
+                                    property.propertyType === "special-offer"
                                     ? `/projects/${property.id}`
                                     : `/listing/${property.id}`
                                 )
@@ -2653,6 +2667,14 @@ const AdminPanel = () => {
                       {
                         properties.filter(
                           (p) => p.propertyType === "international-project"
+                        ).length
+                      }
+                    </Text>
+                    <Text size="sm" color="dimmed">
+                      Special Offer:{" "}
+                      {
+                        properties.filter(
+                          (p) => p.propertyType === "special-offer"
                         ).length
                       }
                     </Text>
@@ -3474,7 +3496,15 @@ const AdminPanel = () => {
             <Divider className="mb-6" />
 
             <Stepper
-              key={isLocalProject ? "local-project-stepper" : isInternationalProject ? "international-project-stepper" : "regular-stepper"}
+              key={
+                isLocalProject
+                  ? "local-project-stepper"
+                  : isInternationalProject
+                  ? "international-project-stepper"
+                  : isSpecialOffer
+                  ? "special-offer-stepper"
+                  : "regular-stepper"
+              }
               active={active}
               onStepClick={setActive}
               breakpoint="sm"
@@ -3503,7 +3533,7 @@ const AdminPanel = () => {
               </Stepper.Step>
 
               {/* Skip Detaylar for local projects - go directly to Proje Detayları */}
-              {!isLocalProject && (
+              {!isLocalProject && !isSpecialOffer && (
                 <Stepper.Step label="Detaylar" description="Ana özellikler">
                   <div className="mt-6">
                     <BasicDetails
@@ -3516,7 +3546,7 @@ const AdminPanel = () => {
                 </Stepper.Step>
               )}
 
-              {(isLocalProject || isInternationalProject) && (
+              {(isLocalProject || isInternationalProject || isSpecialOffer) && (
                 <Stepper.Step label="Proje Detayları" description="Proje bilgileri">
                   <div className="mt-6">
                     <ProjectDetails

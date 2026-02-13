@@ -47,6 +47,7 @@ import {
   MdExpandLess,
   MdLocationCity,
   MdPublic,
+  MdLocalOffer,
   MdDragIndicator,
   MdVideocam,
   MdPlayCircleOutline,
@@ -520,6 +521,18 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
   const [projectStatus, setProjectStatus] = useState("devam-ediyor");
   const [gyo, setGyo] = useState(false);
   const [mapImage, setMapImage] = useState("");
+  const [specialOfferTitle, setSpecialOfferTitle] = useState("");
+  const [specialOfferRoomType, setSpecialOfferRoomType] = useState("");
+  const [specialOfferAreaM2, setSpecialOfferAreaM2] = useState(0);
+  const [specialOfferPriceUSD, setSpecialOfferPriceUSD] = useState(0);
+  const [specialOfferDownPaymentPercent, setSpecialOfferDownPaymentPercent] =
+    useState(0);
+  const [specialOfferInstallmentMonths, setSpecialOfferInstallmentMonths] =
+    useState(0);
+  const [specialOfferLocationLabel, setSpecialOfferLocationLabel] =
+    useState("");
+  const [specialOfferLocationMinutes, setSpecialOfferLocationMinutes] =
+    useState(0);
   
   // Project-specific features
   const [projeBinaOzellikleri, setProjeBinaOzellikleri] = useState([]);
@@ -718,6 +731,41 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
       setProjectStatus(property.projectStatus || "devam-ediyor");
       setGyo(Boolean(property.gyo));
       setMapImage(property.mapImage || "");
+      setSpecialOfferTitle(
+        property.projeHakkinda?.specialOffer?.title || property.projectName || ""
+      );
+      setSpecialOfferRoomType(
+        property.projeHakkinda?.specialOffer?.roomType ||
+          property.dairePlanlari?.[0]?.tip ||
+          ""
+      );
+      setSpecialOfferAreaM2(
+        Number(
+          property.projeHakkinda?.specialOffer?.areaM2 ||
+            property.dairePlanlari?.[0]?.metrekare ||
+            0
+        ) || 0
+      );
+      setSpecialOfferPriceUSD(
+        toRoundedPrice(
+          property.projeHakkinda?.specialOffer?.priceUSD ||
+            property.dairePlanlari?.[0]?.fiyatUSD ||
+            property.dairePlanlari?.[0]?.fiyat ||
+            0
+        )
+      );
+      setSpecialOfferDownPaymentPercent(
+        Number(property.projeHakkinda?.specialOffer?.downPaymentPercent) || 0
+      );
+      setSpecialOfferInstallmentMonths(
+        Number(property.projeHakkinda?.specialOffer?.installmentMonths) || 0
+      );
+      setSpecialOfferLocationLabel(
+        property.projeHakkinda?.specialOffer?.locationLabel || ""
+      );
+      setSpecialOfferLocationMinutes(
+        Number(property.projeHakkinda?.specialOffer?.locationMinutes) || 0
+      );
       
       // Project-specific features
       setProjeBinaOzellikleri(property.projeBinaOzellikleri || property.binaOzellikleri || []);
@@ -729,6 +777,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
       setProjeMuhit(property.projeMuhit || property.muhit || []);
       
       setProjeHakkinda({
+        ...(property.projeHakkinda || {}),
         projeAlani: property.projeHakkinda?.projeAlani || 0,
         yesilAlan: property.projeHakkinda?.yesilAlan || 0,
         konutSayisi: property.projeHakkinda?.konutSayisi || 0,
@@ -981,7 +1030,10 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
     const { hasErrors } = form.validate();
     if (hasErrors) return;
 
-    const isProject = form.values.propertyType === "local-project" || form.values.propertyType === "international-project";
+    const isProject =
+      form.values.propertyType === "local-project" ||
+      form.values.propertyType === "international-project" ||
+      form.values.propertyType === "special-offer";
 
     if (imageURLs.length === 0 && !isProject) {
       toast.error(bilingualKey("toast.imageRequired"), {
@@ -991,11 +1043,100 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
     }
 
     const values = form.values;
+    const isProjectType =
+      values.propertyType === "local-project" ||
+      values.propertyType === "international-project" ||
+      values.propertyType === "special-offer";
+    const isSpecialOfferType = values.propertyType === "special-offer";
     const normalizedCurrency = normalizeFiatCurrency(values.currency);
     const normalizedPrice = Math.round(Number(values.price || 0));
+    const specialOfferTitleValue = String(
+      specialOfferTitle || projectName || ""
+    ).trim();
+    const specialOfferRoomTypeValue = String(specialOfferRoomType || "").trim();
+    const specialOfferAreaValue = Number(specialOfferAreaM2) || 0;
+    const specialOfferPriceValue = toRoundedPrice(specialOfferPriceUSD);
+    const specialOfferDownPaymentValue =
+      Number(specialOfferDownPaymentPercent) || 0;
+    const specialOfferInstallmentValue =
+      Number(specialOfferInstallmentMonths) || 0;
+    const specialOfferLocationLabelValue = String(
+      specialOfferLocationLabel || ""
+    ).trim();
+    const specialOfferLocationMinutesValue =
+      Number(specialOfferLocationMinutes) || 0;
+
+    let nextDairePlanlari = [...dairePlanlari];
+    if (
+      isSpecialOfferType &&
+      (specialOfferRoomTypeValue ||
+        specialOfferAreaValue > 0 ||
+        specialOfferPriceValue > 0 ||
+        nextDairePlanlari.length > 0)
+    ) {
+      const firstPlan = nextDairePlanlari[0]
+        ? { ...nextDairePlanlari[0] }
+        : {
+            id: Date.now(),
+            varyant: "",
+            image: "",
+          };
+
+      firstPlan.tip = specialOfferRoomTypeValue || firstPlan.tip || "";
+      firstPlan.metrekare = specialOfferAreaValue || firstPlan.metrekare || 0;
+      firstPlan.currency = "USD";
+      firstPlan.fiyatUSD = specialOfferPriceValue;
+      firstPlan.fiyatEUR = toRoundedPrice(
+        convertAmount(specialOfferPriceValue, "USD", "EUR")
+      );
+      firstPlan.fiyatTRY = toRoundedPrice(
+        convertAmount(specialOfferPriceValue, "USD", "TRY")
+      );
+      firstPlan.fiyat = specialOfferPriceValue;
+
+      if (nextDairePlanlari.length > 0) {
+        nextDairePlanlari[0] = firstPlan;
+      } else {
+        nextDairePlanlari = [firstPlan];
+      }
+    }
+
+    const generatedCampaign = [];
+    if (specialOfferDownPaymentValue > 0) {
+      generatedCampaign.push(`${specialOfferDownPaymentValue}% down payment`);
+    }
+    if (specialOfferInstallmentValue > 0) {
+      generatedCampaign.push(
+        `${specialOfferInstallmentValue} months installments`
+      );
+    }
+    const generatedCampaignText = generatedCampaign.join(" - ");
+
+    const nextProjeHakkinda = isProjectType
+      ? {
+          ...projeHakkinda,
+          specialOffer: isSpecialOfferType
+            ? {
+                title: specialOfferTitleValue,
+                roomType: specialOfferRoomTypeValue,
+                areaM2: specialOfferAreaValue,
+                priceUSD: specialOfferPriceValue,
+                downPaymentPercent: specialOfferDownPaymentValue,
+                installmentMonths: specialOfferInstallmentValue,
+                locationLabel: specialOfferLocationLabelValue,
+                locationMinutes: specialOfferLocationMinutesValue,
+              }
+            : projeHakkinda?.specialOffer || null,
+        }
+      : null;
+
     const data = {
       // For projects, keep existing values; for sale, use form values
-      title: isProject ? (property?.title || values.title) : values.title,
+      title: isProject
+        ? isSpecialOfferType
+          ? specialOfferTitleValue || property?.title || values.title
+          : property?.title || values.title
+        : values.title,
       description: isProject
         ? (
             projeHakkinda?.description_tr ||
@@ -1014,9 +1155,15 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
       description_ru: isProject
         ? (projeHakkinda?.description_ru || property?.description_ru)
         : values.description_ru,
-      price: isProject ? (property?.price || 0) : normalizedPrice,
+      price: isProject
+        ? isSpecialOfferType
+          ? specialOfferPriceValue || property?.price || 0
+          : property?.price || 0
+        : normalizedPrice,
       currency: isProject
-        ? normalizeFiatCurrency(property?.currency || normalizedCurrency)
+        ? isSpecialOfferType
+          ? "USD"
+          : normalizeFiatCurrency(property?.currency || normalizedCurrency)
         : normalizedCurrency,
       country: isProject ? (property?.country || "Turkey TR") : values.country,
       city: isProject ? (property?.city || "") : values.city,
@@ -1061,18 +1208,26 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
       genelOzellikler: isProject ? (property?.genelOzellikler || []) : genelOzellikler,
       manzaraFeatures: isProject ? (property?.manzaraFeatures || []) : manzaraFeatures,
       // Project-specific fields
-      projectName: (values.propertyType === "local-project" || values.propertyType === "international-project") ? projectName : "",
-      ilanNo: (values.propertyType === "local-project" || values.propertyType === "international-project") ? ilanNo : "",
-      kampanya: (values.propertyType === "local-project" || values.propertyType === "international-project") ? kampanya : "",
-      deliveryDate: (values.propertyType === "local-project" || values.propertyType === "international-project") ? deliveryDate : "",
-      projectStatus: (values.propertyType === "local-project" || values.propertyType === "international-project") ? projectStatus : "",
-      gyo: (values.propertyType === "local-project" || values.propertyType === "international-project") ? gyo : false,
-      mapImage: (values.propertyType === "local-project" || values.propertyType === "international-project") ? mapImage : "",
-      projeHakkinda: (values.propertyType === "local-project" || values.propertyType === "international-project") ? projeHakkinda : null,
-      dairePlanlari: (values.propertyType === "local-project" || values.propertyType === "international-project") ? dairePlanlari : [],
-      vaziyetPlani: (values.propertyType === "local-project" || values.propertyType === "international-project") ? vaziyetPlani : "",
-      iletisim: (values.propertyType === "local-project" || values.propertyType === "international-project") ? iletisim : null,
-      ozellikler: (values.propertyType === "local-project" || values.propertyType === "international-project") ? ozellikler : null,
+      projectName: isProjectType
+        ? isSpecialOfferType
+          ? specialOfferTitleValue || projectName
+          : projectName
+        : "",
+      ilanNo: isProjectType ? ilanNo : "",
+      kampanya: isProjectType
+        ? isSpecialOfferType
+          ? kampanya || generatedCampaignText
+          : kampanya
+        : "",
+      deliveryDate: isProjectType ? deliveryDate : "",
+      projectStatus: isProjectType ? projectStatus : "",
+      gyo: isProjectType ? gyo : false,
+      mapImage: isProjectType ? mapImage : "",
+      projeHakkinda: nextProjeHakkinda,
+      dairePlanlari: isProjectType ? nextDairePlanlari : [],
+      vaziyetPlani: isProjectType ? vaziyetPlani : "",
+      iletisim: isProjectType ? iletisim : null,
+      ozellikler: isProjectType ? ozellikler : null,
       // Project-specific features (Özellikler tabs)
       binaOzellikleri: isProject ? projeBinaOzellikleri : [],
       disOzellikler: isProject ? projeDisOzellikler : [],
@@ -1111,7 +1266,13 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
           </Text>
           <SegmentedControl
             fullWidth
-            color={form.values.propertyType === "sale" ? "green" : "blue"}
+            color={
+              form.values.propertyType === "sale"
+                ? "green"
+                : form.values.propertyType === "special-offer"
+                ? "red"
+                : "blue"
+            }
             value={form.values.propertyType}
             onChange={(value) => form.setFieldValue("propertyType", value)}
             data={[
@@ -1141,6 +1302,15 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
                   </div>
                 ),
                 value: "international-project",
+              },
+              {
+                label: (
+                  <div className="flex items-center justify-center gap-2 py-1">
+                    <MdLocalOffer size={18} />
+                    <span>Special Offer</span>
+                  </div>
+                ),
+                value: "special-offer",
               },
             ]}
           />
@@ -1836,10 +2006,106 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
           </>
         )}
 
-        {/* Project-Specific Fields - Only show for local-project and international-project */}
-        {(form.values.propertyType === "local-project" || form.values.propertyType === "international-project") && (
+        {/* Project-Specific Fields - local, international, and special offer */}
+        {(form.values.propertyType === "local-project" || form.values.propertyType === "international-project" || form.values.propertyType === "special-offer") && (
           <>
             <Divider my="lg" label="Proje Bilgileri" labelPosition="center" color="blue" />
+
+            {form.values.propertyType === "special-offer" && (
+              <Paper p="md" withBorder mt="md" className="bg-red-50">
+                <Text fw={600} size="sm" mb="md" c="red">
+                  Special Offer
+                </Text>
+                <Grid>
+                  <Grid.Col span={6}>
+                    <TextInput
+                      label="Offer Title"
+                      placeholder="TOPKAPI"
+                      value={specialOfferTitle}
+                      onChange={(e) => setSpecialOfferTitle(e.target.value)}
+                    />
+                  </Grid.Col>
+                  <Grid.Col span={3}>
+                    <TextInput
+                      label="Unit Type"
+                      placeholder="1+1"
+                      value={specialOfferRoomType}
+                      onChange={(e) => setSpecialOfferRoomType(e.target.value)}
+                    />
+                  </Grid.Col>
+                  <Grid.Col span={3}>
+                    <NumberInput
+                      label="Area (m2)"
+                      placeholder="69"
+                      min={0}
+                      value={specialOfferAreaM2}
+                      onChange={(value) => setSpecialOfferAreaM2(value || 0)}
+                    />
+                  </Grid.Col>
+                </Grid>
+                <Grid mt="sm">
+                  <Grid.Col span={3}>
+                    <NumberInput
+                      label="Price (USD)"
+                      placeholder="299000"
+                      min={0}
+                      thousandSeparator="."
+                      decimalSeparator=","
+                      value={specialOfferPriceUSD}
+                      onChange={(value) =>
+                        setSpecialOfferPriceUSD(value || 0)
+                      }
+                    />
+                  </Grid.Col>
+                  <Grid.Col span={3}>
+                    <NumberInput
+                      label="Down Payment (%)"
+                      placeholder="50"
+                      min={0}
+                      max={100}
+                      value={specialOfferDownPaymentPercent}
+                      onChange={(value) =>
+                        setSpecialOfferDownPaymentPercent(value || 0)
+                      }
+                    />
+                  </Grid.Col>
+                  <Grid.Col span={3}>
+                    <NumberInput
+                      label="Installment (Months)"
+                      placeholder="18"
+                      min={0}
+                      value={specialOfferInstallmentMonths}
+                      onChange={(value) =>
+                        setSpecialOfferInstallmentMonths(value || 0)
+                      }
+                    />
+                  </Grid.Col>
+                  <Grid.Col span={3}>
+                    <TextInput
+                      label="Location Label"
+                      placeholder="E5"
+                      value={specialOfferLocationLabel}
+                      onChange={(e) =>
+                        setSpecialOfferLocationLabel(e.target.value)
+                      }
+                    />
+                  </Grid.Col>
+                </Grid>
+                <Grid mt="sm">
+                  <Grid.Col span={3}>
+                    <NumberInput
+                      label="Location Minutes"
+                      placeholder="0"
+                      min={0}
+                      value={specialOfferLocationMinutes}
+                      onChange={(value) =>
+                        setSpecialOfferLocationMinutes(value || 0)
+                      }
+                    />
+                  </Grid.Col>
+                </Grid>
+              </Paper>
+            )}
 
             <Select
               label="Danışman Ata"

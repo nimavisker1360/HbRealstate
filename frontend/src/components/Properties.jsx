@@ -396,7 +396,7 @@ const Properties = () => {
 
   if (isLoading) {
     return (
-      <section className="relative py-20 xl:py-28 overflow-hidden">
+      <section id="featured-properties" className="relative py-20 xl:py-28 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-white via-slate-50 to-white" />
         <div className="max-padd-container relative z-10">
           {/* Loading Header */}
@@ -425,6 +425,7 @@ const Properties = () => {
 
   return (
     <section 
+      id="featured-properties"
       className="relative py-20 xl:py-28 overflow-visible"
     >
       {/* Background - Clean White with subtle tint */}

@@ -4,7 +4,7 @@ import useCountries from "../hooks/useCountries";
 import Map from "./Map";
 import { validateString } from "../utils/common";
 import PropTypes from "prop-types";
-import { MdSell, MdBusiness, MdPublic } from "react-icons/md";
+import { MdSell, MdBusiness, MdPublic, MdLocalOffer } from "react-icons/md";
 
 const AddLocation = ({ propertyDetails, setPropertyDetails, nextStep }) => {
   const { getAll } = useCountries();
@@ -44,7 +44,7 @@ const AddLocation = ({ propertyDetails, setPropertyDetails, nextStep }) => {
         <Text size="sm" fw={500} mb={8}>
           Emlak Tipi <span className="text-red-500">*</span>
         </Text>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <button
             type="button"
             onClick={() => form.setFieldValue("propertyType", "sale")}
@@ -82,6 +82,19 @@ const AddLocation = ({ propertyDetails, setPropertyDetails, nextStep }) => {
           >
             <MdPublic size={28} />
             <span className="font-medium text-sm">Yurt Dışı Proje</span>
+          </button>
+          
+          <button
+            type="button"
+            onClick={() => form.setFieldValue("propertyType", "special-offer")}
+            className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all ${
+              propertyType === "special-offer"
+                ? "border-red-500 bg-red-50 text-red-700"
+                : "border-gray-200 hover:border-red-200"
+            }`}
+          >
+            <MdLocalOffer size={28} />
+            <span className="font-medium text-sm">Special Offer</span>
           </button>
         </div>
       </div>
