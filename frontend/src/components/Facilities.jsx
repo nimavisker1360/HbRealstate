@@ -137,12 +137,6 @@ const Facilities = ({
 
       if (isPageMode) {
         // For page mode (admin panel)
-        if (propertyDetails.propertyType === "special-offer") {
-          if (onSuccess) onSuccess();
-          navigate("/special-offers");
-          refetchProperties();
-          return;
-        }
         setActiveStep(4); // Go to completed step
         if (onSuccess) onSuccess();
       } else {

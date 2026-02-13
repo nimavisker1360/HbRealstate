@@ -161,6 +161,28 @@ const toRoundedPrice = (value) => {
   return Math.round(numericValue);
 };
 
+const hasSpecialOfferData = (specialOffer) =>
+  Boolean(
+    specialOffer &&
+      (specialOffer.enabled ||
+        specialOffer.title ||
+        specialOffer.roomType ||
+        Number(specialOffer.areaM2 || 0) > 0 ||
+        Number(specialOffer.priceUSD || 0) > 0 ||
+        Number(specialOffer.downPaymentAmount || 0) > 0 ||
+        Number(specialOffer.downPaymentPercent || 0) > 0 ||
+        Number(specialOffer.installmentMonths || 0) > 0 ||
+        specialOffer.locationLabel ||
+        Number(specialOffer.locationMinutes || 0) > 0)
+  );
+
+const formatUsdAmount = (value) =>
+  Number(value || 0).toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  });
+
 const ProjectDetails = ({
   prevStep,
   nextStep,
@@ -176,7 +198,12 @@ const ProjectDetails = ({
   const { data: consultants, isLoading: consultantsLoading } = useConsultants();
   const { convertAmount } = useContext(CurrencyContext);
   const floorPlanBaseCurrency = normalizeFiatCurrency(propertyDetails.currency);
-  const isSpecialOffer = propertyDetails.propertyType === "special-offer";
+  const isSpecialOfferType = propertyDetails.propertyType === "special-offer";
+  const [isSpecialOfferEnabled, setIsSpecialOfferEnabled] = useState(() =>
+    isSpecialOfferType ||
+    hasSpecialOfferData(propertyDetails.projeHakkinda?.specialOffer)
+  );
+  const isSpecialOfferActive = isSpecialOfferType || isSpecialOfferEnabled;
 
   const form = useForm({
     initialValues: {
@@ -234,7 +261,9 @@ const ProjectDetails = ({
         propertyDetails.dairePlanlari?.[0]?.fiyat ||
         0,
       specialOfferDownPaymentPercent:
-        propertyDetails.projeHakkinda?.specialOffer?.downPaymentPercent || 0,
+        propertyDetails.projeHakkinda?.specialOffer?.downPaymentAmount ||
+        propertyDetails.projeHakkinda?.specialOffer?.downPaymentPercent ||
+        0,
       specialOfferInstallmentMonths:
         propertyDetails.projeHakkinda?.specialOffer?.installmentMonths || 0,
       specialOfferLocationLabel:
@@ -413,14 +442,13 @@ const ProjectDetails = ({
     ).trim();
     const specialLocationMinutes =
       Number(form.values.specialOfferLocationMinutes) || 0;
-
-    const projectNameValue = isSpecialOffer
-      ? form.values.specialOfferTitle || form.values.projectName
-      : form.values.projectName;
+    const specialOfferTitleValue = String(
+      form.values.specialOfferTitle || form.values.projectName || ""
+    ).trim();
 
     let nextFloorPlans = [...form.values.dairePlanlari];
     if (
-      isSpecialOffer &&
+      isSpecialOfferActive &&
       (form.values.specialOfferRoomType || specialAreaM2 > 0 || specialPriceUSD > 0)
     ) {
       const firstPlan = nextFloorPlans[0]
@@ -453,7 +481,7 @@ const ProjectDetails = ({
     let nextYakinMesafeler = form.values.yakinMesafeler.filter(
       (m) => m.yer.trim() !== ""
     );
-    if (isSpecialOffer && specialLocationLabel) {
+    if (isSpecialOfferActive && specialLocationLabel) {
       nextYakinMesafeler = [
         ...nextYakinMesafeler.filter(
           (item) =>
@@ -469,7 +497,9 @@ const ProjectDetails = ({
 
     const generatedCampaign = [];
     if (specialDownPaymentPercent > 0) {
-      generatedCampaign.push(`${specialDownPaymentPercent}% down payment`);
+      generatedCampaign.push(
+        `${formatUsdAmount(specialDownPaymentPercent)} down payment`
+      );
     }
     if (specialInstallmentMonths > 0) {
       generatedCampaign.push(`${specialInstallmentMonths} months installments`);
@@ -477,10 +507,15 @@ const ProjectDetails = ({
 
     setPropertyDetails((prev) => ({
       ...prev,
-      title: isSpecialOffer ? projectNameValue || prev.title : prev.title,
-      projectName: projectNameValue,
-      price: isSpecialOffer ? specialPriceUSD : prev.price,
-      currency: isSpecialOffer ? "USD" : prev.currency,
+      title:
+        isSpecialOfferType && isSpecialOfferActive
+          ? specialOfferTitleValue || prev.title
+          : prev.title,
+      projectName: form.values.projectName,
+      price:
+        isSpecialOfferType && isSpecialOfferActive ? specialPriceUSD : prev.price,
+      currency:
+        isSpecialOfferType && isSpecialOfferActive ? "USD" : prev.currency,
       ilanNo: form.values.ilanNo,
       consultantId: form.values.consultantId || null,
       projeHakkinda: {
@@ -496,22 +531,24 @@ const ProjectDetails = ({
         description_en: form.values.projeAciklama_en,
         description_ru: form.values.projeAciklama_ru,
         yakinMesafeler: nextYakinMesafeler,
-        specialOffer: isSpecialOffer
+        specialOffer: isSpecialOfferActive
           ? {
-              title: projectNameValue || "",
+              enabled: true,
+              title: specialOfferTitleValue,
               roomType: form.values.specialOfferRoomType || "",
               areaM2: specialAreaM2,
               priceUSD: specialPriceUSD,
               downPaymentPercent: specialDownPaymentPercent,
+              downPaymentAmount: specialDownPaymentPercent,
               installmentMonths: specialInstallmentMonths,
               locationLabel: specialLocationLabel,
               locationMinutes: specialLocationMinutes,
             }
-          : prev.projeHakkinda?.specialOffer || null,
+          : null,
       },
       kampanya:
         form.values.kampanya ||
-        (isSpecialOffer ? generatedCampaign.join(" - ") : ""),
+        (isSpecialOfferActive ? generatedCampaign.join(" - ") : ""),
       deliveryDate: form.values.deliveryDate,
       projectStatus: form.values.projectStatus,
       gyo: form.values.gyo,
@@ -553,7 +590,15 @@ const ProjectDetails = ({
             handleSubmit();
           }}
         >
-          {isSpecialOffer && (
+          <Checkbox
+            label="Special Offer"
+            mb="sm"
+            checked={isSpecialOfferActive}
+            disabled={isSpecialOfferType}
+            onChange={(e) => setIsSpecialOfferEnabled(e.currentTarget.checked)}
+          />
+
+          {isSpecialOfferActive && (
             <Paper p="lg" withBorder mb="lg" className="bg-red-50">
               <div className="flex items-center gap-2 mb-4">
                 <Text fw={700} size="lg" c="red">
@@ -599,10 +644,11 @@ const ProjectDetails = ({
                 </Grid.Col>
                 <Grid.Col span={3}>
                   <NumberInput
-                    label="Down Payment (%)"
-                    placeholder="50"
+                    label="Down Payment (USD)"
+                    placeholder="149500"
                     min={0}
-                    max={100}
+                    thousandSeparator="."
+                    decimalSeparator=","
                     {...form.getInputProps("specialOfferDownPaymentPercent")}
                   />
                 </Grid.Col>

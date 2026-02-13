@@ -10,7 +10,6 @@ import CountryBlogs from "./pages/CountryBlogs";
 import BlogPost from "./pages/BlogPost";
 import Addresses from "./pages/Addresses";
 import LocalProjects from "./pages/LocalProjects";
-import SpecialOffers from "./pages/SpecialOffers";
 import ProjectDetail from "./pages/ProjectDetail";
 import TestimonialsTest from "./pages/TestimonialsTest";
 import { QueryClient, QueryClientProvider } from "react-query"
@@ -71,7 +70,6 @@ export default function App() {
                     <Route path="/testimonials-test" element={<TestimonialsTest />} />
                     <Route path="/addresses" element={<Addresses />} />
                     <Route path="/projects" element={<LocalProjects />} />
-                    <Route path="/special-offers" element={<SpecialOffers />} />
                     <Route path="/projects/:id" element={<ProjectDetail />} />
                   </Route>
                 </Routes>

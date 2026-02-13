@@ -189,7 +189,7 @@ const AdminPanel = () => {
     isLoading: propertiesLoading,
     refetch: refetchProperties,
   } = useProperties();
-  const [propertyFilter, setPropertyFilter] = useState("all"); // all, sale, local-project, international-project, special-offer
+  const [propertyFilter, setPropertyFilter] = useState("all"); // all, sale, local-project, international-project
   const [editModalOpened, setEditModalOpened] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [deleteModalOpened, setDeleteModalOpened] = useState(false);
@@ -1317,10 +1317,9 @@ const AdminPanel = () => {
     gyo: false,
   });
 
-  // Check if current property type is local-project, international-project or special-offer
+  // Check if current property type is local-project or international-project
   const isLocalProject = propertyDetails.propertyType === "local-project";
   const isInternationalProject = propertyDetails.propertyType === "international-project";
-  const isSpecialOffer = propertyDetails.propertyType === "special-offer";
 
   // Fetch all bookings
   const fetchBookings = useCallback(async () => {
@@ -2473,14 +2472,6 @@ const AdminPanel = () => {
               >
                 Yurt Dışı Projeler ({properties?.filter((p) => p.propertyType === "international-project").length || 0})
               </Button>
-              <Button
-                variant={propertyFilter === "special-offer" ? "filled" : "light"}
-                color="red"
-                size="sm"
-                onClick={() => setPropertyFilter("special-offer")}
-              >
-                Special Offers ({properties?.filter((p) => p.propertyType === "special-offer").length || 0})
-              </Button>
             </div>
 
             <Divider className="mb-6" />
@@ -2621,8 +2612,7 @@ const AdminPanel = () => {
                               onClick={() =>
                                 navigate(
                                   property.propertyType === "local-project" ||
-                                    property.propertyType === "international-project" ||
-                                    property.propertyType === "special-offer"
+                                    property.propertyType === "international-project"
                                     ? `/projects/${property.id}`
                                     : `/listing/${property.id}`
                                 )
@@ -2667,14 +2657,6 @@ const AdminPanel = () => {
                       {
                         properties.filter(
                           (p) => p.propertyType === "international-project"
-                        ).length
-                      }
-                    </Text>
-                    <Text size="sm" color="dimmed">
-                      Special Offer:{" "}
-                      {
-                        properties.filter(
-                          (p) => p.propertyType === "special-offer"
                         ).length
                       }
                     </Text>
@@ -3501,8 +3483,6 @@ const AdminPanel = () => {
                   ? "local-project-stepper"
                   : isInternationalProject
                   ? "international-project-stepper"
-                  : isSpecialOffer
-                  ? "special-offer-stepper"
                   : "regular-stepper"
               }
               active={active}
@@ -3533,7 +3513,7 @@ const AdminPanel = () => {
               </Stepper.Step>
 
               {/* Skip Detaylar for local projects - go directly to Proje Detayları */}
-              {!isLocalProject && !isSpecialOffer && (
+              {!isLocalProject && (
                 <Stepper.Step label="Detaylar" description="Ana özellikler">
                   <div className="mt-6">
                     <BasicDetails
@@ -3546,7 +3526,7 @@ const AdminPanel = () => {
                 </Stepper.Step>
               )}
 
-              {(isLocalProject || isInternationalProject || isSpecialOffer) && (
+              {(isLocalProject || isInternationalProject) && (
                 <Stepper.Step label="Proje Detayları" description="Proje bilgileri">
                   <div className="mt-6">
                     <ProjectDetails

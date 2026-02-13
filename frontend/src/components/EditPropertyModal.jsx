@@ -47,7 +47,6 @@ import {
   MdExpandLess,
   MdLocationCity,
   MdPublic,
-  MdLocalOffer,
   MdDragIndicator,
   MdVideocam,
   MdPlayCircleOutline,
@@ -464,6 +463,28 @@ const toRoundedPrice = (value) => {
   return Math.round(numericValue);
 };
 
+const hasSpecialOfferData = (specialOffer) =>
+  Boolean(
+    specialOffer &&
+      (specialOffer.enabled ||
+        specialOffer.title ||
+        specialOffer.roomType ||
+        Number(specialOffer.areaM2 || 0) > 0 ||
+        Number(specialOffer.priceUSD || 0) > 0 ||
+        Number(specialOffer.downPaymentAmount || 0) > 0 ||
+        Number(specialOffer.downPaymentPercent || 0) > 0 ||
+        Number(specialOffer.installmentMonths || 0) > 0 ||
+        specialOffer.locationLabel ||
+        Number(specialOffer.locationMinutes || 0) > 0)
+  );
+
+const formatUsdAmount = (value) =>
+  Number(value || 0).toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  });
+
 const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
   const { getAll } = useCountries();
   const { data: consultants, isLoading: consultantsLoading } = useConsultants();
@@ -533,6 +554,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
     useState("");
   const [specialOfferLocationMinutes, setSpecialOfferLocationMinutes] =
     useState(0);
+  const [isSpecialOfferEnabled, setIsSpecialOfferEnabled] = useState(false);
   
   // Project-specific features
   const [projeBinaOzellikleri, setProjeBinaOzellikleri] = useState([]);
@@ -682,7 +704,11 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
         country: property.country || "",
         city: property.city || "",
         address: property.address || "",
-        propertyType: property.propertyType || "sale",
+        propertyType: ["sale", "local-project", "international-project"].includes(
+          property.propertyType
+        )
+          ? property.propertyType
+          : "local-project",
         category: property.category || "residential",
         bedrooms: property.facilities?.bedrooms || 0,
         parkings: property.facilities?.parkings || 0,
@@ -755,7 +781,10 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
         )
       );
       setSpecialOfferDownPaymentPercent(
-        Number(property.projeHakkinda?.specialOffer?.downPaymentPercent) || 0
+        Number(
+          property.projeHakkinda?.specialOffer?.downPaymentAmount ??
+            property.projeHakkinda?.specialOffer?.downPaymentPercent
+        ) || 0
       );
       setSpecialOfferInstallmentMonths(
         Number(property.projeHakkinda?.specialOffer?.installmentMonths) || 0
@@ -765,6 +794,9 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
       );
       setSpecialOfferLocationMinutes(
         Number(property.projeHakkinda?.specialOffer?.locationMinutes) || 0
+      );
+      setIsSpecialOfferEnabled(
+        hasSpecialOfferData(property.projeHakkinda?.specialOffer)
       );
       
       // Project-specific features
@@ -1032,8 +1064,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
 
     const isProject =
       form.values.propertyType === "local-project" ||
-      form.values.propertyType === "international-project" ||
-      form.values.propertyType === "special-offer";
+      form.values.propertyType === "international-project";
 
     if (imageURLs.length === 0 && !isProject) {
       toast.error(bilingualKey("toast.imageRequired"), {
@@ -1045,9 +1076,8 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
     const values = form.values;
     const isProjectType =
       values.propertyType === "local-project" ||
-      values.propertyType === "international-project" ||
-      values.propertyType === "special-offer";
-    const isSpecialOfferType = values.propertyType === "special-offer";
+      values.propertyType === "international-project";
+    const isSpecialOfferType = isProjectType && isSpecialOfferEnabled;
     const normalizedCurrency = normalizeFiatCurrency(values.currency);
     const normalizedPrice = Math.round(Number(values.price || 0));
     const specialOfferTitleValue = String(
@@ -1103,7 +1133,9 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
 
     const generatedCampaign = [];
     if (specialOfferDownPaymentValue > 0) {
-      generatedCampaign.push(`${specialOfferDownPaymentValue}% down payment`);
+      generatedCampaign.push(
+        `${formatUsdAmount(specialOfferDownPaymentValue)} down payment`
+      );
     }
     if (specialOfferInstallmentValue > 0) {
       generatedCampaign.push(
@@ -1117,25 +1149,25 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
           ...projeHakkinda,
           specialOffer: isSpecialOfferType
             ? {
+                enabled: true,
                 title: specialOfferTitleValue,
                 roomType: specialOfferRoomTypeValue,
                 areaM2: specialOfferAreaValue,
                 priceUSD: specialOfferPriceValue,
                 downPaymentPercent: specialOfferDownPaymentValue,
+                downPaymentAmount: specialOfferDownPaymentValue,
                 installmentMonths: specialOfferInstallmentValue,
                 locationLabel: specialOfferLocationLabelValue,
                 locationMinutes: specialOfferLocationMinutesValue,
               }
-            : projeHakkinda?.specialOffer || null,
+            : null,
         }
       : null;
 
     const data = {
       // For projects, keep existing values; for sale, use form values
       title: isProject
-        ? isSpecialOfferType
-          ? specialOfferTitleValue || property?.title || values.title
-          : property?.title || values.title
+        ? property?.title || values.title
         : values.title,
       description: isProject
         ? (
@@ -1156,14 +1188,10 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
         ? (projeHakkinda?.description_ru || property?.description_ru)
         : values.description_ru,
       price: isProject
-        ? isSpecialOfferType
-          ? specialOfferPriceValue || property?.price || 0
-          : property?.price || 0
+        ? property?.price || 0
         : normalizedPrice,
       currency: isProject
-        ? isSpecialOfferType
-          ? "USD"
-          : normalizeFiatCurrency(property?.currency || normalizedCurrency)
+        ? normalizeFiatCurrency(property?.currency || normalizedCurrency)
         : normalizedCurrency,
       country: isProject ? (property?.country || "Turkey TR") : values.country,
       city: isProject ? (property?.city || "") : values.city,
@@ -1209,15 +1237,11 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
       manzaraFeatures: isProject ? (property?.manzaraFeatures || []) : manzaraFeatures,
       // Project-specific fields
       projectName: isProjectType
-        ? isSpecialOfferType
-          ? specialOfferTitleValue || projectName
-          : projectName
+        ? projectName
         : "",
       ilanNo: isProjectType ? ilanNo : "",
       kampanya: isProjectType
-        ? isSpecialOfferType
-          ? kampanya || generatedCampaignText
-          : kampanya
+        ? (kampanya || (isSpecialOfferType ? generatedCampaignText : ""))
         : "",
       deliveryDate: isProjectType ? deliveryDate : "",
       projectStatus: isProjectType ? projectStatus : "",
@@ -1266,13 +1290,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
           </Text>
           <SegmentedControl
             fullWidth
-            color={
-              form.values.propertyType === "sale"
-                ? "green"
-                : form.values.propertyType === "special-offer"
-                ? "red"
-                : "blue"
-            }
+            color={form.values.propertyType === "sale" ? "green" : "blue"}
             value={form.values.propertyType}
             onChange={(value) => form.setFieldValue("propertyType", value)}
             data={[
@@ -1302,15 +1320,6 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
                   </div>
                 ),
                 value: "international-project",
-              },
-              {
-                label: (
-                  <div className="flex items-center justify-center gap-2 py-1">
-                    <MdLocalOffer size={18} />
-                    <span>Special Offer</span>
-                  </div>
-                ),
-                value: "special-offer",
               },
             ]}
           />
@@ -2006,106 +2015,10 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
           </>
         )}
 
-        {/* Project-Specific Fields - local, international, and special offer */}
-        {(form.values.propertyType === "local-project" || form.values.propertyType === "international-project" || form.values.propertyType === "special-offer") && (
+        {/* Project-Specific Fields - local and international projects */}
+        {(form.values.propertyType === "local-project" || form.values.propertyType === "international-project") && (
           <>
             <Divider my="lg" label="Proje Bilgileri" labelPosition="center" color="blue" />
-
-            {form.values.propertyType === "special-offer" && (
-              <Paper p="md" withBorder mt="md" className="bg-red-50">
-                <Text fw={600} size="sm" mb="md" c="red">
-                  Special Offer
-                </Text>
-                <Grid>
-                  <Grid.Col span={6}>
-                    <TextInput
-                      label="Offer Title"
-                      placeholder="TOPKAPI"
-                      value={specialOfferTitle}
-                      onChange={(e) => setSpecialOfferTitle(e.target.value)}
-                    />
-                  </Grid.Col>
-                  <Grid.Col span={3}>
-                    <TextInput
-                      label="Unit Type"
-                      placeholder="1+1"
-                      value={specialOfferRoomType}
-                      onChange={(e) => setSpecialOfferRoomType(e.target.value)}
-                    />
-                  </Grid.Col>
-                  <Grid.Col span={3}>
-                    <NumberInput
-                      label="Area (m2)"
-                      placeholder="69"
-                      min={0}
-                      value={specialOfferAreaM2}
-                      onChange={(value) => setSpecialOfferAreaM2(value || 0)}
-                    />
-                  </Grid.Col>
-                </Grid>
-                <Grid mt="sm">
-                  <Grid.Col span={3}>
-                    <NumberInput
-                      label="Price (USD)"
-                      placeholder="299000"
-                      min={0}
-                      thousandSeparator="."
-                      decimalSeparator=","
-                      value={specialOfferPriceUSD}
-                      onChange={(value) =>
-                        setSpecialOfferPriceUSD(value || 0)
-                      }
-                    />
-                  </Grid.Col>
-                  <Grid.Col span={3}>
-                    <NumberInput
-                      label="Down Payment (%)"
-                      placeholder="50"
-                      min={0}
-                      max={100}
-                      value={specialOfferDownPaymentPercent}
-                      onChange={(value) =>
-                        setSpecialOfferDownPaymentPercent(value || 0)
-                      }
-                    />
-                  </Grid.Col>
-                  <Grid.Col span={3}>
-                    <NumberInput
-                      label="Installment (Months)"
-                      placeholder="18"
-                      min={0}
-                      value={specialOfferInstallmentMonths}
-                      onChange={(value) =>
-                        setSpecialOfferInstallmentMonths(value || 0)
-                      }
-                    />
-                  </Grid.Col>
-                  <Grid.Col span={3}>
-                    <TextInput
-                      label="Location Label"
-                      placeholder="E5"
-                      value={specialOfferLocationLabel}
-                      onChange={(e) =>
-                        setSpecialOfferLocationLabel(e.target.value)
-                      }
-                    />
-                  </Grid.Col>
-                </Grid>
-                <Grid mt="sm">
-                  <Grid.Col span={3}>
-                    <NumberInput
-                      label="Location Minutes"
-                      placeholder="0"
-                      min={0}
-                      value={specialOfferLocationMinutes}
-                      onChange={(value) =>
-                        setSpecialOfferLocationMinutes(value || 0)
-                      }
-                    />
-                  </Grid.Col>
-                </Grid>
-              </Paper>
-            )}
 
             <Select
               label="Danışman Ata"
@@ -2153,6 +2066,115 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
                 />
               </Grid.Col>
             </Grid>
+
+            <Checkbox
+              label="Special Offer"
+              mt="sm"
+              checked={isSpecialOfferEnabled}
+              onChange={(e) => {
+                const checked = e.currentTarget.checked;
+                setIsSpecialOfferEnabled(checked);
+                if (checked && !specialOfferTitle.trim()) {
+                  setSpecialOfferTitle(projectName || property?.projectName || "");
+                }
+              }}
+            />
+
+            {isSpecialOfferEnabled && (
+              <Paper p="md" withBorder mt="sm" className="bg-rose-50 border-rose-200">
+                <div className="mb-3 flex items-center justify-between">
+                  <Text fw={700} c="red.8">
+                    Special Offer - Buy Smart!
+                  </Text>
+                  <div className="rounded-md bg-rose-600 px-3 py-1 text-xs font-semibold text-white">
+                    OFF
+                  </div>
+                </div>
+
+                <Grid>
+                  <Grid.Col span={6}>
+                    <TextInput
+                      label="Offer Title"
+                      placeholder="Special Offer - Buy Smart!"
+                      value={specialOfferTitle}
+                      onChange={(e) => setSpecialOfferTitle(e.target.value)}
+                    />
+                  </Grid.Col>
+                  <Grid.Col span={3}>
+                    <TextInput
+                      label="Unit Type"
+                      placeholder="1+1"
+                      value={specialOfferRoomType}
+                      onChange={(e) => setSpecialOfferRoomType(e.target.value)}
+                    />
+                  </Grid.Col>
+                  <Grid.Col span={3}>
+                    <NumberInput
+                      label="Area (m2)"
+                      min={0}
+                      value={specialOfferAreaM2}
+                      onChange={(value) => setSpecialOfferAreaM2(Number(value) || 0)}
+                    />
+                  </Grid.Col>
+                </Grid>
+
+                <Grid mt="xs">
+                  <Grid.Col span={3}>
+                    <NumberInput
+                      label="Price (USD)"
+                      min={0}
+                      thousandSeparator="."
+                      decimalSeparator=","
+                      value={specialOfferPriceUSD}
+                      onChange={(value) => setSpecialOfferPriceUSD(Number(value) || 0)}
+                    />
+                  </Grid.Col>
+                  <Grid.Col span={3}>
+                    <NumberInput
+                      label="Down Payment (USD)"
+                      min={0}
+                      thousandSeparator="."
+                      decimalSeparator=","
+                      value={specialOfferDownPaymentPercent}
+                      onChange={(value) =>
+                        setSpecialOfferDownPaymentPercent(Number(value) || 0)
+                      }
+                    />
+                  </Grid.Col>
+                  <Grid.Col span={3}>
+                    <NumberInput
+                      label="Installment (Months)"
+                      min={0}
+                      value={specialOfferInstallmentMonths}
+                      onChange={(value) =>
+                        setSpecialOfferInstallmentMonths(Number(value) || 0)
+                      }
+                    />
+                  </Grid.Col>
+                  <Grid.Col span={3}>
+                    <TextInput
+                      label="Location Label"
+                      placeholder="E5"
+                      value={specialOfferLocationLabel}
+                      onChange={(e) => setSpecialOfferLocationLabel(e.target.value)}
+                    />
+                  </Grid.Col>
+                </Grid>
+                <Grid mt="xs">
+                  <Grid.Col span={3}>
+                    <NumberInput
+                      label="Location Minutes"
+                      min={0}
+                      value={specialOfferLocationMinutes}
+                      onChange={(value) =>
+                        setSpecialOfferLocationMinutes(Number(value) || 0)
+                      }
+                    />
+                  </Grid.Col>
+                </Grid>
+
+              </Paper>
+            )}
 
             {/* Delivery Date & Project Status */}
             <Grid mt="sm">

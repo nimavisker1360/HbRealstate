@@ -200,11 +200,27 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
     
     return filtered.map((p) => {
       const specialOffer = p.projeHakkinda?.specialOffer || {};
+      const hasSpecialOffer = Boolean(
+        specialOffer &&
+          (
+            specialOffer.enabled ||
+            specialOffer.title ||
+            specialOffer.roomType ||
+            Number(specialOffer.areaM2 || 0) > 0 ||
+            Number(specialOffer.priceUSD || 0) > 0 ||
+            Number(specialOffer.downPaymentAmount || 0) > 0 ||
+            Number(specialOffer.downPaymentPercent || 0) > 0 ||
+            Number(specialOffer.installmentMonths || 0) > 0 ||
+            specialOffer.locationLabel ||
+            Number(specialOffer.locationMinutes || 0) > 0
+          )
+      );
+      const activeSpecialOffer = hasSpecialOffer ? specialOffer : {};
       const floorPlanPrices =
         p.dairePlanlari
           ?.map((d) => Number(d.fiyat || d.fiyatUSD || 0))
           .filter((price) => price > 0) || [];
-      const specialOfferPrice = Number(specialOffer.priceUSD || 0);
+      const specialOfferPrice = Number(activeSpecialOffer.priceUSD || 0);
       const startingPrice =
         Number(p.price || 0) > 0
           ? Number(p.price || 0)
@@ -222,13 +238,13 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
 
       const roomTypes = [
         ...(p.dairePlanlari?.map((d) => d.tip).filter(Boolean) || []),
-        ...(specialOffer.roomType ? [specialOffer.roomType] : []),
+        ...(activeSpecialOffer.roomType ? [activeSpecialOffer.roomType] : []),
       ].filter((value, index, arr) => arr.indexOf(value) === index);
 
       const areaValues = [
         ...(p.dairePlanlari?.map((d) => Number(d.metrekare || 0)) || []),
-        ...(Number(specialOffer.areaM2 || 0) > 0
-          ? [Number(specialOffer.areaM2)]
+        ...(Number(activeSpecialOffer.areaM2 || 0) > 0
+          ? [Number(activeSpecialOffer.areaM2)]
           : []),
       ].filter((value) => value > 0);
 
@@ -237,7 +253,7 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
 
       return {
         id: p.id,
-        name: specialOffer.title || p.title,
+        name: activeSpecialOffer.title || p.title,
         city: p.city || "",
         district: p.address || "",
         address: p.address || "",
@@ -257,15 +273,21 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
         kampanya: p.kampanya,
         mapImage: p.mapImage,
         gyo: Boolean(p.gyo),
+        hasSpecialOffer,
         specialOffer: {
-          title: specialOffer.title || p.projectName || p.title || "",
-          roomType: specialOffer.roomType || roomTypes[0] || "",
-          areaM2: Number(specialOffer.areaM2 || areaMin || 0),
+          title: activeSpecialOffer.title || p.projectName || p.title || "",
+          roomType: activeSpecialOffer.roomType || roomTypes[0] || "",
+          areaM2: Number(activeSpecialOffer.areaM2 || areaMin || 0),
           priceUSD: specialOfferPrice || startingPrice || 0,
-          downPaymentPercent: Number(specialOffer.downPaymentPercent || 0),
-          installmentMonths: Number(specialOffer.installmentMonths || 0),
-          locationLabel: specialOffer.locationLabel || "",
-          locationMinutes: Number(specialOffer.locationMinutes || 0),
+          downPaymentAmount: Number(
+            activeSpecialOffer.downPaymentAmount ??
+              activeSpecialOffer.downPaymentPercent ??
+              0
+          ),
+          downPaymentPercent: Number(activeSpecialOffer.downPaymentPercent || 0),
+          installmentMonths: Number(activeSpecialOffer.installmentMonths || 0),
+          locationLabel: activeSpecialOffer.locationLabel || "",
+          locationMinutes: Number(activeSpecialOffer.locationMinutes || 0),
         },
       };
     });
@@ -740,15 +762,15 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
               >
                 <div className={`flex flex-col md:flex-row ${isSpecialOffersPage ? "relative" : ""}`}>
                   {/* Project Image */}
-                  <div className={`w-full flex-shrink-0 ${isSpecialOffersPage ? "md:w-52 h-32 md:h-24" : "md:w-40 h-32 md:h-24"}`}>
+                  <div className={`relative w-full flex-shrink-0 ${isSpecialOffersPage ? "md:w-52 h-32 md:h-24" : "md:w-40 h-32 md:h-24"}`}>
                     <img
                       src={project.image}
                       alt={project.name}
                       className="w-full h-full object-cover"
                     />
-                    {isSpecialOffersPage && (
+                    {(isSpecialOffersPage || project.hasSpecialOffer) && (
                       <div className="absolute left-3 top-3 rounded-md bg-rose-600 px-2.5 py-1 text-[11px] font-bold tracking-wide text-white">
-                        SPECIAL OFFER
+                        {isSpecialOffersPage ? "SPECIAL OFFER" : "OFF"}
                       </div>
                     )}
                   </div>

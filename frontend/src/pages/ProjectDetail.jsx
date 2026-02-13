@@ -241,6 +241,21 @@ const getTranslatedFeature = (feature, language) => {
   return feature;
 };
 
+const hasSpecialOfferData = (specialOffer) =>
+  Boolean(
+    specialOffer &&
+      (specialOffer.enabled ||
+        specialOffer.title ||
+        specialOffer.roomType ||
+        Number(specialOffer.areaM2 || 0) > 0 ||
+        Number(specialOffer.priceUSD || 0) > 0 ||
+        Number(specialOffer.downPaymentAmount || 0) > 0 ||
+        Number(specialOffer.downPaymentPercent || 0) > 0 ||
+        Number(specialOffer.installmentMonths || 0) > 0 ||
+        specialOffer.locationLabel ||
+        Number(specialOffer.locationMinutes || 0) > 0)
+  );
+
 const ProjectDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -398,8 +413,13 @@ const ProjectDetail = () => {
     );
   }
 
-  const isSpecialOfferProject = project.propertyType === "special-offer";
   const specialOfferData = project.specialOffer || {};
+  const isSpecialOfferProject = hasSpecialOfferData(specialOfferData);
+  const specialOfferDownPaymentAmount = Number(
+    specialOfferData.downPaymentAmount ??
+      specialOfferData.downPaymentPercent ??
+      0
+  );
   const specialOfferLocationText =
     specialOfferData.locationLabel || specialOfferData.locationMinutes
       ? `${specialOfferData.locationLabel || ""} ${
@@ -713,8 +733,16 @@ const ProjectDetail = () => {
                         : "-"}
                     </div>
                     <div className="rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-amber-700">
-                      {Number(specialOfferData.downPaymentPercent || 0) > 0
-                        ? `${specialOfferData.downPaymentPercent}% down payment`
+                      {specialOfferDownPaymentAmount > 0
+                        ? `${formatMoney(
+                            convertAmount(
+                              specialOfferDownPaymentAmount,
+                              "USD",
+                              displayCurrency
+                            ),
+                            displayCurrency,
+                            i18n.language === "tr" ? "tr-TR" : "en-US"
+                          )} down payment`
                         : "-"}
                     </div>
                     <div className="rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-amber-700">

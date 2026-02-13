@@ -23,7 +23,6 @@ const Footer = () => {
     {
       title: t('footer.ourCommunity'),
       links: [
-        { key: "specialOffers", label: t('footer.specialOffers') },
         { key: "customerReviews", label: t('footer.customerReviews') },
         { key: "addresses", label: t('footer.addresses'), path: "/addresses" },
       ],
