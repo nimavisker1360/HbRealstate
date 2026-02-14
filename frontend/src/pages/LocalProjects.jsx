@@ -177,6 +177,21 @@ const PROJECT_STATUS = [
   { value: "tamamlandi", label: "Tamamlandı" },
 ];
 
+const hasSpecialOfferData = (specialOffer) =>
+  Boolean(
+    specialOffer &&
+      (specialOffer.enabled ||
+        specialOffer.title ||
+        specialOffer.roomType ||
+        Number(specialOffer.areaM2 || 0) > 0 ||
+        Number(specialOffer.priceUSD || 0) > 0 ||
+        Number(specialOffer.downPaymentAmount || 0) > 0 ||
+        Number(specialOffer.downPaymentPercent || 0) > 0 ||
+        Number(specialOffer.installmentMonths || 0) > 0 ||
+        specialOffer.locationLabel ||
+        Number(specialOffer.locationMinutes || 0) > 0)
+  );
+
 const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
   const navigate = useNavigate();
   const { selectedCurrency, baseCurrency, rates, convertAmount, formatMoney } =
@@ -199,23 +214,17 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
     });
     
     return filtered.map((p) => {
-      const specialOffer = p.projeHakkinda?.specialOffer || {};
-      const hasSpecialOffer = Boolean(
-        specialOffer &&
-          (
-            specialOffer.enabled ||
-            specialOffer.title ||
-            specialOffer.roomType ||
-            Number(specialOffer.areaM2 || 0) > 0 ||
-            Number(specialOffer.priceUSD || 0) > 0 ||
-            Number(specialOffer.downPaymentAmount || 0) > 0 ||
-            Number(specialOffer.downPaymentPercent || 0) > 0 ||
-            Number(specialOffer.installmentMonths || 0) > 0 ||
-            specialOffer.locationLabel ||
-            Number(specialOffer.locationMinutes || 0) > 0
-          )
-      );
-      const activeSpecialOffer = hasSpecialOffer ? specialOffer : {};
+      const specialOffers = Array.isArray(p.projeHakkinda?.specialOffers)
+        ? p.projeHakkinda.specialOffers.filter((offer) => hasSpecialOfferData(offer))
+        : [];
+      const legacySpecialOffer = p.projeHakkinda?.specialOffer || {};
+      const activeSpecialOffer =
+        specialOffers.length > 0
+          ? specialOffers[0]
+          : hasSpecialOfferData(legacySpecialOffer)
+          ? legacySpecialOffer
+          : {};
+      const hasSpecialOffer = hasSpecialOfferData(activeSpecialOffer);
       const floorPlanPrices =
         p.dairePlanlari
           ?.map((d) => Number(d.fiyat || d.fiyatUSD || 0))
@@ -274,6 +283,7 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
         mapImage: p.mapImage,
         gyo: Boolean(p.gyo),
         hasSpecialOffer,
+        specialOffers,
         specialOffer: {
           title: activeSpecialOffer.title || p.projectName || p.title || "",
           roomType: activeSpecialOffer.roomType || roomTypes[0] || "",
@@ -300,7 +310,9 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
   const [districtSearch, setDistrictSearch] = useState("");
   const [selectedRooms, setSelectedRooms] = useState([]);
   const [roomSearch, setRoomSearch] = useState("");
-  const [projectStatus, setProjectStatus] = useState("");
+  const [projectCategory, setProjectCategory] = useState(
+    isSpecialOffersPage ? "special-offer" : ""
+  );
 
   // Popover states
   const [cityPopoverOpened, setCityPopoverOpened] = useState(false);
@@ -434,14 +446,20 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
         if (!matchesRoom) return false;
       }
 
-      // Filter by project status
-      if (projectStatus && project.status !== projectStatus) {
+      // Filter by category/status tabs
+      if (projectCategory === "special-offer" && !project.hasSpecialOffer) {
+        return false;
+      }
+      if (projectCategory === "devam-ediyor" && project.status !== "devam-ediyor") {
+        return false;
+      }
+      if (projectCategory === "tamamlandi" && project.status !== "tamamlandi") {
         return false;
       }
 
       return true;
     });
-  }, [localProjects, selectedCity, selectedDistricts, selectedRooms, projectStatus]);
+  }, [localProjects, selectedCity, selectedDistricts, selectedRooms, projectCategory]);
 
   return (
     <div className="min-h-screen pt-24 pb-16 bg-[#f7f3ea]">
@@ -620,8 +638,12 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
                     onClick={() => setStatusPopoverOpened((o) => !o)}
                   >
                     <span className="text-sm text-gray-700">
-                      {projectStatus
-                        ? (projectStatus === "devam-ediyor" ? t("localProjects.ongoing") : t("localProjects.completed"))
+                      {projectCategory
+                        ? projectCategory === "devam-ediyor"
+                          ? t("localProjects.ongoing")
+                          : projectCategory === "tamamlandi"
+                          ? t("localProjects.completed")
+                          : t("nav.featuredProperties")
                         : t("localProjects.projectStatus")}
                     </span>
                     <MdKeyboardArrowDown className="text-gray-400" size={18} />
@@ -632,16 +654,38 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
                     <div
                       key={status.value}
                       className={`px-3 py-1.5 text-sm cursor-pointer rounded hover:bg-blue-50 ${
-                        projectStatus === status.value ? "bg-blue-500 text-white hover:bg-blue-500" : "text-gray-700"
+                        projectCategory === status.value ? "bg-blue-500 text-white hover:bg-blue-500" : "text-gray-700"
                       }`}
                       onClick={() => {
-                        setProjectStatus(status.value);
+                        setProjectCategory(status.value);
                         setStatusPopoverOpened(false);
                       }}
                     >
                       {status.value === "devam-ediyor" ? t("localProjects.ongoing") : t("localProjects.completed")}
                     </div>
                   ))}
+                  <div
+                    className={`px-3 py-1.5 text-sm cursor-pointer rounded hover:bg-blue-50 ${
+                      projectCategory === "special-offer" ? "bg-blue-500 text-white hover:bg-blue-500" : "text-gray-700"
+                    }`}
+                    onClick={() => {
+                      setProjectCategory("special-offer");
+                      setStatusPopoverOpened(false);
+                    }}
+                  >
+                    {t("nav.featuredProperties")}
+                  </div>
+                  <div
+                    className={`px-3 py-1.5 text-sm cursor-pointer rounded hover:bg-blue-50 ${
+                      !projectCategory ? "bg-blue-500 text-white hover:bg-blue-500" : "text-gray-700"
+                    }`}
+                    onClick={() => {
+                      setProjectCategory("");
+                      setStatusPopoverOpened(false);
+                    }}
+                  >
+                    {t("localProjects.allProjects")}
+                  </div>
                 </Popover.Dropdown>
               </Popover>
 
@@ -695,7 +739,7 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
               onClick={() => {
                 setSelectedCity("");
                 setSelectedDistricts([]);
-                setProjectStatus("");
+                setProjectCategory(isSpecialOffersPage ? "special-offer" : "");
               }}
               className="text-xs text-rose-600 hover:text-rose-700 underline ml-2"
             >
@@ -713,33 +757,43 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
         <div className="flex items-center gap-1 mb-6 border-b border-slate-200">
           <button
             className={`px-4 py-2 text-sm font-medium transition-colors ${
-              !projectStatus
+              !projectCategory
                 ? "text-slate-900 border-b-2 border-blue-600"
                 : "text-slate-500 hover:text-slate-800"
             }`}
-            onClick={() => setProjectStatus("")}
+            onClick={() => setProjectCategory("")}
           >
             {t("localProjects.allProjects")}
           </button>
           <button
             className={`px-4 py-2 text-sm font-medium transition-colors ${
-              projectStatus === "devam-ediyor"
+              projectCategory === "devam-ediyor"
                 ? "text-slate-900 border-b-2 border-blue-600"
                 : "text-slate-500 hover:text-slate-800"
             }`}
-            onClick={() => setProjectStatus("devam-ediyor")}
+            onClick={() => setProjectCategory("devam-ediyor")}
           >
             {t("localProjects.ongoing")}
           </button>
           <button
             className={`px-4 py-2 text-sm font-medium transition-colors ${
-              projectStatus === "tamamlandi"
+              projectCategory === "tamamlandi"
                 ? "text-slate-900 border-b-2 border-blue-600"
                 : "text-slate-500 hover:text-slate-800"
             }`}
-            onClick={() => setProjectStatus("tamamlandi")}
+            onClick={() => setProjectCategory("tamamlandi")}
           >
             {t("localProjects.completed")}
+          </button>
+          <button
+            className={`px-4 py-2 text-sm font-medium transition-colors ${
+              projectCategory === "special-offer"
+                ? "text-slate-900 border-b-2 border-blue-600"
+                : "text-slate-500 hover:text-slate-800"
+            }`}
+            onClick={() => setProjectCategory("special-offer")}
+          >
+            {t("nav.featuredProperties")}
           </button>
         </div>
 

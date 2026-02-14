@@ -176,6 +176,60 @@ const hasSpecialOfferData = (specialOffer) =>
         Number(specialOffer.locationMinutes || 0) > 0)
   );
 
+const createSpecialOfferDraft = (overrides = {}) => {
+  const downPayment = Number(
+    overrides.downPaymentAmount ?? overrides.downPaymentPercent
+  ) || 0;
+
+  return {
+    id: overrides.id || Date.now() + Math.floor(Math.random() * 100000),
+    enabled: Boolean(overrides.enabled ?? true),
+    title: String(overrides.title || ""),
+    roomType: String(overrides.roomType || ""),
+    areaM2: Number(overrides.areaM2) || 0,
+    priceUSD: toRoundedPrice(overrides.priceUSD),
+    downPaymentPercent: downPayment,
+    downPaymentAmount: downPayment,
+    installmentMonths: Number(overrides.installmentMonths) || 0,
+    locationLabel: String(overrides.locationLabel || ""),
+    locationMinutes: Number(overrides.locationMinutes) || 0,
+  };
+};
+
+const getInitialSpecialOffers = (propertyDetails = {}) => {
+  const specialOffers = Array.isArray(propertyDetails.projeHakkinda?.specialOffers)
+    ? propertyDetails.projeHakkinda.specialOffers
+        .filter((offer) => offer && typeof offer === "object")
+        .map((offer) => createSpecialOfferDraft(offer))
+    : [];
+
+  if (specialOffers.length > 0) return specialOffers;
+
+  if (hasSpecialOfferData(propertyDetails.projeHakkinda?.specialOffer)) {
+    return [createSpecialOfferDraft(propertyDetails.projeHakkinda.specialOffer)];
+  }
+
+  return [
+    createSpecialOfferDraft({
+      title: propertyDetails.projectName || "",
+      roomType: propertyDetails.dairePlanlari?.[0]?.tip || "",
+      areaM2: propertyDetails.dairePlanlari?.[0]?.metrekare || 0,
+      priceUSD:
+        propertyDetails.dairePlanlari?.[0]?.fiyatUSD ||
+        propertyDetails.dairePlanlari?.[0]?.fiyat ||
+        0,
+      downPaymentPercent: 0,
+      installmentMonths: 0,
+      locationLabel: "",
+      locationMinutes: 0,
+    }),
+  ];
+};
+
+const hasAnySpecialOfferData = (specialOffers = []) =>
+  Array.isArray(specialOffers) &&
+  specialOffers.some((offer) => hasSpecialOfferData(offer));
+
 const formatUsdAmount = (value) =>
   Number(value || 0).toLocaleString("en-US", {
     style: "currency",
@@ -199,8 +253,10 @@ const ProjectDetails = ({
   const { convertAmount } = useContext(CurrencyContext);
   const floorPlanBaseCurrency = normalizeFiatCurrency(propertyDetails.currency);
   const isSpecialOfferType = propertyDetails.propertyType === "special-offer";
+  const initialSpecialOffers = getInitialSpecialOffers(propertyDetails);
   const [isSpecialOfferEnabled, setIsSpecialOfferEnabled] = useState(() =>
     isSpecialOfferType ||
+    hasAnySpecialOfferData(propertyDetails.projeHakkinda?.specialOffers) ||
     hasSpecialOfferData(propertyDetails.projeHakkinda?.specialOffer)
   );
   const isSpecialOfferActive = isSpecialOfferType || isSpecialOfferEnabled;
@@ -243,33 +299,7 @@ const ProjectDetails = ({
       vaziyetPlani: propertyDetails.vaziyetPlani || "",
       // Harita Görseli
       mapImage: propertyDetails.mapImage || "",
-      specialOfferTitle:
-        propertyDetails.projeHakkinda?.specialOffer?.title ||
-        propertyDetails.projectName ||
-        "",
-      specialOfferRoomType:
-        propertyDetails.projeHakkinda?.specialOffer?.roomType ||
-        propertyDetails.dairePlanlari?.[0]?.tip ||
-        "",
-      specialOfferAreaM2:
-        propertyDetails.projeHakkinda?.specialOffer?.areaM2 ||
-        propertyDetails.dairePlanlari?.[0]?.metrekare ||
-        0,
-      specialOfferPriceUSD:
-        propertyDetails.projeHakkinda?.specialOffer?.priceUSD ||
-        propertyDetails.dairePlanlari?.[0]?.fiyatUSD ||
-        propertyDetails.dairePlanlari?.[0]?.fiyat ||
-        0,
-      specialOfferDownPaymentPercent:
-        propertyDetails.projeHakkinda?.specialOffer?.downPaymentAmount ||
-        propertyDetails.projeHakkinda?.specialOffer?.downPaymentPercent ||
-        0,
-      specialOfferInstallmentMonths:
-        propertyDetails.projeHakkinda?.specialOffer?.installmentMonths || 0,
-      specialOfferLocationLabel:
-        propertyDetails.projeHakkinda?.specialOffer?.locationLabel || "",
-      specialOfferLocationMinutes:
-        propertyDetails.projeHakkinda?.specialOffer?.locationMinutes || 0,
+      specialOffers: initialSpecialOffers,
       // Özellikler
       binaOzellikleri: propertyDetails.ozellikler?.binaOzellikleri || [],
       disOzellikler: propertyDetails.ozellikler?.disOzellikler || [],
@@ -430,26 +460,84 @@ const ProjectDetails = ({
     form.setFieldValue("dairePlanlari", plans);
   };
 
+  const addSpecialOffer = () => {
+    const firstOffer = form.values.specialOffers?.[0] || {};
+    const newOffer = createSpecialOfferDraft({
+      title: form.values.projectName || firstOffer.title || "",
+      roomType: firstOffer.roomType || form.values.dairePlanlari?.[0]?.tip || "",
+      areaM2:
+        Number(firstOffer.areaM2) ||
+        Number(form.values.dairePlanlari?.[0]?.metrekare || 0),
+      priceUSD:
+        Number(firstOffer.priceUSD) ||
+        Number(
+          form.values.dairePlanlari?.[0]?.fiyatUSD ||
+            form.values.dairePlanlari?.[0]?.fiyat ||
+            0
+        ),
+      downPaymentPercent: Number(firstOffer.downPaymentPercent || 0),
+      installmentMonths: Number(firstOffer.installmentMonths || 0),
+      locationLabel: "",
+      locationMinutes: 0,
+    });
+    form.setFieldValue("specialOffers", [
+      ...(form.values.specialOffers || []),
+      newOffer,
+    ]);
+  };
+
+  const removeSpecialOffer = (index) => {
+    const offers = (form.values.specialOffers || []).filter((_, i) => i !== index);
+    form.setFieldValue("specialOffers", offers);
+  };
+
+  const updateSpecialOfferField = (index, field, value) => {
+    const offers = [...(form.values.specialOffers || [])];
+    offers[index] = {
+      ...(offers[index] || createSpecialOfferDraft()),
+      [field]: value,
+    };
+    form.setFieldValue("specialOffers", offers);
+  };
+
   const handleSubmit = () => {
-    const specialPriceUSD = toRoundedPrice(form.values.specialOfferPriceUSD);
-    const specialAreaM2 = Number(form.values.specialOfferAreaM2) || 0;
-    const specialDownPaymentPercent =
-      Number(form.values.specialOfferDownPaymentPercent) || 0;
-    const specialInstallmentMonths =
-      Number(form.values.specialOfferInstallmentMonths) || 0;
-    const specialLocationLabel = String(
-      form.values.specialOfferLocationLabel || ""
-    ).trim();
-    const specialLocationMinutes =
-      Number(form.values.specialOfferLocationMinutes) || 0;
-    const specialOfferTitleValue = String(
-      form.values.specialOfferTitle || form.values.projectName || ""
-    ).trim();
+    const normalizedSpecialOffers = (form.values.specialOffers || [])
+      .map((offer) => {
+        const downPaymentValue = Number(
+          offer?.downPaymentAmount ?? offer?.downPaymentPercent
+        ) || 0;
+        return {
+          ...createSpecialOfferDraft(offer),
+          enabled: true,
+          title: String(offer?.title || form.values.projectName || "").trim(),
+          roomType: String(offer?.roomType || "").trim(),
+          areaM2: Number(offer?.areaM2) || 0,
+          priceUSD: toRoundedPrice(offer?.priceUSD),
+          downPaymentPercent: downPaymentValue,
+          downPaymentAmount: downPaymentValue,
+          installmentMonths: Number(offer?.installmentMonths) || 0,
+          locationLabel: String(offer?.locationLabel || "").trim(),
+          locationMinutes: Number(offer?.locationMinutes) || 0,
+        };
+      })
+      .filter((offer) => hasSpecialOfferData(offer));
+
+    const primarySpecialOffer = normalizedSpecialOffers[0] || null;
+    const specialPriceUSD = primarySpecialOffer?.priceUSD || 0;
+    const specialAreaM2 = Number(primarySpecialOffer?.areaM2 || 0);
+    const specialDownPaymentPercent = Number(
+      primarySpecialOffer?.downPaymentPercent || 0
+    );
+    const specialInstallmentMonths = Number(
+      primarySpecialOffer?.installmentMonths || 0
+    );
+    const specialOfferTitleValue = String(primarySpecialOffer?.title || "").trim();
 
     let nextFloorPlans = [...form.values.dairePlanlari];
     if (
       isSpecialOfferActive &&
-      (form.values.specialOfferRoomType || specialAreaM2 > 0 || specialPriceUSD > 0)
+      primarySpecialOffer &&
+      (primarySpecialOffer.roomType || specialAreaM2 > 0 || specialPriceUSD > 0)
     ) {
       const firstPlan = nextFloorPlans[0]
         ? { ...nextFloorPlans[0] }
@@ -459,7 +547,7 @@ const ProjectDetails = ({
             image: "",
           };
 
-      firstPlan.tip = form.values.specialOfferRoomType || firstPlan.tip || "";
+      firstPlan.tip = primarySpecialOffer.roomType || firstPlan.tip || "";
       firstPlan.metrekare = specialAreaM2 || firstPlan.metrekare || 0;
       firstPlan.currency = "USD";
       firstPlan.fiyatUSD = specialPriceUSD;
@@ -481,18 +569,24 @@ const ProjectDetails = ({
     let nextYakinMesafeler = form.values.yakinMesafeler.filter(
       (m) => m.yer.trim() !== ""
     );
-    if (isSpecialOfferActive && specialLocationLabel) {
-      nextYakinMesafeler = [
-        ...nextYakinMesafeler.filter(
-          (item) =>
-            String(item?.yer || "").trim().toLowerCase() !==
-            specialLocationLabel.toLowerCase()
-        ),
-        {
-          yer: specialLocationLabel,
-          mesafe: `${specialLocationMinutes} min`,
-        },
-      ];
+    if (isSpecialOfferActive && normalizedSpecialOffers.length > 0) {
+      const offerLocationSet = new Set(
+        normalizedSpecialOffers
+          .map((offer) => String(offer.locationLabel || "").toLowerCase())
+          .filter(Boolean)
+      );
+      nextYakinMesafeler = nextYakinMesafeler.filter(
+        (item) =>
+          !offerLocationSet.has(String(item?.yer || "").trim().toLowerCase())
+      );
+
+      normalizedSpecialOffers.forEach((offer) => {
+        if (!offer.locationLabel) return;
+        nextYakinMesafeler.push({
+          yer: offer.locationLabel,
+          mesafe: `${offer.locationMinutes} min`,
+        });
+      });
     }
 
     const generatedCampaign = [];
@@ -508,14 +602,18 @@ const ProjectDetails = ({
     setPropertyDetails((prev) => ({
       ...prev,
       title:
-        isSpecialOfferType && isSpecialOfferActive
+        isSpecialOfferType && isSpecialOfferActive && primarySpecialOffer
           ? specialOfferTitleValue || prev.title
           : prev.title,
       projectName: form.values.projectName,
       price:
-        isSpecialOfferType && isSpecialOfferActive ? specialPriceUSD : prev.price,
+        isSpecialOfferType && isSpecialOfferActive && primarySpecialOffer
+          ? specialPriceUSD
+          : prev.price,
       currency:
-        isSpecialOfferType && isSpecialOfferActive ? "USD" : prev.currency,
+        isSpecialOfferType && isSpecialOfferActive && primarySpecialOffer
+          ? "USD"
+          : prev.currency,
       ilanNo: form.values.ilanNo,
       consultantId: form.values.consultantId || null,
       projeHakkinda: {
@@ -531,20 +629,11 @@ const ProjectDetails = ({
         description_en: form.values.projeAciklama_en,
         description_ru: form.values.projeAciklama_ru,
         yakinMesafeler: nextYakinMesafeler,
-        specialOffer: isSpecialOfferActive
-          ? {
-              enabled: true,
-              title: specialOfferTitleValue,
-              roomType: form.values.specialOfferRoomType || "",
-              areaM2: specialAreaM2,
-              priceUSD: specialPriceUSD,
-              downPaymentPercent: specialDownPaymentPercent,
-              downPaymentAmount: specialDownPaymentPercent,
-              installmentMonths: specialInstallmentMonths,
-              locationLabel: specialLocationLabel,
-              locationMinutes: specialLocationMinutes,
-            }
-          : null,
+        specialOffer:
+          isSpecialOfferActive && primarySpecialOffer
+            ? primarySpecialOffer
+            : null,
+        specialOffers: isSpecialOfferActive ? normalizedSpecialOffers : [],
       },
       kampanya:
         form.values.kampanya ||
@@ -595,90 +684,162 @@ const ProjectDetails = ({
             mb="sm"
             checked={isSpecialOfferActive}
             disabled={isSpecialOfferType}
-            onChange={(e) => setIsSpecialOfferEnabled(e.currentTarget.checked)}
+            onChange={(e) => {
+              const checked = e.currentTarget.checked;
+              setIsSpecialOfferEnabled(checked);
+              if (checked && (form.values.specialOffers || []).length === 0) {
+                addSpecialOffer();
+              }
+            }}
           />
 
           {isSpecialOfferActive && (
             <Paper p="lg" withBorder mb="lg" className="bg-red-50">
-              <div className="flex items-center gap-2 mb-4">
-                <Text fw={700} size="lg" c="red">
-                  Special Offer
-                </Text>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Text fw={700} size="lg" c="red">
+                    Special Offer
+                  </Text>
+                </div>
+                <Button
+                  leftSection={<MdAdd size={18} />}
+                  variant="light"
+                  color="red"
+                  size="sm"
+                  onClick={addSpecialOffer}
+                  type="button"
+                >
+                  Special Offer Ekle
+                </Button>
               </div>
 
-              <Grid>
-                <Grid.Col span={6}>
-                  <TextInput
-                    label="Offer Title"
-                    placeholder="TOPKAPI"
-                    {...form.getInputProps("specialOfferTitle")}
-                  />
-                </Grid.Col>
-                <Grid.Col span={3}>
-                  <TextInput
-                    label="Unit Type"
-                    placeholder="1+1"
-                    {...form.getInputProps("specialOfferRoomType")}
-                  />
-                </Grid.Col>
-                <Grid.Col span={3}>
-                  <NumberInput
-                    label="Area (m2)"
-                    placeholder="69"
-                    min={0}
-                    {...form.getInputProps("specialOfferAreaM2")}
-                  />
-                </Grid.Col>
-              </Grid>
+              {(form.values.specialOffers || []).length === 0 ? (
+                <Text c="dimmed" ta="center" py="md">
+                  Henüz special offer eklenmedi. &quot;Special Offer Ekle&quot; butonuna tıklayın.
+                </Text>
+              ) : (
+                (form.values.specialOffers || []).map((offer, index) => (
+                  <Paper key={offer.id || index} p="md" withBorder mb="sm" className="bg-white">
+                    <div className="flex items-center justify-between mb-3">
+                      <Text fw={600}>Offer #{index + 1}</Text>
+                      <ActionIcon
+                        color="red"
+                        variant="light"
+                        onClick={() => removeSpecialOffer(index)}
+                      >
+                        <MdDelete size={18} />
+                      </ActionIcon>
+                    </div>
 
-              <Grid mt="sm">
-                <Grid.Col span={3}>
-                  <NumberInput
-                    label="Price (USD)"
-                    placeholder="299000"
-                    min={0}
-                    thousandSeparator="."
-                    decimalSeparator=","
-                    {...form.getInputProps("specialOfferPriceUSD")}
-                  />
-                </Grid.Col>
-                <Grid.Col span={3}>
-                  <NumberInput
-                    label="Down Payment (USD)"
-                    placeholder="149500"
-                    min={0}
-                    thousandSeparator="."
-                    decimalSeparator=","
-                    {...form.getInputProps("specialOfferDownPaymentPercent")}
-                  />
-                </Grid.Col>
-                <Grid.Col span={3}>
-                  <NumberInput
-                    label="Installment (Months)"
-                    placeholder="18"
-                    min={0}
-                    {...form.getInputProps("specialOfferInstallmentMonths")}
-                  />
-                </Grid.Col>
-                <Grid.Col span={3}>
-                  <TextInput
-                    label="Location Label"
-                    placeholder="E5"
-                    {...form.getInputProps("specialOfferLocationLabel")}
-                  />
-                </Grid.Col>
-              </Grid>
+                    <Grid>
+                      <Grid.Col span={6}>
+                        <TextInput
+                          label="Offer Title"
+                          placeholder="TOPKAPI"
+                          value={offer.title || ""}
+                          onChange={(e) =>
+                            updateSpecialOfferField(index, "title", e.target.value)
+                          }
+                        />
+                      </Grid.Col>
+                      <Grid.Col span={3}>
+                        <TextInput
+                          label="Unit Type"
+                          placeholder="1+1"
+                          value={offer.roomType || ""}
+                          onChange={(e) =>
+                            updateSpecialOfferField(index, "roomType", e.target.value)
+                          }
+                        />
+                      </Grid.Col>
+                      <Grid.Col span={3}>
+                        <NumberInput
+                          label="Area (m2)"
+                          placeholder="69"
+                          min={0}
+                          value={offer.areaM2 ?? 0}
+                          onChange={(value) =>
+                            updateSpecialOfferField(index, "areaM2", value)
+                          }
+                        />
+                      </Grid.Col>
+                    </Grid>
 
-              <Grid mt="sm">
-                <Grid.Col span={3}>
-                  <NumberInput
-                    label="Location Minutes"
-                    placeholder="0"
-                    min={0}
-                    {...form.getInputProps("specialOfferLocationMinutes")}
-                  />
-                </Grid.Col>
-              </Grid>
+                    <Grid mt="sm">
+                      <Grid.Col span={3}>
+                        <NumberInput
+                          label="Price (USD)"
+                          placeholder="299000"
+                          min={0}
+                          thousandSeparator="."
+                          decimalSeparator=","
+                          value={offer.priceUSD ?? 0}
+                          onChange={(value) =>
+                            updateSpecialOfferField(index, "priceUSD", value)
+                          }
+                        />
+                      </Grid.Col>
+                      <Grid.Col span={3}>
+                        <NumberInput
+                          label="Down Payment (USD)"
+                          placeholder="149500"
+                          min={0}
+                          thousandSeparator="."
+                          decimalSeparator=","
+                          value={
+                            offer.downPaymentAmount ??
+                            offer.downPaymentPercent ??
+                            0
+                          }
+                          onChange={(value) => {
+                            updateSpecialOfferField(index, "downPaymentPercent", value);
+                            updateSpecialOfferField(index, "downPaymentAmount", value);
+                          }}
+                        />
+                      </Grid.Col>
+                      <Grid.Col span={3}>
+                        <NumberInput
+                          label="Installment (Months)"
+                          placeholder="18"
+                          min={0}
+                          value={offer.installmentMonths ?? 0}
+                          onChange={(value) =>
+                            updateSpecialOfferField(index, "installmentMonths", value)
+                          }
+                        />
+                      </Grid.Col>
+                      <Grid.Col span={3}>
+                        <TextInput
+                          label="Location Label"
+                          placeholder="E5"
+                          value={offer.locationLabel || ""}
+                          onChange={(e) =>
+                            updateSpecialOfferField(
+                              index,
+                              "locationLabel",
+                              e.target.value
+                            )
+                          }
+                        />
+                      </Grid.Col>
+                    </Grid>
+
+                    <Grid mt="sm">
+                      <Grid.Col span={3}>
+                        <NumberInput
+                          label="Location Minutes"
+                          placeholder="0"
+                          min={0}
+                          value={offer.locationMinutes ?? 0}
+                          onChange={(value) =>
+                            updateSpecialOfferField(index, "locationMinutes", value)
+                          }
+                        />
+                      </Grid.Col>
+                    </Grid>
+                  </Paper>
+                ))
+              )}
             </Paper>
           )}
 

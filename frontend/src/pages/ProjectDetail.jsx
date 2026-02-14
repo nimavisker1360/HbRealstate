@@ -339,6 +339,19 @@ const ProjectDetail = () => {
       muhit: propertyData.muhit || propertyData.ozellikler?.muhit || [],
     };
     
+    const specialOffersFromArray = Array.isArray(propertyData.projeHakkinda?.specialOffers)
+      ? propertyData.projeHakkinda.specialOffers.filter((offer) =>
+          hasSpecialOfferData(offer)
+        )
+      : [];
+    const legacySpecialOffer = propertyData.projeHakkinda?.specialOffer;
+    const specialOffers =
+      specialOffersFromArray.length > 0
+        ? specialOffersFromArray
+        : hasSpecialOfferData(legacySpecialOffer)
+        ? [legacySpecialOffer]
+        : [];
+
     return {
       id: propertyData.id,
       name: propertyData.title,
@@ -361,7 +374,8 @@ const ProjectDetail = () => {
       ilanNo: propertyData.ilanNo || "",
       consultantId: propertyData.consultant?.id || propertyData.consultantId || "",
       gyo: Boolean(propertyData.gyo),
-      specialOffer: propertyData.projeHakkinda?.specialOffer || null,
+      specialOffer: specialOffers[0] || null,
+      specialOffers,
     };
   }, [propertyData]);
 
@@ -413,21 +427,10 @@ const ProjectDetail = () => {
     );
   }
 
-  const specialOfferData = project.specialOffer || {};
-  const isSpecialOfferProject = hasSpecialOfferData(specialOfferData);
-  const specialOfferDownPaymentAmount = Number(
-    specialOfferData.downPaymentAmount ??
-      specialOfferData.downPaymentPercent ??
-      0
+  const specialOffersData = (project.specialOffers || []).filter((offer) =>
+    hasSpecialOfferData(offer)
   );
-  const specialOfferLocationText =
-    specialOfferData.locationLabel || specialOfferData.locationMinutes
-      ? `${specialOfferData.locationLabel || ""} ${
-          Number(specialOfferData.locationMinutes || 0) > 0
-            ? `${specialOfferData.locationMinutes} min`
-            : ""
-        }`.trim()
-      : "";
+  const isSpecialOfferProject = specialOffersData.length > 0;
 
   const handleContactSubmit = async (e) => {
     e.preventDefault();
@@ -713,68 +716,87 @@ const ProjectDetail = () => {
               )}
 
               {isSpecialOfferProject && (
-                <div className="mb-6 rounded-xl border border-rose-200 bg-gradient-to-r from-rose-50 via-white to-rose-50 p-4">
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <h3 className="text-lg font-bold text-rose-700">
-                      {specialOfferData.title || project.projectName || project.name}
-                    </h3>
-                    <div className="rounded-md bg-rose-600 px-2.5 py-1 text-xs font-semibold text-white">
-                      OFF
-                    </div>
-                  </div>
+                <div className="mb-6 space-y-3">
+                  {specialOffersData.map((offer, offerIndex) => {
+                    const specialOfferDownPaymentAmount = Number(
+                      offer.downPaymentAmount ?? offer.downPaymentPercent ?? 0
+                    );
+                    const specialOfferLocationText =
+                      offer.locationLabel || offer.locationMinutes
+                        ? `${offer.locationLabel || ""} ${
+                            Number(offer.locationMinutes || 0) > 0
+                              ? `${offer.locationMinutes} min`
+                              : ""
+                          }`.trim()
+                        : "";
 
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3 text-sm">
-                    <div className="rounded-md border border-slate-200 bg-white px-2.5 py-2">
-                      {specialOfferData.roomType || "-"}
-                    </div>
-                    <div className="rounded-md border border-slate-200 bg-white px-2.5 py-2">
-                      {Number(specialOfferData.areaM2 || 0) > 0
-                        ? `${specialOfferData.areaM2} m²`
-                        : "-"}
-                    </div>
-                    <div className="rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-amber-700">
-                      {specialOfferDownPaymentAmount > 0
-                        ? `${formatMoney(
-                            convertAmount(
-                              specialOfferDownPaymentAmount,
-                              "USD",
-                              displayCurrency
-                            ),
-                            displayCurrency,
-                            i18n.language === "tr" ? "tr-TR" : "en-US"
-                          )} down payment`
-                        : "-"}
-                    </div>
-                    <div className="rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-amber-700">
-                      {Number(specialOfferData.installmentMonths || 0) > 0
-                        ? `${specialOfferData.installmentMonths} months`
-                        : "-"}
-                    </div>
-                  </div>
+                    return (
+                      <div
+                        key={offer.id || offerIndex}
+                        className="rounded-xl border border-rose-200 bg-gradient-to-r from-rose-50 via-white to-rose-50 p-4"
+                      >
+                        <div className="mb-3 flex items-center justify-between gap-3">
+                          <h3 className="text-lg font-bold text-rose-700">
+                            {offer.title || project.projectName || project.name}
+                          </h3>
+                          <div className="rounded-md bg-rose-600 px-2.5 py-1 text-xs font-semibold text-white">
+                            OFF
+                          </div>
+                        </div>
 
-                  <div className="flex flex-wrap items-end justify-between gap-3 border-t border-rose-100 pt-3">
-                    <div>
-                      <div className="text-xs text-slate-500">{t("projectDetail.startingFrom")}</div>
-                      <div className="text-2xl font-extrabold text-rose-700">
-                        {formatMoney(
-                          convertAmount(
-                            Number(specialOfferData.priceUSD || project.price || 0),
-                            Number(specialOfferData.priceUSD || 0) > 0
-                              ? "USD"
-                              : project.currency || baseCurrency,
-                            displayCurrency
-                          ),
-                          displayCurrency,
-                          i18n.language === "tr" ? "tr-TR" : "en-US"
-                        )}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3 text-sm">
+                          <div className="rounded-md border border-slate-200 bg-white px-2.5 py-2">
+                            {offer.roomType || "-"}
+                          </div>
+                          <div className="rounded-md border border-slate-200 bg-white px-2.5 py-2">
+                            {Number(offer.areaM2 || 0) > 0 ? `${offer.areaM2} m²` : "-"}
+                          </div>
+                          <div className="rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-amber-700">
+                            {specialOfferDownPaymentAmount > 0
+                              ? `${formatMoney(
+                                  convertAmount(
+                                    specialOfferDownPaymentAmount,
+                                    "USD",
+                                    displayCurrency
+                                  ),
+                                  displayCurrency,
+                                  i18n.language === "tr" ? "tr-TR" : "en-US"
+                                )} down payment`
+                              : "-"}
+                          </div>
+                          <div className="rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-amber-700">
+                            {Number(offer.installmentMonths || 0) > 0
+                              ? `${offer.installmentMonths} months`
+                              : "-"}
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-end justify-between gap-3 border-t border-rose-100 pt-3">
+                          <div>
+                            <div className="text-xs text-slate-500">{t("projectDetail.startingFrom")}</div>
+                            <div className="text-2xl font-extrabold text-rose-700">
+                              {formatMoney(
+                                convertAmount(
+                                  Number(offer.priceUSD || project.price || 0),
+                                  Number(offer.priceUSD || 0) > 0
+                                    ? "USD"
+                                    : project.currency || baseCurrency,
+                                  displayCurrency
+                                ),
+                                displayCurrency,
+                                i18n.language === "tr" ? "tr-TR" : "en-US"
+                              )}
+                            </div>
+                          </div>
+                          {specialOfferLocationText && (
+                            <div className="text-sm font-medium text-slate-700">
+                              {specialOfferLocationText}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                    {specialOfferLocationText && (
-                      <div className="text-sm font-medium text-slate-700">
-                        {specialOfferLocationText}
-                      </div>
-                    )}
-                  </div>
+                    );
+                  })}
                 </div>
               )}
 
@@ -1506,3 +1528,4 @@ const ProjectDetail = () => {
 };
 
 export default ProjectDetail;
+

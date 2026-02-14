@@ -478,6 +478,57 @@ const hasSpecialOfferData = (specialOffer) =>
         Number(specialOffer.locationMinutes || 0) > 0)
   );
 
+const createSpecialOfferDraft = (overrides = {}) => {
+  const downPayment = Number(
+    overrides.downPaymentAmount ?? overrides.downPaymentPercent
+  ) || 0;
+
+  return {
+    id: overrides.id || Date.now() + Math.floor(Math.random() * 100000),
+    enabled: Boolean(overrides.enabled ?? true),
+    title: String(overrides.title || ""),
+    roomType: String(overrides.roomType || ""),
+    areaM2: Number(overrides.areaM2) || 0,
+    priceUSD: toRoundedPrice(overrides.priceUSD),
+    downPaymentPercent: downPayment,
+    downPaymentAmount: downPayment,
+    installmentMonths: Number(overrides.installmentMonths) || 0,
+    locationLabel: String(overrides.locationLabel || ""),
+    locationMinutes: Number(overrides.locationMinutes) || 0,
+  };
+};
+
+const getInitialSpecialOffers = (property = {}) => {
+  const specialOffers = Array.isArray(property.projeHakkinda?.specialOffers)
+    ? property.projeHakkinda.specialOffers
+        .filter((offer) => offer && typeof offer === "object")
+        .map((offer) => createSpecialOfferDraft(offer))
+    : [];
+
+  if (specialOffers.length > 0) return specialOffers;
+
+  if (hasSpecialOfferData(property.projeHakkinda?.specialOffer)) {
+    return [createSpecialOfferDraft(property.projeHakkinda.specialOffer)];
+  }
+
+  return [
+    createSpecialOfferDraft({
+      title: property.projectName || "",
+      roomType: property.dairePlanlari?.[0]?.tip || "",
+      areaM2: Number(property.dairePlanlari?.[0]?.metrekare || 0),
+      priceUSD: toRoundedPrice(
+        property.dairePlanlari?.[0]?.fiyatUSD ||
+          property.dairePlanlari?.[0]?.fiyat ||
+          0
+      ),
+    }),
+  ];
+};
+
+const hasAnySpecialOfferData = (specialOffers = []) =>
+  Array.isArray(specialOffers) &&
+  specialOffers.some((offer) => hasSpecialOfferData(offer));
+
 const formatUsdAmount = (value) =>
   Number(value || 0).toLocaleString("en-US", {
     style: "currency",
@@ -542,18 +593,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
   const [projectStatus, setProjectStatus] = useState("devam-ediyor");
   const [gyo, setGyo] = useState(false);
   const [mapImage, setMapImage] = useState("");
-  const [specialOfferTitle, setSpecialOfferTitle] = useState("");
-  const [specialOfferRoomType, setSpecialOfferRoomType] = useState("");
-  const [specialOfferAreaM2, setSpecialOfferAreaM2] = useState(0);
-  const [specialOfferPriceUSD, setSpecialOfferPriceUSD] = useState(0);
-  const [specialOfferDownPaymentPercent, setSpecialOfferDownPaymentPercent] =
-    useState(0);
-  const [specialOfferInstallmentMonths, setSpecialOfferInstallmentMonths] =
-    useState(0);
-  const [specialOfferLocationLabel, setSpecialOfferLocationLabel] =
-    useState("");
-  const [specialOfferLocationMinutes, setSpecialOfferLocationMinutes] =
-    useState(0);
+  const [specialOffers, setSpecialOffers] = useState([]);
   const [isSpecialOfferEnabled, setIsSpecialOfferEnabled] = useState(false);
   
   // Project-specific features
@@ -757,45 +797,9 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
       setProjectStatus(property.projectStatus || "devam-ediyor");
       setGyo(Boolean(property.gyo));
       setMapImage(property.mapImage || "");
-      setSpecialOfferTitle(
-        property.projeHakkinda?.specialOffer?.title || property.projectName || ""
-      );
-      setSpecialOfferRoomType(
-        property.projeHakkinda?.specialOffer?.roomType ||
-          property.dairePlanlari?.[0]?.tip ||
-          ""
-      );
-      setSpecialOfferAreaM2(
-        Number(
-          property.projeHakkinda?.specialOffer?.areaM2 ||
-            property.dairePlanlari?.[0]?.metrekare ||
-            0
-        ) || 0
-      );
-      setSpecialOfferPriceUSD(
-        toRoundedPrice(
-          property.projeHakkinda?.specialOffer?.priceUSD ||
-            property.dairePlanlari?.[0]?.fiyatUSD ||
-            property.dairePlanlari?.[0]?.fiyat ||
-            0
-        )
-      );
-      setSpecialOfferDownPaymentPercent(
-        Number(
-          property.projeHakkinda?.specialOffer?.downPaymentAmount ??
-            property.projeHakkinda?.specialOffer?.downPaymentPercent
-        ) || 0
-      );
-      setSpecialOfferInstallmentMonths(
-        Number(property.projeHakkinda?.specialOffer?.installmentMonths) || 0
-      );
-      setSpecialOfferLocationLabel(
-        property.projeHakkinda?.specialOffer?.locationLabel || ""
-      );
-      setSpecialOfferLocationMinutes(
-        Number(property.projeHakkinda?.specialOffer?.locationMinutes) || 0
-      );
+      setSpecialOffers(getInitialSpecialOffers(property));
       setIsSpecialOfferEnabled(
+        hasAnySpecialOfferData(property.projeHakkinda?.specialOffers) ||
         hasSpecialOfferData(property.projeHakkinda?.specialOffer)
       );
       
@@ -1035,6 +1039,42 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
     }
   };
 
+  const addSpecialOffer = () => {
+    const firstOffer = specialOffers?.[0] || {};
+    const newOffer = createSpecialOfferDraft({
+      title: projectName || firstOffer.title || property?.projectName || "",
+      roomType: firstOffer.roomType || dairePlanlari?.[0]?.tip || "",
+      areaM2:
+        Number(firstOffer.areaM2) ||
+        Number(dairePlanlari?.[0]?.metrekare || 0),
+      priceUSD:
+        Number(firstOffer.priceUSD) ||
+        toRoundedPrice(
+          dairePlanlari?.[0]?.fiyatUSD || dairePlanlari?.[0]?.fiyat || 0
+        ),
+      downPaymentPercent: Number(firstOffer.downPaymentPercent || 0),
+      installmentMonths: Number(firstOffer.installmentMonths || 0),
+      locationLabel: "",
+      locationMinutes: 0,
+    });
+    setSpecialOffers((prev) => [...(prev || []), newOffer]);
+  };
+
+  const removeSpecialOffer = (index) => {
+    setSpecialOffers((prev) => (prev || []).filter((_, i) => i !== index));
+  };
+
+  const updateSpecialOfferField = (index, field, value) => {
+    setSpecialOffers((prev) => {
+      const next = [...(prev || [])];
+      next[index] = {
+        ...(next[index] || createSpecialOfferDraft()),
+        [field]: value,
+      };
+      return next;
+    });
+  };
+
   const { mutate, isLoading } = useMutation({
     mutationFn: (data) => updateResidency(property.id, data, token),
     onError: (error) => {
@@ -1080,25 +1120,51 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
     const isSpecialOfferType = isProjectType && isSpecialOfferEnabled;
     const normalizedCurrency = normalizeFiatCurrency(values.currency);
     const normalizedPrice = Math.round(Number(values.price || 0));
-    const specialOfferTitleValue = String(
-      specialOfferTitle || projectName || ""
+    const normalizedSpecialOffers = (specialOffers || [])
+      .map((offer) => {
+        const downPaymentValue = Number(
+          offer?.downPaymentAmount ?? offer?.downPaymentPercent
+        ) || 0;
+        return {
+          ...createSpecialOfferDraft(offer),
+          enabled: true,
+          title: String(offer?.title || projectName || "").trim(),
+          roomType: String(offer?.roomType || "").trim(),
+          areaM2: Number(offer?.areaM2) || 0,
+          priceUSD: toRoundedPrice(offer?.priceUSD),
+          downPaymentPercent: downPaymentValue,
+          downPaymentAmount: downPaymentValue,
+          installmentMonths: Number(offer?.installmentMonths) || 0,
+          locationLabel: String(offer?.locationLabel || "").trim(),
+          locationMinutes: Number(offer?.locationMinutes) || 0,
+        };
+      })
+      .filter((offer) => hasSpecialOfferData(offer));
+
+    const primarySpecialOffer = normalizedSpecialOffers[0] || null;
+    const specialOfferTitleValue = String(primarySpecialOffer?.title || "").trim();
+    const specialOfferRoomTypeValue = String(
+      primarySpecialOffer?.roomType || ""
     ).trim();
-    const specialOfferRoomTypeValue = String(specialOfferRoomType || "").trim();
-    const specialOfferAreaValue = Number(specialOfferAreaM2) || 0;
-    const specialOfferPriceValue = toRoundedPrice(specialOfferPriceUSD);
-    const specialOfferDownPaymentValue =
-      Number(specialOfferDownPaymentPercent) || 0;
-    const specialOfferInstallmentValue =
-      Number(specialOfferInstallmentMonths) || 0;
+    const specialOfferAreaValue = Number(primarySpecialOffer?.areaM2 || 0);
+    const specialOfferPriceValue = toRoundedPrice(primarySpecialOffer?.priceUSD);
+    const specialOfferDownPaymentValue = Number(
+      primarySpecialOffer?.downPaymentPercent || 0
+    );
+    const specialOfferInstallmentValue = Number(
+      primarySpecialOffer?.installmentMonths || 0
+    );
     const specialOfferLocationLabelValue = String(
-      specialOfferLocationLabel || ""
+      primarySpecialOffer?.locationLabel || ""
     ).trim();
-    const specialOfferLocationMinutesValue =
-      Number(specialOfferLocationMinutes) || 0;
+    const specialOfferLocationMinutesValue = Number(
+      primarySpecialOffer?.locationMinutes || 0
+    );
 
     let nextDairePlanlari = [...dairePlanlari];
     if (
       isSpecialOfferType &&
+      primarySpecialOffer &&
       (specialOfferRoomTypeValue ||
         specialOfferAreaValue > 0 ||
         specialOfferPriceValue > 0 ||
@@ -1147,7 +1213,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
     const nextProjeHakkinda = isProjectType
       ? {
           ...projeHakkinda,
-          specialOffer: isSpecialOfferType
+          specialOffer: isSpecialOfferType && primarySpecialOffer
             ? {
                 enabled: true,
                 title: specialOfferTitleValue,
@@ -1161,6 +1227,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
                 locationMinutes: specialOfferLocationMinutesValue,
               }
             : null,
+          specialOffers: isSpecialOfferType ? normalizedSpecialOffers : [],
         }
       : null;
 
@@ -2074,105 +2141,159 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
               onChange={(e) => {
                 const checked = e.currentTarget.checked;
                 setIsSpecialOfferEnabled(checked);
-                if (checked && !specialOfferTitle.trim()) {
-                  setSpecialOfferTitle(projectName || property?.projectName || "");
+                if (checked && (specialOffers || []).length === 0) {
+                  addSpecialOffer();
                 }
               }}
             />
 
             {isSpecialOfferEnabled && (
               <Paper p="md" withBorder mt="sm" className="bg-rose-50 border-rose-200">
-                <div className="mb-3 flex items-center justify-between">
+                <div className="mb-3 flex items-center justify-between gap-3">
                   <Text fw={700} c="red.8">
-                    Special Offer - Buy Smart!
+                    Special Offer
                   </Text>
-                  <div className="rounded-md bg-rose-600 px-3 py-1 text-xs font-semibold text-white">
-                    OFF
-                  </div>
+                  <Button
+                    variant="light"
+                    color="red"
+                    size="xs"
+                    type="button"
+                    onClick={addSpecialOffer}
+                  >
+                    + Special Offer Ekle
+                  </Button>
                 </div>
 
-                <Grid>
-                  <Grid.Col span={6}>
-                    <TextInput
-                      label="Offer Title"
-                      placeholder="Special Offer - Buy Smart!"
-                      value={specialOfferTitle}
-                      onChange={(e) => setSpecialOfferTitle(e.target.value)}
-                    />
-                  </Grid.Col>
-                  <Grid.Col span={3}>
-                    <TextInput
-                      label="Unit Type"
-                      placeholder="1+1"
-                      value={specialOfferRoomType}
-                      onChange={(e) => setSpecialOfferRoomType(e.target.value)}
-                    />
-                  </Grid.Col>
-                  <Grid.Col span={3}>
-                    <NumberInput
-                      label="Area (m2)"
-                      min={0}
-                      value={specialOfferAreaM2}
-                      onChange={(value) => setSpecialOfferAreaM2(Number(value) || 0)}
-                    />
-                  </Grid.Col>
-                </Grid>
+                {(specialOffers || []).length === 0 ? (
+                  <Text c="dimmed" ta="center" py="sm">
+                    Henüz special offer eklenmedi. &quot;Special Offer Ekle&quot; butonuna tıklayın.
+                  </Text>
+                ) : (
+                  (specialOffers || []).map((offer, index) => (
+                    <Paper key={offer.id || index} p="sm" withBorder mb="sm" className="bg-white">
+                      <div className="mb-2 flex items-center justify-between">
+                        <Text fw={600} size="sm">
+                          Offer #{index + 1}
+                        </Text>
+                        <Button
+                          variant="subtle"
+                          color="red"
+                          size="xs"
+                          type="button"
+                          onClick={() => removeSpecialOffer(index)}
+                        >
+                          Sil
+                        </Button>
+                      </div>
 
-                <Grid mt="xs">
-                  <Grid.Col span={3}>
-                    <NumberInput
-                      label="Price (USD)"
-                      min={0}
-                      thousandSeparator="."
-                      decimalSeparator=","
-                      value={specialOfferPriceUSD}
-                      onChange={(value) => setSpecialOfferPriceUSD(Number(value) || 0)}
-                    />
-                  </Grid.Col>
-                  <Grid.Col span={3}>
-                    <NumberInput
-                      label="Down Payment (USD)"
-                      min={0}
-                      thousandSeparator="."
-                      decimalSeparator=","
-                      value={specialOfferDownPaymentPercent}
-                      onChange={(value) =>
-                        setSpecialOfferDownPaymentPercent(Number(value) || 0)
-                      }
-                    />
-                  </Grid.Col>
-                  <Grid.Col span={3}>
-                    <NumberInput
-                      label="Installment (Months)"
-                      min={0}
-                      value={specialOfferInstallmentMonths}
-                      onChange={(value) =>
-                        setSpecialOfferInstallmentMonths(Number(value) || 0)
-                      }
-                    />
-                  </Grid.Col>
-                  <Grid.Col span={3}>
-                    <TextInput
-                      label="Location Label"
-                      placeholder="E5"
-                      value={specialOfferLocationLabel}
-                      onChange={(e) => setSpecialOfferLocationLabel(e.target.value)}
-                    />
-                  </Grid.Col>
-                </Grid>
-                <Grid mt="xs">
-                  <Grid.Col span={3}>
-                    <NumberInput
-                      label="Location Minutes"
-                      min={0}
-                      value={specialOfferLocationMinutes}
-                      onChange={(value) =>
-                        setSpecialOfferLocationMinutes(Number(value) || 0)
-                      }
-                    />
-                  </Grid.Col>
-                </Grid>
+                      <Grid>
+                        <Grid.Col span={6}>
+                          <TextInput
+                            label="Offer Title"
+                            placeholder="Special Offer - Buy Smart!"
+                            value={offer.title || ""}
+                            onChange={(e) =>
+                              updateSpecialOfferField(index, "title", e.target.value)
+                            }
+                          />
+                        </Grid.Col>
+                        <Grid.Col span={3}>
+                          <TextInput
+                            label="Unit Type"
+                            placeholder="1+1"
+                            value={offer.roomType || ""}
+                            onChange={(e) =>
+                              updateSpecialOfferField(index, "roomType", e.target.value)
+                            }
+                          />
+                        </Grid.Col>
+                        <Grid.Col span={3}>
+                          <NumberInput
+                            label="Area (m2)"
+                            min={0}
+                            value={offer.areaM2 ?? 0}
+                            onChange={(value) =>
+                              updateSpecialOfferField(index, "areaM2", Number(value) || 0)
+                            }
+                          />
+                        </Grid.Col>
+                      </Grid>
 
+                      <Grid mt="xs">
+                        <Grid.Col span={3}>
+                          <NumberInput
+                            label="Price (USD)"
+                            min={0}
+                            thousandSeparator="."
+                            decimalSeparator=","
+                            value={offer.priceUSD ?? 0}
+                            onChange={(value) =>
+                              updateSpecialOfferField(index, "priceUSD", Number(value) || 0)
+                            }
+                          />
+                        </Grid.Col>
+                        <Grid.Col span={3}>
+                          <NumberInput
+                            label="Down Payment (USD)"
+                            min={0}
+                            thousandSeparator="."
+                            decimalSeparator=","
+                            value={offer.downPaymentAmount ?? offer.downPaymentPercent ?? 0}
+                            onChange={(value) => {
+                              const nextValue = Number(value) || 0;
+                              updateSpecialOfferField(index, "downPaymentPercent", nextValue);
+                              updateSpecialOfferField(index, "downPaymentAmount", nextValue);
+                            }}
+                          />
+                        </Grid.Col>
+                        <Grid.Col span={3}>
+                          <NumberInput
+                            label="Installment (Months)"
+                            min={0}
+                            value={offer.installmentMonths ?? 0}
+                            onChange={(value) =>
+                              updateSpecialOfferField(
+                                index,
+                                "installmentMonths",
+                                Number(value) || 0
+                              )
+                            }
+                          />
+                        </Grid.Col>
+                        <Grid.Col span={3}>
+                          <TextInput
+                            label="Location Label"
+                            placeholder="E5"
+                            value={offer.locationLabel || ""}
+                            onChange={(e) =>
+                              updateSpecialOfferField(
+                                index,
+                                "locationLabel",
+                                e.target.value
+                              )
+                            }
+                          />
+                        </Grid.Col>
+                      </Grid>
+                      <Grid mt="xs">
+                        <Grid.Col span={3}>
+                          <NumberInput
+                            label="Location Minutes"
+                            min={0}
+                            value={offer.locationMinutes ?? 0}
+                            onChange={(value) =>
+                              updateSpecialOfferField(
+                                index,
+                                "locationMinutes",
+                                Number(value) || 0
+                              )
+                            }
+                          />
+                        </Grid.Col>
+                      </Grid>
+                    </Paper>
+                  ))
+                )}
               </Paper>
             )}
 
