@@ -15,7 +15,7 @@ import { MdSearch, MdKeyboardArrowDown } from "react-icons/md";
 import heroBg from "../assets/img4.png";
 import cyprusHeroBg from "../assets/hero/cyprus.jpg";
 import dubaiHeroBg from "../assets/hero/dubai.jpg";
-import georgiaHeroBg from "../assets/hero/Georgia.jpg";
+import georgiaHeroBg from "../assets/hero/Georgia02.jpg";
 import greeceHeroBg from "../assets/hero/greece.jpg";
 import useProperties from "../hooks/useProperties";
 import CurrencyContext from "../context/CurrencyContext";
