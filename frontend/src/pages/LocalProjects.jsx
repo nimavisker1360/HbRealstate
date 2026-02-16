@@ -13,8 +13,8 @@ import {
 } from "@mantine/core";
 import { MdSearch, MdKeyboardArrowDown } from "react-icons/md";
 import heroBg from "../assets/img4.png";
-import cyprusHeroBg from "../assets/hero/Cyprus.jpg";
-import dubaiHeroBg from "../assets/hero/Dubai.jpg";
+import cyprusHeroBg from "../assets/hero/cyprus.jpg";
+import dubaiHeroBg from "../assets/hero/dubai.jpg";
 import georgiaHeroBg from "../assets/hero/Georgia.jpg";
 import greeceHeroBg from "../assets/hero/greece.jpg";
 import useProperties from "../hooks/useProperties";
