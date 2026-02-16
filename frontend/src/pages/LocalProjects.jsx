@@ -432,14 +432,18 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
   const [districtPopoverOpened, setDistrictPopoverOpened] = useState(false);
   const [roomPopoverOpened, setRoomPopoverOpened] = useState(false);
   const [statusPopoverOpened, setStatusPopoverOpened] = useState(false);
+  const getCityLabel = (city) =>
+    isInternationalPage && city?.value === ""
+      ? t("localProjects.allCountries")
+      : city?.label || "";
 
   // Filter cities based on search
   const filteredCities = useMemo(() => {
     if (!citySearch) return cityOptions;
     return cityOptions.filter((city) =>
-      city.label.toLowerCase().includes(citySearch.toLowerCase())
+      getCityLabel(city).toLowerCase().includes(citySearch.toLowerCase())
     );
-  }, [citySearch, cityOptions]);
+  }, [citySearch, cityOptions, isInternationalPage, t]);
 
   // Get districts for selected city
   const currentCityDistricts = useMemo(() => {
@@ -653,7 +657,7 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
                     onClick={() => setCityPopoverOpened((o) => !o)}
                   >
                     <span className="text-sm text-gray-700">
-                      {cityOptions.find((c) => c.value === selectedCity)?.label ||
+                      {getCityLabel(cityOptions.find((c) => c.value === selectedCity)) ||
                         t("localProjects.city")}
                     </span>
                     <MdKeyboardArrowDown className="text-gray-400" size={18} />
@@ -682,7 +686,7 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
                           setCitySearch("");
                         }}
                       >
-                        {city.label}
+                        {getCityLabel(city)}
                       </div>
                     ))}
                   </ScrollArea>
@@ -873,7 +877,7 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
             
             {selectedCity && (
               <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 border border-blue-100 rounded text-xs">
-                {cityOptions.find((c) => c.value === selectedCity)?.label}
+                {getCityLabel(cityOptions.find((c) => c.value === selectedCity))}
                 <button
                   onClick={() => handleCityChange("")}
                   className="ml-1 hover:text-blue-900"
