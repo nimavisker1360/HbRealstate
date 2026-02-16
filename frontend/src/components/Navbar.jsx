@@ -211,6 +211,8 @@ const Navbar = ({
   const searchParams = new URLSearchParams(location.search);
   const currentFilter = searchParams.get("type");
   const currentCategory = searchParams.get("category");
+  const currentProjectType = searchParams.get("projectType");
+  const isProjectsPage = location.pathname === "/projects";
 
   const handleCategoryClick = (type, category) => {
     navigate(`/listing?type=${type}&category=${category}`);
@@ -293,7 +295,7 @@ const Navbar = ({
     if (projectType === "LocalProject") {
       navigate("/projects");
     } else {
-      navigate(`/listing?projectType=${projectType}`);
+      navigate("/projects?projectType=international");
     }
     setProjectsDropdownOpen(false);
     closeMenu && closeMenu();
@@ -949,7 +951,7 @@ const Navbar = ({
         }
       >
         <div
-          className={`${linkClass(Boolean(searchParams.get("projectType")))} cursor-pointer`}
+          className={`${linkClass(isProjectsPage)} cursor-pointer`}
           onClick={(e) => {
             // On mobile: toggle dropdown
             if (window.innerWidth < 1024) {
@@ -987,7 +989,9 @@ const Navbar = ({
           {projectTypes.map((project) => {
             const IconComponent = project.icon;
             const isActive =
-              searchParams.get("projectType") === project.value;
+              project.value === "LocalProject"
+                ? isProjectsPage && !currentProjectType
+                : isProjectsPage && currentProjectType === "international";
             return (
               <div
                 key={project.value}

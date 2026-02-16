@@ -1,5 +1,5 @@
-﻿import { useState, useMemo, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useMemo, useContext, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import PropTypes from "prop-types";
 import {
@@ -13,6 +13,10 @@ import {
 } from "@mantine/core";
 import { MdSearch, MdKeyboardArrowDown } from "react-icons/md";
 import heroBg from "../assets/img4.png";
+import cyprusHeroBg from "../assets/hero/Cyprus.jpg";
+import dubaiHeroBg from "../assets/hero/Dubai.jpg";
+import georgiaHeroBg from "../assets/hero/Georgia.jpg";
+import greeceHeroBg from "../assets/hero/greece.jpg";
 import useProperties from "../hooks/useProperties";
 import CurrencyContext from "../context/CurrencyContext";
 
@@ -42,6 +46,74 @@ const TURKISH_CITIES = [
   { value: "samsun", label: "Samsun" },
   { value: "trabzon", label: "Trabzon" },
 ];
+
+// International countries data
+const INTERNATIONAL_COUNTRIES = [
+  { value: "", label: "All Countries" },
+  {
+    value: "cyprus",
+    label: "Kıbrıs / Cyprus",
+    aliases: [
+      "kıbrıs",
+      "kibris",
+      "cyprus",
+      "north cyprus",
+      "northern cyprus",
+      "kuzey kıbrıs",
+      "kuzey kibris",
+      "kktc",
+    ],
+  },
+  {
+    value: "greece",
+    label: "Yunanistan / Greece",
+    aliases: ["yunanistan", "greece", "hellas", "ellada"],
+  },
+  {
+    value: "dubai",
+    label: "Dubai / Dubai",
+    aliases: ["dubai", "uae", "united arab emirates", "birlesik arap emirlikleri"],
+  },
+  {
+    value: "georgia",
+    label: "Gürcistan / Georgia",
+    aliases: ["gürcistan", "gurcistan", "georgia", "sakartvelo"],
+  },
+];
+
+// Districts/regions by international country
+const INTERNATIONAL_DISTRICTS = {
+  cyprus: [
+    "Girne / Kyrenia",
+    "İskele / Iskele",
+    "Lefkoşa / Nicosia",
+    "Gazimağusa / Famagusta",
+  ],
+  greece: [
+    "Atina / Athens",
+    "Selanik / Thessaloniki",
+    "Girit / Crete",
+    "Mikonos / Mykonos",
+  ],
+  dubai: [
+    "Downtown Dubai / Downtown Dubai",
+    "Dubai Marina / Dubai Marina",
+    "Palm Jumeirah / Palm Jumeirah",
+    "JVC / Jumeirah Village Circle",
+  ],
+  georgia: [
+    "Tiflis / Tbilisi",
+    "Batum / Batumi",
+    "Kutaisi / Kutaisi",
+  ],
+};
+
+const INTERNATIONAL_HERO_IMAGES = {
+  cyprus: cyprusHeroBg,
+  greece: greeceHeroBg,
+  dubai: dubaiHeroBg,
+  georgia: georgiaHeroBg,
+};
 
 // Districts by city
 const CITY_DISTRICTS = {
@@ -192,8 +264,26 @@ const hasSpecialOfferData = (specialOffer) =>
         Number(specialOffer.locationMinutes || 0) > 0)
   );
 
+const normalizeProjectType = (value) => {
+  const normalized = String(value || "")
+    .trim()
+    .toLowerCase();
+  if (
+    normalized === "international" ||
+    normalized === "internationalproject" ||
+    normalized === "international-project"
+  ) {
+    return "international-project";
+  }
+  if (normalized === "special-offer") {
+    return "special-offer";
+  }
+  return "local-project";
+};
+
 const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { selectedCurrency, baseCurrency, rates, convertAmount, formatMoney } =
     useContext(CurrencyContext);
   const displayCurrency =
@@ -202,15 +292,24 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
       : baseCurrency;
   const { t, i18n } = useTranslation();
   const { data: allProperties, isLoading } = useProperties();
-  const isSpecialOffersPage = projectType === "special-offer";
+  const resolvedProjectType =
+    projectType === "local-project"
+      ? normalizeProjectType(searchParams.get("projectType") || projectType)
+      : projectType;
+  const isSpecialOffersPage = resolvedProjectType === "special-offer";
+  const isInternationalPage = resolvedProjectType === "international-project";
+  const cityOptions = isInternationalPage ? INTERNATIONAL_COUNTRIES : TURKISH_CITIES;
+  const districtOptionsByCity = isInternationalPage
+    ? INTERNATIONAL_DISTRICTS
+    : CITY_DISTRICTS;
 
-  // Filter local projects from all properties
+  // Filter projects from all properties
   const localProjects = useMemo(() => {
     if (!allProperties) return [];
     
-    // Only filter properties with propertyType === "local-project"
+    // Only include selected project type
     const filtered = allProperties.filter((p) => {
-      return p.propertyType === projectType;
+      return p.propertyType === resolvedProjectType;
     });
     
     return filtered.map((p) => {
@@ -301,7 +400,7 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
         },
       };
     });
-  }, [allProperties, projectType, baseCurrency]);
+  }, [allProperties, resolvedProjectType, baseCurrency]);
 
   // Filter states
   const [selectedCity, setSelectedCity] = useState("");
@@ -313,6 +412,20 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
   const [projectCategory, setProjectCategory] = useState(
     isSpecialOffersPage ? "special-offer" : ""
   );
+  const activeHeroBg =
+    isInternationalPage && selectedCity
+      ? INTERNATIONAL_HERO_IMAGES[selectedCity] || heroBg
+      : heroBg;
+
+  useEffect(() => {
+    setSelectedCity("");
+    setCitySearch("");
+    setSelectedDistricts([]);
+    setDistrictSearch("");
+    setSelectedRooms([]);
+    setRoomSearch("");
+    setProjectCategory(isSpecialOffersPage ? "special-offer" : "");
+  }, [resolvedProjectType, isSpecialOffersPage]);
 
   // Popover states
   const [cityPopoverOpened, setCityPopoverOpened] = useState(false);
@@ -322,16 +435,16 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
 
   // Filter cities based on search
   const filteredCities = useMemo(() => {
-    if (!citySearch) return TURKISH_CITIES;
-    return TURKISH_CITIES.filter((city) =>
+    if (!citySearch) return cityOptions;
+    return cityOptions.filter((city) =>
       city.label.toLowerCase().includes(citySearch.toLowerCase())
     );
-  }, [citySearch]);
+  }, [citySearch, cityOptions]);
 
   // Get districts for selected city
   const currentCityDistricts = useMemo(() => {
-    return CITY_DISTRICTS[selectedCity] || [];
-  }, [selectedCity]);
+    return districtOptionsByCity[selectedCity] || [];
+  }, [selectedCity, districtOptionsByCity]);
 
   // Filter districts based on search
   const filteredDistricts = useMemo(() => {
@@ -401,37 +514,66 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
     return localProjects.filter((project) => {
       // Filter by city
       if (selectedCity) {
-        const projectCity = normalizeCityName(project.city);
-        const selectedCityBase = selectedCity.replace(/-tumu|-avrupa|-anadolu/g, "");
-        const normalizedSelectedCity = normalizeCityName(selectedCityBase);
-        
-        // Check if project city contains the selected city
-        if (!projectCity.includes(normalizedSelectedCity)) {
-          return false;
-        }
-        
-        // For Istanbul sub-regions, check the district
-        if (selectedCity === "istanbul-avrupa" || selectedCity === "istanbul-anadolu") {
-          const projectDistrict = normalizeCityName(project.district || project.address);
-          const istanbulEuropeDistricts = CITY_DISTRICTS["istanbul-avrupa"].map(d => normalizeCityName(d));
-          const istanbulAsiaDistricts = CITY_DISTRICTS["istanbul-anadolu"].map(d => normalizeCityName(d));
-          
-          if (selectedCity === "istanbul-avrupa") {
-            const isInEurope = istanbulEuropeDistricts.some(d => projectDistrict.includes(d));
-            if (!isInEurope) return false;
-          } else if (selectedCity === "istanbul-anadolu") {
-            const isInAsia = istanbulAsiaDistricts.some(d => projectDistrict.includes(d));
-            if (!isInAsia) return false;
+        const selectedOption = cityOptions.find((city) => city.value === selectedCity);
+        const searchableProjectLocation = normalizeCityName(
+          [project.city, project.district, project.address].filter(Boolean).join(" ")
+        );
+
+        if (isInternationalPage) {
+          const countryAliases = selectedOption?.aliases || [];
+          if (
+            countryAliases.length > 0 &&
+            !countryAliases.some((alias) =>
+              searchableProjectLocation.includes(normalizeCityName(alias))
+            )
+          ) {
+            return false;
+          }
+        } else {
+          const projectCity = normalizeCityName(project.city);
+          const selectedCityBase = selectedCity.replace(/-tumu|-avrupa|-anadolu/g, "");
+          const normalizedSelectedCity = normalizeCityName(selectedCityBase);
+
+          // Check if project city contains the selected city
+          if (!projectCity.includes(normalizedSelectedCity)) {
+            return false;
+          }
+
+          // For Istanbul sub-regions, check the district
+          if (selectedCity === "istanbul-avrupa" || selectedCity === "istanbul-anadolu") {
+            const projectDistrict = normalizeCityName(project.district || project.address);
+            const istanbulEuropeDistricts = CITY_DISTRICTS["istanbul-avrupa"].map((d) =>
+              normalizeCityName(d)
+            );
+            const istanbulAsiaDistricts = CITY_DISTRICTS["istanbul-anadolu"].map((d) =>
+              normalizeCityName(d)
+            );
+
+            if (selectedCity === "istanbul-avrupa") {
+              const isInEurope = istanbulEuropeDistricts.some((d) =>
+                projectDistrict.includes(d)
+              );
+              if (!isInEurope) return false;
+            } else if (selectedCity === "istanbul-anadolu") {
+              const isInAsia = istanbulAsiaDistricts.some((d) =>
+                projectDistrict.includes(d)
+              );
+              if (!isInAsia) return false;
+            }
           }
         }
       }
 
       // Filter by district
       if (selectedDistricts.length > 0) {
-        const projectAddress = normalizeCityName(project.address || project.district);
-        const matchesDistrict = selectedDistricts.some(district => 
-          projectAddress.includes(normalizeCityName(district))
-        );
+        const projectAddress = normalizeCityName(project.address || project.district || project.city);
+        const matchesDistrict = selectedDistricts.some((district) => {
+          const districtAliases = district
+            .split("/")
+            .map((value) => normalizeCityName(value.trim()))
+            .filter(Boolean);
+          return districtAliases.some((alias) => projectAddress.includes(alias));
+        });
         if (!matchesDistrict) return false;
       }
 
@@ -459,7 +601,15 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
 
       return true;
     });
-  }, [localProjects, selectedCity, selectedDistricts, selectedRooms, projectCategory]);
+  }, [
+    cityOptions,
+    isInternationalPage,
+    localProjects,
+    projectCategory,
+    selectedCity,
+    selectedDistricts,
+    selectedRooms,
+  ]);
 
   return (
     <div className="min-h-screen pt-24 pb-16 bg-[#f7f3ea]">
@@ -468,7 +618,7 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
         <div className="relative rounded-xl overflow-hidden h-auto min-h-[450px] md:min-h-[280px]">
           {/* Background Image */}
           <img
-            src={heroBg}
+            src={activeHeroBg}
             alt="Konut Projeleri"
             className="absolute inset-0 w-full h-full object-cover"
           />
@@ -479,7 +629,12 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
           {/* Content */}
           <div className="relative h-full flex flex-col items-center justify-center px-4 py-6 md:py-4">
             <h1 className="text-white text-xl md:text-2xl font-medium mb-6 text-center drop-shadow-lg">
-              {heroTitle || (isSpecialOffersPage ? t("nav.featuredProperties") : t("localProjects.heroTitle"))}
+              {heroTitle ||
+                (isSpecialOffersPage
+                  ? t("nav.featuredProperties")
+                  : isInternationalPage
+                  ? t("nav.internationalProjects")
+                  : t("localProjects.heroTitle"))}
             </h1>
 
             {/* Search Box */}
@@ -498,7 +653,8 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
                     onClick={() => setCityPopoverOpened((o) => !o)}
                   >
                     <span className="text-sm text-gray-700">
-                      {TURKISH_CITIES.find(c => c.value === selectedCity)?.label || t("localProjects.city")}
+                      {cityOptions.find((c) => c.value === selectedCity)?.label ||
+                        t("localProjects.city")}
                     </span>
                     <MdKeyboardArrowDown className="text-gray-400" size={18} />
                   </button>
@@ -533,52 +689,56 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
                 </Popover.Dropdown>
               </Popover>
 
-              {/* District Select */}
-              <Popover
-                opened={districtPopoverOpened}
-                onChange={setDistrictPopoverOpened}
-                width={220}
-                position="bottom-start"
-                shadow="md"
-                disabled={!hasDistricts}
-              >
-                <Popover.Target>
-                  <button
-                    className={`flex items-center justify-between gap-2 px-4 py-3 md:py-2.5 md:min-w-[100px] transition-colors w-full md:w-auto ${
-                      !hasDistricts ? "opacity-50 cursor-not-allowed" : ""
-                    }`}
-                    onClick={() => hasDistricts && setDistrictPopoverOpened((o) => !o)}
+              {!isInternationalPage && (
+                <>
+                  {/* District Select */}
+                  <Popover
+                    opened={districtPopoverOpened}
+                    onChange={setDistrictPopoverOpened}
+                    width={220}
+                    position="bottom-start"
+                    shadow="md"
+                    disabled={!hasDistricts}
                   >
-                    <span className="text-sm text-gray-700">
-                      {selectedDistricts.length > 0 ? `${selectedDistricts.length} ${t("localProjects.district")}` : t("localProjects.district")}
-                    </span>
-                    <MdKeyboardArrowDown className="text-gray-400" size={18} />
-                  </button>
-                </Popover.Target>
-                <Popover.Dropdown className="p-0">
-                  <div className="p-2 border-b">
-                    <TextInput
-                      placeholder={t("localProjects.district")}
-                      size="xs"
-                      value={districtSearch}
-                      onChange={(e) => setDistrictSearch(e.target.value)}
-                      rightSection={<MdSearch size={14} />}
-                    />
-                  </div>
-                  <ScrollArea h={200} className="p-2">
-                    {filteredDistricts.map((district) => (
-                      <Checkbox
-                        key={district}
-                        label={district}
-                        size="xs"
-                        checked={selectedDistricts.includes(district)}
-                        onChange={() => toggleDistrict(district)}
-                        className="py-1"
-                      />
-                    ))}
-                  </ScrollArea>
-                </Popover.Dropdown>
-              </Popover>
+                    <Popover.Target>
+                      <button
+                        className={`flex items-center justify-between gap-2 px-4 py-3 md:py-2.5 md:min-w-[100px] transition-colors w-full md:w-auto ${
+                          !hasDistricts ? "opacity-50 cursor-not-allowed" : ""
+                        }`}
+                        onClick={() => hasDistricts && setDistrictPopoverOpened((o) => !o)}
+                      >
+                        <span className="text-sm text-gray-700">
+                          {selectedDistricts.length > 0 ? `${selectedDistricts.length} ${t("localProjects.district")}` : t("localProjects.district")}
+                        </span>
+                        <MdKeyboardArrowDown className="text-gray-400" size={18} />
+                      </button>
+                    </Popover.Target>
+                    <Popover.Dropdown className="p-0">
+                      <div className="p-2 border-b">
+                        <TextInput
+                          placeholder={t("localProjects.district")}
+                          size="xs"
+                          value={districtSearch}
+                          onChange={(e) => setDistrictSearch(e.target.value)}
+                          rightSection={<MdSearch size={14} />}
+                        />
+                      </div>
+                      <ScrollArea h={200} className="p-2">
+                        {filteredDistricts.map((district) => (
+                          <Checkbox
+                            key={district}
+                            label={district}
+                            size="xs"
+                            checked={selectedDistricts.includes(district)}
+                            onChange={() => toggleDistrict(district)}
+                            className="py-1"
+                          />
+                        ))}
+                      </ScrollArea>
+                    </Popover.Dropdown>
+                  </Popover>
+                </>
+              )}
 
               {/* Room Select */}
               <Popover
@@ -713,7 +873,7 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
             
             {selectedCity && (
               <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 border border-blue-100 rounded text-xs">
-                {TURKISH_CITIES.find(c => c.value === selectedCity)?.label}
+                {cityOptions.find((c) => c.value === selectedCity)?.label}
                 <button
                   onClick={() => handleCityChange("")}
                   className="ml-1 hover:text-blue-900"
