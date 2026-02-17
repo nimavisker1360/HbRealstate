@@ -76,8 +76,8 @@ const AddLocation = ({ propertyDetails, setPropertyDetails, nextStep }) => {
             onClick={() => form.setFieldValue("propertyType", "international-project")}
             className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all ${
               propertyType === "international-project"
-                ? "border-purple-500 bg-purple-50 text-purple-700"
-                : "border-gray-200 hover:border-purple-200"
+                ? "border-blue-500 bg-blue-50 text-blue-700"
+                : "border-gray-200 hover:border-blue-200"
             }`}
           >
             <MdPublic size={28} />

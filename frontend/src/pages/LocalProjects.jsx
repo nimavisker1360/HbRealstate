@@ -693,56 +693,56 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
                 </Popover.Dropdown>
               </Popover>
 
-              {!isInternationalPage && (
-                <>
-                  {/* District Select */}
-                  <Popover
-                    opened={districtPopoverOpened}
-                    onChange={setDistrictPopoverOpened}
-                    width={220}
-                    position="bottom-start"
-                    shadow="md"
-                    disabled={!hasDistricts}
+              {/* District Select */}
+              <Popover
+                opened={districtPopoverOpened}
+                onChange={setDistrictPopoverOpened}
+                width={220}
+                position="bottom-start"
+                shadow="md"
+                disabled={!hasDistricts}
+              >
+                <Popover.Target>
+                  <button
+                    className={`flex items-center justify-between gap-2 px-4 py-3 md:py-2.5 md:min-w-[100px] transition-colors w-full md:w-auto ${
+                      !hasDistricts ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
+                    onClick={() =>
+                      hasDistricts && setDistrictPopoverOpened((o) => !o)
+                    }
                   >
-                    <Popover.Target>
-                      <button
-                        className={`flex items-center justify-between gap-2 px-4 py-3 md:py-2.5 md:min-w-[100px] transition-colors w-full md:w-auto ${
-                          !hasDistricts ? "opacity-50 cursor-not-allowed" : ""
-                        }`}
-                        onClick={() => hasDistricts && setDistrictPopoverOpened((o) => !o)}
-                      >
-                        <span className="text-sm text-gray-700">
-                          {selectedDistricts.length > 0 ? `${selectedDistricts.length} ${t("localProjects.district")}` : t("localProjects.district")}
-                        </span>
-                        <MdKeyboardArrowDown className="text-gray-400" size={18} />
-                      </button>
-                    </Popover.Target>
-                    <Popover.Dropdown className="p-0">
-                      <div className="p-2 border-b">
-                        <TextInput
-                          placeholder={t("localProjects.district")}
-                          size="xs"
-                          value={districtSearch}
-                          onChange={(e) => setDistrictSearch(e.target.value)}
-                          rightSection={<MdSearch size={14} />}
-                        />
-                      </div>
-                      <ScrollArea h={200} className="p-2">
-                        {filteredDistricts.map((district) => (
-                          <Checkbox
-                            key={district}
-                            label={district}
-                            size="xs"
-                            checked={selectedDistricts.includes(district)}
-                            onChange={() => toggleDistrict(district)}
-                            className="py-1"
-                          />
-                        ))}
-                      </ScrollArea>
-                    </Popover.Dropdown>
-                  </Popover>
-                </>
-              )}
+                    <span className="text-sm text-gray-700">
+                      {selectedDistricts.length > 0
+                        ? `${selectedDistricts.length} ${t("localProjects.district")}`
+                        : t("localProjects.district")}
+                    </span>
+                    <MdKeyboardArrowDown className="text-gray-400" size={18} />
+                  </button>
+                </Popover.Target>
+                <Popover.Dropdown className="p-0">
+                  <div className="p-2 border-b">
+                    <TextInput
+                      placeholder={t("localProjects.district")}
+                      size="xs"
+                      value={districtSearch}
+                      onChange={(e) => setDistrictSearch(e.target.value)}
+                      rightSection={<MdSearch size={14} />}
+                    />
+                  </div>
+                  <ScrollArea h={200} className="p-2">
+                    {filteredDistricts.map((district) => (
+                      <Checkbox
+                        key={district}
+                        label={district}
+                        size="xs"
+                        checked={selectedDistricts.includes(district)}
+                        onChange={() => toggleDistrict(district)}
+                        className="py-1"
+                      />
+                    ))}
+                  </ScrollArea>
+                </Popover.Dropdown>
+              </Popover>
 
               {/* Room Select */}
               <Popover

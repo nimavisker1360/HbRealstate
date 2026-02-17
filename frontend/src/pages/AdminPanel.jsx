@@ -1319,7 +1319,9 @@ const AdminPanel = () => {
 
   // Check if current property type is local-project or international-project
   const isLocalProject = propertyDetails.propertyType === "local-project";
-  const isInternationalProject = propertyDetails.propertyType === "international-project";
+  const isInternationalProject =
+    propertyDetails.propertyType === "international-project";
+  const isProjectType = isLocalProject || isInternationalProject;
 
   // Fetch all bookings
   const fetchBookings = useCallback(async () => {
@@ -2134,11 +2136,9 @@ const AdminPanel = () => {
     }
   };
 
-  // Dynamic step count based on property type
-  // Local project: Konum -> Görseller -> Proje Detayları -> Olanaklar (4 steps)
-  // International project: Konum -> Görseller -> Detaylar -> Proje Detayları -> Olanaklar (5 steps)
-  // Regular: Konum -> Görseller -> Detaylar -> Olanaklar (4 steps)
-  const maxSteps = isInternationalProject ? 5 : 4;
+  // All flows complete in 4 steps.
+  // Project types skip "Detaylar" and go directly to "Proje Detayları".
+  const maxSteps = 4;
 
   const nextStep = () => {
     setActive((current) => (current < maxSteps ? current + 1 : current));
@@ -2466,7 +2466,7 @@ const AdminPanel = () => {
               </Button>
               <Button
                 variant={propertyFilter === "international-project" ? "filled" : "light"}
-                color="grape"
+                color="blue"
                 size="sm"
                 onClick={() => setPropertyFilter("international-project")}
               >
@@ -2549,7 +2549,7 @@ const AdminPanel = () => {
                                 : property.propertyType === "local-project"
                                 ? "blue"
                                 : property.propertyType === "international-project"
-                                ? "grape"
+                                ? "blue"
                                 : "red"
                             }
                             variant="light"
@@ -3512,8 +3512,8 @@ const AdminPanel = () => {
                 </div>
               </Stepper.Step>
 
-              {/* Skip Detaylar for local projects - go directly to Proje Detayları */}
-              {!isLocalProject && (
+              {/* Skip Detaylar for project types - go directly to Proje Detayları */}
+              {!isProjectType && (
                 <Stepper.Step label="Detaylar" description="Ana özellikler">
                   <div className="mt-6">
                     <BasicDetails
