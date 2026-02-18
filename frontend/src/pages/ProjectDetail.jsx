@@ -1,4 +1,4 @@
-import { useState, useMemo, useContext } from "react";
+import { useState, useMemo, useContext, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import CurrencyContext from "../context/CurrencyContext";
@@ -28,6 +28,8 @@ import {
   MdVideocam,
   MdCheck,
   MdClose,
+  MdChevronLeft,
+  MdChevronRight,
 } from "react-icons/md";
 import { FaKey } from "react-icons/fa";
 import { FaPhone, FaWhatsapp } from "react-icons/fa6";
@@ -299,6 +301,7 @@ const ProjectDetail = () => {
   const [sitePlanModalOpen, setSitePlanModalOpen] = useState(false);
   const [videoModalOpen, setVideoModalOpen] = useState(false);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
+  const [isLightboxMediaLoaded, setIsLightboxMediaLoaded] = useState(true);
   const [contactForm, setContactForm] = useState({
     name: "",
     email: "",
@@ -408,6 +411,22 @@ const ProjectDetail = () => {
     return [...new Set(project.dairePlanlari.map((plan) => plan.tip))];
   }, [project]);
 
+  useEffect(() => {
+    if (!project?.galleryItems?.length) return;
+
+    project.galleryItems.forEach((item) => {
+      if (item?.type !== "image" || !item?.url) return;
+      const preloadedImage = new Image();
+      preloadedImage.src = item.url;
+    });
+  }, [project]);
+
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    const currentType = project?.galleryItems?.[selectedImage]?.type;
+    setIsLightboxMediaLoaded(currentType === "video");
+  }, [lightboxOpen, selectedImage, project]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen pt-24 flex items-center justify-center">
@@ -431,6 +450,33 @@ const ProjectDetail = () => {
     hasSpecialOfferData(offer)
   );
   const isSpecialOfferProject = specialOffersData.length > 0;
+
+  const goToPrevGalleryItem = () => {
+    const totalItems = project?.galleryItems?.length || 0;
+    if (totalItems <= 1) return;
+    setSelectedImage((prev) => (prev === 0 ? totalItems - 1 : prev - 1));
+  };
+
+  const goToNextGalleryItem = () => {
+    const totalItems = project?.galleryItems?.length || 0;
+    if (totalItems <= 1) return;
+    setSelectedImage((prev) => (prev === totalItems - 1 ? 0 : prev + 1));
+  };
+
+  const handleLightboxImageClick = (event) => {
+    const totalItems = project?.galleryItems?.length || 0;
+    if (totalItems <= 1) return;
+
+    const { left, width } = event.currentTarget.getBoundingClientRect();
+    const clickPosition = event.clientX - left;
+
+    if (clickPosition < width / 2) {
+      goToPrevGalleryItem();
+      return;
+    }
+
+    goToNextGalleryItem();
+  };
 
   const handleContactSubmit = async (e) => {
     e.preventDefault();
@@ -1368,20 +1414,55 @@ const ProjectDetail = () => {
         centered
         withCloseButton
       >
-        {project.galleryItems[selectedImage]?.type === 'video' ? (
-          <video
-            src={project.galleryItems[selectedImage]?.url}
-            className="w-full h-auto rounded-lg"
-            controls
-            autoPlay
-          />
-        ) : (
-          <img
-            src={project.galleryItems[selectedImage]?.url || project.images[0]}
-            alt={project.name}
-            className="w-full h-auto"
-          />
-        )}
+        <div className="relative">
+          {project.galleryItems[selectedImage]?.type === 'video' ? (
+            <video
+              src={project.galleryItems[selectedImage]?.url}
+              className="w-full h-auto rounded-lg"
+              controls
+              autoPlay
+            />
+          ) : (
+            <img
+              src={project.galleryItems[selectedImage]?.url || project.images[0]}
+              alt={project.name}
+              className={`w-full h-auto cursor-pointer select-none transition-opacity duration-200 ${
+                isLightboxMediaLoaded ? "opacity-100" : "opacity-0"
+              }`}
+              onClick={handleLightboxImageClick}
+              onLoad={() => setIsLightboxMediaLoaded(true)}
+              onError={() => setIsLightboxMediaLoaded(true)}
+              decoding="async"
+            />
+          )}
+
+          {project.galleryItems[selectedImage]?.type === "image" && !isLightboxMediaLoaded && (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-100/60 rounded-lg">
+              <Loader size="sm" />
+            </div>
+          )}
+
+          {project.galleryItems.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={goToPrevGalleryItem}
+                className="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-black/45 text-white hover:bg-black/65 transition-colors flex items-center justify-center"
+                aria-label="Previous image"
+              >
+                <MdChevronLeft size={24} />
+              </button>
+              <button
+                type="button"
+                onClick={goToNextGalleryItem}
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-black/45 text-white hover:bg-black/65 transition-colors flex items-center justify-center"
+                aria-label="Next image"
+              >
+                <MdChevronRight size={24} />
+              </button>
+            </>
+          )}
+        </div>
         <div className="flex justify-center gap-2 mt-4 flex-wrap">
           {project.galleryItems.map((item, index) => (
             <button
