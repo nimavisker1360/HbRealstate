@@ -29,7 +29,6 @@ export const buyerGuideMenu = [
         items: [
           { labelKey: "buyerGuideMenu.stepByStepGuideBuyingHome" },
           { labelKey: "buyerGuideMenu.costsOfBuyingHome" },
-          { labelKey: "buyerGuideMenu.whoCanBuyProperty" },
           { labelKey: "buyerGuideMenu.buyingThroughCompany" },
           { labelKey: "buyerGuideMenu.shouldUseSolicitor" },
           { labelKey: "buyerGuideMenu.powerOfAttorney" },
