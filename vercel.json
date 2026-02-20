@@ -2,6 +2,14 @@
   "installCommand": "npm install",
   "buildCommand": "npm --workspace frontend run build",
   "outputDirectory": "frontend/dist",
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "www.hbrealstate.com" }],
+      "destination": "https://hbrealstate.com/:path*",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/index.js" },
     { "source": "/(.*)", "destination": "/" }
