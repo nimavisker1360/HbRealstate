@@ -217,7 +217,7 @@ const About = () => {
         </div>
         {/* Right side */}
         <div className="flex-1 flex justify-center flex-col text-left">
-          <h1
+          <h2
             className={`h1 flex flex-col gap-4 ${
               isVisible ? "animate-about-slide-right" : "opacity-0"
             }`}
@@ -248,7 +248,7 @@ const About = () => {
                   </span>
                 </span>
               ))}
-          </h1>
+          </h2>
           <p
             id="about-mission-text"
             className={`py-5 ${
