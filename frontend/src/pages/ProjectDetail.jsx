@@ -1480,7 +1480,11 @@ const ProjectDetail = () => {
                   </div>
                 </>
               ) : (
-                <img src={item.url} alt="" className="w-full h-full object-cover" />
+                <img
+                  src={item.url}
+                  alt={`${project.name} thumbnail ${index + 1}`}
+                  className="w-full h-full object-cover"
+                />
               )}
             </button>
           ))}

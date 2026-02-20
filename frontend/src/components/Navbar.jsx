@@ -338,6 +338,7 @@ const Navbar = ({
               <img
                 src={userIcon}
                 alt=""
+                aria-hidden="true"
                 height={20}
                 width={20}
                 className="brightness-0 invert"
@@ -348,7 +349,12 @@ const Navbar = ({
             <div className="space-y-1">
               {/* User Info */}
               <div className="flex items-center gap-3 px-3 py-2">
-                <Avatar src={user?.picture} alt="user" radius="xl" size="md" />
+                <Avatar
+                  src={user?.picture}
+                  alt={user?.name ? `${user.name} profile photo` : "User profile photo"}
+                  radius="xl"
+                  size="md"
+                />
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-gray-800 truncate text-sm">
                     {user?.name || "User"}

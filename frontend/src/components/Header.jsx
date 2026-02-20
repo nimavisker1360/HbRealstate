@@ -206,7 +206,13 @@ const Header = () => {
                       "btn-secondary flexCenter gap-x-2 medium-16 rounded-[10px] !bg-[#00A86B] !ring-[#00A86B] hover:!bg-[#009A61]"
                     }
                   >
-                    <img src={userIcon} alt="" height={22} width={22} />
+                    <img
+                      src={userIcon}
+                      alt=""
+                      aria-hidden="true"
+                      height={22}
+                      width={22}
+                    />
                     <span>{t("common.login")}</span>
                   </button>
                 ) : (

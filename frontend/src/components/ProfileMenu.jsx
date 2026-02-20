@@ -50,7 +50,7 @@ const ProfileMenu = ({ user, logout }) => {
         <Menu.Target>
           <Avatar
             src={profileImage || user?.picture}
-            alt="user image"
+            alt={user?.name ? `${user.name} profile photo` : "User profile photo"}
             radius={"xl"}
             className="cursor-pointer"
           />
@@ -119,6 +119,7 @@ const ProfileMenu = ({ user, logout }) => {
 ProfileMenu.propTypes = {
   user: PropTypes.shape({
     picture: PropTypes.string,
+    name: PropTypes.string,
   }),
   logout: PropTypes.func.isRequired,
 };

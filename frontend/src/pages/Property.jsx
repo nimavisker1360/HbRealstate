@@ -639,14 +639,14 @@ const Property = () => {
                       <MdPlayCircleOutline size={20} color="white" />
                     </div>
                   </>
-                ) : (
-                  <img
-                    src={item.url}
-                    alt={`thumb-${index + 1}`}
-                    className="h-full w-full object-cover"
-                  />
-                )}
-              </button>
+                  ) : (
+                    <img
+                      src={item.url}
+                      alt={`${data?.title || "Property image"} thumbnail ${index + 2}`}
+                      className="h-full w-full object-cover"
+                    />
+                  )}
+                </button>
             ))}
           </div>
         </div>

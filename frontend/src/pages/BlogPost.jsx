@@ -458,7 +458,7 @@ const BlogPost = () => {
             
             <img 
               src={selectedImage} 
-              alt="Full size" 
+              alt={`${getLocalizedContent("title") || "Blog image"} image ${currentImageIndex + 1}`}
               className="max-w-full max-h-[90vh] object-contain rounded-lg"
               onClick={(e) => e.stopPropagation()}
             />
@@ -537,7 +537,7 @@ const BlogPost = () => {
                   >
                     <img 
                       src={img} 
-                      alt={`Gallery ${index + 1}`}
+                      alt={`${getLocalizedContent("title") || "Blog image"} thumbnail ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
                   </button>
