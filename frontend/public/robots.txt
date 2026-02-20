@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://hbrealstate.com/sitemap.xml
+Sitemap: https://www.hbrealstate.com/sitemap.xml
