@@ -53,9 +53,6 @@ const escapeXml = (value) =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
 
-const isProjectProperty = (propertyType) =>
-  propertyType === "local-project" || propertyType === "international-project";
-
 const toPropertyPath = (residency) => {
   const id = normalizeIdentifier(residency?._id);
   const explicitSlug = normalizeIdentifier(residency?.slug);
@@ -63,12 +60,7 @@ const toPropertyPath = (residency) => {
   const fallbackSlug = slugFromTitle && id ? `${slugFromTitle}-${id}` : "";
   const identifier = explicitSlug || fallbackSlug || id;
   if (!identifier) return null;
-
-  const prefix = isProjectProperty(residency?.propertyType)
-    ? "/projects/"
-    : "/listing/";
-
-  return `${prefix}${encodePathSegment(identifier)}`;
+  return `/listing/${encodePathSegment(identifier)}`;
 };
 
 const buildSitemapXml = (urls) => {
@@ -108,7 +100,6 @@ export const getSitemapXml = asyncHandler(async (_req, res) => {
             _id: 1,
             slug: 1,
             title: 1,
-            propertyType: 1,
             updatedAt: 1,
             createdAt: 1,
           },
