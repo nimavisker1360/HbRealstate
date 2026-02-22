@@ -176,11 +176,8 @@ const AdminPanel = () => {
   const { t, i18n } = useTranslation();
 
   // Bookings state (reserved for future use)
-  // eslint-disable-next-line no-unused-vars
   const [bookings, setBookings] = useState([]);
-  // eslint-disable-next-line no-unused-vars
   const [bookingsLoading, setBookingsLoading] = useState(true);
-  // eslint-disable-next-line no-unused-vars
   const [totalBookings, setTotalBookings] = useState(0);
 
   // Properties state

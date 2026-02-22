@@ -10,6 +10,7 @@ import { blogRoute } from "./routes/blogRoute.js";
 import { housingSalesRoute } from "./routes/housingSalesRoute.js";
 import { testimonialRoute } from "./routes/testimonialRoute.js";
 import { assistantRoute } from "./routes/assistantRoute.js";
+import { getSitemapXml } from "./controllers/sitemapCntrl.js";
 
 dotenv.config();
 
@@ -18,6 +19,10 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors());
+
+// Dynamic XML sitemap (served via Vercel rewrite from /sitemap.xml).
+app.get("/sitemap.xml", getSitemapXml);
+app.get("/api/sitemap.xml", getSitemapXml);
 
 // Routes
 app.use("/api/user", userRoute);

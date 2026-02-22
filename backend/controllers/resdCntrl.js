@@ -9,6 +9,23 @@ const normalizeCurrency = (currencyCode) => {
   return SUPPORTED_CURRENCIES.includes(normalized) ? normalized : "USD";
 };
 
+const normalizeLookupIdentifier = (value) => {
+  const raw = String(value || "").trim();
+  try {
+    return decodeURIComponent(raw);
+  } catch (_error) {
+    return raw;
+  }
+};
+
+const extractObjectIdCandidate = (identifier) => {
+  if (!identifier) return null;
+  if (ObjectId.isValid(identifier)) return identifier;
+  const match = identifier.match(/([a-fA-F0-9]{24})$/);
+  if (match && ObjectId.isValid(match[1])) return match[1];
+  return null;
+};
+
 export const createResidency = asyncHandler(async (req, res) => {
   const {
     title,
@@ -283,9 +300,21 @@ export const getResidency = asyncHandler(async (req, res) => {
   try {
     // Use MongoDB directly to get all fields including new ones
     const db = await getMongoDb();
-    const residency = await db.collection("Residency").findOne({
-      _id: new ObjectId(id),
-    });
+    const identifier = normalizeLookupIdentifier(id);
+    const objectIdCandidate = extractObjectIdCandidate(identifier);
+    let residency = null;
+
+    if (objectIdCandidate) {
+      residency = await db.collection("Residency").findOne({
+        _id: new ObjectId(objectIdCandidate),
+      });
+    }
+
+    if (!residency && identifier) {
+      residency = await db.collection("Residency").findOne({
+        slug: identifier,
+      });
+    }
 
     if (residency) {
       // Transform _id to id for consistency

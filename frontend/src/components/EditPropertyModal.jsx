@@ -855,7 +855,6 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
         muhit: [],
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [property]);
 
   // Initialize Cloudinary widget
