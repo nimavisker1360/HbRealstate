@@ -57,6 +57,7 @@ export const buyerGuideMenu = [
         items: [
           { labelKey: "buyerGuideMenu.residencePermitAndVisaInfo" },
           { labelKey: "buyerGuideMenu.workPermitsInTurkey" },
+          { labelKey: "nav.citizenship", menuKey: "nav.citizenship" },
         ],
       },
     ],

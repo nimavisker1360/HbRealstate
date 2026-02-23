@@ -190,16 +190,6 @@ const Navbar = ({
     closeMenu && closeMenu();
   };
 
-  const handleCitizenshipClick = async () => {
-    const blogId = await getMenuBlogId({ menuKey: "nav.citizenship" });
-    if (blogId) {
-      navigate(`/blog/${blogId}`);
-    } else {
-      navigate("/blogs");
-    }
-    closeMenu && closeMenu();
-  };
-
   const handleAddPropertyClick = () => {
     if (validateLogin()) {
       closeMenu && closeMenu();
@@ -213,6 +203,8 @@ const Navbar = ({
   const currentCategory = searchParams.get("category");
   const currentProjectType = searchParams.get("projectType");
   const isProjectsPage = location.pathname === "/projects";
+  const isInvestmentOpportunitiesPage =
+    isProjectsPage && currentProjectType === "special-offer";
 
   const handleCategoryClick = (type, category) => {
     navigate(`/listing?type=${type}&category=${category}`);
@@ -297,6 +289,12 @@ const Navbar = ({
     } else {
       navigate("/projects?projectType=international");
     }
+    setProjectsDropdownOpen(false);
+    closeMenu && closeMenu();
+  };
+
+  const handleInvestmentOpportunitiesClick = () => {
+    navigate("/projects?projectType=special-offer");
     setProjectsDropdownOpen(false);
     closeMenu && closeMenu();
   };
@@ -545,14 +543,6 @@ const Navbar = ({
           })}
         </div>
       </div>
-
-      <button
-        type="button"
-        className={simpleButtonClass(false)}
-        onClick={handleCitizenshipClick}
-      >
-        <span>{t("nav.citizenship")}</span>
-      </button>
 
       {isDesktop ? (
         <div
@@ -937,6 +927,14 @@ const Navbar = ({
           </div>
         </div>
       )}
+
+      <button
+        type="button"
+        className={simpleButtonClass(isInvestmentOpportunitiesPage)}
+        onClick={handleInvestmentOpportunitiesClick}
+      >
+        <span>{t("nav.investmentOpportunities")}</span>
+      </button>
 
       <button
         type="button"
