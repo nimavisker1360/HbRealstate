@@ -215,7 +215,7 @@ export const FOOTER_CONTACT_INFO = {
     {
       label: "Main Branch Address",
       value:
-        "KOZA MAH. 1638 SK, AÇELYA G2 BLOKLARI, NO.37F İÇ KAPI NO.73, ESENYURT/İSTANBUL",
+        "Koza Mah. 1638 Sk., Açelya G2 Blokları, No.37F İç Kapı No.73, Esenyurt/İstanbul",
     },
     {
       label: "Second Branch Address",

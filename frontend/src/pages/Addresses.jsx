@@ -31,7 +31,7 @@ const Addresses = () => {
     {
       id: 1,
       nameKey: "mainBranch",
-      address: "KOZA MAH. 1638 SK, AÇELYA G2 BLOKLARI, NO.37F İÇ KAPI NO.73, ESENYURT/İSTANBUL",
+      address: "Koza Mah. 1638 Sk., Açelya G2 Blokları, No.37F İç Kapı No.73, Esenyurt/İstanbul",
       position: [41.0255, 28.6733], // Esenyurt coordinates
     },
     {
