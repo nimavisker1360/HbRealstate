@@ -11,7 +11,7 @@ import {
   ScrollArea,
   Loader,
 } from "@mantine/core";
-import { MdSearch, MdKeyboardArrowDown } from "react-icons/md";
+import { MdSearch, MdKeyboardArrowDown, MdLocationOn, MdTune } from "react-icons/md";
 import heroBg from "../assets/img4.png";
 import cyprusHeroBg from "../assets/hero/cyprus.jpg";
 import dubaiHeroBg from "../assets/hero/dubai.jpg";
@@ -19,6 +19,8 @@ import georgiaHeroBg from "../assets/hero/Georgia02.jpg";
 import greeceHeroBg from "../assets/hero/greece.jpg";
 import useProperties from "../hooks/useProperties";
 import CurrencyContext from "../context/CurrencyContext";
+import PropertiesMap from "../components/PropertiesMap";
+import PropertyCard from "../components/PropertyCard";
 
 // Turkish cities data
 const TURKISH_CITIES = [
@@ -284,6 +286,10 @@ const normalizeProjectType = (value) => {
 const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const hotOffersQuery = String(searchParams.get("hotOffers") || "")
+    .trim()
+    .toLowerCase();
+  const isHotOffersMode = hotOffersQuery === "1" || hotOffersQuery === "true";
   const { selectedCurrency, baseCurrency, rates, convertAmount, formatMoney } =
     useContext(CurrencyContext);
   const displayCurrency =
@@ -307,8 +313,14 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
   const localProjects = useMemo(() => {
     if (!allProperties) return [];
     
-    // Only include selected project type
+    // In Hot Offers mode include local + international projects
     const filtered = allProperties.filter((p) => {
+      if (isHotOffersMode) {
+        return (
+          p.propertyType === "local-project" ||
+          p.propertyType === "international-project"
+        );
+      }
       return p.propertyType === resolvedProjectType;
     });
     
@@ -363,6 +375,7 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
         id: p.id,
         name: activeSpecialOffer.title || p.title,
         city: p.city || "",
+        country: p.country || (p.propertyType === "international-project" ? "" : "Turkey"),
         district: p.address || "",
         address: p.address || "",
         rooms: roomTypes,
@@ -399,8 +412,8 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
           locationMinutes: Number(activeSpecialOffer.locationMinutes || 0),
         },
       };
-    });
-  }, [allProperties, resolvedProjectType, baseCurrency]);
+    }).filter((project) => (isHotOffersMode ? project.hasSpecialOffer : true));
+  }, [allProperties, resolvedProjectType, baseCurrency, isHotOffersMode]);
 
   // Filter states
   const [selectedCity, setSelectedCity] = useState("");
@@ -412,6 +425,10 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
   const [projectCategory, setProjectCategory] = useState(
     isSpecialOffersPage ? "special-offer" : ""
   );
+  const [hotLocationQuery, setHotLocationQuery] = useState("");
+  const [hotPropertyTypeFilter, setHotPropertyTypeFilter] = useState("all");
+  const [hotPriceMin, setHotPriceMin] = useState("");
+  const [hotPriceMax, setHotPriceMax] = useState("");
   const activeHeroBg =
     isInternationalPage && selectedCity
       ? INTERNATIONAL_HERO_IMAGES[selectedCity] || heroBg
@@ -425,13 +442,21 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
     setSelectedRooms([]);
     setRoomSearch("");
     setProjectCategory(isSpecialOffersPage ? "special-offer" : "");
-  }, [resolvedProjectType, isSpecialOffersPage]);
+    setHotLocationQuery("");
+    setHotPropertyTypeFilter("all");
+    setHotPriceMin("");
+    setHotPriceMax("");
+  }, [resolvedProjectType, isSpecialOffersPage, isHotOffersMode]);
 
   // Popover states
   const [cityPopoverOpened, setCityPopoverOpened] = useState(false);
   const [districtPopoverOpened, setDistrictPopoverOpened] = useState(false);
   const [roomPopoverOpened, setRoomPopoverOpened] = useState(false);
   const [statusPopoverOpened, setStatusPopoverOpened] = useState(false);
+  const [hotStatusPopoverOpened, setHotStatusPopoverOpened] = useState(false);
+  const [hotUsePopoverOpened, setHotUsePopoverOpened] = useState(false);
+  const [hotPricePopoverOpened, setHotPricePopoverOpened] = useState(false);
+  const [hotRoomsPopoverOpened, setHotRoomsPopoverOpened] = useState(false);
   const getCityLabel = (city) =>
     isInternationalPage && city?.value === ""
       ? t("localProjects.allCountries")
@@ -581,6 +606,42 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
         if (!matchesDistrict) return false;
       }
 
+      if (isHotOffersMode) {
+        const searchableLocation = normalizeCityName(
+          [
+            project.name,
+            project.address,
+            project.district,
+            project.city,
+            project.country,
+          ]
+            .filter(Boolean)
+            .join(" ")
+        );
+
+        if (
+          hotLocationQuery &&
+          !searchableLocation.includes(normalizeCityName(hotLocationQuery))
+        ) {
+          return false;
+        }
+
+        if (
+          hotPropertyTypeFilter !== "all" &&
+          project.propertyType !== hotPropertyTypeFilter
+        ) {
+          return false;
+        }
+
+        const projectPrice = Number(project.price || 0);
+        if (hotPriceMin && projectPrice < Number(hotPriceMin)) {
+          return false;
+        }
+        if (hotPriceMax && projectPrice > Number(hotPriceMax)) {
+          return false;
+        }
+      }
+
       // Filter by room types
       if (selectedRooms.length > 0) {
         const projectRooms = (project.rooms || []).map((room) =>
@@ -607,6 +668,11 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
     });
   }, [
     cityOptions,
+    hotLocationQuery,
+    hotPriceMax,
+    hotPriceMin,
+    hotPropertyTypeFilter,
+    isHotOffersMode,
     isInternationalPage,
     localProjects,
     projectCategory,
@@ -614,6 +680,350 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
     selectedDistricts,
     selectedRooms,
   ]);
+
+  const mapProjects = useMemo(
+    () =>
+      filteredProjects.map((project) => ({
+        id: project.id,
+        title: project.name,
+        image: project.image,
+        address: project.address || project.district || "",
+        city: project.city || "",
+        country: project.country || "",
+        price: Number(project.price || 0),
+        currency: project.currency || baseCurrency,
+      })),
+    [filteredProjects, baseCurrency]
+  );
+
+  const hotOffersCards = useMemo(
+    () =>
+      filteredProjects.map((project) => ({
+        id: project.id,
+        title: project.name,
+        image: project.image,
+        address: project.address || project.district || "",
+        city: project.city || "",
+        country: project.country || "",
+        description: project.kampanya || "",
+        price: Number(project.price || 0),
+        currency: project.currency || baseCurrency,
+        propertyType: project.propertyType,
+        category: project.propertyType,
+        offBadge: true,
+        dairePlanlari: project.dairePlanlari || [],
+      })),
+    [filteredProjects, baseCurrency]
+  );
+
+  if (isHotOffersMode) {
+    const hotStatusLabel =
+      !projectCategory
+        ? t("listing.all")
+        : projectCategory === "devam-ediyor"
+        ? t("localProjects.ongoing")
+        : projectCategory === "tamamlandi"
+        ? t("localProjects.completed")
+        : t("listing.all");
+    const hotPropertyTypeLabel =
+      hotPropertyTypeFilter === "all"
+        ? t("listing.propertyUses")
+        : hotPropertyTypeFilter === "local-project"
+        ? t("nav.localProjects")
+        : t("nav.internationalProjects");
+
+    return (
+      <div className="min-h-screen pt-24 bg-white">
+        <div className="border-y border-slate-200 bg-[#f4f5f7]">
+          <div className="w-full px-4 py-4 lg:px-6">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative min-w-[240px] flex-1 max-w-[420px]">
+                <MdLocationOn
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                  size={20}
+                />
+                <input
+                  type="text"
+                  value={hotLocationQuery}
+                  onChange={(e) => setHotLocationQuery(e.target.value)}
+                  placeholder={t("listing.locationPlaceholder")}
+                  className="h-12 w-full rounded-2xl border border-slate-300 bg-white pl-10 pr-10 text-slate-700 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none"
+                />
+                <MdSearch
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
+                  size={20}
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setHotLocationQuery("");
+                  setHotPropertyTypeFilter("all");
+                  setHotPriceMin("");
+                  setHotPriceMax("");
+                  setSelectedCity("");
+                  setSelectedDistricts([]);
+                  setSelectedRooms([]);
+                  setProjectCategory("");
+                }}
+                className="inline-flex h-12 items-center gap-2 rounded-2xl border border-[#0f1f3a] bg-[#0f1f3a] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#152a4c]"
+              >
+                <MdTune size={16} />
+                <span>{t("listing.allFilters")}</span>
+              </button>
+
+              <Popover
+                opened={hotStatusPopoverOpened}
+                onChange={setHotStatusPopoverOpened}
+                width={170}
+                position="bottom-start"
+                shadow="md"
+              >
+                <Popover.Target>
+                  <button
+                    type="button"
+                    onClick={() => setHotStatusPopoverOpened((o) => !o)}
+                    className="inline-flex h-12 min-w-[86px] items-center justify-between gap-2 rounded-2xl border border-slate-300 bg-white px-4 text-sm text-slate-700"
+                  >
+                    <span>{hotStatusLabel}</span>
+                    <MdKeyboardArrowDown
+                      size={18}
+                      className={`${hotStatusPopoverOpened ? "" : "rotate-180"} transition-transform`}
+                    />
+                  </button>
+                </Popover.Target>
+                <Popover.Dropdown className="p-1">
+                  <div
+                    className={`cursor-pointer rounded px-3 py-2 text-sm ${
+                      !projectCategory ? "bg-blue-600 text-white" : "text-slate-700 hover:bg-blue-50"
+                    }`}
+                    onClick={() => {
+                      setProjectCategory("");
+                      setHotStatusPopoverOpened(false);
+                    }}
+                  >
+                    {t("listing.all")}
+                  </div>
+                  <div
+                    className={`cursor-pointer rounded px-3 py-2 text-sm ${
+                      projectCategory === "devam-ediyor"
+                        ? "bg-blue-600 text-white"
+                        : "text-slate-700 hover:bg-blue-50"
+                    }`}
+                    onClick={() => {
+                      setProjectCategory("devam-ediyor");
+                      setHotStatusPopoverOpened(false);
+                    }}
+                  >
+                    {t("localProjects.ongoing")}
+                  </div>
+                  <div
+                    className={`cursor-pointer rounded px-3 py-2 text-sm ${
+                      projectCategory === "tamamlandi"
+                        ? "bg-blue-600 text-white"
+                        : "text-slate-700 hover:bg-blue-50"
+                    }`}
+                    onClick={() => {
+                      setProjectCategory("tamamlandi");
+                      setHotStatusPopoverOpened(false);
+                    }}
+                  >
+                    {t("localProjects.completed")}
+                  </div>
+                </Popover.Dropdown>
+              </Popover>
+
+              <Popover
+                opened={hotUsePopoverOpened}
+                onChange={setHotUsePopoverOpened}
+                width={210}
+                position="bottom-start"
+                shadow="md"
+              >
+                <Popover.Target>
+                  <button
+                    type="button"
+                    onClick={() => setHotUsePopoverOpened((o) => !o)}
+                    className="inline-flex h-12 min-w-[150px] items-center justify-between gap-2 rounded-2xl border border-slate-300 bg-white px-4 text-sm text-slate-700"
+                  >
+                    <span className="truncate">{hotPropertyTypeLabel}</span>
+                    <MdKeyboardArrowDown
+                      size={18}
+                      className={`${hotUsePopoverOpened ? "" : "rotate-180"} transition-transform`}
+                    />
+                  </button>
+                </Popover.Target>
+                <Popover.Dropdown className="p-1">
+                  <div
+                    className={`cursor-pointer rounded px-3 py-2 text-sm ${
+                      hotPropertyTypeFilter === "all"
+                        ? "bg-blue-600 text-white"
+                        : "text-slate-700 hover:bg-blue-50"
+                    }`}
+                    onClick={() => {
+                      setHotPropertyTypeFilter("all");
+                      setHotUsePopoverOpened(false);
+                    }}
+                  >
+                    {t("listing.all")}
+                  </div>
+                  <div
+                    className={`cursor-pointer rounded px-3 py-2 text-sm ${
+                      hotPropertyTypeFilter === "local-project"
+                        ? "bg-blue-600 text-white"
+                        : "text-slate-700 hover:bg-blue-50"
+                    }`}
+                    onClick={() => {
+                      setHotPropertyTypeFilter("local-project");
+                      setHotUsePopoverOpened(false);
+                    }}
+                  >
+                    {t("nav.localProjects")}
+                  </div>
+                  <div
+                    className={`cursor-pointer rounded px-3 py-2 text-sm ${
+                      hotPropertyTypeFilter === "international-project"
+                        ? "bg-blue-600 text-white"
+                        : "text-slate-700 hover:bg-blue-50"
+                    }`}
+                    onClick={() => {
+                      setHotPropertyTypeFilter("international-project");
+                      setHotUsePopoverOpened(false);
+                    }}
+                  >
+                    {t("nav.internationalProjects")}
+                  </div>
+                </Popover.Dropdown>
+              </Popover>
+
+              <Popover
+                opened={hotPricePopoverOpened}
+                onChange={setHotPricePopoverOpened}
+                width={280}
+                position="bottom-start"
+                shadow="md"
+              >
+                <Popover.Target>
+                  <button
+                    type="button"
+                    onClick={() => setHotPricePopoverOpened((o) => !o)}
+                    className="inline-flex h-12 min-w-[100px] items-center justify-between gap-2 rounded-2xl border border-slate-300 bg-white px-4 text-sm text-slate-700"
+                  >
+                    <span>{t("listing.price")}</span>
+                    <MdKeyboardArrowDown
+                      size={18}
+                      className={`${hotPricePopoverOpened ? "" : "rotate-180"} transition-transform`}
+                    />
+                  </button>
+                </Popover.Target>
+                <Popover.Dropdown className="p-3">
+                  <div className="mb-2 text-xs text-slate-500">{t("listing.priceRange")}</div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      value={hotPriceMin}
+                      onChange={(e) => setHotPriceMin(e.target.value)}
+                      placeholder={t("listing.minPrice")}
+                      className="h-10 w-full rounded-md border border-slate-300 px-3 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                    />
+                    <span className="text-slate-400">-</span>
+                    <input
+                      type="number"
+                      value={hotPriceMax}
+                      onChange={(e) => setHotPriceMax(e.target.value)}
+                      placeholder={t("listing.maxPrice")}
+                      className="h-10 w-full rounded-md border border-slate-300 px-3 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setHotPricePopoverOpened(false)}
+                    className="mt-3 w-full rounded-md bg-blue-600 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                  >
+                    {t("listing.applyFilters")}
+                  </button>
+                </Popover.Dropdown>
+              </Popover>
+
+              <Popover
+                opened={hotRoomsPopoverOpened}
+                onChange={setHotRoomsPopoverOpened}
+                width={220}
+                position="bottom-start"
+                shadow="md"
+              >
+                <Popover.Target>
+                  <button
+                    type="button"
+                    onClick={() => setHotRoomsPopoverOpened((o) => !o)}
+                    className="inline-flex h-12 min-w-[110px] items-center justify-between gap-2 rounded-2xl border border-slate-300 bg-white px-4 text-sm text-slate-700"
+                  >
+                    <span>
+                      {selectedRooms.length > 0
+                        ? `${selectedRooms.length} ${t("localProjects.rooms")}`
+                        : t("listing.rooms")}
+                    </span>
+                    <MdKeyboardArrowDown
+                      size={18}
+                      className={`${hotRoomsPopoverOpened ? "" : "rotate-180"} transition-transform`}
+                    />
+                  </button>
+                </Popover.Target>
+                <Popover.Dropdown className="p-2">
+                  <ScrollArea h={220}>
+                    {ROOM_OPTIONS.map((room) => (
+                      <Checkbox
+                        key={room.value}
+                        label={room.label}
+                        size="xs"
+                        checked={selectedRooms.includes(room.value)}
+                        onChange={() => toggleRoom(room.value)}
+                        className="py-1"
+                      />
+                    ))}
+                  </ScrollArea>
+                </Popover.Dropdown>
+              </Popover>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col lg:flex-row">
+          <div className="w-full lg:w-[60%] h-[360px] lg:h-[calc(100vh-170px)]">
+            <PropertiesMap
+              properties={mapProjects}
+              onPropertyClick={(id) => navigate(`/projects/${id}`)}
+              resizeKey={filteredProjects.length}
+            />
+          </div>
+
+          <div className="w-full lg:w-[40%] h-auto lg:h-[calc(100vh-170px)] bg-white border-l border-slate-200 flex flex-col">
+            <div className="p-5 border-b border-slate-200">
+              <h1 className="text-2xl font-bold text-slate-900">{t("footer.hotOffers")}</h1>
+              <p className="mt-1 text-sm text-slate-500">
+                {filteredProjects.length} {t("localProjects.projectsFound")}
+              </p>
+            </div>
+
+            <div className="flex-1 overflow-y-auto bg-white">
+              {hotOffersCards.length > 0 ? (
+                hotOffersCards.map((project) => (
+                  <div key={project.id} className="relative">
+                    <PropertyCard property={project} />
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-12 text-slate-500">
+                  <p>{t("localProjects.noProjectsFound")}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pt-24 pb-16 bg-[#f7f3ea]">
@@ -636,6 +1046,8 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
               {heroTitle ||
                 (isSpecialOffersPage
                   ? t("nav.featuredProperties")
+                  : isHotOffersMode
+                  ? t("footer.hotOffers")
                   : isInternationalPage
                   ? t("nav.internationalProjects")
                   : t("localProjects.heroTitle"))}
@@ -789,69 +1201,71 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
               </Popover>
 
               {/* Project Status Select */}
-              <Popover
-                opened={statusPopoverOpened}
-                onChange={setStatusPopoverOpened}
-                width={160}
-                position="bottom-start"
-                shadow="md"
-              >
-                <Popover.Target>
-                  <button
-                    className="flex items-center justify-between gap-2 px-4 py-3 md:py-2.5 md:min-w-[120px] transition-colors w-full md:w-auto"
-                    onClick={() => setStatusPopoverOpened((o) => !o)}
-                  >
-                    <span className="text-sm text-gray-700">
-                      {projectCategory
-                        ? projectCategory === "devam-ediyor"
-                          ? t("localProjects.ongoing")
-                          : projectCategory === "tamamlandi"
-                          ? t("localProjects.completed")
-                          : t("nav.featuredProperties")
-                        : t("localProjects.projectStatus")}
-                    </span>
-                    <MdKeyboardArrowDown className="text-gray-400" size={18} />
-                  </button>
-                </Popover.Target>
-                <Popover.Dropdown className="p-1">
-                  {PROJECT_STATUS.map((status) => (
+              {!isHotOffersMode && (
+                <Popover
+                  opened={statusPopoverOpened}
+                  onChange={setStatusPopoverOpened}
+                  width={160}
+                  position="bottom-start"
+                  shadow="md"
+                >
+                  <Popover.Target>
+                    <button
+                      className="flex items-center justify-between gap-2 px-4 py-3 md:py-2.5 md:min-w-[120px] transition-colors w-full md:w-auto"
+                      onClick={() => setStatusPopoverOpened((o) => !o)}
+                    >
+                      <span className="text-sm text-gray-700">
+                        {projectCategory
+                          ? projectCategory === "devam-ediyor"
+                            ? t("localProjects.ongoing")
+                            : projectCategory === "tamamlandi"
+                            ? t("localProjects.completed")
+                            : t("nav.featuredProperties")
+                          : t("localProjects.projectStatus")}
+                      </span>
+                      <MdKeyboardArrowDown className="text-gray-400" size={18} />
+                    </button>
+                  </Popover.Target>
+                  <Popover.Dropdown className="p-1">
+                    {PROJECT_STATUS.map((status) => (
+                      <div
+                        key={status.value}
+                        className={`px-3 py-1.5 text-sm cursor-pointer rounded hover:bg-blue-50 ${
+                          projectCategory === status.value ? "bg-blue-500 text-white hover:bg-blue-500" : "text-gray-700"
+                        }`}
+                        onClick={() => {
+                          setProjectCategory(status.value);
+                          setStatusPopoverOpened(false);
+                        }}
+                      >
+                        {status.value === "devam-ediyor" ? t("localProjects.ongoing") : t("localProjects.completed")}
+                      </div>
+                    ))}
                     <div
-                      key={status.value}
                       className={`px-3 py-1.5 text-sm cursor-pointer rounded hover:bg-blue-50 ${
-                        projectCategory === status.value ? "bg-blue-500 text-white hover:bg-blue-500" : "text-gray-700"
+                        projectCategory === "special-offer" ? "bg-blue-500 text-white hover:bg-blue-500" : "text-gray-700"
                       }`}
                       onClick={() => {
-                        setProjectCategory(status.value);
+                        setProjectCategory("special-offer");
                         setStatusPopoverOpened(false);
                       }}
                     >
-                      {status.value === "devam-ediyor" ? t("localProjects.ongoing") : t("localProjects.completed")}
+                      {t("nav.featuredProperties")}
                     </div>
-                  ))}
-                  <div
-                    className={`px-3 py-1.5 text-sm cursor-pointer rounded hover:bg-blue-50 ${
-                      projectCategory === "special-offer" ? "bg-blue-500 text-white hover:bg-blue-500" : "text-gray-700"
-                    }`}
-                    onClick={() => {
-                      setProjectCategory("special-offer");
-                      setStatusPopoverOpened(false);
-                    }}
-                  >
-                    {t("nav.featuredProperties")}
-                  </div>
-                  <div
-                    className={`px-3 py-1.5 text-sm cursor-pointer rounded hover:bg-blue-50 ${
-                      !projectCategory ? "bg-blue-500 text-white hover:bg-blue-500" : "text-gray-700"
-                    }`}
-                    onClick={() => {
-                      setProjectCategory("");
-                      setStatusPopoverOpened(false);
-                    }}
-                  >
-                    {t("localProjects.allProjects")}
-                  </div>
-                </Popover.Dropdown>
-              </Popover>
+                    <div
+                      className={`px-3 py-1.5 text-sm cursor-pointer rounded hover:bg-blue-50 ${
+                        !projectCategory ? "bg-blue-500 text-white hover:bg-blue-500" : "text-gray-700"
+                      }`}
+                      onClick={() => {
+                        setProjectCategory("");
+                        setStatusPopoverOpened(false);
+                      }}
+                    >
+                      {t("localProjects.allProjects")}
+                    </div>
+                  </Popover.Dropdown>
+                </Popover>
+              )}
 
               {/* Search Button */}
               <Button
@@ -861,7 +1275,7 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
                 style={{ height: "46px" }}
                 onClick={handleSearch}
               >
-                {t("localProjects.search")}
+                {isHotOffersMode ? t("footer.hotOffers") : t("localProjects.search")}
               </Button>
             </div>
           </div>
@@ -903,7 +1317,9 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
               onClick={() => {
                 setSelectedCity("");
                 setSelectedDistricts([]);
-                setProjectCategory(isSpecialOffersPage ? "special-offer" : "");
+                setProjectCategory(
+                  isSpecialOffersPage || isHotOffersMode ? "special-offer" : ""
+                );
               }}
               className="text-xs text-rose-600 hover:text-rose-700 underline ml-2"
             >
@@ -918,48 +1334,50 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
         </div>
 
         {/* Tabs */}
-        <div className="flex items-center gap-1 mb-6 border-b border-slate-200">
-          <button
-            className={`px-4 py-2 text-sm font-medium transition-colors ${
-              !projectCategory
-                ? "text-slate-900 border-b-2 border-blue-600"
-                : "text-slate-500 hover:text-slate-800"
-            }`}
-            onClick={() => setProjectCategory("")}
-          >
-            {t("localProjects.allProjects")}
-          </button>
-          <button
-            className={`px-4 py-2 text-sm font-medium transition-colors ${
-              projectCategory === "devam-ediyor"
-                ? "text-slate-900 border-b-2 border-blue-600"
-                : "text-slate-500 hover:text-slate-800"
-            }`}
-            onClick={() => setProjectCategory("devam-ediyor")}
-          >
-            {t("localProjects.ongoing")}
-          </button>
-          <button
-            className={`px-4 py-2 text-sm font-medium transition-colors ${
-              projectCategory === "tamamlandi"
-                ? "text-slate-900 border-b-2 border-blue-600"
-                : "text-slate-500 hover:text-slate-800"
-            }`}
-            onClick={() => setProjectCategory("tamamlandi")}
-          >
-            {t("localProjects.completed")}
-          </button>
-          <button
-            className={`px-4 py-2 text-sm font-medium transition-colors ${
-              projectCategory === "special-offer"
-                ? "text-slate-900 border-b-2 border-blue-600"
-                : "text-slate-500 hover:text-slate-800"
-            }`}
-            onClick={() => setProjectCategory("special-offer")}
-          >
-            {t("nav.featuredProperties")}
-          </button>
-        </div>
+        {!isHotOffersMode && (
+          <div className="flex items-center gap-1 mb-6 border-b border-slate-200">
+            <button
+              className={`px-4 py-2 text-sm font-medium transition-colors ${
+                !projectCategory
+                  ? "text-slate-900 border-b-2 border-blue-600"
+                  : "text-slate-500 hover:text-slate-800"
+              }`}
+              onClick={() => setProjectCategory("")}
+            >
+              {t("localProjects.allProjects")}
+            </button>
+            <button
+              className={`px-4 py-2 text-sm font-medium transition-colors ${
+                projectCategory === "devam-ediyor"
+                  ? "text-slate-900 border-b-2 border-blue-600"
+                  : "text-slate-500 hover:text-slate-800"
+              }`}
+              onClick={() => setProjectCategory("devam-ediyor")}
+            >
+              {t("localProjects.ongoing")}
+            </button>
+            <button
+              className={`px-4 py-2 text-sm font-medium transition-colors ${
+                projectCategory === "tamamlandi"
+                  ? "text-slate-900 border-b-2 border-blue-600"
+                  : "text-slate-500 hover:text-slate-800"
+              }`}
+              onClick={() => setProjectCategory("tamamlandi")}
+            >
+              {t("localProjects.completed")}
+            </button>
+            <button
+              className={`px-4 py-2 text-sm font-medium transition-colors ${
+                projectCategory === "special-offer"
+                  ? "text-slate-900 border-b-2 border-blue-600"
+                  : "text-slate-500 hover:text-slate-800"
+              }`}
+              onClick={() => setProjectCategory("special-offer")}
+            >
+              {t("nav.featuredProperties")}
+            </button>
+          </div>
+        )}
 
         {/* Project Cards */}
         {isLoading ? (
@@ -967,7 +1385,29 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
             <Loader size="lg" />
           </div>
         ) : (
-        <div className="space-y-3">
+        <div
+          className={
+            isHotOffersMode
+              ? "grid grid-cols-1 lg:grid-cols-12 gap-4 items-start"
+              : "space-y-3"
+          }
+        >
+          {isHotOffersMode && (
+            <div className="lg:col-span-7 h-[420px] lg:h-[680px] rounded-xl overflow-hidden border border-slate-200 bg-white sticky top-28">
+              <PropertiesMap
+                properties={mapProjects}
+                onPropertyClick={(id) => navigate(`/projects/${id}`)}
+                resizeKey={filteredProjects.length}
+              />
+            </div>
+          )}
+          <div
+            className={
+              isHotOffersMode
+                ? "lg:col-span-5 space-y-3 max-h-[680px] overflow-y-auto pr-1"
+                : "space-y-3"
+            }
+          >
           {filteredProjects.map((project) => (
               <div
                 key={project.id}
@@ -1150,6 +1590,7 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
                 </div>
               </div>
             ))}
+          </div>
         </div>
         )}
 

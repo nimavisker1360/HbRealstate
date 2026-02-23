@@ -17,7 +17,7 @@ const Footer = () => {
       links: [
         { key: "aboutUs", label: t('footer.aboutUs'), isAbout: true },
         { key: "latestItems", label: t('footer.latestItems') },
-        { key: "hotOffers", label: t('footer.hotOffers') },
+        { key: "hotOffers", label: t('footer.hotOffers'), path: "/projects?hotOffers=1" },
       ],
     },
     {

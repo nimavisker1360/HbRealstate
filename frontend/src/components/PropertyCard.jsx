@@ -193,6 +193,11 @@ const PropertyCard = ({ property, onCardClick }) => {
             decoding="async"
             className="w-full h-full object-cover rounded-lg"
           />
+          {property.offBadge && (
+            <div className="absolute top-3 right-3 z-10 rounded-md bg-rose-600 px-2.5 py-1 text-[11px] font-bold tracking-wide text-white shadow-sm">
+              OFF
+            </div>
+          )}
           {/* Category Badge */}
           <div className="absolute top-3 left-3">
             <span className="flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold bg-green-500 text-white">
@@ -275,7 +280,7 @@ const PropertyCard = ({ property, onCardClick }) => {
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                navigate(`/listing/${property.id}`);
+                navigate(getPropertyRoute(property));
               }}
               className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-green-500 rounded-lg hover:bg-green-600 transition-colors"
             >
@@ -301,6 +306,7 @@ PropertyCard.propTypes = {
     price: PropTypes.number,
     currency: PropTypes.string,
     propertyType: PropTypes.string,
+    offBadge: PropTypes.bool,
     facilities: PropTypes.shape({
       bedrooms: PropTypes.number,
       bathrooms: PropTypes.number,
