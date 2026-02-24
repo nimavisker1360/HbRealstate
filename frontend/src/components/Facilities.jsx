@@ -15,7 +15,7 @@ const getDefaultFiatCurrency = () => {
   const currency = String(
     import.meta.env.VITE_DEFAULT_FIAT_CURRENCY || "USD"
   ).toUpperCase();
-  return ["USD", "EUR", "TRY"].includes(currency) ? currency : "USD";
+  return ["USD", "EUR", "GBP", "TRY"].includes(currency) ? currency : "USD";
 };
 
 const Facilities = ({

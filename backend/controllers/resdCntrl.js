@@ -2,7 +2,7 @@ import asyncHandler from "express-async-handler";
 import { prisma, getMongoDb } from "../config/prismaConfig.js";
 import { ObjectId } from "mongodb";
 
-const SUPPORTED_CURRENCIES = ["USD", "EUR", "TRY"];
+const SUPPORTED_CURRENCIES = ["USD", "EUR", "GBP", "TRY"];
 
 const normalizeCurrency = (currencyCode) => {
   const normalized = String(currencyCode || "").toUpperCase();

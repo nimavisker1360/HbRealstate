@@ -151,6 +151,7 @@ SortableTableRow.propTypes = {
 const CURRENCY_SYMBOLS = {
   USD: "$",
   EUR: "\u20AC",
+  GBP: "\u00A3",
   TRY: "\u20BA",
 };
 
@@ -161,7 +162,7 @@ const getDefaultFiatCurrency = () => {
   const currency = String(
     import.meta.env.VITE_DEFAULT_FIAT_CURRENCY || "USD"
   ).toUpperCase();
-  return ["USD", "EUR", "TRY"].includes(currency) ? currency : "USD";
+  return ["USD", "EUR", "GBP", "TRY"].includes(currency) ? currency : "USD";
 };
 
 const AdminPanel = () => {

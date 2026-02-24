@@ -427,6 +427,7 @@ import { validateString } from "../utils/common";
 const FIAT_CURRENCIES = [
   { code: "USD", symbol: "$" },
   { code: "EUR", symbol: "\u20AC" },
+  { code: "GBP", symbol: "\u00A3" },
   { code: "TRY", symbol: "\u20BA" },
 ];
 
@@ -451,6 +452,7 @@ const normalizeFiatCurrency = (currencyCode) => {
 const FLOOR_PLAN_PRICE_FIELDS = {
   USD: "fiyatUSD",
   EUR: "fiyatEUR",
+  GBP: "fiyatGBP",
   TRY: "fiyatTRY",
 };
 
@@ -1183,6 +1185,9 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
       firstPlan.fiyatUSD = specialOfferPriceValue;
       firstPlan.fiyatEUR = toRoundedPrice(
         convertAmount(specialOfferPriceValue, "USD", "EUR")
+      );
+      firstPlan.fiyatGBP = toRoundedPrice(
+        convertAmount(specialOfferPriceValue, "USD", "GBP")
       );
       firstPlan.fiyatTRY = toRoundedPrice(
         convertAmount(specialOfferPriceValue, "USD", "TRY")
@@ -2485,6 +2490,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
                         fiyat: 0,
                         fiyatUSD: 0,
                         fiyatEUR: 0,
+                        fiyatGBP: 0,
                         fiyatTRY: 0,
                         currency: floorPlanBaseCurrency,
                         metrekare: 0,
@@ -2562,6 +2568,19 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
                           value={getFloorPlanPriceByCurrency(plan, "EUR")}
                           onChange={(value) =>
                             updateFloorPlanPrices(index, "EUR", value)
+                          }
+                        />
+                      </Grid.Col>
+                      <Grid.Col span={2}>
+                        <NumberInput
+                          size="xs"
+                          label="GBP (\u00A3)"
+                          min={0}
+                          thousandSeparator="."
+                          decimalSeparator=","
+                          value={getFloorPlanPriceByCurrency(plan, "GBP")}
+                          onChange={(value) =>
+                            updateFloorPlanPrices(index, "GBP", value)
                           }
                         />
                       </Grid.Col>

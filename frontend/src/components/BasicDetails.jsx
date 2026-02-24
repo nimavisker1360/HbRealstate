@@ -143,6 +143,7 @@ const MANZARA_FEATURES = [
 const FIAT_CURRENCIES = [
   { code: "USD", symbol: "$" },
   { code: "EUR", symbol: "\u20AC" },
+  { code: "GBP", symbol: "\u00A3" },
   { code: "TRY", symbol: "\u20BA" },
 ];
 

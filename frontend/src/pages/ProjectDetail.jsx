@@ -279,7 +279,7 @@ const ProjectDetail = () => {
     if (Array.isArray(currencies) && currencies.length > 0) {
       return currencies.map((currency) => currency.code);
     }
-    return ["TRY", "USD", "EUR"];
+    return ["TRY", "USD", "EUR", "GBP"];
   }, [currencies]);
   const secondaryCurrencyCodes = useMemo(
     () => currencyCodes.filter((code) => code !== displayCurrency),

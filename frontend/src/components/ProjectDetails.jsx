@@ -134,10 +134,11 @@ const MUHIT = [
   "Sağlık Ocağı",
 ];
 
-const FIAT_CURRENCIES = ["USD", "EUR", "TRY"];
+const FIAT_CURRENCIES = ["USD", "EUR", "GBP", "TRY"];
 const FLOOR_PLAN_PRICE_FIELDS = {
   USD: "fiyatUSD",
   EUR: "fiyatEUR",
+  GBP: "fiyatGBP",
   TRY: "fiyatTRY",
 };
 
@@ -438,6 +439,7 @@ const ProjectDetails = ({
       fiyat: 0,
       fiyatUSD: 0,
       fiyatEUR: 0,
+      fiyatGBP: 0,
       fiyatTRY: 0,
       currency: floorPlanBaseCurrency,
       metrekare: 0,
@@ -553,6 +555,9 @@ const ProjectDetails = ({
       firstPlan.fiyatUSD = specialPriceUSD;
       firstPlan.fiyatEUR = toRoundedPrice(
         convertAmount(specialPriceUSD, "USD", "EUR")
+      );
+      firstPlan.fiyatGBP = toRoundedPrice(
+        convertAmount(specialPriceUSD, "USD", "GBP")
       );
       firstPlan.fiyatTRY = toRoundedPrice(
         convertAmount(specialPriceUSD, "USD", "TRY")
@@ -1192,6 +1197,19 @@ const ProjectDetails = ({
                             value={getFloorPlanPriceByCurrency(plan, "EUR")}
                             onChange={(value) =>
                               updateFloorPlanPrices(index, "EUR", value)
+                            }
+                          />
+                        </Grid.Col>
+                        <Grid.Col span={2}>
+                          <NumberInput
+                            label="GBP (\u00A3)"
+                            placeholder="8.450.000"
+                            min={0}
+                            thousandSeparator="."
+                            decimalSeparator=","
+                            value={getFloorPlanPriceByCurrency(plan, "GBP")}
+                            onChange={(value) =>
+                              updateFloorPlanPrices(index, "GBP", value)
                             }
                           />
                         </Grid.Col>
