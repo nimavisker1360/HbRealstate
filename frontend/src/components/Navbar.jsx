@@ -68,6 +68,14 @@ const Navbar = ({
     isMobile ? mobileItemClass(isActive) : desktopItemClass(isActive);
   const simpleButtonClass = (isActive = false) =>
     isMobile ? mobileItemClass(isActive) : desktopItemClass(isActive);
+  const investmentButtonClass = (isActive = false) =>
+    isMobile
+      ? `investment-opportunities-pill relative flex w-full items-center justify-between overflow-hidden border-b border-gray-200 px-4 py-4 font-bold text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 ${
+          isActive ? "bg-red-700" : "bg-red-600 hover:bg-red-700"
+        }`
+      : `investment-opportunities-pill relative flex items-center gap-1 overflow-hidden rounded-sm px-3 py-1 text-[13px] font-bold text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 ${
+          isActive ? "bg-red-700" : "bg-red-600 hover:bg-red-700"
+        }`;
 
   // Property categories with translations
   const propertyCategories = [
@@ -930,10 +938,10 @@ const Navbar = ({
 
       <button
         type="button"
-        className={simpleButtonClass(isInvestmentOpportunitiesPage)}
+        className={investmentButtonClass(isInvestmentOpportunitiesPage)}
         onClick={handleInvestmentOpportunitiesClick}
       >
-        <span>{t("nav.investmentOpportunities")}</span>
+        <span className="relative z-[1]">{t("nav.investmentOpportunities")}</span>
       </button>
 
       <button

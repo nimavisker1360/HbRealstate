@@ -462,6 +462,46 @@ body {
   animation: slideDown 0.3s ease-out forwards;
 }
 
+@keyframes investment-pill-sweep {
+  0% {
+    transform: translateX(-180%) skewX(-18deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.9;
+  }
+  55% {
+    opacity: 0.45;
+  }
+  100% {
+    transform: translateX(320%) skewX(-18deg);
+    opacity: 0;
+  }
+}
+
+.investment-opportunities-pill {
+  isolation: isolate;
+}
+
+.investment-opportunities-pill::after {
+  content: "";
+  position: absolute;
+  top: -10%;
+  left: 0;
+  width: 38%;
+  height: 120%;
+  pointer-events: none;
+  background: linear-gradient(
+    110deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.72) 48%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: translateX(-180%) skewX(-18deg);
+  animation: investment-pill-sweep 2.4s ease-in-out infinite;
+  z-index: 0;
+}
+
 @keyframes whatsapp-ring {
   0% {
     box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.5);
@@ -602,6 +642,11 @@ body {
   .ai-chat-typing span {
     animation: none !important;
     transition: none !important;
+  }
+
+  .investment-opportunities-pill::after {
+    animation: none !important;
+    opacity: 0 !important;
   }
 }
 
