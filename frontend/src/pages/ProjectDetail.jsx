@@ -1,4 +1,4 @@
-import { useState, useMemo, useContext, useEffect } from "react";
+import { useState, useMemo, useContext, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import CurrencyContext from "../context/CurrencyContext";
@@ -45,6 +45,11 @@ import {
 import { getProperty, sendEmail } from "../utils/api";
 import useConsultants from "../hooks/useConsultants";
 import { normalizeWhatsAppNumber } from "../utils/common";
+import {
+  getOptimizedImageUrl,
+  getOptimizedVideoPosterUrl,
+  getOptimizedVideoUrl,
+} from "../utils/media";
 
 // All possible Bina Özellikleri (Building Features)
 const ALL_BINA_OZELLIKLERI = [
@@ -302,6 +307,9 @@ const ProjectDetail = () => {
   const [videoModalOpen, setVideoModalOpen] = useState(false);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [isLightboxMediaLoaded, setIsLightboxMediaLoaded] = useState(true);
+  const [isMainVideoPreviewActive, setIsMainVideoPreviewActive] = useState(false);
+  const [isMainVideoPreviewReady, setIsMainVideoPreviewReady] = useState(false);
+  const mainVideoPreviewRef = useRef(null);
   const [contactForm, setContactForm] = useState({
     name: "",
     email: "",
@@ -411,15 +419,72 @@ const ProjectDetail = () => {
     return [...new Set(project.dairePlanlari.map((plan) => plan.tip))];
   }, [project]);
 
+  const getMainImageUrl = (url) =>
+    getOptimizedImageUrl(url, { width: 1280, height: 860, quality: "auto:good" });
+  const getThumbnailImageUrl = (url) =>
+    getOptimizedImageUrl(url, { width: 320, height: 240, quality: "auto:good" });
+  const getLightboxImageUrl = (url) =>
+    getOptimizedImageUrl(url, {
+      width: 1800,
+      height: 1400,
+      crop: "limit",
+      quality: "auto:good",
+    });
+  const getMainVideoPosterUrl = (url) =>
+    getOptimizedVideoPosterUrl(url, { width: 1280, height: 860, quality: "auto:good" });
+  const getThumbnailVideoPosterUrl = (url) =>
+    getOptimizedVideoPosterUrl(url, { width: 320, height: 240, quality: "auto:good" });
+  const getOptimizedProjectVideoUrl = (url) =>
+    getOptimizedVideoUrl(url, { width: 1600, quality: "auto:good" });
+
   useEffect(() => {
     if (!project?.galleryItems?.length) return;
 
-    project.galleryItems.forEach((item) => {
-      if (item?.type !== "image" || !item?.url) return;
+    const firstVideoIndex = project.galleryItems.findIndex(
+      (item) => item?.type === "video" && item?.url
+    );
+    const firstImageIndex = project.galleryItems.findIndex(
+      (item) => item?.type === "image" && item?.url
+    );
+
+    // Prefer video on initial load, then fallback to first image.
+    if (firstVideoIndex >= 0) {
+      setSelectedImage(firstVideoIndex);
+      return;
+    }
+
+    setSelectedImage(firstImageIndex >= 0 ? firstImageIndex : 0);
+  }, [project?.id, project?.galleryItems]);
+
+  useEffect(() => {
+    setIsMainVideoPreviewActive(false);
+    setIsMainVideoPreviewReady(false);
+
+    if (mainVideoPreviewRef.current) {
+      mainVideoPreviewRef.current.pause();
+      mainVideoPreviewRef.current.currentTime = 0;
+    }
+  }, [selectedImage, project?.id]);
+
+  useEffect(() => {
+    if (!project?.galleryItems?.length) return;
+
+    const totalItems = project.galleryItems.length;
+    const preloadIndexes = [selectedImage, selectedImage + 1, selectedImage + 2]
+      .map((index) => index % totalItems)
+      .filter((index, current, items) => items.indexOf(index) === current);
+
+    preloadIndexes.forEach((index) => {
+      const item = project.galleryItems[index];
+      if (!item?.url) return;
+
       const preloadedImage = new Image();
-      preloadedImage.src = item.url;
+      preloadedImage.src =
+        item.type === "video"
+          ? getMainVideoPosterUrl(item.url) || getThumbnailVideoPosterUrl(item.url)
+          : getMainImageUrl(item.url);
     });
-  }, [project]);
+  }, [project, selectedImage]);
 
   useEffect(() => {
     if (!lightboxOpen) return;
@@ -528,6 +593,29 @@ const ProjectDetail = () => {
     }
   };
 
+  const selectedGalleryItem = project.galleryItems[selectedImage];
+  const selectedVideoPoster =
+    selectedGalleryItem?.type === "video"
+      ? getMainVideoPosterUrl(selectedGalleryItem.url) ||
+        getMainImageUrl(project.images?.[0] || "")
+      : "";
+
+  const startMainVideoPreview = () => {
+    if (selectedGalleryItem?.type !== "video" || !selectedGalleryItem?.url) return;
+    setIsMainVideoPreviewReady(false);
+    setIsMainVideoPreviewActive(true);
+  };
+
+  const stopMainVideoPreview = () => {
+    setIsMainVideoPreviewActive(false);
+    setIsMainVideoPreviewReady(false);
+
+    if (mainVideoPreviewRef.current) {
+      mainVideoPreviewRef.current.pause();
+      mainVideoPreviewRef.current.currentTime = 0;
+    }
+  };
+
   return (
     <div className="min-h-screen pt-20 bg-white">
       {/* Header */}
@@ -575,8 +663,11 @@ const ProjectDetail = () => {
                 {/* Main Image/Video */}
                 <div 
                   className="flex-1 relative cursor-pointer group"
+                  onMouseEnter={startMainVideoPreview}
+                  onMouseLeave={stopMainVideoPreview}
                   onClick={() => {
                     if (project.galleryItems[selectedImage]?.type === 'video') {
+                      stopMainVideoPreview();
                       setCurrentVideoIndex(selectedImage);
                       setVideoModalOpen(true);
                     } else {
@@ -584,18 +675,49 @@ const ProjectDetail = () => {
                     }
                   }}
                 >
-                  {project.galleryItems[selectedImage]?.type === 'video' ? (
+                  {selectedGalleryItem?.type === "video" ? (
                     <>
-                      <video
-                        src={project.galleryItems[selectedImage]?.url}
-                        className="w-full h-[300px] md:h-[400px] object-cover rounded-lg"
-                        muted
-                        onMouseEnter={(e) => e.target.play()}
-                        onMouseLeave={(e) => {
-                          e.target.pause();
-                          e.target.currentTime = 0;
-                        }}
-                      />
+                      {selectedVideoPoster ? (
+                        <img
+                          src={selectedVideoPoster}
+                          alt={`${project.name} video preview`}
+                          className="w-full h-[300px] md:h-[400px] object-cover rounded-lg"
+                          loading="eager"
+                          fetchPriority="high"
+                          decoding="async"
+                        />
+                      ) : (
+                        <video
+                          src={getOptimizedProjectVideoUrl(selectedGalleryItem?.url)}
+                          className="w-full h-[300px] md:h-[400px] object-cover rounded-lg"
+                          muted
+                          preload="metadata"
+                          playsInline
+                        />
+                      )}
+                      {isMainVideoPreviewActive && selectedGalleryItem?.url && (
+                        <video
+                          ref={mainVideoPreviewRef}
+                          src={getOptimizedProjectVideoUrl(selectedGalleryItem.url)}
+                          className={`absolute inset-0 w-full h-[300px] md:h-[400px] object-cover rounded-lg transition-opacity duration-150 ${
+                            isMainVideoPreviewReady ? "opacity-100" : "opacity-0"
+                          }`}
+                          muted
+                          autoPlay
+                          preload="metadata"
+                          playsInline
+                          onLoadedData={(event) => {
+                            event.currentTarget.currentTime = 0;
+                            setIsMainVideoPreviewReady(true);
+                          }}
+                          onTimeUpdate={(event) => {
+                            if (event.currentTarget.currentTime >= 3) {
+                              event.currentTarget.currentTime = 0;
+                            }
+                          }}
+                          onError={stopMainVideoPreview}
+                        />
+                      )}
                       {/* Video Play Button Overlay */}
                       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                         <div className="bg-black/50 rounded-full p-4 group-hover:bg-black/70 transition-colors">
@@ -606,9 +728,15 @@ const ProjectDetail = () => {
                   ) : (
                     <>
                       <img
-                        src={project.galleryItems[selectedImage]?.url || project.images[0]}
+                        src={
+                          getMainImageUrl(selectedGalleryItem?.url || project.images[0]) ||
+                          project.images[0]
+                        }
                         alt={project.name}
                         className="w-full h-[300px] md:h-[400px] object-cover rounded-lg"
+                        loading="eager"
+                        fetchPriority="high"
+                        decoding="async"
                       />
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors rounded-lg flex items-center justify-center">
                         <MdZoomIn className="text-white opacity-0 group-hover:opacity-100 transition-opacity" size={48} />
@@ -627,22 +755,36 @@ const ProjectDetail = () => {
                       }`}
                       onClick={() => setSelectedImage(index)}
                     >
-                      {item.type === 'video' ? (
+                      {item.type === "video" ? (
                         <>
-                          <video
-                            src={item.url}
-                            className="w-full h-full object-cover absolute inset-0"
-                            muted
-                          />
+                          {getThumbnailVideoPosterUrl(item.url) ? (
+                            <img
+                              src={getThumbnailVideoPosterUrl(item.url)}
+                              alt={`${project.name} video ${index + 1}`}
+                              className="w-full h-full object-cover absolute inset-0"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          ) : (
+                            <video
+                              src={getOptimizedProjectVideoUrl(item.url)}
+                              className="w-full h-full object-cover absolute inset-0"
+                              muted
+                              preload="metadata"
+                              playsInline
+                            />
+                          )}
                           <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                             <MdPlayCircleOutline className="text-white" size={24} />
                           </div>
                         </>
                       ) : (
                         <img
-                          src={item.url}
+                          src={getThumbnailImageUrl(item.url)}
                           alt={`${project.name} ${index + 1}`}
                           className="w-full h-full object-cover absolute inset-0"
+                          loading="lazy"
+                          decoding="async"
                         />
                       )}
                       {index === 4 && project.galleryItems.length > 5 && (
@@ -993,9 +1135,15 @@ const ProjectDetail = () => {
                   onClick={() => setSitePlanModalOpen(true)}
                 >
                   <img
-                    src={project.vaziyetPlani}
+                    src={getOptimizedImageUrl(project.vaziyetPlani, {
+                      width: 1400,
+                      height: 1000,
+                      crop: "limit",
+                    })}
                     alt={t("projectDetail.sitePlan")}
                     className="w-full h-auto max-h-[500px] object-contain rounded-lg border bg-gray-50"
+                    loading="lazy"
+                    decoding="async"
                   />
                   {/* Zoom overlay on hover */}
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-lg flex items-center justify-center">
@@ -1014,9 +1162,14 @@ const ProjectDetail = () => {
               <div className="relative">
                 {project.mapImage ? (
                   <img
-                    src={project.mapImage}
+                    src={getOptimizedImageUrl(project.mapImage, {
+                      width: 1400,
+                      height: 900,
+                    })}
                     alt={`${project.name} - ${t("projectDetail.location")}`}
                     className="w-full h-[350px] object-cover rounded-lg border"
+                    loading="lazy"
+                    decoding="async"
                   />
                 ) : (
                   <div className="w-full h-[350px] bg-gray-100 rounded-lg border flex items-center justify-center">
@@ -1415,16 +1568,22 @@ const ProjectDetail = () => {
         withCloseButton
       >
         <div className="relative">
-          {project.galleryItems[selectedImage]?.type === 'video' ? (
+          {selectedGalleryItem?.type === "video" ? (
             <video
-              src={project.galleryItems[selectedImage]?.url}
+              src={getOptimizedProjectVideoUrl(selectedGalleryItem?.url)}
+              poster={getMainVideoPosterUrl(selectedGalleryItem?.url) || undefined}
               className="w-full h-auto rounded-lg"
               controls
               autoPlay
+              preload="metadata"
+              playsInline
             />
           ) : (
             <img
-              src={project.galleryItems[selectedImage]?.url || project.images[0]}
+              src={
+                getLightboxImageUrl(selectedGalleryItem?.url || project.images[0]) ||
+                project.images[0]
+              }
               alt={project.name}
               className={`w-full h-auto cursor-pointer select-none transition-opacity duration-200 ${
                 isLightboxMediaLoaded ? "opacity-100" : "opacity-0"
@@ -1436,7 +1595,7 @@ const ProjectDetail = () => {
             />
           )}
 
-          {project.galleryItems[selectedImage]?.type === "image" && !isLightboxMediaLoaded && (
+          {selectedGalleryItem?.type === "image" && !isLightboxMediaLoaded && (
             <div className="absolute inset-0 flex items-center justify-center bg-gray-100/60 rounded-lg">
               <Loader size="sm" />
             </div>
@@ -1472,18 +1631,36 @@ const ProjectDetail = () => {
               }`}
               onClick={() => setSelectedImage(index)}
             >
-              {item.type === 'video' ? (
+              {item.type === "video" ? (
                 <>
-                  <video src={item.url} className="w-full h-full object-cover" muted />
+                  {getThumbnailVideoPosterUrl(item.url) ? (
+                    <img
+                      src={getThumbnailVideoPosterUrl(item.url)}
+                      alt={`${project.name} video ${index + 1}`}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  ) : (
+                    <video
+                      src={getOptimizedProjectVideoUrl(item.url)}
+                      className="w-full h-full object-cover"
+                      muted
+                      preload="metadata"
+                      playsInline
+                    />
+                  )}
                   <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
                     <MdPlayCircleOutline className="text-white" size={16} />
                   </div>
                 </>
               ) : (
                 <img
-                  src={item.url}
+                  src={getThumbnailImageUrl(item.url)}
                   alt={`${project.name} thumbnail ${index + 1}`}
                   className="w-full h-full object-cover"
+                  loading="lazy"
+                  decoding="async"
                 />
               )}
             </button>
@@ -1574,9 +1751,15 @@ const ProjectDetail = () => {
       >
         {project?.vaziyetPlani && (
           <img
-            src={project.vaziyetPlani}
+            src={getOptimizedImageUrl(project.vaziyetPlani, {
+              width: 1800,
+              height: 1400,
+              crop: "limit",
+            })}
             alt={t("projectDetail.sitePlan")}
             className="w-full h-auto rounded-lg"
+            loading="lazy"
+            decoding="async"
           />
         )}
       </Modal>
@@ -1601,10 +1784,15 @@ const ProjectDetail = () => {
           {/* Main Video */}
           <video
             key={currentVideoIndex}
-            src={project.galleryItems[currentVideoIndex]?.url}
+            src={getOptimizedProjectVideoUrl(project.galleryItems[currentVideoIndex]?.url)}
+            poster={
+              getMainVideoPosterUrl(project.galleryItems[currentVideoIndex]?.url) || undefined
+            }
             className="max-h-[85vh] max-w-[90vw] rounded-lg"
             controls
             autoPlay
+            preload="metadata"
+            playsInline
           />
         </div>
       )}

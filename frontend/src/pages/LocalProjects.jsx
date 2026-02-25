@@ -21,6 +21,7 @@ import useProperties from "../hooks/useProperties";
 import CurrencyContext from "../context/CurrencyContext";
 import PropertiesMap from "../components/PropertiesMap";
 import PropertyCard from "../components/PropertyCard";
+import { getOptimizedImageUrl } from "../utils/media";
 
 // Turkish cities data
 const TURKISH_CITIES = [
@@ -1422,9 +1423,11 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
                   {/* Project Image */}
                   <div className={`relative w-full flex-shrink-0 ${isSpecialOffersPage ? "md:w-52 h-32 md:h-24" : "md:w-40 h-32 md:h-24"}`}>
                     <img
-                      src={project.image}
+                      src={getOptimizedImageUrl(project.image, { width: 520, height: 320 })}
                       alt={project.name}
                       className="w-full h-full object-cover"
+                      loading="lazy"
+                      decoding="async"
                     />
                     {(isSpecialOffersPage || project.hasSpecialOffer) && (
                       <div className="absolute left-3 top-3 rounded-md bg-rose-600 px-2.5 py-1 text-[11px] font-bold tracking-wide text-white">

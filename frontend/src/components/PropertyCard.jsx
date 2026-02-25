@@ -14,6 +14,7 @@ import { toFav } from "../utils/api";
 import { useAuth0 } from "@auth0/auth0-react";
 import { toast } from "react-toastify";
 import { bilingualKey } from "../utils/bilingualToast";
+import { getOptimizedImageUrl } from "../utils/media";
 
 // Get category display name (bilingual)
 const getCategoryLabel = (category, propertyType, lang = "tr") => {
@@ -187,7 +188,7 @@ const PropertyCard = ({ property, onCardClick }) => {
         {/* Property Image */}
         <div className="relative w-full h-[200px] sm:w-[280px] sm:h-[180px] flex-shrink-0">
           <img
-            src={property.image}
+            src={getOptimizedImageUrl(property.image, { width: 760, height: 480 })}
             alt={property.title}
             loading="lazy"
             decoding="async"

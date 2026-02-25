@@ -4,6 +4,7 @@ import PropTypes from "prop-types";
 import { MdLocationOn } from "react-icons/md";
 import { useContext } from "react";
 import CurrencyContext from "../context/CurrencyContext";
+import { getOptimizedImageUrl } from "../utils/media";
 
 // Get category display name (bilingual)
 const getCategoryLabel = (category, propertyType, lang = "tr") => {
@@ -73,7 +74,7 @@ const PropertyGridCard = ({ property }) => {
       {/* Image */}
       <div className="relative overflow-hidden">
         <img
-          src={property.image}
+          src={getOptimizedImageUrl(property.image, { width: 520, height: 320 })}
           alt={property.title}
           loading="lazy"
           decoding="async"
