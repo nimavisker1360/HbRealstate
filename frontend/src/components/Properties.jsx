@@ -442,8 +442,8 @@ const Properties = () => {
           ref={headerRef}
           className={`text-center mb-14 transition-all duration-1000 ${headerVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
         >
-          <span className="inline-block px-4 py-1.5 bg-emerald-500 text-white text-sm font-medium rounded-md mb-4 shadow-md">
-            {t("properties.futureHomeAwaits")}
+          <span className="investment-opportunities-pill relative mb-4 inline-block overflow-hidden rounded-md bg-emerald-500 px-4 py-1.5 text-sm font-medium text-white shadow-md">
+            <span className="relative z-[1]">{t("properties.futureHomeAwaits")}</span>
           </span>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-4">
             {t("properties.findDreamHere")}
@@ -735,7 +735,7 @@ const Properties = () => {
           <div className="flex justify-center mt-14">
             <Link
               to="/listing"
-              className="group relative px-8 py-3.5 bg-emerald-500 text-white font-medium rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/25"
+              className="investment-opportunities-pill group relative overflow-hidden rounded-xl bg-emerald-500 px-8 py-3.5 font-medium text-white transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/25"
             >
               <span className="relative z-10 flex items-center gap-2">
                 {t("properties.viewAll")}
