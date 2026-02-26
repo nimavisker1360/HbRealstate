@@ -430,6 +430,8 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
   const [hotPropertyTypeFilter, setHotPropertyTypeFilter] = useState("all");
   const [hotPriceMin, setHotPriceMin] = useState("");
   const [hotPriceMax, setHotPriceMax] = useState("");
+  const [priceMinGBP, setPriceMinGBP] = useState("");
+  const [priceMaxGBP, setPriceMaxGBP] = useState("");
   const activeHeroBg =
     isInternationalPage && selectedCity
       ? INTERNATIONAL_HERO_IMAGES[selectedCity] || heroBg
@@ -447,6 +449,8 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
     setHotPropertyTypeFilter("all");
     setHotPriceMin("");
     setHotPriceMax("");
+    setPriceMinGBP("");
+    setPriceMaxGBP("");
   }, [resolvedProjectType, isSpecialOffersPage, isHotOffersMode]);
 
   // Popover states
@@ -454,6 +458,7 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
   const [districtPopoverOpened, setDistrictPopoverOpened] = useState(false);
   const [roomPopoverOpened, setRoomPopoverOpened] = useState(false);
   const [statusPopoverOpened, setStatusPopoverOpened] = useState(false);
+  const [pricePopoverOpened, setPricePopoverOpened] = useState(false);
   const [hotStatusPopoverOpened, setHotStatusPopoverOpened] = useState(false);
   const [hotUsePopoverOpened, setHotUsePopoverOpened] = useState(false);
   const [hotPricePopoverOpened, setHotPricePopoverOpened] = useState(false);
@@ -497,6 +502,7 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
     setCityPopoverOpened(false);
     setDistrictPopoverOpened(false);
     setRoomPopoverOpened(false);
+    setPricePopoverOpened(false);
     setStatusPopoverOpened(false);
   };
 
@@ -607,6 +613,10 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
         if (!matchesDistrict) return false;
       }
 
+      const projectPrice = Number(project.price || 0);
+      const projectCurrency = String(project.currency || baseCurrency).toUpperCase();
+      const projectPriceGBP = convertAmount(projectPrice, projectCurrency, "GBP");
+
       if (isHotOffersMode) {
         const searchableLocation = normalizeCityName(
           [
@@ -634,11 +644,19 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
           return false;
         }
 
-        const projectPrice = Number(project.price || 0);
-        if (hotPriceMin && projectPrice < Number(hotPriceMin)) {
+        if (hotPriceMin && projectPriceGBP < Number(hotPriceMin)) {
           return false;
         }
-        if (hotPriceMax && projectPrice > Number(hotPriceMax)) {
+        if (hotPriceMax && projectPriceGBP > Number(hotPriceMax)) {
+          return false;
+        }
+      }
+
+      if (!isHotOffersMode) {
+        if (priceMinGBP && projectPriceGBP < Number(priceMinGBP)) {
+          return false;
+        }
+        if (priceMaxGBP && projectPriceGBP > Number(priceMaxGBP)) {
           return false;
         }
       }
@@ -676,6 +694,10 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
     isHotOffersMode,
     isInternationalPage,
     localProjects,
+    baseCurrency,
+    convertAmount,
+    priceMaxGBP,
+    priceMinGBP,
     projectCategory,
     selectedCity,
     selectedDistricts,
@@ -766,6 +788,8 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
                   setSelectedCity("");
                   setSelectedDistricts([]);
                   setSelectedRooms([]);
+                  setPriceMinGBP("");
+                  setPriceMaxGBP("");
                   setProjectCategory("");
                 }}
                 className="inline-flex h-12 items-center gap-2 rounded-2xl border border-[#0f1f3a] bg-[#0f1f3a] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#152a4c]"
@@ -911,7 +935,7 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
                     onClick={() => setHotPricePopoverOpened((o) => !o)}
                     className="inline-flex h-12 min-w-[100px] items-center justify-between gap-2 rounded-2xl border border-slate-300 bg-white px-4 text-sm text-slate-700"
                   >
-                    <span>{t("listing.price")}</span>
+                    <span>{`${t("listing.price")} (£)`}</span>
                     <MdKeyboardArrowDown
                       size={18}
                       className={`${hotPricePopoverOpened ? "" : "rotate-180"} transition-transform`}
@@ -919,13 +943,13 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
                   </button>
                 </Popover.Target>
                 <Popover.Dropdown className="p-3">
-                  <div className="mb-2 text-xs text-slate-500">{t("listing.priceRange")}</div>
+                  <div className="mb-2 text-xs text-slate-500">{`${t("listing.priceRange")} (£)`}</div>
                   <div className="flex items-center gap-2">
                     <input
                       type="number"
                       value={hotPriceMin}
                       onChange={(e) => setHotPriceMin(e.target.value)}
-                      placeholder={t("listing.minPrice")}
+                      placeholder={`${t("listing.minPrice")} (£)`}
                       className="h-10 w-full rounded-md border border-slate-300 px-3 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
                     />
                     <span className="text-slate-400">-</span>
@@ -933,7 +957,7 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
                       type="number"
                       value={hotPriceMax}
                       onChange={(e) => setHotPriceMax(e.target.value)}
-                      placeholder={t("listing.maxPrice")}
+                      placeholder={`${t("listing.maxPrice")} (£)`}
                       className="h-10 w-full rounded-md border border-slate-300 px-3 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
                     />
                   </div>
@@ -1201,6 +1225,56 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
                 </Popover.Dropdown>
               </Popover>
 
+              {/* Price Select (GBP) */}
+              <Popover
+                opened={pricePopoverOpened}
+                onChange={setPricePopoverOpened}
+                width={260}
+                position="bottom-start"
+                shadow="md"
+              >
+                <Popover.Target>
+                  <button
+                    className="flex items-center justify-between gap-2 px-4 py-3 md:py-2.5 md:min-w-[120px] transition-colors w-full md:w-auto"
+                    onClick={() => setPricePopoverOpened((o) => !o)}
+                  >
+                    <span className="text-sm text-gray-700">
+                      {priceMinGBP || priceMaxGBP
+                        ? `£${priceMinGBP || "0"} - £${priceMaxGBP || "∞"}`
+                        : `${t("listing.price")} (£)`}
+                    </span>
+                    <MdKeyboardArrowDown className="text-gray-400" size={18} />
+                  </button>
+                </Popover.Target>
+                <Popover.Dropdown className="p-3">
+                  <div className="mb-2 text-xs text-slate-500">{`${t("listing.priceRange")} (£)`}</div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      value={priceMinGBP}
+                      onChange={(e) => setPriceMinGBP(e.target.value)}
+                      placeholder={`${t("listing.minPrice")} (£)`}
+                      className="h-10 w-full rounded-md border border-slate-300 px-3 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                    />
+                    <span className="text-slate-400">-</span>
+                    <input
+                      type="number"
+                      value={priceMaxGBP}
+                      onChange={(e) => setPriceMaxGBP(e.target.value)}
+                      placeholder={`${t("listing.maxPrice")} (£)`}
+                      className="h-10 w-full rounded-md border border-slate-300 px-3 text-sm text-slate-700 focus:border-slate-400 focus:outline-none"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setPricePopoverOpened(false)}
+                    className="mt-3 w-full rounded-md bg-blue-600 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                  >
+                    {t("listing.applyFilters")}
+                  </button>
+                </Popover.Dropdown>
+              </Popover>
+
               {/* Project Status Select */}
               {!isHotOffersMode && (
                 <Popover
@@ -1286,7 +1360,7 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
       {/* Projects Listing Section */}
       <Container size="lg" className="py-8">
         {/* Active Filters Summary */}
-        {(selectedCity || selectedDistricts.length > 0) && (
+        {(selectedCity || selectedDistricts.length > 0 || priceMinGBP || priceMaxGBP) && (
           <div className="flex flex-wrap items-center gap-2 mb-4">
             <span className="text-slate-500 text-sm">{t("localProjects.activeFilters")}:</span>
             
@@ -1313,11 +1387,28 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
                 </button>
               </span>
             ))}
+
+            {(priceMinGBP || priceMaxGBP) && (
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-50 text-amber-700 border border-amber-100 rounded text-xs">
+                {`£${priceMinGBP || "0"} - £${priceMaxGBP || "∞"}`}
+                <button
+                  onClick={() => {
+                    setPriceMinGBP("");
+                    setPriceMaxGBP("");
+                  }}
+                  className="ml-1 hover:text-amber-900"
+                >
+                  Ã—
+                </button>
+              </span>
+            )}
             
             <button
               onClick={() => {
                 setSelectedCity("");
                 setSelectedDistricts([]);
+                setPriceMinGBP("");
+                setPriceMaxGBP("");
                 setProjectCategory(
                   isSpecialOffersPage || isHotOffersMode ? "special-offer" : ""
                 );
