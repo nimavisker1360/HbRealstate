@@ -162,6 +162,47 @@ const imarDurumuOptions = [
   { value: "tarimsal", label: "Tarımsal" },
 ];
 
+const normalizeListingStatus = (value) => {
+  const normalized = String(value || "").toLowerCase().trim();
+  if (["ready", "hazir", "tamamlandi", "completed"].includes(normalized)) {
+    return "ready";
+  }
+  if (
+    [
+      "offplan",
+      "off-plan",
+      "off plan",
+      "devam-ediyor",
+      "devam ediyor",
+      "under-construction",
+      "under construction",
+      "insaat-halinde",
+      "insaat halinde",
+    ].includes(normalized)
+  ) {
+    return "offplan";
+  }
+  return "";
+};
+
+const listingStatusFromProjectStatus = (value) => {
+  const normalized = String(value || "").toLowerCase().trim();
+  if (["tamamlandi", "completed", "ready"].includes(normalized)) {
+    return "ready";
+  }
+  if (
+    ["devam-ediyor", "devam ediyor", "under construction", "off-plan", "offplan"].includes(
+      normalized
+    )
+  ) {
+    return "offplan";
+  }
+  return "";
+};
+
+const projectStatusFromListingStatus = (value) =>
+  value === "ready" ? "tamamlandi" : "devam-ediyor";
+
 const roomOptions = [
   { value: "1+0", label: "1+0 (Stüdyo)" },
   { value: "1+1", label: "1+1" },
@@ -593,6 +634,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
   const [kampanya, setKampanya] = useState("");
   const [deliveryDate, setDeliveryDate] = useState("");
   const [projectStatus, setProjectStatus] = useState("devam-ediyor");
+  const [listingStatus, setListingStatus] = useState("offplan");
   const [gyo, setGyo] = useState(false);
   const [mapImage, setMapImage] = useState("");
   const [specialOffers, setSpecialOffers] = useState([]);
@@ -797,6 +839,12 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
       setKampanya(property.kampanya || "");
       setDeliveryDate(property.deliveryDate || "");
       setProjectStatus(property.projectStatus || "devam-ediyor");
+      setListingStatus(
+        normalizeListingStatus(property.listingStatus) ||
+          (property.propertyType === "sale"
+            ? "ready"
+            : listingStatusFromProjectStatus(property.projectStatus) || "offplan")
+      );
       setGyo(Boolean(property.gyo));
       setMapImage(property.mapImage || "");
       setSpecialOffers(getInitialSpecialOffers(property));
@@ -1118,6 +1166,11 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
     const isProjectType =
       values.propertyType === "local-project" ||
       values.propertyType === "international-project";
+    const normalizedListingStatus =
+      normalizeListingStatus(listingStatus) ||
+      (isProjectType
+        ? listingStatusFromProjectStatus(projectStatus) || "offplan"
+        : "ready");
     const isSpecialOfferType = isProjectType && isSpecialOfferEnabled;
     const normalizedCurrency = normalizeFiatCurrency(values.currency);
     const normalizedPrice = Math.round(Number(values.price || 0));
@@ -1316,6 +1369,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
         : "",
       deliveryDate: isProjectType ? deliveryDate : "",
       projectStatus: isProjectType ? projectStatus : "",
+      listingStatus: normalizedListingStatus,
       gyo: isProjectType ? gyo : false,
       mapImage: isProjectType ? mapImage : "",
       projeHakkinda: nextProjeHakkinda,
@@ -1798,7 +1852,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
         </Grid>
 
         <Grid mt="sm">
-          <Grid.Col span={4}>
+          <Grid.Col span={3}>
             <Select
               label="Kullanım Durumu"
               placeholder="Seçin"
@@ -1808,7 +1862,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
               clearable
             />
           </Grid.Col>
-          <Grid.Col span={4}>
+          <Grid.Col span={3}>
             <TextInput
               label="Tapu Durumu"
               placeholder="Tapu durumunu yazın"
@@ -1816,7 +1870,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
               onChange={(e) => setDeedStatus(e.target.value)}
             />
           </Grid.Col>
-          <Grid.Col span={4}>
+          <Grid.Col span={3}>
             <Select
               label="İmar Durumu"
               placeholder="Seçin"
@@ -1825,6 +1879,31 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
               onChange={setImarDurumu}
               clearable
             />
+          </Grid.Col>
+          <Grid.Col span={3}>
+            <Text size="sm" fw={500} mb={4}>
+              Listing Durumu
+            </Text>
+            <Group gap="md" mt={8}>
+              <Checkbox
+                label="Ready"
+                checked={listingStatus === "ready"}
+                onChange={(event) => {
+                  if (event.currentTarget.checked) {
+                    setListingStatus("ready");
+                  }
+                }}
+              />
+              <Checkbox
+                label="Off-plan"
+                checked={listingStatus === "offplan"}
+                onChange={(event) => {
+                  if (event.currentTarget.checked) {
+                    setListingStatus("offplan");
+                  }
+                }}
+              />
+            </Group>
           </Grid.Col>
         </Grid>
 
@@ -2303,7 +2382,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
 
             {/* Delivery Date & Project Status */}
             <Grid mt="sm">
-              <Grid.Col span={4}>
+              <Grid.Col span={3}>
                 <TextInput
                   label="Teslim Tarihi"
                   placeholder="Mayıs 2027"
@@ -2311,7 +2390,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
                   onChange={(e) => setDeliveryDate(e.target.value)}
                 />
               </Grid.Col>
-              <Grid.Col span={4}>
+              <Grid.Col span={3}>
                 <Select
                   label="Proje Durumu"
                   placeholder="Seçin"
@@ -2320,10 +2399,45 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
                     { value: "tamamlandi", label: "Tamamlandı" },
                   ]}
                   value={projectStatus}
-                  onChange={setProjectStatus}
+                  onChange={(value) => {
+                    const nextProjectStatus = value || "devam-ediyor";
+                    setProjectStatus(nextProjectStatus);
+                    const inferredListingStatus =
+                      listingStatusFromProjectStatus(nextProjectStatus);
+                    if (inferredListingStatus) {
+                      setListingStatus(inferredListingStatus);
+                    }
+                  }}
                 />
               </Grid.Col>
-              <Grid.Col span={4}>
+              <Grid.Col span={3}>
+                <Text size="sm" fw={500} mb={4}>
+                  Listing Durumu
+                </Text>
+                <Group gap="md" mt={8}>
+                  <Checkbox
+                    label="Ready"
+                    checked={listingStatus === "ready"}
+                    onChange={(event) => {
+                      if (event.currentTarget.checked) {
+                        setListingStatus("ready");
+                        setProjectStatus(projectStatusFromListingStatus("ready"));
+                      }
+                    }}
+                  />
+                  <Checkbox
+                    label="Off-plan"
+                    checked={listingStatus === "offplan"}
+                    onChange={(event) => {
+                      if (event.currentTarget.checked) {
+                        setListingStatus("offplan");
+                        setProjectStatus(projectStatusFromListingStatus("offplan"));
+                      }
+                    }}
+                  />
+                </Group>
+              </Grid.Col>
+              <Grid.Col span={3}>
                 <Checkbox
                   label="GYO"
                   mt={36}
@@ -2964,3 +3078,4 @@ EditPropertyModal.propTypes = {
 };
 
 export default EditPropertyModal;
+

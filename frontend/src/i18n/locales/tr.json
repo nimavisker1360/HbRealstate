@@ -558,7 +558,13 @@
     "filtersApplied": "{{count}} filtre uygulandı",
     "selectCategory": "Kategori Seç",
     "list": "Liste",
-    "map": "Harita"
+    "map": "Harita",
+    "quickSeaView": "Deniz Manzarasi",
+    "quickInstallmentAvailable": "Taksit Imkani",
+    "quickReadyOffPlan": "Hazir / Proje Asamasinda",
+    "quickReady": "Hazir",
+    "quickOffPlan": "Proje Asamasinda",
+    "quickCitizenshipEligible": "Vatandasliga Uygun"
   },
   "profile": {
     "myProfile": "Profilim",

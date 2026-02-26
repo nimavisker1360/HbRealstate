@@ -559,7 +559,13 @@
     "filtersApplied": "Применено фильтров: {{count}}",
     "selectCategory": "Выбрать категорию",
     "list": "Список",
-    "map": "Карта"
+    "map": "Карта",
+    "quickSeaView": "Вид на море",
+    "quickInstallmentAvailable": "Рассрочка доступна",
+    "quickReadyOffPlan": "Готово / На этапе строительства",
+    "quickReady": "Готово",
+    "quickOffPlan": "Строится",
+    "quickCitizenshipEligible": "Подходит для гражданства"
   },
   "profile": {
     "myProfile": "My Profile",

@@ -8,6 +8,218 @@ import { MdLocationOn, MdSearch, MdKeyboardArrowDown, MdFilterList, MdClose, MdL
 import CurrencyContext from "../context/CurrencyContext";
 import useConsultants from "../hooks/useConsultants";
 
+const normalizeText = (value) =>
+  String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const toArray = (value) => (Array.isArray(value) ? value : []);
+
+const SEA_VIEW_KEYWORDS = [
+  "sea view",
+  "deniz manzara",
+  "denize sifir",
+  "denize yakin",
+  "ocean view",
+  "waterfront",
+  "marina view",
+  "bogaz manzara",
+];
+
+const INSTALLMENT_KEYWORDS = [
+  "installment",
+  "payment plan",
+  "taksit",
+  "taksitli",
+  "down payment",
+];
+
+const CITIZENSHIP_KEYWORDS = [
+  "citizenship eligible",
+  "turkish citizenship",
+  "citizenship",
+  "vatandaslik",
+  "vatandasliga uygun",
+  "passport",
+];
+
+const READY_KEYWORDS = [
+  "ready",
+  "move in",
+  "completed",
+  "tamamlandi",
+  "teslime hazir",
+  "oturuma hazir",
+  "anahtar teslim",
+  "bos",
+  "kiraci",
+  "mulk sahibi",
+  "mulk-sahibi",
+];
+
+const OFFPLAN_KEYWORDS = [
+  "off plan",
+  "off-plan",
+  "offplan",
+  "under construction",
+  "construction",
+  "insaat halinde",
+  "devam ediyor",
+  "devam-ediyor",
+  "pre sale",
+];
+
+const includesAnyKeyword = (text, keywords) =>
+  keywords.some((keyword) => text.includes(keyword));
+
+const normalizeListingStatus = (value) => {
+  const normalized = normalizeText(value);
+  if (["ready", "hazir", "tamamlandi", "completed"].includes(normalized)) {
+    return "ready";
+  }
+  if (
+    [
+      "offplan",
+      "off-plan",
+      "off plan",
+      "devam-ediyor",
+      "devam ediyor",
+      "under construction",
+      "under-construction",
+      "insaat halinde",
+      "insaat-halinde",
+    ].includes(normalized)
+  ) {
+    return "offplan";
+  }
+  return "";
+};
+
+const getSpecialOffers = (property) => {
+  const offers = toArray(property?.projeHakkinda?.specialOffers);
+  const legacyOffer = property?.projeHakkinda?.specialOffer;
+  if (legacyOffer && typeof legacyOffer === "object") {
+    offers.push(legacyOffer);
+  }
+  return offers;
+};
+
+const collectPropertySearchText = (property) => {
+  const directTexts = [
+    property?.title,
+    property?.description,
+    property?.description_tr,
+    property?.description_en,
+    property?.description_ru,
+    property?.address,
+    property?.city,
+    property?.country,
+    property?.usageStatus,
+    property?.projectStatus,
+    property?.listingStatus,
+    property?.deedStatus,
+    property?.kampanya,
+  ];
+
+  const staticFeatureValues = [
+    ...toArray(property?.interiorFeatures),
+    ...toArray(property?.exteriorFeatures),
+    ...toArray(property?.muhitFeatures),
+    ...toArray(property?.manzaraFeatures),
+    ...toArray(property?.binaOzellikleri),
+    ...toArray(property?.disOzellikler),
+    ...toArray(property?.engelliYasliUygun),
+    ...toArray(property?.eglenceAlisveris),
+    ...toArray(property?.guvenlik),
+    ...toArray(property?.manzara),
+    ...toArray(property?.muhit),
+  ];
+
+  const ozelliklerValues =
+    property?.ozellikler && typeof property.ozellikler === "object"
+      ? Object.values(property.ozellikler).flatMap((value) => toArray(value))
+      : [];
+
+  const specialOfferValues = getSpecialOffers(property).flatMap((offer) => [
+    offer?.title,
+    offer?.roomType,
+    offer?.locationLabel,
+    offer?.description,
+    offer?.paymentPlan,
+  ]);
+
+  const allValues = [
+    ...directTexts,
+    ...staticFeatureValues,
+    ...ozelliklerValues,
+    ...specialOfferValues,
+  ];
+
+  return normalizeText(allValues.filter(Boolean).join(" "));
+};
+
+const isSeaViewProperty = (searchableText) =>
+  includesAnyKeyword(searchableText, SEA_VIEW_KEYWORDS);
+
+const isInstallmentProperty = (property, searchableText) => {
+  const hasInstallmentInOffers = getSpecialOffers(property).some(
+    (offer) => Number(offer?.installmentMonths || 0) > 0
+  );
+  if (hasInstallmentInOffers) return true;
+  return includesAnyKeyword(searchableText, INSTALLMENT_KEYWORDS);
+};
+
+const isCitizenshipEligibleProperty = (searchableText) =>
+  includesAnyKeyword(searchableText, CITIZENSHIP_KEYWORDS);
+
+const getReadyOffPlanState = (property, searchableText) => {
+  const explicitStatus = normalizeListingStatus(property?.listingStatus);
+  if (explicitStatus) return explicitStatus;
+
+  const statusText = normalizeText(
+    `${property?.usageStatus || ""} ${property?.projectStatus || ""}`
+  );
+  if (includesAnyKeyword(statusText, OFFPLAN_KEYWORDS)) return "offplan";
+  if (includesAnyKeyword(statusText, READY_KEYWORDS)) return "ready";
+  if (includesAnyKeyword(searchableText, OFFPLAN_KEYWORDS)) return "offplan";
+  if (includesAnyKeyword(searchableText, READY_KEYWORDS)) return "ready";
+  return null;
+};
+
+const matchesQuickAccessFilters = (property, quickFilters) => {
+  const searchableText = collectPropertySearchText(property);
+
+  if (quickFilters.seaView && !isSeaViewProperty(searchableText)) {
+    return false;
+  }
+
+  if (
+    quickFilters.installmentAvailable &&
+    !isInstallmentProperty(property, searchableText)
+  ) {
+    return false;
+  }
+
+  if (
+    quickFilters.citizenshipEligible &&
+    !isCitizenshipEligibleProperty(searchableText)
+  ) {
+    return false;
+  }
+
+  if (quickFilters.status) {
+    const resolvedStatus = getReadyOffPlanState(property, searchableText);
+    if (resolvedStatus !== quickFilters.status) {
+      return false;
+    }
+  }
+
+  return true;
+};
+
 // Animated Card wrapper with IntersectionObserver
 const AnimatedCard = ({ children, delay = 0 }) => {
   const [isVisible, setIsVisible] = useState(false);
@@ -69,6 +281,17 @@ const Properties = () => {
   const [categoryFilter, setCategoryFilter] = useState(null);
   const [priceRange, setPriceRange] = useState({ min: "", max: "" });
   const [roomsFilter, setRoomsFilter] = useState("");
+  const [quickFilters, setQuickFilters] = useState({
+    seaView: false,
+    installmentAvailable: false,
+    citizenshipEligible: false,
+    status: "",
+  });
+  const includeProjectsByQuickFilters =
+    quickFilters.seaView ||
+    quickFilters.installmentAvailable ||
+    quickFilters.citizenshipEligible ||
+    Boolean(quickFilters.status);
 
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
@@ -147,11 +370,13 @@ const Properties = () => {
     const counts = {};
 
     data
-      .filter(
-        (property) =>
+      .filter((property) => {
+        if (includeProjectsByQuickFilters) return true;
+        return (
           property.propertyType !== "local-project" &&
           property.propertyType !== "international-project"
-      )
+        );
+      })
       .filter((property) => {
         if (categoryFilter) {
           return property.category === categoryFilter;
@@ -196,6 +421,7 @@ const Properties = () => {
         if (roomsFilter === "5+") return bedrooms >= 5;
         return bedrooms === parseInt(roomsFilter, 10);
       })
+      .filter((property) => matchesQuickAccessFilters(property, quickFilters))
       .filter((property) => {
         if (!query) return true;
         const title = property.title?.toLowerCase() || "";
@@ -222,6 +448,8 @@ const Properties = () => {
     categoryFilter,
     priceRange,
     roomsFilter,
+    quickFilters,
+    includeProjectsByQuickFilters,
     baseCurrency,
     displayCurrency,
     convertAmount,
@@ -285,19 +513,39 @@ const Properties = () => {
     if (categoryFilter) count += 1;
     if (priceRange.min || priceRange.max) count += 1;
     if (roomsFilter) count += 1;
+    if (quickFilters.seaView) count += 1;
+    if (quickFilters.installmentAvailable) count += 1;
+    if (quickFilters.citizenshipEligible) count += 1;
+    if (quickFilters.status) count += 1;
     return count;
-  }, [searchValue, consultantFilter, categoryFilter, priceRange, roomsFilter]);
+  }, [searchValue, consultantFilter, categoryFilter, priceRange, roomsFilter, quickFilters]);
+
+  const toggleQuickFlag = (key) => {
+    setQuickFilters((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
+
+  const toggleQuickStatus = (status) => {
+    setQuickFilters((prev) => ({
+      ...prev,
+      status: prev.status === status ? "" : status,
+    }));
+  };
 
   const baseFilteredProperties = useMemo(() => {
     if (!Array.isArray(data)) return [];
     const query = searchValue.trim().toLowerCase();
 
     return data
-      .filter(
-        (property) =>
+      .filter((property) => {
+        if (includeProjectsByQuickFilters) return true;
+        return (
           property.propertyType !== "local-project" &&
           property.propertyType !== "international-project"
-      )
+        );
+      })
       .filter((property) => {
         if (categoryFilter) {
           return property.category === categoryFilter;
@@ -342,6 +590,7 @@ const Properties = () => {
         if (roomsFilter === "5+") return bedrooms >= 5;
         return bedrooms === parseInt(roomsFilter, 10);
       })
+      .filter((property) => matchesQuickAccessFilters(property, quickFilters))
       .filter((property) => {
         if (!query) return true;
         const title = property.title?.toLowerCase() || "";
@@ -361,6 +610,8 @@ const Properties = () => {
     categoryFilter,
     priceRange,
     roomsFilter,
+    quickFilters,
+    includeProjectsByQuickFilters,
     baseCurrency,
     displayCurrency,
     convertAmount,
@@ -382,6 +633,10 @@ const Properties = () => {
     if (priceRange.min) params.set("minPrice", priceRange.min);
     if (priceRange.max) params.set("maxPrice", priceRange.max);
     if (roomsFilter) params.set("rooms", roomsFilter);
+    if (quickFilters.seaView) params.set("seaView", "true");
+    if (quickFilters.installmentAvailable) params.set("installmentAvailable", "true");
+    if (quickFilters.citizenshipEligible) params.set("citizenshipEligible", "true");
+    if (quickFilters.status) params.set("status", quickFilters.status);
     const queryString = params.toString();
     navigate(`/listing${queryString ? `?${queryString}` : ""}`);
   };
@@ -712,6 +967,73 @@ const Properties = () => {
                   )}
                 </button>
               </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 border-t border-gray-200/80 px-3 pb-3 sm:px-4 sm:pb-4">
+              <button
+                type="button"
+                onClick={() => toggleQuickFlag("seaView")}
+                aria-pressed={quickFilters.seaView}
+                className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
+                  quickFilters.seaView
+                    ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                    : "border-gray-200 bg-white text-gray-600 hover:border-emerald-200 hover:bg-emerald-50"
+                }`}
+              >
+                {t("listing.quickSeaView")}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => toggleQuickFlag("installmentAvailable")}
+                aria-pressed={quickFilters.installmentAvailable}
+                className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
+                  quickFilters.installmentAvailable
+                    ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                    : "border-gray-200 bg-white text-gray-600 hover:border-emerald-200 hover:bg-emerald-50"
+                }`}
+              >
+                {t("listing.quickInstallmentAvailable")}
+              </button>
+
+              <div className="inline-flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => toggleQuickStatus("ready")}
+                  aria-pressed={quickFilters.status === "ready"}
+                  className={`rounded-md border px-2 py-1 text-[11px] font-semibold transition ${
+                    quickFilters.status === "ready"
+                      ? "border-emerald-500 bg-emerald-100 text-emerald-700"
+                      : "border-gray-200 bg-white text-gray-600 hover:border-emerald-200 hover:bg-emerald-50"
+                  }`}
+                >
+                  {t("listing.quickReady")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => toggleQuickStatus("offplan")}
+                  aria-pressed={quickFilters.status === "offplan"}
+                  className={`rounded-md border px-2 py-1 text-[11px] font-semibold transition ${
+                    quickFilters.status === "offplan"
+                      ? "border-emerald-500 bg-emerald-100 text-emerald-700"
+                      : "border-gray-200 bg-white text-gray-600 hover:border-emerald-200 hover:bg-emerald-50"
+                  }`}
+                >
+                  {t("listing.quickOffPlan")}
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => toggleQuickFlag("citizenshipEligible")}
+                aria-pressed={quickFilters.citizenshipEligible}
+                className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
+                  quickFilters.citizenshipEligible
+                    ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                    : "border-gray-200 bg-white text-gray-600 hover:border-emerald-200 hover:bg-emerald-50"
+                }`}
+              >
+                {t("listing.quickCitizenshipEligible")}
+              </button>
             </div>
           </div>
         </div>

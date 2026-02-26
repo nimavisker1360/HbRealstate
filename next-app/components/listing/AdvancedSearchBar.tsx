@@ -2,6 +2,7 @@ import {
   PROPERTY_STATUSES,
   PROPERTY_TYPES,
   type ListingFilters,
+  type PropertyStatus,
   type PropertyType,
 } from "../../types/property";
 
@@ -26,6 +27,11 @@ const WRAPPER_STYLES: Record<SearchVariant, string> = {
 
 const INPUT_STYLE =
   "h-11 w-full rounded-lg border border-slate-300 px-3 text-sm text-slate-800 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100";
+
+const STATUS_LABELS: Record<PropertyStatus, string> = {
+  ready: "Ready",
+  offplan: "Off-plan",
+};
 
 const toNumber = (value: string): number | undefined => {
   if (!value) return undefined;
@@ -57,6 +63,12 @@ export default function AdvancedSearchBar({
     checked: boolean,
   ) => {
     onFiltersChange({ [key]: checked ? true : undefined } as Partial<ListingFilters>);
+  };
+
+  const toggleStatusFilter = (status: PropertyStatus) => {
+    onFiltersChange({
+      status: filters.status === status ? undefined : status,
+    });
   };
 
   return (
@@ -117,7 +129,7 @@ export default function AdvancedSearchBar({
           <option value="">Any Status</option>
           {PROPERTY_STATUSES.map((status) => (
             <option key={status} value={status}>
-              {status}
+              {STATUS_LABELS[status]}
             </option>
           ))}
         </select>
@@ -228,8 +240,36 @@ export default function AdvancedSearchBar({
             }
             disabled={disabled}
           />
-          Installment
+          Installment Available
         </label>
+
+        <div className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+          <span>Ready / Off-plan</span>
+          <button
+            type="button"
+            onClick={() => toggleStatusFilter("ready")}
+            className={`rounded-md border px-2 py-1 text-xs font-medium transition ${
+              filters.status === "ready"
+                ? "border-emerald-500 bg-emerald-100 text-emerald-800"
+                : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
+            }`}
+            disabled={disabled}
+          >
+            Ready
+          </button>
+          <button
+            type="button"
+            onClick={() => toggleStatusFilter("offplan")}
+            className={`rounded-md border px-2 py-1 text-xs font-medium transition ${
+              filters.status === "offplan"
+                ? "border-emerald-500 bg-emerald-100 text-emerald-800"
+                : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
+            }`}
+            disabled={disabled}
+          >
+            Off-plan
+          </button>
+        </div>
 
         <label className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
           <input
@@ -240,7 +280,7 @@ export default function AdvancedSearchBar({
             }
             disabled={disabled}
           />
-          Citizenship
+          Citizenship Eligible
         </label>
       </div>
     </section>

@@ -153,6 +153,47 @@ const normalizeFiatCurrency = (currencyCode) => {
   return FIAT_CURRENCIES.includes(normalized) ? normalized : fallback;
 };
 
+const normalizeListingStatus = (value) => {
+  const normalized = String(value || "").toLowerCase().trim();
+  if (["ready", "hazir", "tamamlandi", "completed"].includes(normalized)) {
+    return "ready";
+  }
+  if (
+    [
+      "offplan",
+      "off-plan",
+      "off plan",
+      "devam-ediyor",
+      "devam ediyor",
+      "under construction",
+      "under-construction",
+      "insaat halinde",
+      "insaat-halinde",
+    ].includes(normalized)
+  ) {
+    return "offplan";
+  }
+  return "";
+};
+
+const listingStatusFromProjectStatus = (value) => {
+  const normalized = String(value || "").toLowerCase().trim();
+  if (["tamamlandi", "completed", "ready"].includes(normalized)) {
+    return "ready";
+  }
+  if (
+    ["devam-ediyor", "devam ediyor", "under construction", "off-plan", "offplan"].includes(
+      normalized
+    )
+  ) {
+    return "offplan";
+  }
+  return "";
+};
+
+const projectStatusFromListingStatus = (value) =>
+  value === "ready" ? "tamamlandi" : "devam-ediyor";
+
 const hasOwnField = (obj, field) =>
   Object.prototype.hasOwnProperty.call(obj || {}, field);
 
@@ -282,6 +323,10 @@ const ProjectDetails = ({
       // Teslim Tarihi ve Proje Durumu
       deliveryDate: propertyDetails.deliveryDate || "",
       projectStatus: propertyDetails.projectStatus || "devam-ediyor",
+      listingStatus:
+        normalizeListingStatus(propertyDetails.listingStatus) ||
+        listingStatusFromProjectStatus(propertyDetails.projectStatus) ||
+        "offplan",
       gyo: Boolean(propertyDetails.gyo),
       // Facilities
       bedrooms: propertyDetails.facilities?.bedrooms || 0,
@@ -534,6 +579,10 @@ const ProjectDetails = ({
       primarySpecialOffer?.installmentMonths || 0
     );
     const specialOfferTitleValue = String(primarySpecialOffer?.title || "").trim();
+    const normalizedListingStatus =
+      normalizeListingStatus(form.values.listingStatus) ||
+      listingStatusFromProjectStatus(form.values.projectStatus) ||
+      "offplan";
 
     let nextFloorPlans = [...form.values.dairePlanlari];
     if (
@@ -644,7 +693,10 @@ const ProjectDetails = ({
         form.values.kampanya ||
         (isSpecialOfferActive ? generatedCampaign.join(" - ") : ""),
       deliveryDate: form.values.deliveryDate,
-      projectStatus: form.values.projectStatus,
+      projectStatus:
+        form.values.projectStatus ||
+        projectStatusFromListingStatus(normalizedListingStatus),
+      listingStatus: normalizedListingStatus,
       gyo: form.values.gyo,
       facilities: {
         bedrooms: form.values.bedrooms || 0,
@@ -963,21 +1015,67 @@ const ProjectDetails = ({
 
             {/* Teslim Tarihi ve Proje Durumu */}
             <Grid mt="md">
-              <Grid.Col span={4}>
+              <Grid.Col span={3}>
                 <TextInput
                   label="Teslim Tarihi"
-                  placeholder="Mayıs 2027"
+                  placeholder="Mayis 2027"
                   {...form.getInputProps("deliveryDate")}
                 />
               </Grid.Col>
-              <Grid.Col span={4}>
-                <TextInput
+              <Grid.Col span={3}>
+                <Select
                   label="Proje Durumu"
-                  placeholder="devam-ediyor veya tamamlandi"
-                  {...form.getInputProps("projectStatus")}
+                  placeholder="Secin"
+                  data={[
+                    { value: "devam-ediyor", label: "Devam Ediyor" },
+                    { value: "tamamlandi", label: "Tamamlandi" },
+                  ]}
+                  value={form.values.projectStatus || "devam-ediyor"}
+                  onChange={(value) => {
+                    const nextProjectStatus = value || "devam-ediyor";
+                    form.setFieldValue("projectStatus", nextProjectStatus);
+                    const inferredListingStatus =
+                      listingStatusFromProjectStatus(nextProjectStatus);
+                    if (inferredListingStatus) {
+                      form.setFieldValue("listingStatus", inferredListingStatus);
+                    }
+                  }}
                 />
               </Grid.Col>
-              <Grid.Col span={4}>
+              <Grid.Col span={3}>
+                <Text size="sm" fw={500} mb={4}>
+                  Listing Durumu
+                </Text>
+                <Group gap="md" mt={8}>
+                  <Checkbox
+                    label="Ready"
+                    checked={form.values.listingStatus === "ready"}
+                    onChange={(event) => {
+                      if (event.currentTarget.checked) {
+                        form.setFieldValue("listingStatus", "ready");
+                        form.setFieldValue(
+                          "projectStatus",
+                          projectStatusFromListingStatus("ready")
+                        );
+                      }
+                    }}
+                  />
+                  <Checkbox
+                    label="Off-plan"
+                    checked={form.values.listingStatus === "offplan"}
+                    onChange={(event) => {
+                      if (event.currentTarget.checked) {
+                        form.setFieldValue("listingStatus", "offplan");
+                        form.setFieldValue(
+                          "projectStatus",
+                          projectStatusFromListingStatus("offplan")
+                        );
+                      }
+                    }}
+                  />
+                </Group>
+              </Grid.Col>
+              <Grid.Col span={3}>
                 <Checkbox
                   label="GYO"
                   mt={36}

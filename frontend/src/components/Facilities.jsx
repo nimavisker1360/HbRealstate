@@ -127,6 +127,9 @@ const Facilities = ({
         exteriorFeatures: [],
         muhitFeatures: [],
         // Project-specific fields
+        deliveryDate: "",
+        projectStatus: "devam-ediyor",
+        listingStatus: "",
         projeHakkinda: null,
         dairePlanlari: [],
         vaziyetPlani: "",

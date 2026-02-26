@@ -9,6 +9,45 @@ const normalizeCurrency = (currencyCode) => {
   return SUPPORTED_CURRENCIES.includes(normalized) ? normalized : "USD";
 };
 
+const normalizeListingStatus = (listingStatus, projectStatus) => {
+  const status = String(listingStatus || "")
+    .toLowerCase()
+    .trim();
+  if (["ready", "hazir", "tamamlandi", "completed"].includes(status)) {
+    return "ready";
+  }
+  if (
+    [
+      "offplan",
+      "off-plan",
+      "off plan",
+      "devam-ediyor",
+      "devam ediyor",
+      "under construction",
+      "under-construction",
+      "insaat halinde",
+      "insaat-halinde",
+    ].includes(status)
+  ) {
+    return "offplan";
+  }
+
+  const project = String(projectStatus || "")
+    .toLowerCase()
+    .trim();
+  if (["tamamlandi", "completed", "ready"].includes(project)) {
+    return "ready";
+  }
+  if (
+    ["devam-ediyor", "devam ediyor", "under construction", "off-plan", "offplan"].includes(
+      project
+    )
+  ) {
+    return "offplan";
+  }
+  return null;
+};
+
 const normalizeLookupIdentifier = (value) => {
   const raw = String(value || "").trim();
   try {
@@ -87,6 +126,7 @@ export const createResidency = asyncHandler(async (req, res) => {
     mapImage,
     deliveryDate,
     projectStatus,
+    listingStatus,
     gyo,
     // Project-specific features (Özellikler tabs)
     binaOzellikleri,
@@ -187,6 +227,7 @@ export const createResidency = asyncHandler(async (req, res) => {
       mapImage: mapImage || null,
       deliveryDate: deliveryDate || null,
       projectStatus: projectStatus || "devam-ediyor",
+      listingStatus: normalizeListingStatus(listingStatus, projectStatus),
       gyo: Boolean(gyo),
       // Project-specific features (Özellikler tabs)
       binaOzellikleri: binaOzellikleri || [],
@@ -406,6 +447,7 @@ export const updateResidency = asyncHandler(async (req, res) => {
     mapImage,
     deliveryDate,
     projectStatus,
+    listingStatus,
     gyo,
     // Project-specific features (Özellikler tabs)
     binaOzellikleri,
@@ -490,6 +532,7 @@ export const updateResidency = asyncHandler(async (req, res) => {
       mapImage: mapImage || null,
       deliveryDate: deliveryDate || null,
       projectStatus: projectStatus || "devam-ediyor",
+      listingStatus: normalizeListingStatus(listingStatus, projectStatus),
       gyo: Boolean(gyo),
       // Project-specific features (Özellikler tabs)
       binaOzellikleri: binaOzellikleri || [],

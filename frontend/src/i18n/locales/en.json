@@ -559,7 +559,13 @@
     "filtersApplied": "{{count}} filters applied",
     "selectCategory": "Select Category",
     "list": "List",
-    "map": "Map"
+    "map": "Map",
+    "quickSeaView": "Sea View",
+    "quickInstallmentAvailable": "Installment Available",
+    "quickReadyOffPlan": "Ready / Off-plan",
+    "quickReady": "Ready",
+    "quickOffPlan": "Off-plan",
+    "quickCitizenshipEligible": "Citizenship Eligible"
   },
   "profile": {
     "myProfile": "My Profile",
