@@ -1,10 +1,7 @@
 {
-  "version": 2,
+  "framework": "nextjs",
   "installCommand": "npm install && npm --prefix next-app install",
-  "builds": [
-    { "src": "next-app/package.json", "use": "@vercel/next" },
-    { "src": "api/index.js", "use": "@vercel/node" }
-  ],
+  "buildCommand": "npm run build:next && node -e \"require('fs').cpSync('next-app/.next','.next',{recursive:true,force:true})\"",
   "redirects": [
     {
       "source": "/:path*",
