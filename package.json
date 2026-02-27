@@ -4,14 +4,6 @@
     "backend",
     "frontend"
   ],
-  "scripts": {
-    "dev:next": "npm --prefix next-app run dev",
-    "build:next": "npm --prefix next-app run build",
-    "start:next": "npm --prefix next-app run start",
-    "dev:frontend": "npm --workspace frontend run dev",
-    "build:frontend": "npm --workspace frontend run build",
-    "start:backend": "npm --workspace backend run start"
-  },
   "dependencies": {
     "nodemailer": "^7.0.12"
   }

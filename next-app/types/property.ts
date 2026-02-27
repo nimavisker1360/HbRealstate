@@ -1,14 +1,4 @@
 export const PROPERTY_TYPES = [
-  "sale",
-  "rent",
-  "residential",
-  "residentialProjects",
-  "commercial",
-  "building",
-  "timeshare",
-  "touristFacility",
-  "local-project",
-  "international-project",
   "apartment",
   "villa",
   "penthouse",
@@ -20,7 +10,6 @@ export const PROPERTY_USES = [
   "residential",
   "commercial",
   "investment",
-  "land",
 ] as const;
 
 export const PROPERTY_STATUSES = ["ready", "offplan"] as const;
@@ -39,7 +28,6 @@ export type ListingSort = (typeof LISTING_SORTS)[number];
 
 export interface PropertyItem {
   _id: string;
-  sourceId: string;
   title: string;
   slug: string;
   country: string;
@@ -62,8 +50,6 @@ export interface PropertyItem {
   roiPercent: number;
   amenities: string[];
   createdAt: string;
-  description?: string;
-  image?: string | null;
 }
 
 export interface ListingFilters {

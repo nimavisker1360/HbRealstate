@@ -1,28 +1,10 @@
 import type { ListingFilters } from "../types/property";
-import { DEFAULT_LIMIT, DEFAULT_PAGE } from "./listingParams";
 
-export const getSiteUrl = (): string => {
-  const raw = String(process.env.NEXT_PUBLIC_SITE_URL || "https://example.com").trim();
-  const withProtocol = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
-  return withProtocol.replace(/\/+$/, "");
-};
-
-export const slugifySegment = (value: string): string =>
-  String(value || "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+/, "")
-    .replace(/-+$/, "")
-    .replace(/-{2,}/g, "-");
-
-export const titleFromSlug = (slug: string): string =>
-  slug
-    .split("-")
-    .filter(Boolean)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
+export const getSiteUrl = (): string =>
+  String(process.env.NEXT_PUBLIC_SITE_URL || "https://example.com").replace(
+    /\/+$/,
+    "",
+  );
 
 export const buildListingSeoText = (
   filters: ListingFilters,
@@ -61,33 +43,4 @@ export const buildCanonicalListingUrl = (
   return normalized
     ? `${siteUrl}${pathname}?${normalized}`
     : `${siteUrl}${pathname}`;
-};
-
-export const buildCityCanonicalUrl = (city: string): string =>
-  `${getSiteUrl()}/city/${slugifySegment(city)}`;
-
-export const buildTypeCanonicalUrl = (propertyType: string): string =>
-  `${getSiteUrl()}/type/${slugifySegment(propertyType)}`;
-
-export const buildPropertyCanonicalUrl = (slug: string): string =>
-  `${getSiteUrl()}/property/${encodeURIComponent(slug)}`;
-
-export const shouldIndexListingPage = (filters: ListingFilters): boolean => {
-  const hasLowValueFilters =
-    typeof filters.minPrice === "number" ||
-    typeof filters.maxPrice === "number" ||
-    typeof filters.minRooms === "number" ||
-    typeof filters.minRoi === "number" ||
-    typeof filters.seaView === "boolean" ||
-    typeof filters.installmentAvailable === "boolean" ||
-    typeof filters.citizenshipEligible === "boolean";
-
-  if (hasLowValueFilters) return false;
-
-  if ((filters.sort ?? "newest") !== "newest") return false;
-  if ((filters.page ?? DEFAULT_PAGE) > DEFAULT_PAGE) return false;
-  if ((filters.limit ?? DEFAULT_LIMIT) !== DEFAULT_LIMIT) return false;
-  if ((filters.propertyType?.length ?? 0) > 1) return false;
-
-  return true;
 };

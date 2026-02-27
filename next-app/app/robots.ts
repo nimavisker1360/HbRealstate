@@ -5,22 +5,10 @@ export default function robots(): MetadataRoute.Robots {
   const siteUrl = getSiteUrl();
 
   return {
-    rules: [
-      {
-        userAgent: "*",
-        allow: "/",
-        disallow: [
-          "/api/",
-          "/*?*minPrice=*",
-          "/*?*maxPrice=*",
-          "/*?*minRooms=*",
-          "/*?*minRoi=*",
-          "/*?*installmentAvailable=*",
-          "/*?*citizenshipEligible=*",
-          "/*?*seaView=*",
-        ],
-      },
-    ],
+    rules: {
+      userAgent: "*",
+      allow: "/",
+    },
     sitemap: `${siteUrl}/sitemap.xml`,
     host: siteUrl,
   };

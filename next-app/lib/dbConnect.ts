@@ -6,13 +6,6 @@ if (!MONGODB_URI) {
   throw new Error("Missing MONGODB_URI in environment variables.");
 }
 
-const getMongoUri = (): string => {
-  if (!MONGODB_URI) {
-    throw new Error("Missing MONGODB_URI in environment variables.");
-  }
-  return MONGODB_URI;
-};
-
 type MongooseCache = {
   conn: typeof mongoose | null;
   promise: Promise<typeof mongoose> | null;
@@ -37,7 +30,7 @@ export default async function dbConnect(): Promise<typeof mongoose> {
   }
 
   if (!cached.promise) {
-    cached.promise = mongoose.connect(getMongoUri(), {
+    cached.promise = mongoose.connect(MONGODB_URI, {
       bufferCommands: false,
     });
   }
