@@ -542,6 +542,26 @@ const toProjectRoomSummary = (property) => {
   return types.slice(0, 3).join(", ");
 };
 
+const resolveProjectSchemaType = (property) => {
+  const explicitSchemaType = pickText(
+    property?.schemaType,
+    property?.schema?.type
+  ).toLowerCase();
+  if (explicitSchemaType === "apartmentcomplex") return "ApartmentComplex";
+  if (explicitSchemaType === "residence") return "Residence";
+
+  const planCount = Array.isArray(property?.dairePlanlari)
+    ? property.dairePlanlari.length
+    : 0;
+  const unitCount = toPositiveNumber(
+    property?.unitCount ?? property?.totalUnits ?? property?.numberOfUnits
+  );
+  if (planCount > 1 || (unitCount !== null && unitCount > 1)) {
+    return "ApartmentComplex";
+  }
+  return "Residence";
+};
+
 const getDistrictFromAddress = (address) => {
   const normalized = pickText(address);
   if (!normalized) return "";
@@ -617,7 +637,7 @@ const buildProjectMeta = (property, route) => {
 
   const realEstateListing = {
     "@context": "https://schema.org",
-    "@type": "RealEstateListing",
+    "@type": resolveProjectSchemaType(property),
   };
   pushIfPresent(
     realEstateListing,

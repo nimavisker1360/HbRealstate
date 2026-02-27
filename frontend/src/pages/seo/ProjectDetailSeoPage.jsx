@@ -71,6 +71,26 @@ const toMainArea = (property) => {
   );
 };
 
+const resolveProjectSchemaType = (project) => {
+  const explicitSchemaType = pickText(
+    project?.schemaType,
+    project?.schema?.type
+  ).toLowerCase();
+  if (explicitSchemaType === "apartmentcomplex") return "ApartmentComplex";
+  if (explicitSchemaType === "residence") return "Residence";
+
+  const planCount = Array.isArray(project?.dairePlanlari)
+    ? project.dairePlanlari.length
+    : 0;
+  const unitCount = toPositiveNumber(
+    project?.unitCount ?? project?.totalUnits ?? project?.numberOfUnits
+  );
+  if (planCount > 1 || (unitCount !== null && unitCount > 1)) {
+    return "ApartmentComplex";
+  }
+  return "Residence";
+};
+
 const extractGeo = (property) => {
   const candidates = [
     property?.geo,
@@ -226,7 +246,7 @@ const ProjectDetailSeoPage = () => {
 
     const schema = {
       "@context": "https://schema.org",
-      "@type": "RealEstateListing",
+      "@type": resolveProjectSchemaType(project),
     };
 
     const name = pickText(project?.projectName, project?.title, project?.name);
