@@ -60,6 +60,7 @@ const AddPropertyModal = ({ opened, setOpened }) => {
     mortgageEligible: false,
     deedStatus: "",
     // Project-specific fields
+    projectName: "",
     deliveryDate: "",
     projectStatus: "devam-ediyor",
     listingStatus: "",

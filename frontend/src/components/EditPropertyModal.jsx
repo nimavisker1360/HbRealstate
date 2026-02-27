@@ -2197,6 +2197,14 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
               )}
             />
 
+            <TextInput
+              label="Proje Adı"
+              placeholder="Örn: Blue Coast Residence"
+              value={projectName}
+              onChange={(e) => setProjectName(e.target.value)}
+              mt="sm"
+            />
+
             {/* İlan No & Kampanya */}
             <Grid>
               <Grid.Col span={6}>

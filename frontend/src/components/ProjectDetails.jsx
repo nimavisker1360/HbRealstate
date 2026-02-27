@@ -932,6 +932,13 @@ const ProjectDetails = ({
               )}
             />
             <TextInput
+              label="Proje Adı"
+              placeholder="Örn: Blue Coast Residence"
+              description="Projeyi listede göstermek için bir ad girin"
+              mt="sm"
+              {...form.getInputProps("projectName")}
+            />
+            <TextInput
               label="İlan No"
               placeholder="#1201651741"
               description="Proje ilan numarasını girin (örn: #1201651741)"
