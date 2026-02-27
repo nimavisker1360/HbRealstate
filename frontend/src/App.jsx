@@ -64,7 +64,7 @@ export default function App() {
             <BrowserRouter>
               <ScrollToTop />
               <SEO />
-              <Suspense fallback={<div>Loading data...</div>}>
+              <Suspense fallback={null}>
                 <Routes>
                   <Route element={<Layout />}>
                     <Route path="/" element={<Home />} />
