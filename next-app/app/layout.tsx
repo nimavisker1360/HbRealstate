@@ -6,8 +6,16 @@ import "./globals.css";
 
 const GA_MEASUREMENT_ID = "G-KMXZ73K0CE";
 
+const getMetadataBase = (): URL => {
+  try {
+    return new URL(getSiteUrl());
+  } catch (_error) {
+    return new URL("https://example.com");
+  }
+};
+
 export const metadata: Metadata = {
-  metadataBase: new URL(getSiteUrl()),
+  metadataBase: getMetadataBase(),
   title: {
     default: "HB Real Estate | Buy Verified Properties",
     template: "%s | HB Real Estate",

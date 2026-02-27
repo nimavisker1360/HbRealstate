@@ -2,8 +2,16 @@ import type { ListingFilters } from "../types/property";
 import { DEFAULT_LIMIT, DEFAULT_PAGE } from "./listingParams";
 
 export const getSiteUrl = (): string => {
-  const raw = String(process.env.NEXT_PUBLIC_SITE_URL || "https://example.com").trim();
-  const withProtocol = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+  const rawInput = String(
+    process.env.NEXT_PUBLIC_SITE_URL || "https://example.com",
+  ).trim();
+  const normalized = rawInput
+    .replace(/^['"]+|['"]+$/g, "")
+    .split(/[,\s]/)
+    .find(Boolean) || "https://example.com";
+  const withProtocol = /^https?:\/\//i.test(normalized)
+    ? normalized
+    : `https://${normalized}`;
   return withProtocol.replace(/\/+$/, "");
 };
 
