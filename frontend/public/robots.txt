@@ -1,4 +1,10 @@
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /addproperty
+Disallow: /bookings
+Disallow: /favourites
+Disallow: /testimonials-test
+Disallow: /api/
 
 Sitemap: https://www.hbrealstate.com/sitemap.xml

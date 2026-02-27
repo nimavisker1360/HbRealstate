@@ -8,6 +8,13 @@ import blog2 from "../assets/blog2.jpg";
 import blog3 from "../assets/blog3.jpg";
 import blog4 from "../assets/blog4.jpg";
 import { fixMojibake } from "../utils/text";
+import SEO from "../components/SEO";
+import {
+  SITE_URL,
+  buildLanguageAlternates,
+  resolveBlogPath,
+  resolveCountrySlug,
+} from "../utils/seo";
 
 const placeholderImages = [blog1, blog2, blog3, blog4];
 
@@ -59,16 +66,6 @@ const CountryBlogs = () => {
     return fixMojibake(value);
   };
 
-  const toSlug = (value = "") =>
-    value
-      .toString()
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9\s-]/g, "")
-      .replace(/\s+/g, "-")
-      .replace(/-+/g, "-")
-      .replace(/^-+|-+$/g, "");
-
   const extractCountryTitle = (rawTitle) => {
     if (!rawTitle || typeof rawTitle !== "string") return "";
     const cleaned = rawTitle.replace(/[?!\u061f]+$/g, "").trim();
@@ -98,9 +95,7 @@ const CountryBlogs = () => {
 
   const getCountrySlug = (country) => {
     if (!country) return "";
-    const trimmed = country.toString().trim();
-    const asciiSlug = toSlug(trimmed);
-    return (asciiSlug || encodeURIComponent(trimmed.toLowerCase())).toLowerCase();
+    return resolveCountrySlug(country);
   };
 
   const getSummaryItems = (text) => {
@@ -123,9 +118,52 @@ const CountryBlogs = () => {
   const countryName = countryBlogs.length
     ? getCountryFromBlog(countryBlogs[0].blog)
     : decodeURIComponent(normalizedSlug || "").replace(/-/g, " ");
+  const canonicalPath = normalizedSlug ? `/blogs/${normalizedSlug}` : "/blogs";
+  const description = `Read curated real estate insights for ${countryName || "this country"} with ${countryBlogs.length} available posts.`;
+  const structuredData = [
+    {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      name: `${countryName || "Country"} Real Estate Articles`,
+      description,
+      url: `${SITE_URL}${canonicalPath}`,
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "Home",
+          item: SITE_URL,
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: "Blogs",
+          item: `${SITE_URL}/blogs`,
+        },
+        {
+          "@type": "ListItem",
+          position: 3,
+          name: countryName || "Country",
+          item: `${SITE_URL}${canonicalPath}`,
+        },
+      ],
+    },
+  ];
 
   return (
-    <section className="min-h-screen pt-24 pb-20 bg-[#f7f3ea] relative overflow-hidden">
+    <>
+      <SEO
+        title={`${countryName || "Country"} Real Estate Articles | HB International Real Estate`}
+        description={description}
+        canonicalPath={canonicalPath}
+        languageAlternates={buildLanguageAlternates(canonicalPath)}
+        structuredData={structuredData}
+      />
+      <section className="min-h-screen pt-24 pb-20 bg-[#f7f3ea] relative overflow-hidden">
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -top-32 -left-24 h-72 w-72 rounded-full bg-emerald-200/35 blur-3xl"></div>
         <div className="absolute top-16 -right-20 h-80 w-80 rounded-full bg-amber-200/35 blur-3xl"></div>
@@ -173,7 +211,8 @@ const CountryBlogs = () => {
         ) : (
           <div className="mt-10 grid gap-8 md:grid-cols-2 xl:grid-cols-3">
             {countryBlogs.map(({ blog, index }) => {
-              const canNavigate = Boolean(blog.id);
+              const blogPath = resolveBlogPath(blog);
+              const canNavigate = blogPath !== "/blogs";
               const postTitle = getLocalizedTitle(blog);
               const summary = getLocalizedSummary(blog);
               const summaryItems = getSummaryItems(summary);
@@ -187,7 +226,7 @@ const CountryBlogs = () => {
                   }`}
                   onClick={() => {
                     if (canNavigate) {
-                      navigate(`/blog/${blog.id}`);
+                      navigate(blogPath);
                     }
                   }}
                 >
@@ -244,7 +283,7 @@ const CountryBlogs = () => {
                       onClick={(event) => {
                         event.stopPropagation();
                         if (canNavigate) {
-                          navigate(`/blog/${blog.id}`);
+                          navigate(blogPath);
                         }
                       }}
                       className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-emerald-700 hover:text-emerald-800 disabled:cursor-default disabled:opacity-50"
@@ -260,7 +299,8 @@ const CountryBlogs = () => {
         )}
 
       </div>
-    </section>
+      </section>
+    </>
   );
 };
 

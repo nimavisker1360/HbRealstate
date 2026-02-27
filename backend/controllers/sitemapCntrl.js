@@ -1,5 +1,5 @@
 import asyncHandler from "express-async-handler";
-import { getMongoDb } from "../config/prismaConfig.js";
+import { getMongoDb, prisma } from "../config/prismaConfig.js";
 
 const DEFAULT_CANONICAL_ORIGIN = "https://www.hbrealstate.com";
 const STATIC_PATHS = [
@@ -10,6 +10,10 @@ const STATIC_PATHS = [
   "/consultants",
   "/addresses",
   "/today",
+  "/istanbul-apartments",
+  "/kyrenia-apartments",
+  "/turkey-property-investment",
+  "/turkish-citizenship-property",
 ];
 
 const normalizeOrigin = (value) => {
@@ -63,6 +67,61 @@ const toPropertyPath = (residency) => {
   return `/listing/${encodePathSegment(identifier)}`;
 };
 
+const toProjectPath = (residency) => {
+  const type = String(residency?.propertyType || "").toLowerCase().trim();
+  if (type !== "local-project" && type !== "international-project") {
+    return null;
+  }
+  const id = normalizeIdentifier(residency?._id);
+  if (!id) return null;
+  return `/projects/${encodePathSegment(id)}`;
+};
+
+const extractCountryFromTitle = (rawTitle) => {
+  if (!rawTitle || typeof rawTitle !== "string") return "";
+  const cleaned = rawTitle.replace(/[?!\u061f]+$/g, "").trim();
+  const lower = cleaned.toLowerCase();
+  const inIndex = lower.lastIndexOf(" in ");
+  if (inIndex !== -1 && inIndex + 4 < cleaned.length) {
+    return cleaned.slice(inIndex + 4).trim();
+  }
+  return "";
+};
+
+const resolveBlogCountry = (blog) => {
+  const direct = String(blog?.country || "").trim();
+  if (direct) return direct;
+  return (
+    extractCountryFromTitle(blog?.title_en) ||
+    extractCountryFromTitle(blog?.title_tr) ||
+    extractCountryFromTitle(blog?.title_ru) ||
+    extractCountryFromTitle(blog?.title)
+  );
+};
+
+const isExcludedCountry = (value) => {
+  const normalized = String(value || "").toLowerCase().trim();
+  return normalized === "turkey" || normalized === "turkiye";
+};
+
+const toBlogPath = (blog) => {
+  const identifier = normalizeIdentifier(blog?.slug || blog?.id);
+  if (!identifier) return null;
+  return `/blog/${encodePathSegment(identifier)}`;
+};
+
+const toCountryPath = (blog) => {
+  const country = resolveBlogCountry(blog);
+  if (!country || isExcludedCountry(country)) return null;
+  const slug = slugify(country);
+  if (slug) {
+    return `/blogs/${encodePathSegment(slug)}`;
+  }
+  const encoded = encodeURIComponent(String(country).toLowerCase().trim());
+  if (!encoded) return null;
+  return `/blogs/${encoded.toLowerCase()}`;
+};
+
 const buildSitemapXml = (urls) => {
   const rows = urls
     .map(
@@ -88,6 +147,9 @@ export const getSitemapXml = asyncHandler(async (_req, res) => {
   }));
 
   let propertyUrls = [];
+  let projectUrls = [];
+  let blogUrls = [];
+  let countryUrls = [];
 
   try {
     const db = await getMongoDb();
@@ -100,6 +162,7 @@ export const getSitemapXml = asyncHandler(async (_req, res) => {
             _id: 1,
             slug: 1,
             title: 1,
+            propertyType: 1,
             updatedAt: 1,
             createdAt: 1,
           },
@@ -121,13 +184,84 @@ export const getSitemapXml = asyncHandler(async (_req, res) => {
         };
       })
       .filter(Boolean);
+
+    projectUrls = residencies
+      .map((residency) => {
+        const path = toProjectPath(residency);
+        if (!path) return null;
+        return {
+          loc: `${origin}${path}`,
+          lastModified: resolveLastModified(
+            residency?.updatedAt,
+            residency?.createdAt,
+            generatedAt
+          ),
+        };
+      })
+      .filter(Boolean);
   } catch (error) {
     // Keep sitemap available even if the database is temporarily unreachable.
     console.error("[sitemap] failed to fetch residency URLs:", error.message);
   }
 
+  try {
+    const blogs = await prisma.blog.findMany({
+      where: { published: true },
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        title_en: true,
+        title_tr: true,
+        title_ru: true,
+        country: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      orderBy: [{ order: "asc" }, { createdAt: "desc" }],
+    });
+
+    blogUrls = blogs
+      .map((blog) => {
+        const path = toBlogPath(blog);
+        if (!path) return null;
+        return {
+          loc: `${origin}${path}`,
+          lastModified: resolveLastModified(
+            blog?.updatedAt,
+            blog?.createdAt,
+            generatedAt
+          ),
+        };
+      })
+      .filter(Boolean);
+
+    countryUrls = blogs
+      .map((blog) => {
+        const path = toCountryPath(blog);
+        if (!path) return null;
+        return {
+          loc: `${origin}${path}`,
+          lastModified: resolveLastModified(
+            blog?.updatedAt,
+            blog?.createdAt,
+            generatedAt
+          ),
+        };
+      })
+      .filter(Boolean);
+  } catch (error) {
+    console.error("[sitemap] failed to fetch blog URLs:", error.message);
+  }
+
   const uniqueByLoc = new Map();
-  for (const item of [...staticUrls, ...propertyUrls]) {
+  for (const item of [
+    ...staticUrls,
+    ...propertyUrls,
+    ...projectUrls,
+    ...blogUrls,
+    ...countryUrls,
+  ]) {
     if (!item?.loc) continue;
     if (!uniqueByLoc.has(item.loc)) uniqueByLoc.set(item.loc, item);
   }

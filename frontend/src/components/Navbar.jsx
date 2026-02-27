@@ -27,6 +27,7 @@ import useBlogs from "../hooks/useBlogs";
 import userIcon from "../assets/user.svg";
 import { aboutTurkeyMenu } from "../constant/aboutTurkeyMenu";
 import { buyerGuideMenu } from "../constant/buyerGuideMenu";
+import { resolveBlogIdentifier } from "../utils/seo";
 
 const Navbar = ({ 
   containerStyles, 
@@ -106,8 +107,9 @@ const Navbar = ({
     const map = new Map();
     if (Array.isArray(blogs)) {
       blogs.forEach((blog) => {
-        if (blog?.menuKey) {
-          map.set(blog.menuKey, blog.id);
+        const identifier = resolveBlogIdentifier(blog);
+        if (blog?.menuKey && identifier) {
+          map.set(blog.menuKey, identifier);
         }
       });
     }
@@ -121,7 +123,7 @@ const Navbar = ({
         .filter((content) => typeof content === "string")
         .some((content) => content.includes(marker))
     );
-    return match?.id || null;
+    return resolveBlogIdentifier(match) || null;
   };
 
   const getMarketAnalysisBlogId = async (key) => {
@@ -151,7 +153,7 @@ const Navbar = ({
   const findBlogIdByMenuKey = (list, menuKey) => {
     if (!menuKey || !Array.isArray(list)) return null;
     const match = list.find((blog) => blog?.menuKey === menuKey);
-    return match?.id || null;
+    return resolveBlogIdentifier(match) || null;
   };
 
   const getMenuBlogId = async (item) => {

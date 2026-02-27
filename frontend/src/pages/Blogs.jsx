@@ -8,6 +8,8 @@ import blog2 from "../assets/blog2.jpg";
 import blog3 from "../assets/blog3.jpg";
 import blog4 from "../assets/blog4.jpg";
 import { fixMojibake } from "../utils/text";
+import SEO from "../components/SEO";
+import { SITE_URL, buildLanguageAlternates, resolveCountrySlug } from "../utils/seo";
 
 const placeholderImages = [blog1, blog2, blog3, blog4];
 
@@ -40,16 +42,6 @@ const BlogsPage = () => {
     return fixMojibake(value);
   };
 
-  const toSlug = (value = "") =>
-    value
-      .toString()
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9\s-]/g, "")
-      .replace(/\s+/g, "-")
-      .replace(/-+/g, "-")
-      .replace(/^-+|-+$/g, "");
-
   const extractCountryTitle = (rawTitle) => {
     if (!rawTitle || typeof rawTitle !== "string") return "";
     const cleaned = rawTitle.replace(/[?!\u061f]+$/g, "").trim();
@@ -79,9 +71,7 @@ const BlogsPage = () => {
 
   const getCountrySlug = (country) => {
     if (!country) return "";
-    const trimmed = country.toString().trim();
-    const asciiSlug = toSlug(trimmed);
-    return (asciiSlug || encodeURIComponent(trimmed.toLowerCase())).toLowerCase();
+    return resolveCountrySlug(country);
   };
 
   const normalizeCountry = (value = "") =>
@@ -126,9 +116,47 @@ const BlogsPage = () => {
   const countryCards = Object.values(countryMap).sort((a, b) =>
     a.country.localeCompare(b.country)
   );
+  const canonicalPath = "/blogs";
+  const description = `Explore country-based real estate articles and market updates. ${countryCards.length} countries and ${displayBlogs.length} published posts.`;
+  const structuredData = [
+    {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      name: "Real Estate Blog Countries",
+      description,
+      url: `${SITE_URL}${canonicalPath}`,
+      about: "Real estate market insights by country",
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "Home",
+          item: SITE_URL,
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: "Blogs",
+          item: `${SITE_URL}${canonicalPath}`,
+        },
+      ],
+    },
+  ];
 
   return (
-    <section className="min-h-screen pt-24 pb-20 bg-[#f7f3ea] relative overflow-hidden">
+    <>
+      <SEO
+        title="Real Estate Blog Countries | HB International Real Estate"
+        description={description}
+        canonicalPath={canonicalPath}
+        languageAlternates={buildLanguageAlternates(canonicalPath)}
+        structuredData={structuredData}
+      />
+      <section className="min-h-screen pt-24 pb-20 bg-[#f7f3ea] relative overflow-hidden">
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -top-32 -left-24 h-72 w-72 rounded-full bg-emerald-200/35 blur-3xl"></div>
         <div className="absolute top-16 -right-20 h-80 w-80 rounded-full bg-amber-200/35 blur-3xl"></div>
@@ -216,7 +244,8 @@ const BlogsPage = () => {
         )}
 
       </div>
-    </section>
+      </section>
+    </>
   );
 };
 

@@ -15,6 +15,7 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { toast } from "react-toastify";
 import { bilingualKey } from "../utils/bilingualToast";
 import { getOptimizedImageUrl } from "../utils/media";
+import { resolveProjectPath, resolvePropertyPath } from "../utils/seo";
 
 // Get category display name (bilingual)
 const getCategoryLabel = (category, propertyType, lang = "tr") => {
@@ -68,8 +69,8 @@ const PropertyCard = ({ property, onCardClick }) => {
   const getPropertyRoute = (targetProperty) =>
     targetProperty?.propertyType === "local-project" ||
     targetProperty?.propertyType === "international-project"
-      ? `/projects/${targetProperty.id}`
-      : `/listing/${targetProperty.id}`;
+      ? resolveProjectPath(targetProperty)
+      : resolvePropertyPath(targetProperty);
 
   // Get display price - for projects, use minimum floor plan price if main price is 0
   const getDisplayPrice = () => {

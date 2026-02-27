@@ -9,6 +9,7 @@ import UserDetailContext from "../context/UserDetailContext";
 import aiRobotAvatar from "../assets/ai-robot-avatar.svg";
 import { chatWithRealEstateAssistant, getUserProfile } from "../utils/api";
 import { normalizeWhatsAppNumber } from "../utils/common";
+import { resolveBlogPath, resolvePropertyPath } from "../utils/seo";
 
 const UI_TEXT = {
   en: {
@@ -127,8 +128,10 @@ const serializeHistory = (messages) =>
 const resolveDetailUrl = (item) => {
   const link = String(item?.detail_url || "").trim();
   if (link) return link;
+  const slug = String(item?.slug || item?.seoSlug || "").trim();
   const id = String(item?.id || "").trim();
-  return id ? `/listing/${id}` : "";
+  if (!slug && !id) return "";
+  return resolvePropertyPath({ slug, id });
 };
 
 const resolveAbsoluteUrl = (url) => {
@@ -149,8 +152,8 @@ const resolveConsultantProfileUrl = (item) => {
 const resolveBlogUrl = (item) => {
   const link = String(item?.blog_url || "").trim();
   if (link) return link;
-  const id = String(item?.id || "").trim();
-  return id ? `/blog/${id}` : "";
+  const path = resolveBlogPath(item);
+  return path === "/blogs" ? "" : path;
 };
 
 const AssistantChatModal = ({ opened, onClose }) => {

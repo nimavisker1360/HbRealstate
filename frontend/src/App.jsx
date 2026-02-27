@@ -7,7 +7,7 @@ import UserDetailContext from "./context/UserDetailContext";
 import { CurrencyProvider } from "./context/CurrencyContext";
 import Layout from "./components/Layout";
 import ScrollToTop from "./components/ScrollToTop";
-import SEO from "./components/SEO";
+import RouteSeo from "./components/RouteSeo";
 
 const Home = lazy(() => import("./pages/seo/HomeSeoPage"));
 const Listing = lazy(() => import("./pages/seo/ListingSeoPage"));
@@ -63,7 +63,7 @@ export default function App() {
         <QueryClientProvider client={queryClient}>
             <BrowserRouter>
               <ScrollToTop />
-              <SEO />
+              <RouteSeo />
               <Suspense fallback={null}>
                 <Routes>
                   <Route element={<Layout />}>

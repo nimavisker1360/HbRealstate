@@ -19,6 +19,7 @@ import { FaLandmark, FaHome, FaBriefcase, FaHotel, FaUmbrellaBeach, FaCity } fro
 import { HiOutlineOfficeBuilding } from "react-icons/hi";
 import { BsBuildingsFill } from "react-icons/bs";
 import CurrencyContext from "../context/CurrencyContext";
+import { resolveProjectPath, resolvePropertyPath } from "../utils/seo";
 
 const normalizeText = (value) =>
   String(value || "")
@@ -590,14 +591,17 @@ const Listing = () => {
   });
 
   const handlePropertyClick = (id, propertyType) => {
+    const matchedProperty = rawData.find(
+      (property) => property.id === id || property.slug === id || property.seoSlug === id
+    );
     const resolvedType =
       propertyType ||
-      rawData.find((property) => property.id === id)?.propertyType ||
+      matchedProperty?.propertyType ||
       "";
     const targetRoute =
       resolvedType === "local-project" || resolvedType === "international-project"
-        ? `/projects/${id}`
-        : `/listing/${id}`;
+        ? resolveProjectPath(matchedProperty || { id })
+        : resolvePropertyPath(matchedProperty || { id });
     navigate(targetRoute);
   };
 

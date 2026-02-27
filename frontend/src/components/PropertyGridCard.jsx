@@ -5,6 +5,7 @@ import { MdLocationOn } from "react-icons/md";
 import { useContext } from "react";
 import CurrencyContext from "../context/CurrencyContext";
 import { getOptimizedImageUrl } from "../utils/media";
+import { resolveProjectPath, resolvePropertyPath } from "../utils/seo";
 
 // Get category display name (bilingual)
 const getCategoryLabel = (category, propertyType, lang = "tr") => {
@@ -63,8 +64,8 @@ const PropertyGridCard = ({ property }) => {
   const propertyRoute =
     property?.propertyType === "local-project" ||
     property?.propertyType === "international-project"
-      ? `/projects/${property.id}`
-      : `/listing/${property.id}`;
+      ? resolveProjectPath(property)
+      : resolvePropertyPath(property);
 
   return (
     <div

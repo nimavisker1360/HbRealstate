@@ -44,9 +44,15 @@ export const getBlog = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
   try {
-    const blog = await prisma.blog.findUnique({
+    let blog = await prisma.blog.findUnique({
       where: { id },
     });
+
+    if (!blog) {
+      blog = await prisma.blog.findUnique({
+        where: { slug: id },
+      });
+    }
 
     if (!blog) {
       return res.status(404).send({ message: "Blog not found" });

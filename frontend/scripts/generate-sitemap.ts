@@ -5,7 +5,21 @@ interface PropertyEntry {
   id?: string;
   slug?: string;
   seoSlug?: string;
+  propertyType?: string;
   updatedAt?: string;
+  createdAt?: string;
+}
+
+interface BlogEntry {
+  id?: string;
+  slug?: string;
+  country?: string;
+  title?: string;
+  title_en?: string;
+  title_tr?: string;
+  title_ru?: string;
+  updatedAt?: string;
+  createdAt?: string;
 }
 
 interface SitemapUrl {
@@ -36,11 +50,33 @@ const staticPages: SitemapUrl[] = [
   { path: "/", changefreq: "daily", priority: "1.0" },
   { path: "/listing", changefreq: "daily", priority: "0.9" },
   { path: "/projects", changefreq: "weekly", priority: "0.8" },
+  { path: "/blogs", changefreq: "weekly", priority: "0.8" },
+  { path: "/consultants", changefreq: "monthly", priority: "0.6" },
+  { path: "/addresses", changefreq: "monthly", priority: "0.6" },
+  { path: "/today", changefreq: "daily", priority: "0.7" },
   { path: "/istanbul-apartments", changefreq: "weekly", priority: "0.8" },
   { path: "/kyrenia-apartments", changefreq: "weekly", priority: "0.8" },
   { path: "/turkey-property-investment", changefreq: "weekly", priority: "0.8" },
   { path: "/turkish-citizenship-property", changefreq: "weekly", priority: "0.8" },
 ];
+
+const toIsoDate = (value?: string) => {
+  if (!value) return TODAY;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return TODAY;
+  return date.toISOString().split("T")[0];
+};
+
+const slugify = (value = "") =>
+  value
+    .toString()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
 
 const toListingPath = (property: PropertyEntry): string | null => {
   const slug = property.slug || property.seoSlug;
@@ -51,6 +87,56 @@ const toListingPath = (property: PropertyEntry): string | null => {
     return `/listing/${property.id}`;
   }
   return null;
+};
+
+const toProjectPath = (property: PropertyEntry): string | null => {
+  const type = String(property.propertyType || "").toLowerCase().trim();
+  if (type !== "local-project" && type !== "international-project") {
+    return null;
+  }
+  const id = String(property.id || "").trim();
+  return id ? `/projects/${encodeURIComponent(id)}` : null;
+};
+
+const toBlogPath = (blog: BlogEntry): string | null => {
+  const identifier = String(blog.slug || blog.id || "").trim();
+  return identifier ? `/blog/${encodeURIComponent(identifier)}` : null;
+};
+
+const extractCountryFromTitle = (rawTitle?: string) => {
+  if (!rawTitle || typeof rawTitle !== "string") return "";
+  const cleaned = rawTitle.replace(/[?!\u061f]+$/g, "").trim();
+  const lower = cleaned.toLowerCase();
+  const inIndex = lower.lastIndexOf(" in ");
+  if (inIndex !== -1 && inIndex + 4 < cleaned.length) {
+    return cleaned.slice(inIndex + 4).trim();
+  }
+  return "";
+};
+
+const resolveBlogCountry = (blog: BlogEntry) => {
+  const direct = String(blog.country || "").trim();
+  if (direct) return direct;
+  return (
+    extractCountryFromTitle(blog.title_en) ||
+    extractCountryFromTitle(blog.title_tr) ||
+    extractCountryFromTitle(blog.title_ru) ||
+    extractCountryFromTitle(blog.title)
+  );
+};
+
+const isExcludedCountry = (value: string) => {
+  const normalized = value.toLowerCase().trim();
+  return normalized === "turkey" || normalized === "turkiye";
+};
+
+const toCountryPath = (blog: BlogEntry): string | null => {
+  const country = resolveBlogCountry(blog);
+  if (!country || isExcludedCountry(country)) return null;
+  const countrySlug = slugify(country);
+  if (countrySlug) return `/blogs/${encodeURIComponent(countrySlug)}`;
+  const encoded = encodeURIComponent(String(country).toLowerCase().trim());
+  return encoded ? `/blogs/${encoded.toLowerCase()}` : null;
 };
 
 const fetchPropertyEntries = async (): Promise<PropertyEntry[]> => {
@@ -65,9 +151,29 @@ const fetchPropertyEntries = async (): Promise<PropertyEntry[]> => {
 
     const data = (await response.json()) as PropertyEntry[];
     return Array.isArray(data) ? data : [];
-  } catch (error) {
+  } catch (_error) {
     console.warn(
       `[sitemap] Failed to fetch properties from ${API_BASE}/residency/allresd. Continuing with static URLs only.`
+    );
+    return [];
+  }
+};
+
+const fetchBlogEntries = async (): Promise<BlogEntry[]> => {
+  try {
+    const response = await fetch(`${API_BASE}/blog/all`, {
+      headers: { Accept: "application/json" },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Unexpected status ${response.status}`);
+    }
+
+    const data = (await response.json()) as BlogEntry[];
+    return Array.isArray(data) ? data : [];
+  } catch (_error) {
+    console.warn(
+      `[sitemap] Failed to fetch blogs from ${API_BASE}/blog/all. Continuing without blog URLs.`
     );
     return [];
   }
@@ -101,26 +207,69 @@ const toUrlNode = (url: SitemapUrl) => {
 };
 
 const main = async () => {
-  const properties = await fetchPropertyEntries();
-  const dynamicPages: SitemapUrl[] = properties
+  const [properties, blogs] = await Promise.all([
+    fetchPropertyEntries(),
+    fetchBlogEntries(),
+  ]);
+
+  const listingPages: SitemapUrl[] = properties
     .map((property) => {
       const listingPath = toListingPath(property);
       if (!listingPath) return null;
       return {
         path: listingPath,
-        lastmod: property.updatedAt
-          ? new Date(property.updatedAt).toISOString().split("T")[0]
-          : TODAY,
+        lastmod: toIsoDate(property.updatedAt || property.createdAt),
         changefreq: "daily",
         priority: "0.7",
       } as SitemapUrl;
     })
     .filter((item): item is SitemapUrl => Boolean(item));
 
+  const projectPages: SitemapUrl[] = properties
+    .map((property) => {
+      const projectPath = toProjectPath(property);
+      if (!projectPath) return null;
+      return {
+        path: projectPath,
+        lastmod: toIsoDate(property.updatedAt || property.createdAt),
+        changefreq: "weekly",
+        priority: "0.7",
+      } as SitemapUrl;
+    })
+    .filter((item): item is SitemapUrl => Boolean(item));
+
+  const blogPages: SitemapUrl[] = blogs
+    .map((blog) => {
+      const blogPath = toBlogPath(blog);
+      if (!blogPath) return null;
+      return {
+        path: blogPath,
+        lastmod: toIsoDate(blog.updatedAt || blog.createdAt),
+        changefreq: "weekly",
+        priority: "0.7",
+      } as SitemapUrl;
+    })
+    .filter((item): item is SitemapUrl => Boolean(item));
+
+  const countryPages: SitemapUrl[] = blogs
+    .map((blog) => {
+      const countryPath = toCountryPath(blog);
+      if (!countryPath) return null;
+      return {
+        path: countryPath,
+        lastmod: toIsoDate(blog.updatedAt || blog.createdAt),
+        changefreq: "weekly",
+        priority: "0.6",
+      } as SitemapUrl;
+    })
+    .filter((item): item is SitemapUrl => Boolean(item));
+
   const unique = new Map<string, SitemapUrl>();
-  [...staticPages, ...dynamicPages].forEach((item) => {
-    unique.set(item.path, item);
-  });
+  [...staticPages, ...listingPages, ...projectPages, ...blogPages, ...countryPages].forEach(
+    (item) => {
+      unique.set(item.path, item);
+    }
+  );
 
   const urlset = Array.from(unique.values()).map(toUrlNode).join("\n");
   const sitemap = `<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n${urlset}\n</urlset>\n`;
@@ -132,7 +281,7 @@ const main = async () => {
   await writeFile(outputPath, sitemap, "utf8");
 
   console.log(
-    `[sitemap] Generated ${outputPath} with ${unique.size} URLs (${staticPages.length} static, ${dynamicPages.length} dynamic).`
+    `[sitemap] Generated ${outputPath} with ${unique.size} URLs (${staticPages.length} static, ${listingPages.length + projectPages.length + blogPages.length + countryPages.length} dynamic).`
   );
 };
 

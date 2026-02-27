@@ -2,14 +2,24 @@
 import { useQuery } from "react-query";
 import { getBlog } from "../utils/api";
 import { MdArrowBack, MdCalendarToday, MdCategory, MdErrorOutline, MdAccessTime, MdShare, MdClose, MdChevronLeft, MdChevronRight, MdArticle } from "react-icons/md";
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import HousingSalesChart from "../components/HousingSalesChart";
 import ForeignSalesChart from "../components/ForeignSalesChart";
 import BlogContactForm from "../components/BlogContactForm";
+import SEO from "../components/SEO";
 import useBlogs from "../hooks/useBlogs";
 import { aboutTurkeyMenu } from "../constant/aboutTurkeyMenu";
 import { fixMojibake } from "../utils/text";
+import {
+  SITE_URL,
+  buildLanguageAlternates,
+  resolveBlogIdentifier,
+  resolveBlogPath,
+  stripHtml,
+  toAbsoluteUrl,
+  truncateText,
+} from "../utils/seo";
 
 const BlogPost = () => {
   const { blogId } = useParams();
@@ -74,8 +84,9 @@ const BlogPost = () => {
     const map = new Map();
     if (Array.isArray(blogs)) {
       blogs.forEach((blogItem) => {
-        if (blogItem?.menuKey) {
-          map.set(blogItem.menuKey, blogItem.id);
+        const identifier = resolveBlogIdentifier(blogItem);
+        if (blogItem?.menuKey && identifier) {
+          map.set(blogItem.menuKey, identifier);
         }
       });
     }
@@ -89,7 +100,7 @@ const BlogPost = () => {
         .filter((content) => typeof content === "string")
         .some((content) => content.includes(marker))
     );
-    return match?.id || null;
+    return resolveBlogIdentifier(match) || null;
   };
 
   const getMarketAnalysisBlogId = async (key) => {
@@ -119,7 +130,7 @@ const BlogPost = () => {
   const findBlogIdByMenuKey = (list, menuKey) => {
     if (!menuKey || !Array.isArray(list)) return null;
     const match = list.find((blogItem) => blogItem?.menuKey === menuKey);
-    return match?.id || null;
+    return resolveBlogIdentifier(match) || null;
   };
 
   const getMenuBlogId = async (item) => {
@@ -152,33 +163,6 @@ const BlogPost = () => {
       navigate("/blogs");
     }
   };
-
-
-  // Update meta tags for SEO
-  useEffect(() => {
-    if (blog) {
-      // Set page title
-      document.title = getLocalizedContent("title") || "Blog Post";
-      
-      // Set meta description
-      const metaDesc = getLocalizedContent("metaDescription") || getLocalizedContent("summary");
-      const metaDescription = document.querySelector('meta[name="description"]');
-      if (metaDescription) {
-        metaDescription.setAttribute("content", metaDesc);
-      } else {
-        const meta = document.createElement("meta");
-        meta.name = "description";
-        meta.content = metaDesc;
-        document.head.appendChild(meta);
-      }
-    }
-    
-    // Cleanup
-    return () => {
-      document.title = "Real Estate Turkey";
-    };
-  }, [blog, language]);
-
   // Calculate reading time
   const calculateReadingTime = (content) => {
     if (!content) return 0;
@@ -262,9 +246,106 @@ const BlogPost = () => {
     return categoryMap[normalized] || raw;
   };
   const categoryLabel = getLocalizedCategoryLabel(getLocalizedContent("category"));
+  const localizedFaq = getLocalizedFaq();
+  const localizedTitle = getLocalizedContent("title") || "Blog Post";
+  const canonicalPath = blog
+    ? resolveBlogPath(blog, { preferSlug: true })
+    : `/blog/${blogId || ""}`;
+  const fallbackDescription =
+    "Read practical real estate insights and market updates from HB International Real Estate.";
+  const resolvedDescription =
+    truncateText(
+      getLocalizedContent("metaDescription") ||
+        getLocalizedContent("summary") ||
+        getLocalizedContent("content"),
+      165
+    ) || fallbackDescription;
+  const seoImage = blog?.image || blog?.images?.[0] || "/og-image.png";
+  const normalizedCategory = getLocalizedContent("category") || "Real Estate";
+  const wordCount = stripHtml(getLocalizedContent("content"))
+    .split(/\s+/)
+    .filter(Boolean).length;
+
+  const blogSchema = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: localizedTitle,
+    articleSection: normalizedCategory,
+    description: resolvedDescription,
+    image: [toAbsoluteUrl(seoImage)],
+    inLanguage: language,
+    datePublished: blog?.createdAt || undefined,
+    dateModified: blog?.updatedAt || blog?.createdAt || undefined,
+    mainEntityOfPage: toAbsoluteUrl(canonicalPath),
+    publisher: {
+      "@type": "Organization",
+      name: "HB International Real Estate",
+      url: SITE_URL,
+      logo: {
+        "@type": "ImageObject",
+        url: `${SITE_URL}/logo.png`,
+      },
+    },
+    author: {
+      "@type": "Organization",
+      name: "HB International Real Estate",
+    },
+    wordCount,
+    timeRequired: `PT${Math.max(readingTime, 1)}M`,
+  };
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: SITE_URL,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Blogs",
+        item: `${SITE_URL}/blogs`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: localizedTitle,
+        item: toAbsoluteUrl(canonicalPath),
+      },
+    ],
+  };
+
+  const faqSchema = localizedFaq.length
+    ? {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: localizedFaq.map((faq) => ({
+          "@type": "Question",
+          name: faq.question,
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: faq.answer,
+          },
+        })),
+      }
+    : null;
 
   return (
-    <div className={`min-h-screen pt-24 pb-20 relative overflow-hidden ${isStatsTheme ? 'bg-slate-950' : 'bg-[#f7f3ea]'}`}>
+    <>
+      <SEO
+        title={`${localizedTitle} | HB International Real Estate`}
+        description={resolvedDescription}
+        canonicalPath={canonicalPath}
+        image={seoImage}
+        type="article"
+        languageAlternates={buildLanguageAlternates(canonicalPath)}
+        structuredData={[blogSchema, breadcrumbSchema, faqSchema]}
+      />
+      <div className={`min-h-screen pt-24 pb-20 relative overflow-hidden ${isStatsTheme ? 'bg-slate-950' : 'bg-[#f7f3ea]'}`}>
       {!isStatsTheme && (
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute -top-32 -left-24 h-72 w-72 rounded-full bg-emerald-200/35 blur-3xl"></div>
@@ -642,7 +723,7 @@ const BlogPost = () => {
             </div>
 
             {/* FAQ Section */}
-            {getLocalizedFaq().length > 0 && !isStatsBlog && (
+            {localizedFaq.length > 0 && !isStatsBlog && (
               <div className="mt-12 rounded-3xl border border-emerald-100/80 bg-white/90 p-6 sm:p-8 shadow-[0_20px_50px_-40px_rgba(15,23,42,0.35)]">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-700">
@@ -653,7 +734,7 @@ const BlogPost = () => {
                   </h2>
                 </div>
                 <div className="space-y-3">
-                  {getLocalizedFaq().map((faq, index) => (
+                  {localizedFaq.map((faq, index) => (
                     <details
                       key={index}
                       className="group rounded-2xl border border-emerald-100/80 bg-white/80 overflow-hidden transition hover:border-emerald-300 hover:shadow-md"
@@ -710,8 +791,9 @@ const BlogPost = () => {
           </div>
         </div>
       </div>
-    </div>
-);
+      </div>
+    </>
+  );
 };
 
 export default BlogPost;
