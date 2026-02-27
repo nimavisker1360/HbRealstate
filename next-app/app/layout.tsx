@@ -1,7 +1,20 @@
 import Script from "next/script";
 import type { ReactNode } from "react";
+import type { Metadata } from "next";
+import { getSiteUrl } from "../lib/seo";
+import "./globals.css";
 
 const GA_MEASUREMENT_ID = "G-KMXZ73K0CE";
+
+export const metadata: Metadata = {
+  metadataBase: new URL(getSiteUrl()),
+  title: {
+    default: "HB Real Estate | Buy Verified Properties",
+    template: "%s | HB Real Estate",
+  },
+  description:
+    "Find verified real estate listings with city and property-type landing pages, transparent filters, and SEO-ready property details.",
+};
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (

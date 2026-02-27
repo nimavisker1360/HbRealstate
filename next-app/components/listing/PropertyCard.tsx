@@ -63,7 +63,7 @@ export default function PropertyCard({ property }: PropertyCardProps) {
       </div>
 
       <Link
-        href={`/property/${property.slug}`}
+        href={`/property/${encodeURIComponent(property.slug)}`}
         className="inline-flex rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
       >
         View Details

@@ -1,7 +1,7 @@
 {
-  "installCommand": "npm install",
-  "buildCommand": "npm --workspace frontend run build",
-  "outputDirectory": "frontend/dist",
+  "framework": "nextjs",
+  "installCommand": "npm install && npm --prefix next-app install",
+  "buildCommand": "npm run build:next",
   "redirects": [
     {
       "source": "/:path*",
@@ -11,8 +11,14 @@
     }
   ],
   "rewrites": [
-    { "source": "/sitemap.xml", "destination": "/api/index.js" },
-    { "source": "/api/(.*)", "destination": "/api/index.js" },
-    { "source": "/(.*)", "destination": "/" }
+    { "source": "/api/user/:path*", "destination": "/api/index.js" },
+    { "source": "/api/residency/:path*", "destination": "/api/index.js" },
+    { "source": "/api/consultant/:path*", "destination": "/api/index.js" },
+    { "source": "/api/email/:path*", "destination": "/api/index.js" },
+    { "source": "/api/blog/:path*", "destination": "/api/index.js" },
+    { "source": "/api/housing-sales/:path*", "destination": "/api/index.js" },
+    { "source": "/api/testimonial/:path*", "destination": "/api/index.js" },
+    { "source": "/api/assistant/:path*", "destination": "/api/index.js" },
+    { "source": "/api/sitemap.xml", "destination": "/api/index.js" }
   ]
 }

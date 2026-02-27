@@ -1,5 +1,7 @@
 # Dependencies
 node_modules
+.next
+next-app/.next
 
 # Environment variables
 .env

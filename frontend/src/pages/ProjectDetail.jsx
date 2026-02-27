@@ -263,6 +263,27 @@ const hasSpecialOfferData = (specialOffer) =>
         Number(specialOffer.locationMinutes || 0) > 0)
   );
 
+const normalizeOptionalMediaUrl = (value) => {
+  if (typeof value !== "string") return "";
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+
+  const normalized = trimmed.toLowerCase();
+  if (["null", "undefined", "n/a", "na", "-"].includes(normalized)) {
+    return "";
+  }
+
+  if (trimmed.startsWith("//")) {
+    return `https:${trimmed}`;
+  }
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+
+  return "";
+};
+
 const ProjectDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -309,6 +330,8 @@ const ProjectDetail = () => {
   const [isLightboxMediaLoaded, setIsLightboxMediaLoaded] = useState(true);
   const [isMainVideoPreviewActive, setIsMainVideoPreviewActive] = useState(false);
   const [isMainVideoPreviewReady, setIsMainVideoPreviewReady] = useState(false);
+  const [sitePlanLoadFailed, setSitePlanLoadFailed] = useState(false);
+  const [mapImageLoadFailed, setMapImageLoadFailed] = useState(false);
   const mainVideoPreviewRef = useRef(null);
   const [contactForm, setContactForm] = useState({
     name: "",
@@ -378,10 +401,10 @@ const ProjectDetail = () => {
       galleryItems, // Combined gallery
       projeHakkinda: propertyData.projeHakkinda,
       dairePlanlari: propertyData.dairePlanlari || [],
-      vaziyetPlani: propertyData.vaziyetPlani,
+      vaziyetPlani: normalizeOptionalMediaUrl(propertyData.vaziyetPlani),
       ozellikler,
       kampanya: propertyData.kampanya,
-      mapImage: propertyData.mapImage,
+      mapImage: normalizeOptionalMediaUrl(propertyData.mapImage),
       ilanNo: propertyData.ilanNo || "",
       consultantId: propertyData.consultant?.id || propertyData.consultantId || "",
       gyo: Boolean(propertyData.gyo),
@@ -491,6 +514,11 @@ const ProjectDetail = () => {
     const currentType = project?.galleryItems?.[selectedImage]?.type;
     setIsLightboxMediaLoaded(currentType === "video");
   }, [lightboxOpen, selectedImage, project]);
+
+  useEffect(() => {
+    setSitePlanLoadFailed(false);
+    setMapImageLoadFailed(false);
+  }, [project?.id, project?.vaziyetPlani, project?.mapImage]);
 
   if (isLoading) {
     return (
@@ -1127,7 +1155,7 @@ const ProjectDetail = () => {
             )}
 
             {/* Site Plan */}
-            {project.vaziyetPlani && (
+            {project.vaziyetPlani && !sitePlanLoadFailed && (
               <section className="mb-8">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">{t("projectDetail.sitePlan")}</h2>
                 <div 
@@ -1144,6 +1172,7 @@ const ProjectDetail = () => {
                     className="w-full h-auto max-h-[500px] object-contain rounded-lg border bg-gray-50"
                     loading="lazy"
                     decoding="async"
+                    onError={() => setSitePlanLoadFailed(true)}
                   />
                   {/* Zoom overlay on hover */}
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-lg flex items-center justify-center">
@@ -1160,7 +1189,7 @@ const ProjectDetail = () => {
             <section className="mb-8">
               <h2 className="text-xl font-bold text-gray-900 mb-6">{t("projectDetail.location")}</h2>
               <div className="relative">
-                {project.mapImage ? (
+                {project.mapImage && !mapImageLoadFailed ? (
                   <img
                     src={getOptimizedImageUrl(project.mapImage, {
                       width: 1400,
@@ -1170,6 +1199,7 @@ const ProjectDetail = () => {
                     className="w-full h-[350px] object-cover rounded-lg border"
                     loading="lazy"
                     decoding="async"
+                    onError={() => setMapImageLoadFailed(true)}
                   />
                 ) : (
                   <div className="w-full h-[350px] bg-gray-100 rounded-lg border flex items-center justify-center">
@@ -1749,7 +1779,7 @@ const ProjectDetail = () => {
         withCloseButton
         title={<span className="font-bold text-lg">{t("projectDetail.sitePlan")}</span>}
       >
-        {project?.vaziyetPlani && (
+        {project?.vaziyetPlani && !sitePlanLoadFailed && (
           <img
             src={getOptimizedImageUrl(project.vaziyetPlani, {
               width: 1800,
@@ -1760,6 +1790,7 @@ const ProjectDetail = () => {
             className="w-full h-auto rounded-lg"
             loading="lazy"
             decoding="async"
+            onError={() => setSitePlanLoadFailed(true)}
           />
         )}
       </Modal>

@@ -1,24 +1,21 @@
-# Advanced Real Estate Search (Next.js App Router)
+# SEO-first Next.js App (Listing + City + Type + Property)
 
-Place these files in your Next.js project root:
+This `next-app` now reads inventory from the existing backend API routes
+(`api/index.js` + Express app), then renders server-side SEO pages:
 
-- `types/property.ts`
-- `models/Property.ts`
-- `lib/dbConnect.ts`
-- `lib/listingParams.ts`
-- `lib/server/buildPropertyQuery.ts`
-- `app/api/properties/route.ts`
-- `components/listing/AdvancedSearchBar.tsx`
-- `components/listing/SearchPresets.tsx`
-- `components/listing/ListingClient.tsx`
-- `components/listing/PropertyCard.tsx`
-- `components/listing/Pagination.tsx`
-- `app/listing/page.tsx`
-- `app/listing/loading.tsx`
+- `/` home landing page
+- `/listing`
+- `/city/[city]`
+- `/type/[type]`
+- `/property/[slug]`
+- dynamic `sitemap.xml` + `robots.txt`
 
-Environment variable:
+Required environment variables:
 
 ```bash
-MONGODB_URI=your_mongodb_connection_string
 NEXT_PUBLIC_SITE_URL=https://your-domain.com
+INTERNAL_API_BASE_URL=https://your-domain.com
 ```
+
+For local development, point `INTERNAL_API_BASE_URL` to your backend base URL
+(for example `http://localhost:3000` if using Vercel API adapter).

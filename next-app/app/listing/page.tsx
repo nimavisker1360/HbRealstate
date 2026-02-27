@@ -6,6 +6,7 @@ import {
   buildCanonicalListingUrl,
   buildListingSeoText,
   getSiteUrl,
+  shouldIndexListingPage,
 } from "../../lib/seo";
 import type { PropertiesApiResponse } from "../../types/property";
 
@@ -46,6 +47,7 @@ export async function generateMetadata({
   const filters = readListingFilters(new URLSearchParams(queryString));
   const seoText = buildListingSeoText(filters);
   const canonical = buildCanonicalListingUrl(queryString);
+  const shouldIndex = shouldIndexListingPage(filters);
 
   return {
     title: seoText.title,
@@ -60,7 +62,7 @@ export async function generateMetadata({
       type: "website",
     },
     robots: {
-      index: true,
+      index: shouldIndex,
       follow: true,
     },
   };
@@ -100,7 +102,7 @@ export default async function ListingPage({ searchParams }: ListingPageProps) {
       itemListElement: initialData.items.slice(0, 20).map((item, index) => ({
         "@type": "ListItem",
         position: index + 1,
-        url: `${siteUrl}/property/${item.slug}`,
+        url: `${siteUrl}/property/${encodeURIComponent(item.slug)}`,
         name: item.title,
       })),
     },
