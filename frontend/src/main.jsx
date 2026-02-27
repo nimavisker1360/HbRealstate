@@ -6,6 +6,7 @@ import "@mantine/core/styles.css";
 import "@mantine/dates/styles.css";
 import { Auth0Provider } from "@auth0/auth0-react";
 import { MantineProvider } from "@mantine/core";
+import { HelmetProvider } from "react-helmet-async";
 import "./i18n"; // Initialize i18n
 import { Analytics } from "@vercel/analytics/react";
 
@@ -22,8 +23,10 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       useRefreshTokens={true}
     >
       <MantineProvider>
-        <App />
-        <Analytics />
+        <HelmetProvider>
+          <App />
+          <Analytics />
+        </HelmetProvider>
       </MantineProvider>
     </Auth0Provider>
   </React.StrictMode>

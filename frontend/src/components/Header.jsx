@@ -149,7 +149,7 @@ const Header = () => {
               <img
                 src={logo}
                 alt="HB International"
-                className="h-11 sm:h-12 md:h-14 object-contain"
+                className="h-11 sm:h-12 md:h-14 w-auto object-contain"
               />
             </Link>
             <div className="flex items-center gap-2 sm:gap-3">

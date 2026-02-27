@@ -8,6 +8,7 @@ import { useMutation } from "react-query";
 import { createUser, setTokenRefreshCallback } from "../utils/api";
 import useFavourites from "../hooks/useFavourites.jsx";
 import useBookings from "../hooks/useBookings.jsx";
+import useImageOptimization from "../hooks/useImageOptimization";
 
 const INACTIVITY_LIMIT_MS = 6 * 60 * 60 * 1000;
 const ACTIVITY_THROTTLE_MS = 60 * 1000;
@@ -16,6 +17,7 @@ const LAST_ACTIVITY_KEY = "last_activity_ts";
 const Layout = () => {
   useFavourites();
   useBookings();
+  useImageOptimization();
 
   const location = useLocation();
   const { isAuthenticated, user, getIdTokenClaims, logout, isLoading } = useAuth0();

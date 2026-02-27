@@ -118,7 +118,7 @@ const Footer = () => {
               <img
                 src={logo}
                 alt="HB International"
-                className="h-12 object-contain brightness-0 invert"
+                className="h-12 w-auto object-contain brightness-0 invert"
               />
             </Link>
             <p className="text-white/50 text-sm leading-relaxed">

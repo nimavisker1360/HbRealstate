@@ -1,29 +1,42 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import Home from "./pages/Home";
-import Listing from "./pages/Listing";
-import AddProperty from "./pages/AddProperty";
-import AdminPanel from "./pages/AdminPanel";
-import Consultants from "./pages/Consultants";
-import TodayProperties from "./pages/TodayProperties";
-import BlogsPage from "./pages/Blogs";
-import CountryBlogs from "./pages/CountryBlogs";
-import BlogPost from "./pages/BlogPost";
-import Addresses from "./pages/Addresses";
-import LocalProjects from "./pages/LocalProjects";
-import ProjectDetail from "./pages/ProjectDetail";
-import TestimonialsTest from "./pages/TestimonialsTest";
 import { QueryClient, QueryClientProvider } from "react-query"
 import { ToastContainer } from "react-toastify";
-import { ReactQueryDevtools } from 'react-query/devtools';
 import "react-toastify/dist/ReactToastify.css"
-import Property from "./pages/Property";
-import { Suspense, useState, useEffect } from "react";
+import { lazy, Suspense, useState, useEffect } from "react";
 import UserDetailContext from "./context/UserDetailContext";
 import { CurrencyProvider } from "./context/CurrencyContext";
 import Layout from "./components/Layout";
-import Favourites from "./pages/Favourites";
-import Bookings from "./pages/Bookings";
 import ScrollToTop from "./components/ScrollToTop";
+import SEO from "./components/SEO";
+
+const Home = lazy(() => import("./pages/seo/HomeSeoPage"));
+const Listing = lazy(() => import("./pages/seo/ListingSeoPage"));
+const Property = lazy(() => import("./pages/seo/PropertySeoPage"));
+const AddProperty = lazy(() => import("./pages/AddProperty"));
+const AdminPanel = lazy(() => import("./pages/AdminPanel"));
+const Consultants = lazy(() => import("./pages/Consultants"));
+const TodayProperties = lazy(() => import("./pages/TodayProperties"));
+const BlogsPage = lazy(() => import("./pages/Blogs"));
+const CountryBlogs = lazy(() => import("./pages/CountryBlogs"));
+const BlogPost = lazy(() => import("./pages/BlogPost"));
+const Addresses = lazy(() => import("./pages/Addresses"));
+const LocalProjects = lazy(() => import("./pages/LocalProjects"));
+const ProjectDetail = lazy(() => import("./pages/ProjectDetail"));
+const TestimonialsTest = lazy(() => import("./pages/TestimonialsTest"));
+const Favourites = lazy(() => import("./pages/Favourites"));
+const Bookings = lazy(() => import("./pages/Bookings"));
+const IstanbulApartments = lazy(() => import("./pages/IstanbulApartments"));
+const KyreniaApartments = lazy(() => import("./pages/KyreniaApartments"));
+const TurkeyPropertyInvestment = lazy(() => import("./pages/TurkeyPropertyInvestment"));
+const TurkishCitizenshipProperty = lazy(() => import("./pages/TurkishCitizenshipProperty"));
+
+const ReactQueryDevtools = import.meta.env.DEV
+  ? lazy(() =>
+      import("react-query/devtools").then((module) => ({
+        default: module.ReactQueryDevtools,
+      }))
+    )
+  : () => null;
 
 export default function App() {
 
@@ -50,6 +63,7 @@ export default function App() {
         <QueryClientProvider client={queryClient}>
             <BrowserRouter>
               <ScrollToTop />
+              <SEO />
               <Suspense fallback={<div>Loading data...</div>}>
                 <Routes>
                   <Route element={<Layout />}>
@@ -71,12 +85,20 @@ export default function App() {
                     <Route path="/addresses" element={<Addresses />} />
                     <Route path="/projects" element={<LocalProjects />} />
                     <Route path="/projects/:id" element={<ProjectDetail />} />
+                    <Route path="/istanbul-apartments" element={<IstanbulApartments />} />
+                    <Route path="/kyrenia-apartments" element={<KyreniaApartments />} />
+                    <Route path="/turkey-property-investment" element={<TurkeyPropertyInvestment />} />
+                    <Route path="/turkish-citizenship-property" element={<TurkishCitizenshipProperty />} />
                   </Route>
                 </Routes>
               </Suspense>
             </BrowserRouter>
           <ToastContainer />
-          <ReactQueryDevtools initialIsOpen={false} />
+          {import.meta.env.DEV && (
+            <Suspense fallback={null}>
+              <ReactQueryDevtools initialIsOpen={false} />
+            </Suspense>
+          )}
         </QueryClientProvider>
       </CurrencyProvider>
     </UserDetailContext.Provider>
