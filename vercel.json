@@ -1,7 +1,7 @@
 {
   "framework": "nextjs",
   "installCommand": "npm install && npm --prefix next-app install",
-  "buildCommand": "npm run build:next && node -e \"require('fs').cpSync('next-app/.next','.next',{recursive:true,force:true})\"",
+  "buildCommand": "npm run build:next",
   "redirects": [
     {
       "source": "/:path*",
