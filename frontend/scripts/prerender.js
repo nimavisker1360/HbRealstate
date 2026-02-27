@@ -191,6 +191,53 @@ const slugify = (value = "") =>
     .replace(/-+/g, "-")
     .replace(/^-+|-+$/g, "");
 
+const normalizeRoomTypeForSlug = (value = "") =>
+  String(value || "")
+    .trim()
+    .replace(/\+/g, "-")
+    .replace(/\s+/g, " ");
+
+const getProjectRoomTypes = (property) => {
+  const fromPlans = Array.isArray(property?.dairePlanlari)
+    ? property.dairePlanlari
+        .map((plan) => pickText(plan?.tip, plan?.roomType))
+        .filter(Boolean)
+    : [];
+
+  const fromRoomsField = pickText(property?.rooms)
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  return Array.from(new Set([...fromPlans, ...fromRoomsField])).slice(0, 4);
+};
+
+const getProjectDistrict = (property) => {
+  const directDistrict = pickText(
+    property?.addressDetails?.district,
+    property?.district,
+    property?.ilce
+  );
+  if (directDistrict) return directDistrict;
+
+  const address = pickText(property?.address);
+  if (!address) return "";
+  const [firstPart] = address.split(",");
+  return pickText(firstPart);
+};
+
+const titleContainsLocation = (title, district, city) => {
+  const normalizedTitle = slugify(title);
+  if (!normalizedTitle) return false;
+  const normalizedDistrict = slugify(district);
+  const normalizedCity = slugify(city);
+
+  return (
+    (normalizedDistrict && normalizedTitle.includes(normalizedDistrict)) ||
+    (normalizedCity && normalizedTitle.includes(normalizedCity))
+  );
+};
+
 const buildProjectSlugBase = (property) => {
   const projectTitle = pickText(
     property?.projectName,
@@ -198,9 +245,24 @@ const buildProjectSlugBase = (property) => {
     property?.name,
     "New Residential Project"
   );
-  const slugBase = slugify(projectTitle);
+  const district = getProjectDistrict(property);
+  const city = pickText(property?.city, property?.addressDetails?.city);
+  const location = [district, city].filter(Boolean).join(", ");
+  const includeLocation = location && !titleContainsLocation(projectTitle, district, city);
+
+  const roomTypes = getProjectRoomTypes(property)
+    .map((item) => normalizeRoomTypeForSlug(item))
+    .filter(Boolean);
+
+  const sections = [
+    includeLocation ? `${projectTitle} in ${location}` : projectTitle,
+    roomTypes.length > 0 ? `${roomTypes.join(", ")} Apartments` : "Apartments",
+    "HB Real Estate",
+  ];
+
+  const slugBase = slugify(sections.join(" | "));
   if (!slugBase) return "hb-real-estate-project";
-  return slugBase.slice(0, 120).replace(/-+$/g, "");
+  return slugBase.slice(0, 170).replace(/-+$/g, "");
 };
 
 const truncate = (value, max = 170) => {
