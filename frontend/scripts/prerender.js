@@ -3,6 +3,7 @@ import path from "node:path";
 
 const SITE_URL = "https://www.hbrealstate.com";
 const API_BASE = process.env.SITEMAP_API_URL || `${SITE_URL}/api`;
+const ENABLE_REACT_SNAP = process.env.ENABLE_REACT_SNAP === "1";
 const parsedLimit = Number(process.env.PRERENDER_PROPERTY_LIMIT || 0);
 const MAX_PROPERTY_ROUTES =
   Number.isFinite(parsedLimit) && parsedLimit > 0
@@ -712,20 +713,26 @@ const main = async () => {
     ])
   );
 
-  try {
-    const run = await getReactSnapRun();
-    if (typeof run === "function") {
-      await run({
-        source: "dist",
-        include,
-        crawl: true,
-        skipThirdPartyRequests: false,
-        puppeteerArgs: ["--no-sandbox", "--disable-setuid-sandbox"],
-      });
+  if (ENABLE_REACT_SNAP) {
+    try {
+      const run = await getReactSnapRun();
+      if (typeof run === "function") {
+        await run({
+          source: "dist",
+          include,
+          crawl: true,
+          skipThirdPartyRequests: false,
+          puppeteerArgs: ["--no-sandbox", "--disable-setuid-sandbox"],
+        });
+      }
+    } catch (error) {
+      console.warn(
+        `[prerender] react-snap reported runtime errors. Continuing with static SEO snapshots. ${error?.message || ""}`
+      );
     }
-  } catch (error) {
-    console.warn(
-      `[prerender] react-snap reported runtime errors. Continuing with static SEO snapshots. ${error?.message || ""}`
+  } else {
+    console.log(
+      `[prerender] Skipping react-snap (set ENABLE_REACT_SNAP=1 to enable browser snapshot crawl).`
     );
   }
 
