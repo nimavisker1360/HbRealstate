@@ -144,7 +144,6 @@ const ProjectDetailSeoPage = () => {
   useEffect(() => {
     const routeValue = String(routeProjectSlugOrId || "").trim();
     if (!routeValue || !project) return;
-    if (!/^[a-f0-9]{24}$/i.test(routeValue)) return;
     const targetPath = resolveProjectPath(project);
     if (!targetPath || targetPath === location.pathname) return;
     navigate(targetPath, { replace: true });

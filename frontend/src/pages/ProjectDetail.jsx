@@ -1,5 +1,5 @@
 import { useState, useMemo, useContext, useEffect, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import CurrencyContext from "../context/CurrencyContext";
 import { useQuery } from "react-query";
@@ -272,6 +272,7 @@ const ProjectDetail = () => {
     return extractObjectId(normalized) || normalized;
   }, [routeProjectSlugOrId]);
   const navigate = useNavigate();
+  const location = useLocation();
   const { t, i18n } = useTranslation();
   const {
     currencies,
@@ -334,11 +335,10 @@ const ProjectDetail = () => {
   useEffect(() => {
     const routeValue = String(routeProjectSlugOrId || "").trim();
     if (!routeValue || !propertyData) return;
-    if (!/^[a-f0-9]{24}$/i.test(routeValue)) return;
     const targetPath = resolveProjectPath(propertyData);
-    if (!targetPath) return;
+    if (!targetPath || targetPath === location.pathname) return;
     navigate(targetPath, { replace: true });
-  }, [navigate, propertyData, routeProjectSlugOrId]);
+  }, [location.pathname, navigate, propertyData, routeProjectSlugOrId]);
 
   // Transform property data to project format
   const project = useMemo(() => {

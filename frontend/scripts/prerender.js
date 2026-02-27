@@ -191,6 +191,94 @@ const slugify = (value = "") =>
     .replace(/-+/g, "-")
     .replace(/^-+|-+$/g, "");
 
+const normalizeRoomTypeForSlug = (value = "") =>
+  String(value || "")
+    .trim()
+    .replace(/\+/g, "-")
+    .replace(/\s+/g, " ");
+
+const getProjectRoomTypes = (property) => {
+  const fromPlans = Array.isArray(property?.dairePlanlari)
+    ? property.dairePlanlari
+        .map((plan) => pickText(plan?.tip, plan?.roomType))
+        .filter(Boolean)
+    : [];
+
+  const fromRoomsField = pickText(property?.rooms)
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  return Array.from(new Set([...fromPlans, ...fromRoomsField])).slice(0, 4);
+};
+
+const getProjectDistrict = (property) => {
+  const directDistrict = pickText(
+    property?.addressDetails?.district,
+    property?.district,
+    property?.ilce
+  );
+  if (directDistrict) return directDistrict;
+
+  const address = pickText(property?.address);
+  if (!address) return "";
+  const [firstPart] = address.split(",");
+  return pickText(firstPart);
+};
+
+const buildProjectSlugBase = (property) => {
+  const projectTitle = pickText(
+    property?.projectName,
+    property?.title,
+    property?.name,
+    "New Residential Project"
+  );
+  const district = getProjectDistrict(property);
+  const city = pickText(property?.city, property?.addressDetails?.city);
+  const location = [district, city].filter(Boolean).join(", ");
+
+  const roomTypes = getProjectRoomTypes(property)
+    .map((item) => normalizeRoomTypeForSlug(item))
+    .filter(Boolean);
+
+  const sections = [
+    location ? `${projectTitle} in ${location}` : projectTitle,
+    roomTypes.length > 0 ? `${roomTypes.join(", ")} Apartments` : "Apartments",
+    "HB Real Estate",
+  ];
+
+  const slugBase = slugify(sections.join(" | "));
+  if (!slugBase) return "hb-real-estate-project";
+  return slugBase.slice(0, 170).replace(/-+$/g, "");
+};
+
+const isGenericProjectSlug = (slug = "", id = "") => {
+  const normalizedSlug = slugify(slug);
+  const normalizedId = String(id || "").trim().toLowerCase();
+  if (!normalizedSlug) return true;
+  if (/^[a-f0-9]{24}$/i.test(normalizedSlug)) return true;
+  if (normalizedId && normalizedSlug === normalizedId) return true;
+
+  const genericRoots = [
+    "project",
+    "property",
+    "listing",
+    "real-estate-project",
+    "hb-real-estate-project",
+  ];
+
+  if (genericRoots.includes(normalizedSlug)) return true;
+
+  if (
+    normalizedId &&
+    genericRoots.some((root) => normalizedSlug === `${root}-${normalizedId}`)
+  ) {
+    return true;
+  }
+
+  return false;
+};
+
 const truncate = (value, max = 170) => {
   const text = String(value || "").replace(/\s+/g, " ").trim();
   if (!text) return "";
@@ -443,14 +531,16 @@ const toProjectRoute = (property) => {
   const preferredSlug = pickText(property?.slug, property?.seoSlug);
   const preferredSlugIsObjectId = /^[a-f0-9]{24}$/i.test(preferredSlug);
   const sameAsId = preferredSlug.toLowerCase() === id.toLowerCase();
-  if (preferredSlug && !preferredSlugIsObjectId && !sameAsId) {
+  const genericPreferredSlug = isGenericProjectSlug(preferredSlug, id);
+  if (preferredSlug && !preferredSlugIsObjectId && !sameAsId && !genericPreferredSlug) {
     const hasIdSuffix = /[a-f0-9]{24}$/i.test(preferredSlug);
+    const preferredSlugBase = slugify(preferredSlug) || buildProjectSlugBase(property);
     const safeSlug = hasIdSuffix
       ? preferredSlug
-      : `${pickText(slugify(preferredSlug), "project")}-${id}`;
+      : `${preferredSlugBase}-${id}`;
     return `/projects/${encodeURIComponent(safeSlug)}`;
   }
-  return `/projects/${encodeURIComponent(`project-${id}`)}`;
+  return `/projects/${encodeURIComponent(`${buildProjectSlugBase(property)}-${id}`)}`;
 };
 
 const toProjectArea = (property) => {
