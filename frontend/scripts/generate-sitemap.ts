@@ -29,7 +29,7 @@ interface SitemapUrl {
   priority?: string;
 }
 
-const SITE_URL = process.env.SITE_URL || "https://www.hbrealstate.com";
+const SITE_URL = "https://www.hbrealstate.com";
 const rawApiBase =
   process.env.SITEMAP_API_URL ||
   process.env.VITE_API_URL ||
@@ -95,7 +95,18 @@ const toProjectPath = (property: PropertyEntry): string | null => {
     return null;
   }
   const id = String(property.id || "").trim();
-  return id ? `/projects/${encodeURIComponent(id)}` : null;
+  if (!id) return null;
+  const preferredSlug = String(property.slug || property.seoSlug || "").trim();
+  const preferredSlugIsObjectId = /^[a-f0-9]{24}$/i.test(preferredSlug);
+  const sameAsId = preferredSlug.toLowerCase() === id.toLowerCase();
+  if (preferredSlug && !preferredSlugIsObjectId && !sameAsId) {
+    const hasIdSuffix = /[a-f0-9]{24}$/i.test(preferredSlug);
+    const safeSlug = hasIdSuffix
+      ? preferredSlug
+      : `${slugify(preferredSlug) || "project"}-${id}`;
+    return `/projects/${encodeURIComponent(safeSlug)}`;
+  }
+  return `/projects/${encodeURIComponent(`project-${id}`)}`;
 };
 
 const toBlogPath = (blog: BlogEntry): string | null => {

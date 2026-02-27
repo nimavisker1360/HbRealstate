@@ -62,6 +62,7 @@ import {
 } from "../utils/api";
 import { toast } from "react-toastify";
 import { bilingualFromMessage, bilingualKey } from "../utils/bilingualToast";
+import { resolveProjectPath } from "../utils/seo";
 import {
   MdDashboard,
   MdAddHome,
@@ -2608,7 +2609,7 @@ const AdminPanel = () => {
                                 navigate(
                                   property.propertyType === "local-project" ||
                                     property.propertyType === "international-project"
-                                    ? `/projects/${property.id}`
+                                    ? resolveProjectPath(property)
                                     : `/listing/${property.id}`
                                 )
                               }

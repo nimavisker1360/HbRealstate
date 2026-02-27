@@ -22,6 +22,7 @@ import CurrencyContext from "../context/CurrencyContext";
 import PropertiesMap from "../components/PropertiesMap";
 import PropertyCard from "../components/PropertyCard";
 import { getOptimizedImageUrl } from "../utils/media";
+import { resolveProjectPath } from "../utils/seo";
 
 // Turkish cities data
 const TURKISH_CITIES = [
@@ -374,6 +375,7 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
 
       return {
         id: p.id,
+        projectPath: resolveProjectPath(p),
         name: activeSpecialOffer.title || p.title,
         city: p.city || "",
         country: p.country || (p.propertyType === "international-project" ? "" : "Turkey"),
@@ -436,6 +438,17 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
     isInternationalPage && selectedCity
       ? INTERNATIONAL_HERO_IMAGES[selectedCity] || heroBg
       : heroBg;
+  const getProjectPathById = (projectId) => {
+    const normalized = String(projectId || "").trim();
+    if (!normalized) return "/projects";
+    const matched = filteredProjects.find(
+      (project) => String(project.id || "").trim() === normalized
+    );
+    return (
+      matched?.projectPath ||
+      `/projects/${encodeURIComponent(`project-${normalized}`)}`
+    );
+  };
 
   useEffect(() => {
     setSelectedCity("");
@@ -1018,7 +1031,7 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
           <div className="w-full lg:w-[60%] h-[360px] lg:h-[calc(100vh-170px)]">
             <PropertiesMap
               properties={mapProjects}
-              onPropertyClick={(id) => navigate(`/projects/${id}`)}
+              onPropertyClick={(id) => navigate(getProjectPathById(id))}
               resizeKey={filteredProjects.length}
             />
           </div>
@@ -1488,7 +1501,7 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
             <div className="lg:col-span-7 h-[420px] lg:h-[680px] rounded-xl overflow-hidden border border-slate-200 bg-white sticky top-28">
               <PropertiesMap
                 properties={mapProjects}
-                onPropertyClick={(id) => navigate(`/projects/${id}`)}
+                onPropertyClick={(id) => navigate(getProjectPathById(id))}
                 resizeKey={filteredProjects.length}
               />
             </div>
@@ -1508,7 +1521,12 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
                     ? "bg-white rounded-xl border-rose-200 hover:shadow-lg hover:shadow-rose-100"
                     : "bg-white rounded-md border-gray-200 hover:shadow-md"
                 }`}
-                onClick={() => navigate(`/projects/${project.id}`)}
+                onClick={() =>
+                  navigate(
+                    project.projectPath ||
+                      `/projects/${encodeURIComponent(`project-${project.id}`)}`
+                  )
+                }
               >
                 <div className={`flex flex-col md:flex-row ${isSpecialOffersPage ? "relative" : ""}`}>
                   {/* Project Image */}
@@ -1540,7 +1558,12 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                navigate(`/projects/${project.id}`);
+                                navigate(
+                                  project.projectPath ||
+                                    `/projects/${encodeURIComponent(
+                                      `project-${project.id}`
+                                    )}`
+                                );
                               }}
                               className="text-blue-500 underline hover:text-blue-600 transition-colors"
                             >
@@ -1617,7 +1640,12 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            navigate(`/projects/${project.id}`);
+                            navigate(
+                              project.projectPath ||
+                                `/projects/${encodeURIComponent(
+                                  `project-${project.id}`
+                                )}`
+                            );
                           }}
                           className="text-blue-500 underline hover:text-blue-600 transition-colors"
                         >

@@ -43,7 +43,29 @@ export const resolvePropertyPath = (property) => {
 
 export const resolveProjectPath = (property) => {
   const id = String(property?.id || "").trim();
-  return id ? `/projects/${encodeURIComponent(id)}` : "/projects";
+  if (!id) return "/projects";
+
+  const preferredSlug = String(property?.slug || property?.seoSlug || "").trim();
+  const preferredSlugIsObjectId = /^[a-f0-9]{24}$/i.test(preferredSlug);
+  const sameAsId =
+    preferredSlug.toLowerCase() === id.toLowerCase();
+  if (preferredSlug && !preferredSlugIsObjectId && !sameAsId) {
+    const hasIdSuffix = /[a-f0-9]{24}$/i.test(preferredSlug);
+    const safeSlug = hasIdSuffix
+      ? preferredSlug
+      : `${slugify(preferredSlug) || "project"}-${id}`;
+    return `/projects/${encodeURIComponent(safeSlug)}`;
+  }
+
+  const generatedSlug = slugify(
+    property?.projectName || property?.title || property?.name || "project"
+  );
+  return `/projects/${encodeURIComponent(`${generatedSlug || "project"}-${id}`)}`;
+};
+
+export const extractObjectId = (value = "") => {
+  const match = String(value || "").trim().match(/([a-f0-9]{24})$/i);
+  return match ? match[1] : "";
 };
 
 export const resolveBlogIdentifier = (blog, options = {}) => {

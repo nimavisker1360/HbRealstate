@@ -11,6 +11,7 @@ const SeoStaticPageLayout = ({
   introParagraphs,
   sections,
   faqs,
+  relatedLinks = [],
 }) => {
   const breadcrumbSchema = {
     "@context": "https://schema.org",
@@ -83,6 +84,25 @@ const SeoStaticPageLayout = ({
             ))}
           </div>
 
+          {relatedLinks.length > 0 && (
+            <section className="mt-10">
+              <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+                Popular Listing Paths
+              </h2>
+              <div className="flex flex-wrap gap-3">
+                {relatedLinks.map((item) => (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-700 hover:bg-emerald-100"
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
           {sections.map((section, sectionIndex) => (
             <section key={section.heading} className="mt-10">
               <h2 className="text-2xl font-semibold text-gray-900 mb-4">
@@ -152,6 +172,12 @@ SeoStaticPageLayout.propTypes = {
       answer: PropTypes.string.isRequired,
     })
   ).isRequired,
+  relatedLinks: PropTypes.arrayOf(
+    PropTypes.shape({
+      to: PropTypes.string.isRequired,
+      label: PropTypes.string.isRequired,
+    })
+  ),
 };
 
 export default SeoStaticPageLayout;

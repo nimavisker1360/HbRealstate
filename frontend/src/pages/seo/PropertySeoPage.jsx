@@ -1,22 +1,48 @@
 import { useMemo } from "react";
 import { useQuery } from "react-query";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import Property from "../Property";
 import PropertyGridCard from "../../components/PropertyGridCard";
 import SEO from "../../components/SEO";
+import JsonLd from "../../components/JsonLd";
 import useProperties from "../../hooks/useProperties";
 import { getProperty } from "../../utils/api";
-import {
-  SITE_URL,
-  stripHtml,
-  toAbsoluteUrl,
-  truncateText,
-  resolvePropertySlug,
-} from "../../utils/seo";
+import { SITE_URL, stripHtml, toAbsoluteUrl, truncateText } from "../../utils/seo";
 
 const toNumber = (value) => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
+};
+
+const toPositiveNumber = (value) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+};
+
+const pickText = (...values) => {
+  for (const value of values) {
+    if (value === null || value === undefined) continue;
+    const normalized = String(value).trim();
+    if (normalized) return normalized;
+  }
+  return "";
+};
+
+const toRoomsCount = (roomsValue) => {
+  if (roomsValue === null || roomsValue === undefined) return null;
+  if (typeof roomsValue === "number" && roomsValue > 0) return roomsValue;
+  const text = String(roomsValue).trim();
+  if (!text) return null;
+  const match = text.match(/^(\d+)/);
+  if (!match) return null;
+  return toPositiveNumber(match[1]);
+};
+
+const pushIfPresent = (target, key, value) => {
+  if (value === null || value === undefined) return;
+  if (typeof value === "string" && !value.trim()) return;
+  if (Array.isArray(value) && value.length === 0) return;
+  target[key] = value;
 };
 
 const extractGeo = (property) => {
@@ -59,28 +85,98 @@ const extractGeo = (property) => {
   return null;
 };
 
+const normalizePathname = (pathname, fallbackPath) => {
+  const value = String(pathname || fallbackPath || "/").trim();
+  if (!value) return fallbackPath || "/";
+  return value.startsWith("/") ? value : `/${value}`;
+};
+
+const resolveAvailability = (property) => {
+  const explicitAvailability = pickText(property?.availability);
+  if (explicitAvailability) {
+    return explicitAvailability.startsWith("http")
+      ? explicitAvailability
+      : `https://schema.org/${explicitAvailability}`;
+  }
+
+  const listingStatus = pickText(property?.listingStatus).toLowerCase();
+  if (listingStatus === "ready") return "https://schema.org/InStock";
+  if (listingStatus === "offplan") return "https://schema.org/PreOrder";
+
+  return "";
+};
+
 const PropertySeoPage = () => {
   const { propertyId = "" } = useParams();
+  const location = useLocation();
   const { data: property } = useQuery(["resd", propertyId], () =>
-    getProperty(propertyId)
+    getProperty(propertyId),
+    {
+      enabled: Boolean(propertyId),
+    }
   );
   const { data: allProperties = [] } = useProperties();
 
-  const slug = resolvePropertySlug(property) || propertyId;
-  const canonicalPath = `/listing/${slug}`;
-  const canonicalUrl = toAbsoluteUrl(canonicalPath);
-  const propertyTitle = property?.title
-    ? `${property.title} | HB International Real Estate`
-    : "Property Detail | HB International Real Estate";
+  const district = pickText(
+    property?.addressDetails?.district,
+    property?.district,
+    property?.ilce
+  );
+  const city = pickText(property?.city, property?.addressDetails?.city);
+  const titleOrName = pickText(property?.title, property?.name, "Property");
+  const locationLabel = pickText(`${city} ${district}`) || "Turkey";
+
+  const normalizedPathname = normalizePathname(
+    location.pathname,
+    `/listing/${propertyId}`
+  );
+  const canonicalUrl = `${SITE_URL}${normalizedPathname}`;
+
+  const fallbackTitle = "Property Detail | Turkey | For Sale | HB Real Estate";
+  const propertyTitle = property
+    ? `${titleOrName} | ${locationLabel} | For Sale | HB Real Estate`
+    : fallbackTitle;
+
   const sourceDescription =
     property?.description_en ||
     property?.description ||
     property?.description_tr ||
     property?.description_ru ||
     "";
+
+  const roomsText = pickText(property?.rooms);
+  const bedroomCount = toPositiveNumber(property?.facilities?.bedrooms);
+  const roomLabel =
+    roomsText || (bedroomCount ? `${bedroomCount} bedroom` : "");
+  const highlightTokens = [
+    pickText(property?.category),
+    pickText(property?.usageStatus),
+    pickText(property?.deedStatus),
+    pickText(property?.siteName),
+  ].filter(Boolean);
+  const highlights = highlightTokens.slice(0, 2).join(", ");
+  const numericPrice = toPositiveNumber(property?.price);
+  const priceLabel =
+    numericPrice && pickText(property?.currency)
+      ? `${numericPrice.toLocaleString()} ${pickText(property?.currency)}`
+      : numericPrice
+      ? `${numericPrice.toLocaleString()}`
+      : "";
+
+  const descriptionParts = [
+    roomLabel ? `${roomLabel} property` : "",
+    locationLabel ? `in ${locationLabel}` : "",
+    priceLabel ? `priced at ${priceLabel}` : "",
+    highlights ? `Highlights: ${highlights}` : "",
+    sourceDescription ? stripHtml(sourceDescription) : "",
+  ].filter(Boolean);
+
   const propertyDescription =
-    truncateText(sourceDescription, 170) ||
-    "Explore this property detail and contact HB International Real Estate for current price and availability.";
+    truncateText(
+      descriptionParts.join(". "),
+      170
+    ) ||
+    "Explore this property detail and contact HB Real Estate for current price and availability.";
 
   const primaryImage = property?.images?.[0] || property?.image || "/og-image.png";
 
@@ -88,35 +184,52 @@ const PropertySeoPage = () => {
     if (!property) return null;
 
     const geo = extractGeo(property);
-    const numberOfRooms = property?.rooms || property?.facilities?.bedrooms || null;
-    const areaValue = property?.area?.gross || property?.area?.net || null;
+    const numberOfRooms =
+      toRoomsCount(property?.rooms) ||
+      toPositiveNumber(property?.facilities?.bedrooms);
+    const areaValue =
+      toPositiveNumber(property?.area?.gross) ||
+      toPositiveNumber(property?.area?.net) ||
+      toPositiveNumber(property?.area?.m2) ||
+      toPositiveNumber(property?.m2);
+    const images = [
+      ...(Array.isArray(property?.images) ? property.images : []),
+      pickText(property?.image),
+    ]
+      .filter(Boolean)
+      .map((item) => toAbsoluteUrl(item));
 
     const schema = {
       "@context": "https://schema.org",
       "@type": "RealEstateListing",
-      name: property.title,
-      description: stripHtml(sourceDescription),
-      image: property?.images?.length
-        ? property.images.map((item) => toAbsoluteUrl(item))
-        : [toAbsoluteUrl(primaryImage)],
-      url: canonicalUrl,
-      address: {
-        "@type": "PostalAddress",
-        streetAddress: property?.address || "",
-        addressLocality: property?.city || "",
-        addressCountry: property?.country || "TR",
-      },
-      price: property?.price,
-      currency: property?.currency || "USD",
-      numberOfRooms: numberOfRooms || undefined,
-      floorSize: areaValue
-        ? {
-            "@type": "QuantitativeValue",
-            value: Number(areaValue),
-            unitCode: "MTK",
-          }
-        : undefined,
     };
+
+    pushIfPresent(schema, "name", pickText(property?.title, property?.name));
+    pushIfPresent(schema, "description", stripHtml(sourceDescription));
+    pushIfPresent(schema, "url", canonicalUrl);
+    if (images.length > 0) {
+      schema.image = images;
+    }
+
+    const address = {
+      "@type": "PostalAddress",
+    };
+    pushIfPresent(address, "streetAddress", pickText(property?.address));
+    pushIfPresent(address, "addressLocality", city);
+    pushIfPresent(
+      address,
+      "addressRegion",
+      pickText(
+        property?.addressDetails?.district,
+        property?.district,
+        property?.ilce,
+        property?.addressRegion
+      )
+    );
+    pushIfPresent(address, "addressCountry", pickText(property?.country));
+    if (Object.keys(address).length > 1) {
+      schema.address = address;
+    }
 
     if (geo) {
       schema.geo = {
@@ -126,16 +239,35 @@ const PropertySeoPage = () => {
       };
     }
 
+    const offers = {
+      "@type": "Offer",
+    };
+    pushIfPresent(offers, "price", toPositiveNumber(property?.price));
+    pushIfPresent(offers, "priceCurrency", pickText(property?.currency));
+    pushIfPresent(offers, "availability", resolveAvailability(property));
+    pushIfPresent(offers, "url", canonicalUrl);
+    if (Object.keys(offers).length > 1) {
+      schema.offers = offers;
+    }
+
+    pushIfPresent(schema, "numberOfRooms", numberOfRooms);
+    if (areaValue) {
+      schema.floorSize = {
+        "@type": "QuantitativeValue",
+        value: Number(areaValue),
+        unitCode: "MTK",
+      };
+    }
+
     return schema;
   }, [
     canonicalUrl,
-    primaryImage,
+    city,
     property,
     sourceDescription,
   ]);
 
   const breadcrumbSchema = useMemo(() => {
-    if (!property) return null;
     return {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
@@ -155,12 +287,12 @@ const PropertySeoPage = () => {
         {
           "@type": "ListItem",
           position: 3,
-          name: property?.title || "Property",
+          name: pickText(property?.title, property?.name, "Property"),
           item: canonicalUrl,
         },
       ],
     };
-  }, [canonicalUrl, property]);
+  }, [canonicalUrl, property?.name, property?.title]);
 
   const relatedProperties = useMemo(() => {
     if (!property || !Array.isArray(allProperties)) return [];
@@ -198,11 +330,12 @@ const PropertySeoPage = () => {
       <SEO
         title={propertyTitle}
         description={propertyDescription}
-        canonicalPath={canonicalPath}
-        image={primaryImage}
+        canonical={canonicalUrl}
+        ogImage={primaryImage}
         type="product"
-        structuredData={[realEstateSchema, breadcrumbSchema]}
       />
+      <JsonLd data={realEstateSchema} />
+      <JsonLd data={breadcrumbSchema} />
 
       <Property />
 

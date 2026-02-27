@@ -173,6 +173,7 @@ const MUHIT_FEATURES = [
 
 import { CgRuler } from "react-icons/cg";
 import HeartBtn from "../components/HeartBtn";
+import { resolveProjectPath } from "../utils/seo";
 
 // Format date helper function
 const formatDate = (dateString, showFullDate = false, locale = "en") => {
@@ -231,9 +232,9 @@ const Property = () => {
       data?.propertyType === "local-project" ||
       data?.propertyType === "international-project"
     ) {
-      navigate(`/projects/${id}`, { replace: true });
+      navigate(resolveProjectPath(data), { replace: true });
     }
-  }, [data?.propertyType, id, navigate]);
+  }, [data, data?.propertyType, navigate]);
   // console.log(data)
   const [modalOpened, setModalOpened] = useState(false);
   const [galleryOpened, setGalleryOpened] = useState(false);

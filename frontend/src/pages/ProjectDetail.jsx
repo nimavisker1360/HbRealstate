@@ -50,6 +50,7 @@ import {
   getOptimizedVideoPosterUrl,
   getOptimizedVideoUrl,
 } from "../utils/media";
+import { extractObjectId, resolveProjectPath } from "../utils/seo";
 
 // All possible Bina Özellikleri (Building Features)
 const ALL_BINA_OZELLIKLERI = [
@@ -264,7 +265,12 @@ const hasSpecialOfferData = (specialOffer) =>
   );
 
 const ProjectDetail = () => {
-  const { id } = useParams();
+  const { projectSlugOrId: routeProjectSlugOrId = "" } = useParams();
+  const projectLookupKey = useMemo(() => {
+    const normalized = String(routeProjectSlugOrId || "").trim();
+    if (!normalized) return "";
+    return extractObjectId(normalized) || normalized;
+  }, [routeProjectSlugOrId]);
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const {
@@ -319,11 +325,20 @@ const ProjectDetail = () => {
 
   // Fetch project data from API
   const { data: propertyData, isLoading, isError } = useQuery(
-    ["project", id],
-    () => getProperty(id),
-    { enabled: !!id }
+    ["project", projectLookupKey],
+    () => getProperty(projectLookupKey),
+    { enabled: Boolean(projectLookupKey) }
   );
   const { data: consultants, isLoading: consultantsLoading } = useConsultants();
+
+  useEffect(() => {
+    const routeValue = String(routeProjectSlugOrId || "").trim();
+    if (!routeValue || !propertyData) return;
+    if (!/^[a-f0-9]{24}$/i.test(routeValue)) return;
+    const targetPath = resolveProjectPath(propertyData);
+    if (!targetPath) return;
+    navigate(targetPath, { replace: true });
+  }, [navigate, propertyData, routeProjectSlugOrId]);
 
   // Transform property data to project format
   const project = useMemo(() => {
@@ -1801,4 +1816,3 @@ const ProjectDetail = () => {
 };
 
 export default ProjectDetail;
-

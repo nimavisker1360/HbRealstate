@@ -25,7 +25,7 @@ const RouteSeo = () => {
         description:
           "Internal dashboard page for HB International Real Estate.",
         canonicalPath: pathname,
-        robots: "noindex, nofollow",
+        noindex: true,
       };
     }
 
@@ -33,6 +33,7 @@ const RouteSeo = () => {
       pathname === "/" ||
       pathname === "/listing" ||
       pathname.startsWith("/listing/") ||
+      pathname.startsWith("/projects/") ||
       pathname === "/blogs" ||
       pathname.startsWith("/blogs/") ||
       pathname.startsWith("/blog/") ||

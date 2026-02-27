@@ -46,19 +46,32 @@
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href="https://www.hbrealstate.com/" />
     <title>HB International Gayrimenkul</title>
-    <script
-      src="https://upload-widget.cloudinary.com/global/all.js"
-      type="text/javascript"
-      defer
-    ></script>
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-KMXZ73K0CE"></script>
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag() {
-        dataLayer.push(arguments);
-      }
-      gtag("js", new Date());
-      gtag("config", "G-KMXZ73K0CE");
+      (function () {
+        const isReactSnap =
+          typeof navigator !== "undefined" &&
+          /ReactSnap/i.test(String(navigator.userAgent || ""));
+        if (isReactSnap) return;
+
+        const cloudinaryScript = document.createElement("script");
+        cloudinaryScript.src = "https://upload-widget.cloudinary.com/global/all.js";
+        cloudinaryScript.type = "text/javascript";
+        cloudinaryScript.defer = true;
+        document.head.appendChild(cloudinaryScript);
+
+        const analyticsScript = document.createElement("script");
+        analyticsScript.async = true;
+        analyticsScript.src = "https://www.googletagmanager.com/gtag/js?id=G-KMXZ73K0CE";
+        document.head.appendChild(analyticsScript);
+
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function () {
+          window.dataLayer.push(arguments);
+        };
+
+        window.gtag("js", new Date());
+        window.gtag("config", "G-KMXZ73K0CE");
+      })();
     </script>
   </head>
   <body>

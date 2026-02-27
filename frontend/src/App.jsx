@@ -21,7 +21,7 @@ const CountryBlogs = lazy(() => import("./pages/CountryBlogs"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const Addresses = lazy(() => import("./pages/Addresses"));
 const LocalProjects = lazy(() => import("./pages/LocalProjects"));
-const ProjectDetail = lazy(() => import("./pages/ProjectDetail"));
+const ProjectDetail = lazy(() => import("./pages/seo/ProjectDetailSeoPage"));
 const TestimonialsTest = lazy(() => import("./pages/TestimonialsTest"));
 const Favourites = lazy(() => import("./pages/Favourites"));
 const Bookings = lazy(() => import("./pages/Bookings"));
@@ -84,7 +84,7 @@ export default function App() {
                     <Route path="/testimonials-test" element={<TestimonialsTest />} />
                     <Route path="/addresses" element={<Addresses />} />
                     <Route path="/projects" element={<LocalProjects />} />
-                    <Route path="/projects/:id" element={<ProjectDetail />} />
+                    <Route path="/projects/:projectSlugOrId" element={<ProjectDetail />} />
                     <Route path="/istanbul-apartments" element={<IstanbulApartments />} />
                     <Route path="/kyrenia-apartments" element={<KyreniaApartments />} />
                     <Route path="/turkey-property-investment" element={<TurkeyPropertyInvestment />} />

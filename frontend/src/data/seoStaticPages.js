@@ -92,6 +92,11 @@ export const seoStaticPages = {
       "Discover where, when, and how to buy Istanbul apartments with practical guidance on districts, yields, legal checks, and long-term value.",
     canonicalPath: "/istanbul-apartments",
     breadcrumbLabel: "Istanbul Apartments",
+    relatedLinks: [
+      { to: "/listing", label: "All Listings" },
+      { to: "/listing?city=Istanbul", label: "Istanbul Listings" },
+      { to: "/listing?city=Istanbul&category=residential", label: "Istanbul Residential" },
+    ],
     ...istanbulContent,
     faqs: [
       {
@@ -114,6 +119,11 @@ export const seoStaticPages = {
         answer:
           "Prioritizing visual appeal or discount size without full legal and operational analysis is the most common mistake in this segment.",
       },
+      {
+        question: "Should investors prioritize city center units in Istanbul?",
+        answer:
+          "City-center units can offer strong liquidity, but neighborhood-level transport access, building quality, and tenant profile depth are usually more important than a simple center-vs-suburb decision.",
+      },
     ],
   },
 
@@ -123,6 +133,11 @@ export const seoStaticPages = {
       "Learn how to evaluate Kyrenia apartments with a data-led approach covering rental demand, project quality, legal checks, and long-term exit planning.",
     canonicalPath: "/kyrenia-apartments",
     breadcrumbLabel: "Kyrenia Apartments",
+    relatedLinks: [
+      { to: "/listing", label: "All Listings" },
+      { to: "/listing?city=Kyrenia", label: "Kyrenia Listings" },
+      { to: "/listing?city=Kyrenia&category=residential", label: "Kyrenia Residential" },
+    ],
     ...kyreniaContent,
     faqs: [
       {
@@ -145,6 +160,11 @@ export const seoStaticPages = {
         answer:
           "Use comparable data, stress-test net income, and evaluate nearby supply pipeline before making final offers.",
       },
+      {
+        question: "What documents should I verify first in Kyrenia deals?",
+        answer:
+          "Start with title integrity, transfer authority, and any obligations tied to the property. Early legal verification reduces closing delays and protects exit liquidity.",
+      },
     ],
   },
 
@@ -154,6 +174,11 @@ export const seoStaticPages = {
       "Build a stronger Turkey property investment strategy with practical guidance on market selection, due diligence, financing, and long-term portfolio management.",
     canonicalPath: "/turkey-property-investment",
     breadcrumbLabel: "Turkey Property Investment",
+    relatedLinks: [
+      { to: "/listing", label: "All Listings" },
+      { to: "/listing?installmentAvailable=true", label: "Installment Listings" },
+      { to: "/listing?status=ready", label: "Ready Properties" },
+    ],
     ...turkeyInvestmentContent,
     faqs: [
       {
@@ -176,6 +201,11 @@ export const seoStaticPages = {
         answer:
           "Yes, with strong legal advisors and professional management systems that provide transparent reporting and maintenance controls.",
       },
+      {
+        question: "How many markets should I compare before buying in Turkey?",
+        answer:
+          "Compare at least two or three submarkets using the same underwriting framework. Side-by-side analysis improves pricing discipline and reduces concentration risk.",
+      },
     ],
   },
 
@@ -185,6 +215,11 @@ export const seoStaticPages = {
       "Understand how to approach Turkish citizenship by property with a practical framework for eligibility, due diligence, and long-term asset performance.",
     canonicalPath: "/turkish-citizenship-property",
     breadcrumbLabel: "Turkish Citizenship Property",
+    relatedLinks: [
+      { to: "/listing", label: "All Listings" },
+      { to: "/listing?citizenshipEligible=true", label: "Citizenship Eligible" },
+      { to: "/listing?city=Istanbul&citizenshipEligible=true", label: "Istanbul Citizenship Options" },
+    ],
     ...citizenshipContent,
     faqs: [
       {
@@ -206,6 +241,11 @@ export const seoStaticPages = {
         question: "What creates the highest risk in citizenship transactions?",
         answer:
           "Process inconsistency such as weak documentation control, unclear payment traceability, or poor legal due diligence creates the biggest risk.",
+      },
+      {
+        question: "Can citizenship-focused buyers still optimize for resale?",
+        answer:
+          "Yes. Selecting compliant properties in liquid submarkets with broad tenant demand helps preserve resale flexibility after citizenship milestones are completed.",
       },
     ],
   },

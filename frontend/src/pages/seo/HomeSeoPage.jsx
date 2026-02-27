@@ -7,7 +7,7 @@ const HomeSeoPage = () => {
       <SEO
         title="HB International Real Estate | Turkey Property & Investment Opportunities"
         description="Explore apartments, villas, and investment-ready projects across Istanbul, Kyrenia, and major Turkish markets with HB International Real Estate."
-        canonicalPath="/"
+        canonical="https://www.hbrealstate.com/"
       />
       <Home />
     </>
