@@ -211,7 +211,7 @@ const CountryBlogs = () => {
         ) : (
           <div className="mt-10 grid gap-8 md:grid-cols-2 xl:grid-cols-3">
             {countryBlogs.map(({ blog, index }) => {
-              const blogPath = resolveBlogPath(blog);
+              const blogPath = resolveBlogPath(blog, { preferSlug: true });
               const canNavigate = blogPath !== "/blogs";
               const postTitle = getLocalizedTitle(blog);
               const summary = getLocalizedSummary(blog);

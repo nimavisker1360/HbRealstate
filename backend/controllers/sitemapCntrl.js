@@ -40,6 +40,9 @@ const slugify = (value) =>
     .replace(/^-+/, "")
     .replace(/-+$/, "");
 
+const isObjectId = (value = "") =>
+  /^[a-f0-9]{24}$/i.test(String(value || "").trim());
+
 const resolveLastModified = (...candidates) => {
   for (const value of candidates) {
     if (!value) continue;
@@ -104,10 +107,21 @@ const isExcludedCountry = (value) => {
   return normalized === "turkey" || normalized === "turkiye";
 };
 
+const resolveBlogSlug = (blog) => {
+  const existingSlug = normalizeIdentifier(blog?.slug);
+  if (existingSlug && !isObjectId(existingSlug)) return existingSlug;
+
+  const titleSource =
+    blog?.title_en || blog?.title || blog?.title_tr || blog?.title_ru || "blog";
+  const baseSlug = slugify(titleSource) || "blog";
+  const id = normalizeIdentifier(blog?.id).toLowerCase();
+  return id ? `${baseSlug}-${id}` : baseSlug;
+};
+
 const toBlogPath = (blog) => {
-  const identifier = normalizeIdentifier(blog?.slug || blog?.id);
-  if (!identifier) return null;
-  return `/blog/${encodePathSegment(identifier)}`;
+  const slug = resolveBlogSlug(blog);
+  if (!slug) return null;
+  return `/blog/${encodePathSegment(slug)}`;
 };
 
 const toCountryPath = (blog) => {

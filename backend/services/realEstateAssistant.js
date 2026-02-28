@@ -498,6 +498,37 @@ function getLocalizedBlogField(blog, field, language = "en") {
   return normalizeString(blog?.[field]);
 }
 
+function slugifyBlogValue(value = "") {
+  return String(value || "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function isObjectIdString(value = "") {
+  return /^[a-f0-9]{24}$/i.test(String(value || "").trim());
+}
+
+function resolveAssistantBlogSlug(blog = {}) {
+  const existingSlug = normalizeString(blog?.slug);
+  if (existingSlug && !isObjectIdString(existingSlug)) return existingSlug;
+
+  const titleSource =
+    normalizeString(blog?.title_en) ||
+    normalizeString(blog?.title) ||
+    normalizeString(blog?.title_tr) ||
+    normalizeString(blog?.title_ru) ||
+    "blog";
+  const baseSlug = slugifyBlogValue(titleSource) || "blog";
+  const id = normalizeString(blog?._id?.toString?.() || blog?.id).toLowerCase();
+  return id ? `${baseSlug}-${id}` : baseSlug;
+}
+
 function normalizeBlogRecord(blog, language = "en") {
   const id = blog?._id?.toString?.() || blog?.id || "";
   const title = getLocalizedBlogField(blog, "title", language);
@@ -508,15 +539,17 @@ function normalizeBlogRecord(blog, language = "en") {
   const imageUrl =
     normalizeString(blog?.image) ||
     (Array.isArray(blog?.images) ? normalizeString(blog.images[0]) : "");
+  const slug = resolveAssistantBlogSlug(blog);
 
   return {
     id: normalizeString(id),
+    slug,
     title,
     summary,
     category,
     country: normalizeString(blog?.country),
     image_url: imageUrl,
-    blog_url: id ? `/blog/${id}` : "",
+    blog_url: slug ? `/blog/${slug}` : "",
     published_at: normalizeDateLike(blog?.createdAt),
   };
 }
@@ -1411,6 +1444,7 @@ function normalizeConsultantItem(item = {}) {
 function normalizeBlogItem(item = {}) {
   return {
     id: normalizeString(item.id),
+    slug: normalizeString(item.slug),
     title: normalizeString(item.title),
     summary: normalizeString(item.summary),
     category: normalizeString(item.category),

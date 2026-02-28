@@ -2,7 +2,7 @@
 import { useQuery } from "react-query";
 import { getBlog } from "../utils/api";
 import { MdArrowBack, MdCalendarToday, MdCategory, MdErrorOutline, MdAccessTime, MdShare, MdClose, MdChevronLeft, MdChevronRight, MdArticle } from "react-icons/md";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import HousingSalesChart from "../components/HousingSalesChart";
 import ForeignSalesChart from "../components/ForeignSalesChart";
@@ -14,15 +14,16 @@ import { fixMojibake } from "../utils/text";
 import {
   SITE_URL,
   buildLanguageAlternates,
+  isObjectId,
   resolveBlogIdentifier,
-  resolveBlogPath,
+  resolveBlogSlug,
   stripHtml,
   toAbsoluteUrl,
   truncateText,
 } from "../utils/seo";
 
 const BlogPost = () => {
-  const { blogId } = useParams();
+  const { slug: routeIdentifier } = useParams();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language?.toLowerCase() || "en";
@@ -51,14 +52,22 @@ const BlogPost = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const { data: blog, isLoading, isError } = useQuery(
-    ["blog", blogId],
-    () => getBlog(blogId),
+    ["blog", routeIdentifier],
+    () => getBlog(routeIdentifier),
     {
-      enabled: !!blogId,
+      enabled: !!routeIdentifier,
       refetchOnWindowFocus: false,
     }
   );
   const { data: blogs, refetch: refetchBlogs } = useBlogs();
+  const resolvedBlogSlug = resolveBlogSlug(blog);
+
+  useEffect(() => {
+    if (!blog || !routeIdentifier) return;
+    if (!isObjectId(routeIdentifier)) return;
+    if (!resolvedBlogSlug || resolvedBlogSlug === routeIdentifier) return;
+    navigate(`/blog/${encodeURIComponent(resolvedBlogSlug)}`, { replace: true });
+  }, [blog, navigate, resolvedBlogSlug, routeIdentifier]);
 
   // Get content based on selected language
   const getLocalizedContent = (field) => {
@@ -84,7 +93,9 @@ const BlogPost = () => {
     const map = new Map();
     if (Array.isArray(blogs)) {
       blogs.forEach((blogItem) => {
-        const identifier = resolveBlogIdentifier(blogItem);
+        const identifier = resolveBlogIdentifier(blogItem, {
+          preferSlug: true,
+        });
         if (blogItem?.menuKey && identifier) {
           map.set(blogItem.menuKey, identifier);
         }
@@ -100,7 +111,7 @@ const BlogPost = () => {
         .filter((content) => typeof content === "string")
         .some((content) => content.includes(marker))
     );
-    return resolveBlogIdentifier(match) || null;
+    return resolveBlogIdentifier(match, { preferSlug: true }) || null;
   };
 
   const getMarketAnalysisBlogId = async (key) => {
@@ -130,7 +141,7 @@ const BlogPost = () => {
   const findBlogIdByMenuKey = (list, menuKey) => {
     if (!menuKey || !Array.isArray(list)) return null;
     const match = list.find((blogItem) => blogItem?.menuKey === menuKey);
-    return resolveBlogIdentifier(match) || null;
+    return resolveBlogIdentifier(match, { preferSlug: true }) || null;
   };
 
   const getMenuBlogId = async (item) => {
@@ -156,9 +167,9 @@ const BlogPost = () => {
   };
 
   const handleAboutTurkeyItemClick = async (item) => {
-    const blogId = await getMenuBlogId(item);
-    if (blogId) {
-      navigate(`/blog/${blogId}`);
+    const blogSlug = await getMenuBlogId(item);
+    if (blogSlug) {
+      navigate(`/blog/${blogSlug}`);
     } else {
       navigate("/blogs");
     }
@@ -248,17 +259,17 @@ const BlogPost = () => {
   const categoryLabel = getLocalizedCategoryLabel(getLocalizedContent("category"));
   const localizedFaq = getLocalizedFaq();
   const localizedTitle = getLocalizedContent("title") || "Blog Post";
-  const canonicalPath = blog
-    ? resolveBlogPath(blog, { preferSlug: true })
-    : `/blog/${blogId || ""}`;
+  const canonicalPath = resolvedBlogSlug
+    ? `/blog/${encodeURIComponent(resolvedBlogSlug)}`
+    : `/blog/${routeIdentifier || ""}`;
   const fallbackDescription =
-    "Read practical real estate insights and market updates from HB International Real Estate.";
+    "Read practical real estate insights and market updates from HB Real Estate.";
   const resolvedDescription =
     truncateText(
-      getLocalizedContent("metaDescription") ||
-        getLocalizedContent("summary") ||
+      getLocalizedContent("summary") ||
+        getLocalizedContent("metaDescription") ||
         getLocalizedContent("content"),
-      165
+      150
     ) || fallbackDescription;
   const seoImage = blog?.image || blog?.images?.[0] || "/og-image.png";
   const normalizedCategory = getLocalizedContent("category") || "Real Estate";
@@ -268,7 +279,7 @@ const BlogPost = () => {
 
   const blogSchema = {
     "@context": "https://schema.org",
-    "@type": "BlogPosting",
+    "@type": "Article",
     headline: localizedTitle,
     articleSection: normalizedCategory,
     description: resolvedDescription,
@@ -337,7 +348,7 @@ const BlogPost = () => {
   return (
     <>
       <SEO
-        title={`${localizedTitle} | HB International Real Estate`}
+        title={`${localizedTitle} | HB Real Estate`}
         description={resolvedDescription}
         canonicalPath={canonicalPath}
         image={seoImage}

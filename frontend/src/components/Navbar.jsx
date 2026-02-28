@@ -107,7 +107,7 @@ const Navbar = ({
     const map = new Map();
     if (Array.isArray(blogs)) {
       blogs.forEach((blog) => {
-        const identifier = resolveBlogIdentifier(blog);
+        const identifier = resolveBlogIdentifier(blog, { preferSlug: true });
         if (blog?.menuKey && identifier) {
           map.set(blog.menuKey, identifier);
         }
@@ -123,7 +123,7 @@ const Navbar = ({
         .filter((content) => typeof content === "string")
         .some((content) => content.includes(marker))
     );
-    return resolveBlogIdentifier(match) || null;
+    return resolveBlogIdentifier(match, { preferSlug: true }) || null;
   };
 
   const getMarketAnalysisBlogId = async (key) => {
@@ -153,7 +153,7 @@ const Navbar = ({
   const findBlogIdByMenuKey = (list, menuKey) => {
     if (!menuKey || !Array.isArray(list)) return null;
     const match = list.find((blog) => blog?.menuKey === menuKey);
-    return resolveBlogIdentifier(match) || null;
+    return resolveBlogIdentifier(match, { preferSlug: true }) || null;
   };
 
   const getMenuBlogId = async (item) => {

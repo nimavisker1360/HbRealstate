@@ -12,6 +12,24 @@ const toSlug = (value = "") =>
     .replace(/-+/g, "-")
     .replace(/^-+|-+$/g, "");
 
+const isObjectId = (value = "") =>
+  /^[a-f0-9]{24}$/i.test(String(value || "").trim());
+
+const pickBlogTitle = (blog = {}) =>
+  blog?.title_en || blog?.title || blog?.title_tr || blog?.title_ru || "blog";
+
+const resolveBlogSlug = (blog = {}) => {
+  const existingSlug = String(blog?.slug || "").trim();
+  if (existingSlug && !isObjectId(existingSlug)) return existingSlug;
+
+  const baseSlug = toSlug(pickBlogTitle(blog)) || "blog";
+  const id = String(blog?.id || "").trim().toLowerCase();
+  return id ? `${baseSlug}-${id}` : baseSlug;
+};
+
+const withResolvedSlug = (blog) =>
+  blog ? { ...blog, slug: resolveBlogSlug(blog) } : blog;
+
 // Get all blogs (public)
 export const getAllBlogs = asyncHandler(async (req, res) => {
   try {
@@ -19,7 +37,7 @@ export const getAllBlogs = asyncHandler(async (req, res) => {
       where: { published: true },
       orderBy: [{ order: "asc" }, { createdAt: "desc" }],
     });
-    res.status(200).send(blogs);
+    res.status(200).send(blogs.map(withResolvedSlug));
   } catch (err) {
     console.error("Error fetching blogs:", err);
     res.status(500).send({ message: "Error fetching blogs" });
@@ -32,7 +50,9 @@ export const getAllBlogsAdmin = asyncHandler(async (req, res) => {
     const blogs = await prisma.blog.findMany({
       orderBy: [{ order: "asc" }, { createdAt: "desc" }],
     });
-    res.status(200).send({ totalBlogs: blogs.length, blogs });
+    res
+      .status(200)
+      .send({ totalBlogs: blogs.length, blogs: blogs.map(withResolvedSlug) });
   } catch (err) {
     console.error("Error fetching blogs:", err);
     res.status(500).send({ message: "Error fetching blogs" });
@@ -41,24 +61,45 @@ export const getAllBlogsAdmin = asyncHandler(async (req, res) => {
 
 // Get single blog
 export const getBlog = asyncHandler(async (req, res) => {
-  const { id } = req.params;
+  const { id: idOrSlug } = req.params;
+  const normalizedIdentifier = String(idOrSlug || "").trim().toLowerCase();
 
   try {
-    let blog = await prisma.blog.findUnique({
-      where: { id },
-    });
+    let blog = null;
+
+    if (isObjectId(idOrSlug)) {
+      blog = await prisma.blog.findUnique({
+        where: { id: idOrSlug },
+      });
+    }
 
     if (!blog) {
       blog = await prisma.blog.findUnique({
-        where: { slug: id },
+        where: { slug: idOrSlug },
       });
+    }
+
+    if (!blog && normalizedIdentifier) {
+      const objectIdMatch = normalizedIdentifier.match(/([a-f0-9]{24})$/i);
+      const fallbackObjectId = objectIdMatch?.[1] || "";
+      if (fallbackObjectId) {
+        const candidate = await prisma.blog.findUnique({
+          where: { id: fallbackObjectId },
+        });
+        if (candidate) {
+          const candidateFallbackSlug = resolveBlogSlug(candidate).toLowerCase();
+          if (candidateFallbackSlug === normalizedIdentifier) {
+            blog = candidate;
+          }
+        }
+      }
     }
 
     if (!blog) {
       return res.status(404).send({ message: "Blog not found" });
     }
 
-    res.status(200).send(blog);
+    res.status(200).send(withResolvedSlug(blog));
   } catch (err) {
     console.error("Error fetching blog:", err);
     res.status(500).send({ message: "Error fetching blog" });
@@ -80,7 +121,7 @@ export const createBlog = asyncHandler(async (req, res) => {
       select: { order: true },
     });
 
-    let slugBase = toSlug(data.title);
+    let slugBase = toSlug(data.slug || data.title);
     if (!slugBase) {
       slugBase = `blog-${Date.now()}`;
     }

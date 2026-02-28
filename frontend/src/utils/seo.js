@@ -136,9 +136,25 @@ export const extractObjectId = (value = "") => {
   return match ? match[1] : "";
 };
 
+export const isObjectId = (value = "") =>
+  /^[a-f0-9]{24}$/i.test(String(value || "").trim());
+
+export const resolveBlogSlug = (blog) => {
+  const existingSlug = String(blog?.slug || "").trim();
+  if (existingSlug && !isObjectId(existingSlug)) return existingSlug;
+
+  const titleSource =
+    blog?.title_en || blog?.title || blog?.title_tr || blog?.title_ru || "blog";
+  const baseSlug = slugify(titleSource) || "blog";
+  const id = String(blog?.id || "").trim().toLowerCase();
+
+  // Include id for generated fallback slugs so duplicate titles remain unique.
+  return id ? `${baseSlug}-${id}` : baseSlug;
+};
+
 export const resolveBlogIdentifier = (blog, options = {}) => {
   const preferSlug = Boolean(options?.preferSlug);
-  const slug = String(blog?.slug || "").trim();
+  const slug = resolveBlogSlug(blog);
   const id = String(blog?.id || "").trim();
   return preferSlug ? slug || id : id || slug;
 };

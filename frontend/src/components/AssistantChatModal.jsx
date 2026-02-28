@@ -152,7 +152,7 @@ const resolveConsultantProfileUrl = (item) => {
 const resolveBlogUrl = (item) => {
   const link = String(item?.blog_url || "").trim();
   if (link) return link;
-  const path = resolveBlogPath(item);
+  const path = resolveBlogPath(item, { preferSlug: true });
   return path === "/blogs" ? "" : path;
 };
 

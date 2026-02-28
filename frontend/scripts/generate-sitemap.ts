@@ -94,6 +94,9 @@ const slugify = (value = "") =>
     .replace(/-+/g, "-")
     .replace(/^-+|-+$/g, "");
 
+const isObjectId = (value = "") =>
+  /^[a-f0-9]{24}$/i.test(String(value || "").trim());
+
 const pickText = (...values: Array<unknown>) => {
   for (const value of values) {
     if (value === null || value === undefined) continue;
@@ -198,9 +201,25 @@ const toProjectPath = (property: PropertyEntry): string | null => {
   return `/projects/${encodeURIComponent(`${buildProjectSlugBase(property)}-${id}`)}`;
 };
 
+const resolveBlogSlug = (blog: BlogEntry): string => {
+  const existingSlug = String(blog.slug || "").trim();
+  if (existingSlug && !isObjectId(existingSlug)) return existingSlug;
+
+  const titleSource = pickText(
+    blog.title_en,
+    blog.title,
+    blog.title_tr,
+    blog.title_ru,
+    "blog"
+  );
+  const baseSlug = slugify(titleSource) || "blog";
+  const id = String(blog.id || "").trim().toLowerCase();
+  return id ? `${baseSlug}-${id}` : baseSlug;
+};
+
 const toBlogPath = (blog: BlogEntry): string | null => {
-  const identifier = String(blog.slug || blog.id || "").trim();
-  return identifier ? `/blog/${encodeURIComponent(identifier)}` : null;
+  const slug = resolveBlogSlug(blog);
+  return slug ? `/blog/${encodeURIComponent(slug)}` : null;
 };
 
 const extractCountryFromTitle = (rawTitle?: string) => {
