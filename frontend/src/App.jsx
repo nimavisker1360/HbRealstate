@@ -29,6 +29,9 @@ const IstanbulApartments = lazy(() => import("./pages/IstanbulApartments"));
 const KyreniaApartments = lazy(() => import("./pages/KyreniaApartments"));
 const TurkeyPropertyInvestment = lazy(() => import("./pages/TurkeyPropertyInvestment"));
 const TurkishCitizenshipProperty = lazy(() => import("./pages/TurkishCitizenshipProperty"));
+const InvestmentOpportunitiesBlogs = lazy(
+  () => import("./pages/InvestmentOpportunitiesBlogs")
+);
 
 const ReactQueryDevtools = import.meta.env.DEV
   ? lazy(() =>
@@ -89,6 +92,10 @@ export default function App() {
                     <Route path="/kyrenia-apartments" element={<KyreniaApartments />} />
                     <Route path="/turkey-property-investment" element={<TurkeyPropertyInvestment />} />
                     <Route path="/turkish-citizenship-property" element={<TurkishCitizenshipProperty />} />
+                    <Route
+                      path="/investment-opportunities"
+                      element={<InvestmentOpportunitiesBlogs />}
+                    />
                   </Route>
                 </Routes>
               </Suspense>

@@ -214,7 +214,7 @@ const Navbar = ({
   const currentProjectType = searchParams.get("projectType");
   const isProjectsPage = location.pathname === "/projects";
   const isInvestmentOpportunitiesPage =
-    isProjectsPage && currentProjectType === "special-offer";
+    location.pathname === "/investment-opportunities";
 
   const handleCategoryClick = (type, category) => {
     navigate(`/listing?type=${type}&category=${category}`);
@@ -304,7 +304,7 @@ const Navbar = ({
   };
 
   const handleInvestmentOpportunitiesClick = () => {
-    navigate("/projects?projectType=special-offer");
+    navigate("/investment-opportunities");
     setProjectsDropdownOpen(false);
     closeMenu && closeMenu();
   };

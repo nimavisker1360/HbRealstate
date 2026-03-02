@@ -39,6 +39,7 @@ const RouteSeo = () => {
       pathname.startsWith("/blog/") ||
       pathname === "/istanbul-apartments" ||
       pathname === "/kyrenia-apartments" ||
+      pathname === "/investment-opportunities" ||
       pathname === "/turkey-property-investment" ||
       pathname === "/turkish-citizenship-property";
 

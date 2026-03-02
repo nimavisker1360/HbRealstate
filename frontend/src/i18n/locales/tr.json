@@ -57,7 +57,7 @@
     "blogDeleteError": "Blog silinirken bir hata oluştu.",
     "blogStatusUpdateError": "Blog durumu güncellenirken bir hata oluştu.",
     "blogReorderError": "Blog sırası değiştirilirken bir hata oluştu.",
-    "blogRequiredFields": "Lütfen gerekli alanları doldurun (Başlık EN/TR, Özet EN/TR, Kategori, İçerik).",
+    "blogRequiredFields": "Lütfen gerekli alanları doldurun (Başlık, Özet, Kategori, İçerik).",
     "blogCreatedSuccess": "Blog başarıyla oluşturuldu!",
     "blogUpdatedSuccess": "Blog başarıyla güncellendi!",
     "blogDeletedSuccess": "Blog başarıyla silindi!",

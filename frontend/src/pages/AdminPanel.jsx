@@ -378,6 +378,15 @@ const AdminPanel = () => {
     () => [{ value: "nav.citizenship", label: t("nav.citizenship") }],
     [t, i18n.language]
   );
+  const investmentOpportunitiesMenuOptions = useMemo(
+    () => [
+      {
+        value: "nav.investmentOpportunities",
+        label: t("nav.investmentOpportunities"),
+      },
+    ],
+    [t, i18n.language]
+  );
 
   // Testimonials state
   const [testimonials, setTestimonials] = useState([]);
@@ -1512,10 +1521,18 @@ const AdminPanel = () => {
       hasBlocksTr ||
       hasBlocksRu;
 
-    const hasRequiredSummary = blogForm.summary_en?.trim() && blogForm.summary_tr?.trim();
+    const hasRequiredTitle =
+      blogForm.title_en?.trim() ||
+      blogForm.title_tr?.trim() ||
+      blogForm.title_ru?.trim() ||
+      blogForm.title?.trim();
+    const hasRequiredSummary =
+      blogForm.summary_en?.trim() ||
+      blogForm.summary_tr?.trim() ||
+      blogForm.summary_ru?.trim() ||
+      blogForm.summary?.trim();
     if (
-      !blogForm.title_en ||
-      !blogForm.title_tr ||
+      !hasRequiredTitle ||
       !blogForm.category ||
       !hasAnyContent ||
       !hasRequiredSummary
@@ -1627,11 +1644,19 @@ const AdminPanel = () => {
       hasBlocksEn ||
       hasBlocksTr ||
       hasBlocksRu;
-    const hasRequiredSummary = blogForm.summary_en?.trim() && blogForm.summary_tr?.trim();
+    const hasRequiredTitle =
+      blogForm.title_en?.trim() ||
+      blogForm.title_tr?.trim() ||
+      blogForm.title_ru?.trim() ||
+      blogForm.title?.trim();
+    const hasRequiredSummary =
+      blogForm.summary_en?.trim() ||
+      blogForm.summary_tr?.trim() ||
+      blogForm.summary_ru?.trim() ||
+      blogForm.summary?.trim();
 
     if (
-      !blogForm.title_en ||
-      !blogForm.title_tr ||
+      !hasRequiredTitle ||
       !blogForm.category ||
       !hasAnyContent ||
       !hasRequiredSummary
@@ -4872,6 +4897,23 @@ const AdminPanel = () => {
                 setBlogForm({ ...blogForm, menuKey: value || "" })
               }
             />
+            <Select
+              label="Investment Opportunities (optional)"
+              placeholder="Link this post to Investment Opportunities"
+              searchable
+              clearable
+              data={investmentOpportunitiesMenuOptions}
+              value={
+                investmentOpportunitiesMenuOptions.some(
+                  (option) => option.value === blogForm.menuKey
+                )
+                  ? blogForm.menuKey
+                  : null
+              }
+              onChange={(value) =>
+                setBlogForm({ ...blogForm, menuKey: value || "" })
+              }
+            />
 
             <div className="grid gap-3 md:grid-cols-3">
               <Textarea
@@ -5583,6 +5625,23 @@ const AdminPanel = () => {
               data={citizenshipMenuOptions}
               value={
                 citizenshipMenuOptions.some(
+                  (option) => option.value === blogForm.menuKey
+                )
+                  ? blogForm.menuKey
+                  : null
+              }
+              onChange={(value) =>
+                setBlogForm({ ...blogForm, menuKey: value || "" })
+              }
+            />
+            <Select
+              label="Investment Opportunities (optional)"
+              placeholder="Link this post to Investment Opportunities"
+              searchable
+              clearable
+              data={investmentOpportunitiesMenuOptions}
+              value={
+                investmentOpportunitiesMenuOptions.some(
                   (option) => option.value === blogForm.menuKey
                 )
                   ? blogForm.menuKey
@@ -6355,6 +6414,23 @@ const AdminPanel = () => {
               data={citizenshipMenuOptions}
               value={
                 citizenshipMenuOptions.some(
+                  (option) => option.value === aiBlogForm.menuKey
+                )
+                  ? aiBlogForm.menuKey
+                  : null
+              }
+              onChange={(value) =>
+                setAiBlogForm({ ...aiBlogForm, menuKey: value || "" })
+              }
+            />
+            <Select
+              label="Investment Opportunities (optional)"
+              placeholder="Link this post to Investment Opportunities"
+              searchable
+              clearable
+              data={investmentOpportunitiesMenuOptions}
+              value={
+                investmentOpportunitiesMenuOptions.some(
                   (option) => option.value === aiBlogForm.menuKey
                 )
                   ? aiBlogForm.menuKey

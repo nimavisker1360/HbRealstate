@@ -57,7 +57,7 @@
     "blogDeleteError": "Error deleting blog.",
     "blogStatusUpdateError": "Error updating blog status.",
     "blogReorderError": "Error reordering blogs.",
-    "blogRequiredFields": "Please fill required fields (Title EN/TR, Summary EN/TR, Category, Content).",
+    "blogRequiredFields": "Please fill required fields (Title, Summary, Category, Content).",
     "blogCreatedSuccess": "Blog created successfully!",
     "blogUpdatedSuccess": "Blog updated successfully!",
     "blogDeletedSuccess": "Blog deleted successfully!",
