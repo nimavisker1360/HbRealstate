@@ -4,7 +4,16 @@ import useProperties from "../hooks/useProperties";
 import { useEffect, useState, useRef, useMemo, useContext } from "react";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
-import { MdLocationOn, MdSearch, MdKeyboardArrowDown, MdFilterList, MdClose, MdList, MdPerson } from "react-icons/md";
+import {
+  MdLocationOn,
+  MdSearch,
+  MdKeyboardArrowDown,
+  MdFilterList,
+  MdClose,
+  MdList,
+  MdLocationCity,
+  MdPublic,
+} from "react-icons/md";
 import CurrencyContext from "../context/CurrencyContext";
 import useConsultants from "../hooks/useConsultants";
 
@@ -506,6 +515,26 @@ const Properties = () => {
     return t("listing.rooms");
   };
 
+  const projectPageOptions = [
+    {
+      value: "local",
+      label: t("nav.localProjects"),
+      icon: MdLocationCity,
+      route: "/projects",
+    },
+    {
+      value: "international",
+      label: t("nav.internationalProjects"),
+      icon: MdPublic,
+      route: "/projects?projectType=international",
+    },
+  ];
+
+  const handleProjectPageNavigation = (route) => {
+    setShowTypeDropdown(false);
+    navigate(route);
+  };
+
   const activeFiltersCount = useMemo(() => {
     let count = 0;
     if (searchValue.trim()) count += 1;
@@ -736,14 +765,14 @@ const Properties = () => {
                   <MdSearch className="text-gray-400 text-lg flex-shrink-0" />
                 </div>
 
-                {/* Consultant Filter Dropdown */}
+                {/* Project Type Dropdown */}
                 <div ref={typeRef} className="relative w-[96px] shrink-0 sm:w-auto">
                   <button
                     type="button"
                     onClick={() => setShowTypeDropdown((prev) => !prev)}
                     className="flex w-full items-center justify-between gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-700 transition hover:border-emerald-200 hover:bg-emerald-50"
                   >
-                    <span className="min-w-0 flex-1 truncate">{getConsultantLabel()}</span>
+                    <span className="min-w-0 flex-1 truncate">{t("nav.projects")}</span>
                     <MdKeyboardArrowDown
                       className={`transition-transform ${showTypeDropdown ? "rotate-180" : ""}`}
                     />
@@ -757,43 +786,22 @@ const Properties = () => {
                     }`}
                   >
                     <div className="max-h-[320px] overflow-y-auto">
-                      {consultantOptions.map((option) => {
-                        const IconComponent = option.icon || MdPerson;
-                        const isActive = consultantFilter
-                          ? normalizeId(consultantFilter) === normalizeId(option.value)
-                          : option.value === null;
+                      {projectPageOptions.map((option) => {
+                        const IconComponent = option.icon;
                         return (
                           <button
-                            key={option.value ?? "all"}
+                            key={option.value}
                             type="button"
                             onClick={() => {
-                              setConsultantFilter(option.value);
-                              setShowTypeDropdown(false);
+                              handleProjectPageNavigation(option.route);
                             }}
-                            className={`w-full px-4 py-2 text-sm transition-colors ${
-                              isActive
-                                ? "bg-emerald-50 text-emerald-700 font-medium"
-                                : "text-gray-700 hover:bg-emerald-50"
-                            }`}
+                            className="w-full px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-emerald-50"
                           >
                             <div className="flex items-center gap-3">
-                              <div className="h-7 w-7 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center overflow-hidden">
-                                {option.image ? (
-                                  <img
-                                    src={option.image}
-                                    alt={option.label}
-                                    className="h-full w-full object-cover"
-                                  />
-                                ) : (
-                                  <IconComponent className="text-base" />
-                                )}
+                              <div className="h-7 w-7 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                                <IconComponent className="text-base" />
                               </div>
                               <span className="flex-1 min-w-0 truncate">{option.label}</span>
-                              {option.value && (
-                                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                                  {option.count ?? 0}
-                                </span>
-                              )}
                             </div>
                           </button>
                         );
