@@ -72,6 +72,7 @@ const staticPages: SitemapUrl[] = [
   { path: "/today", changefreq: "daily", priority: "0.7" },
   { path: "/istanbul-apartments", changefreq: "weekly", priority: "0.8" },
   { path: "/kyrenia-apartments", changefreq: "weekly", priority: "0.8" },
+  { path: "/investment-opportunities", changefreq: "weekly", priority: "0.8" },
   { path: "/turkey-property-investment", changefreq: "weekly", priority: "0.8" },
   { path: "/turkish-citizenship-property", changefreq: "weekly", priority: "0.8" },
 ];
@@ -153,6 +154,13 @@ const titleContainsLocation = (title: string, district: string, city: string) =>
   );
 };
 
+const titleContainsToken = (title: string, token: string) => {
+  const normalizedTitle = slugify(title);
+  if (!normalizedTitle) return false;
+  const normalizedToken = slugify(token);
+  return Boolean(normalizedToken && normalizedTitle.includes(normalizedToken));
+};
+
 const buildProjectSlugBase = (property: PropertyEntry) => {
   const projectTitle = pickText(
     property?.projectName,
@@ -162,15 +170,30 @@ const buildProjectSlugBase = (property: PropertyEntry) => {
   );
   const district = getProjectDistrict(property);
   const city = pickText(property?.city, property?.addressDetails?.city);
-  const location = [district, city].filter(Boolean).join(", ");
-  const includeLocation = location && !titleContainsLocation(projectTitle, district, city);
+  const projectType = String(property?.propertyType || "").toLowerCase().trim();
+  const isLocalIstanbulProject =
+    projectType === "local-project" && slugify(city) === "istanbul";
+  const titleHasDistrict = titleContainsToken(projectTitle, district);
+  const titleHasCity = titleContainsToken(projectTitle, city);
+
+  let locationLabel = "";
+  if (isLocalIstanbulProject && city && !titleHasCity) {
+    locationLabel = [titleHasDistrict ? "" : district, city]
+      .filter(Boolean)
+      .join(", ");
+  } else {
+    const location = [district, city].filter(Boolean).join(", ");
+    const includeLocation =
+      location && !titleContainsLocation(projectTitle, district, city);
+    locationLabel = includeLocation ? location : "";
+  }
 
   const roomTypes = getProjectRoomTypes(property)
     .map((item) => normalizeRoomTypeForSlug(item))
     .filter(Boolean);
 
   const sections = [
-    includeLocation ? `${projectTitle} in ${location}` : projectTitle,
+    locationLabel ? `${projectTitle} in ${locationLabel}` : projectTitle,
     roomTypes.length > 0 ? `${roomTypes.join(", ")} Apartments` : "Apartments",
     "HB Real Estate",
   ];

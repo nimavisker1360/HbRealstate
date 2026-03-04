@@ -92,7 +92,7 @@ const Navbar = ({
   // Project types with translations
   const projectTypes = [
     {
-      value: "LocalProject",
+      value: "local",
       label: t("nav.localProjects"),
       icon: MdLocationCity,
     },
@@ -212,6 +212,15 @@ const Navbar = ({
   const currentFilter = searchParams.get("type");
   const currentCategory = searchParams.get("category");
   const currentProjectType = searchParams.get("projectType");
+  const normalizedProjectType = String(currentProjectType || "")
+    .trim()
+    .toLowerCase();
+  const activeProjectType =
+    normalizedProjectType === "international" ||
+    normalizedProjectType === "internationalproject" ||
+    normalizedProjectType === "international-project"
+      ? "international"
+      : "local";
   const isProjectsPage = location.pathname === "/projects";
   const isInvestmentOpportunitiesPage =
     location.pathname === "/investment-opportunities";
@@ -294,11 +303,8 @@ const Navbar = ({
   };
 
   const handleProjectClick = (projectType) => {
-    if (projectType === "LocalProject") {
-      navigate("/projects");
-    } else {
-      navigate("/projects?projectType=international");
-    }
+    const targetProjectType = projectType === "international" ? "international" : "local";
+    navigate(`/projects?projectType=${targetProjectType}`);
     setProjectsDropdownOpen(false);
     closeMenu && closeMenu();
   };
@@ -1002,10 +1008,7 @@ const Navbar = ({
         >
           {projectTypes.map((project) => {
             const IconComponent = project.icon;
-            const isActive =
-              project.value === "LocalProject"
-                ? isProjectsPage && !currentProjectType
-                : isProjectsPage && currentProjectType === "international";
+            const isActive = isProjectsPage && activeProjectType === project.value;
             return (
               <div
                 key={project.value}

@@ -111,6 +111,25 @@ const normalizeListingStatus = (value) => {
   return "";
 };
 
+const normalizeProjectTypeFilter = (value) => {
+  const normalized = normalizeText(value);
+  if (
+    normalized === "local" ||
+    normalized === "localproject" ||
+    normalized === "local-project"
+  ) {
+    return "local-project";
+  }
+  if (
+    normalized === "international" ||
+    normalized === "internationalproject" ||
+    normalized === "international-project"
+  ) {
+    return "international-project";
+  }
+  return "";
+};
+
 const getSpecialOffers = (property) => {
   const offers = toArray(property?.projeHakkinda?.specialOffers);
   const legacyOffer = property?.projeHakkinda?.specialOffer;
@@ -308,10 +327,9 @@ const Listing = () => {
   // Local state for price inputs
   const [priceRange, setPriceRange] = useState({ min: minPrice, max: maxPrice });
 
-  // Map projectType to type filter (for navbar compatibility)
-  const effectiveTypeFilter = projectTypeFilter 
-    ? (projectTypeFilter === "LocalProject" ? "local-project" : "international-project")
-    : typeFilter;
+  // Map projectType URL aliases to canonical property types
+  const normalizedProjectTypeFilter = normalizeProjectTypeFilter(projectTypeFilter);
+  const effectiveTypeFilter = normalizedProjectTypeFilter || typeFilter;
 
   const [filter, setFilter] = useState(searchQuery);
 

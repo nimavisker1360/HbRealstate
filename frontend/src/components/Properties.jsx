@@ -520,7 +520,7 @@ const Properties = () => {
       value: "local",
       label: t("nav.localProjects"),
       icon: MdLocationCity,
-      route: "/projects",
+      route: "/projects?projectType=local",
     },
     {
       value: "international",

@@ -94,8 +94,8 @@ export const seoStaticPages = {
     breadcrumbLabel: "Istanbul Apartments",
     relatedLinks: [
       { to: "/listing", label: "All Listings" },
-      { to: "/listing?city=Istanbul", label: "Istanbul Listings" },
-      { to: "/listing?city=Istanbul&category=residential", label: "Istanbul Residential" },
+      { to: "/listing?search=Istanbul", label: "Istanbul Listings" },
+      { to: "/listing?search=Istanbul&category=residential", label: "Istanbul Residential" },
     ],
     ...istanbulContent,
     faqs: [
@@ -135,8 +135,8 @@ export const seoStaticPages = {
     breadcrumbLabel: "Kyrenia Apartments",
     relatedLinks: [
       { to: "/listing", label: "All Listings" },
-      { to: "/listing?city=Kyrenia", label: "Kyrenia Listings" },
-      { to: "/listing?city=Kyrenia&category=residential", label: "Kyrenia Residential" },
+      { to: "/listing?search=Kyrenia", label: "Kyrenia Listings" },
+      { to: "/listing?search=Kyrenia&category=residential", label: "Kyrenia Residential" },
     ],
     ...kyreniaContent,
     faqs: [
@@ -218,7 +218,7 @@ export const seoStaticPages = {
     relatedLinks: [
       { to: "/listing", label: "All Listings" },
       { to: "/listing?citizenshipEligible=true", label: "Citizenship Eligible" },
-      { to: "/listing?city=Istanbul&citizenshipEligible=true", label: "Istanbul Citizenship Options" },
+      { to: "/listing?search=Istanbul&citizenshipEligible=true", label: "Istanbul Citizenship Options" },
     ],
     ...citizenshipContent,
     faqs: [
