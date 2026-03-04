@@ -52,6 +52,21 @@ const readPositiveEnvNumber = (name, fallback) => {
 const ASSISTANT_TRY_PER_USD = readPositiveEnvNumber("ASSISTANT_TRY_PER_USD", 36);
 const ASSISTANT_USD_PER_EUR = readPositiveEnvNumber("ASSISTANT_USD_PER_EUR", 1.08);
 
+function toFoldedText(value = "") {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\u0131/g, "i")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function containsAnyPhrase(text, phrases = []) {
+  const normalized = String(text || "");
+  return phrases.some((phrase) => normalized.includes(phrase));
+}
+
 function getOpenAIClient() {
   if (!openaiClient) {
     const apiKey = process.env.OPENAI_API_KEY;
@@ -127,14 +142,21 @@ async function createTranscriptionWithFallback(openai, payload) {
 }
 
 function detectLanguage(text = "") {
-  if (!text) return "en";
+  const raw = String(text || "");
+  if (!raw) return "en";
+  if (/[\u0400-\u04FF]/.test(raw)) return "ru";
 
-  if (/[\u0400-\u04FF]/.test(text)) return "ru";
+  const normalized = toFoldedText(raw);
+  if (
+    /\b(kvartira|nedvizhimost|rassrochka|stambul|proekt|kupit|byudzhet)\b/.test(normalized)
+  ) {
+    return "ru";
+  }
 
   const turkishHint =
-    /[\u00E7\u011F\u0131\u00F6\u015F\u00FC\u00C7\u011E\u0130\u00D6\u015E\u00DC]/.test(text) ||
-    /\b(merhaba|istanbul|ev|daire|yatirim|taksit|fiyat|odeme|satilik|kredi)\b/i.test(
-      text
+    /[\u00E7\u011F\u0131\u00F6\u015F\u00FC\u00C7\u011E\u0130\u00D6\u015E\u00DC]/.test(raw) ||
+    /\b(merhaba|istanbul|ev|daire|yatirim|taksit|fiyat|odeme|satilik|kredi|butce|emlak|proje)\b/.test(
+      normalized
     );
 
   if (turkishHint) return "tr";
@@ -158,7 +180,43 @@ function normalizeString(value, fallback = "") {
 function normalizeNumber(value, fallback = 0) {
   if (typeof value === "number" && Number.isFinite(value)) return value;
   if (typeof value === "string") {
-    const parsed = Number(value.replace(/[^\d.-]/g, ""));
+    const raw = value.trim();
+    if (!raw) return fallback;
+
+    const cleaned = raw
+      .replace(/[^\d.,\s-]/g, "")
+      .replace(/\u00A0/g, " ")
+      .trim();
+    if (!cleaned) return fallback;
+
+    const compact = cleaned.replace(/\s+/g, "");
+    const hasDot = compact.includes(".");
+    const hasComma = compact.includes(",");
+    let normalized = compact;
+
+    if (hasDot && hasComma) {
+      const lastDot = compact.lastIndexOf(".");
+      const lastComma = compact.lastIndexOf(",");
+      const decimalSeparator = lastDot > lastComma ? "." : ",";
+      const thousandSeparator = decimalSeparator === "." ? "," : ".";
+      normalized = compact.split(thousandSeparator).join("");
+      if (decimalSeparator === ",") {
+        normalized = normalized.replace(/,/g, ".");
+      }
+    } else if (hasDot || hasComma) {
+      const separator = hasDot ? "." : ",";
+      const chunks = compact.split(separator);
+      const looksLikeGroupedThousands =
+        chunks.length > 2 || (chunks.length === 2 && chunks[1].length === 3 && chunks[0].length <= 3);
+
+      if (looksLikeGroupedThousands) {
+        normalized = chunks.join("");
+      } else if (separator === ",") {
+        normalized = compact.replace(/,/g, ".");
+      }
+    }
+
+    const parsed = Number(normalized);
     if (Number.isFinite(parsed)) return parsed;
   }
   return fallback;
@@ -624,9 +682,7 @@ function normalizeBlogSearchArgs(args = {}) {
 }
 
 function inferLocationTokensFromText(text = "") {
-  const normalized = String(text || "")
-    .toLowerCase()
-    .replace(/[^0-9a-z\u00c0-\u024f\u0400-\u04ff\s-]/gi, " ");
+  const normalized = toFoldedText(text).replace(/[^0-9a-z\u0400-\u04ff\s-]/gi, " ");
 
   const stopwords = new Set([
     "i",
@@ -649,6 +705,28 @@ function inferLocationTokensFromText(text = "") {
     "project",
     "facility",
     "facilities",
+    "property",
+    "properties",
+    "apartment",
+    "apartments",
+    "flat",
+    "home",
+    "house",
+    "listing",
+    "listings",
+    "resale",
+    "room",
+    "rooms",
+    "buy",
+    "sale",
+    "between",
+    "from",
+    "max",
+    "min",
+    "exact",
+    "payment",
+    "plan",
+    "installment",
     "usd",
     "eur",
     "euro",
@@ -661,21 +739,38 @@ function inferLocationTokensFromText(text = "") {
     "ev",
     "fiyat",
     "butce",
-    "bütçe",
+    "butce",
     "ve",
     "ile",
     "icin",
-    "için",
+    "icin",
     "satilik",
-    "satılık",
+    "satÄ±lÄ±k",
     "proje",
+    "ilce",
+    "mahalle",
+    "sehir",
+    "oda",
+    "odali",
+    "konut",
+    "yatirim",
     "sosyal",
     "donati",
-    "donatı",
-    "хочу",
-    "купить",
-    "бюджет",
-    "цена",
+    "stambul",
+    "kvartira",
+    "nedvizhimost",
+    "rassrochka",
+    "proekt",
+    "rayon",
+    "gorod",
+    "do",
+    "ot",
+    "v",
+    "donatÄ±",
+    "\u0445\u043e\u0447\u0443",
+    "\u043a\u0443\u043f\u0438\u0442\u044c",
+    "\u0431\u044e\u0434\u0436\u0435\u0442",
+    "\u0446\u0435\u043d\u0430",
   ]);
 
   return normalized
@@ -684,7 +779,7 @@ function inferLocationTokensFromText(text = "") {
     .filter((token) => token.length >= 3)
     .filter((token) => !/^\d+$/.test(token))
     .filter((token) => !stopwords.has(token))
-    .slice(0, 3);
+    .slice(0, 6);
 }
 
 function inferBlogKeywordsFromText(text = "") {
@@ -733,11 +828,7 @@ function inferBlogKeywordsFromText(text = "") {
 }
 
 function toAsciiSearchForm(value = "") {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/\u0131/g, "i")
-    .trim();
+  return toFoldedText(value);
 }
 
 function expandKeywordVariants(rawKeyword = "") {
@@ -831,6 +922,12 @@ async function searchProperties(rawArgs = {}) {
   const exactPriceEnabled = requestedExactPrice && Number.isFinite(exactPriceTarget);
   const roomFilter = normalizeRoomToken(args.rooms);
   const propertyScope = normalizePropertyScope(args.propertyScope);
+  const cityValue = normalizeString(args.city);
+  const districtValue = normalizeString(args.district);
+  const neighborhoodValue = normalizeString(args.neighborhood);
+  const broadDistrictAlias = isBroadDistrictAlias(districtValue);
+  let districtCondition = null;
+  let neighborhoodCondition = null;
 
   // Budget filtering is applied after fetch so mixed listing currencies (USD/TRY/EUR)
   // can be normalized to one budget currency reliably.
@@ -848,25 +945,26 @@ async function searchProperties(rawArgs = {}) {
     });
   }
 
-  if (normalizeString(args.city)) {
+  if (cityValue) {
     baseAndConditions.push({
-      city: { $regex: escapeRegex(normalizeString(args.city)), $options: "i" },
+      city: { $regex: escapeRegex(cityValue), $options: "i" },
     });
   }
 
-  if (normalizeString(args.district)) {
-    const districtPattern = escapeRegex(normalizeString(args.district));
-    baseAndConditions.push({
+  if (districtValue && !broadDistrictAlias) {
+    const districtPattern = escapeRegex(districtValue);
+    districtCondition = {
       $or: [
         { "addressDetails.district": { $regex: districtPattern, $options: "i" } },
         { address: { $regex: districtPattern, $options: "i" } },
       ],
-    });
+    };
+    baseAndConditions.push(districtCondition);
   }
 
-  if (normalizeString(args.neighborhood)) {
-    const neighborhoodPattern = escapeRegex(normalizeString(args.neighborhood));
-    baseAndConditions.push({
+  if (neighborhoodValue) {
+    const neighborhoodPattern = escapeRegex(neighborhoodValue);
+    neighborhoodCondition = {
       $or: [
         {
           "addressDetails.neighborhood": {
@@ -879,7 +977,8 @@ async function searchProperties(rawArgs = {}) {
         { title: { $regex: neighborhoodPattern, $options: "i" } },
         { address: { $regex: neighborhoodPattern, $options: "i" } },
       ],
-    });
+    };
+    baseAndConditions.push(neighborhoodCondition);
   }
 
   if (typeof args.installmentPlan === "boolean" && args.installmentPlan) {
@@ -891,7 +990,10 @@ async function searchProperties(rawArgs = {}) {
     });
   }
 
-  const rawKeywords = (Array.isArray(args.keywords) ? args.keywords : [])
+  const rawKeywords = [
+    ...(Array.isArray(args.keywords) ? args.keywords : []),
+    ...(districtValue && broadDistrictAlias ? [districtValue] : []),
+  ]
     .map((k) => normalizeString(k))
     .filter(Boolean);
   const expandedKeywords = Array.from(
@@ -923,8 +1025,8 @@ async function searchProperties(rawArgs = {}) {
     }
   }
 
-  const buildQuery = (useKeywordConditions) => {
-    const andConditions = [...baseAndConditions];
+  const buildQuery = (baseConditions, useKeywordConditions) => {
+    const andConditions = [...baseConditions];
     if (useKeywordConditions && keywordConditions.length > 0) {
       andConditions.push({ $or: keywordConditions });
     }
@@ -936,7 +1038,7 @@ async function searchProperties(rawArgs = {}) {
 
   let docs = await db
     .collection("Residency")
-    .find(buildQuery(true))
+    .find(buildQuery(baseAndConditions, true))
     .sort({ createdAt: -1 })
     .limit(prefetchLimit)
     .toArray();
@@ -945,10 +1047,33 @@ async function searchProperties(rawArgs = {}) {
   if (docs.length === 0 && keywordConditions.length > 0) {
     docs = await db
       .collection("Residency")
-      .find(buildQuery(false))
+      .find(buildQuery(baseAndConditions, false))
       .sort({ createdAt: -1 })
       .limit(prefetchLimit)
       .toArray();
+  }
+
+  const hasTightLocationFilter = Boolean(districtCondition || neighborhoodCondition);
+  if (docs.length === 0 && hasTightLocationFilter) {
+    const relaxedBaseConditions = baseAndConditions.filter(
+      (condition) => condition !== districtCondition && condition !== neighborhoodCondition
+    );
+
+    docs = await db
+      .collection("Residency")
+      .find(buildQuery(relaxedBaseConditions, true))
+      .sort({ createdAt: -1 })
+      .limit(prefetchLimit)
+      .toArray();
+
+    if (docs.length === 0 && keywordConditions.length > 0) {
+      docs = await db
+        .collection("Residency")
+        .find(buildQuery(relaxedBaseConditions, false))
+        .sort({ createdAt: -1 })
+        .limit(prefetchLimit)
+        .toArray();
+    }
   }
 
   const budgetFiltered = hasBudgetFilter
@@ -1257,6 +1382,7 @@ Intents to handle:
 Behavior rules:
 - Extract filters where possible (budget, rooms, city/district/neighborhood/site name, delivery date, installment, feature keywords).
 - Property search must cover all property inventory records (listing and project types together).
+- For short property queries like "istanbul 350.000 usd 2+1", always call searchProperties at least once before final reply.
 - If user asks exact/specific price, pass "budget_exact" and set "exact_price": true.
 - For rough budgets (e.g., only a number like 400000 USD without under/over), you may pass "budget_flex_percent" (10-20) to allow around-range matches.
 - If user says "in projects" or equivalent, pass "property_scope": "projects". If user asks only listings, pass "property_scope": "listings".
@@ -1331,44 +1457,49 @@ Output rules:
 }
 
 function hasBuyingIntent(text = "") {
-  const normalized = text.toLowerCase();
+  const normalized = toFoldedText(text);
+  const raw = String(text || "").toLowerCase();
   return (
     /\b(i want to buy|how can i proceed|book|reserve|buy now|ready to buy)\b/.test(normalized) ||
     /\b(satin almak istiyorum|nasil ilerleyebilirim|hemen almak)\b/.test(normalized) ||
-    /\b(hochu kupit|kak prodolzhit|gotov kupit)\b/.test(normalized)
+    /\b(hochu kupit|kak prodolzhit|gotov kupit)\b/.test(normalized) ||
+    /\b(\u0445\u043e\u0447\u0443 \u043a\u0443\u043f\u0438\u0442\u044c|\u043a\u0430\u043a \u043f\u0440\u043e\u0434\u043e\u043b\u0436\u0438\u0442\u044c|\u0433\u043e\u0442\u043e\u0432 \u043a\u0443\u043f\u0438\u0442\u044c)\b/u.test(
+      raw
+    )
   );
 }
 
 function hasConsultantIntent(text = "") {
-  const normalized = String(text || "").toLowerCase();
+  const normalized = toFoldedText(text);
+  const raw = String(text || "").toLowerCase();
   return (
     /\b(consultant|advisor|agent|broker|expert|team)\b/.test(normalized) ||
-    /\b(meslek|uzman|danisman|danışman|emlakci|emlakçı|satis temsilcisi)\b/.test(normalized) ||
+    /\b(meslek|uzman|danisman|emlakci|satis temsilcisi)\b/.test(normalized) ||
     /\b(konsultant|agent)\b/.test(normalized) ||
-    /\b(مشاور|کارشناس|ادمین فروش|ایجنت)\b/.test(normalized)
+    /\b(\u043a\u043e\u043d\u0441\u0443\u043b\u044c\u0442\u0430\u043d\u0442|\u0431\u0440\u043e\u043a\u0435\u0440|\u0430\u0433\u0435\u043d\u0442|\u044d\u043a\u0441\u043f\u0435\u0440\u0442)\b/u.test(
+      raw
+    )
   );
 }
 
 function hasBlogIntent(text = "") {
-  const normalized = String(text || "").toLowerCase();
+  const normalized = toFoldedText(text);
+  const raw = String(text || "").toLowerCase();
   return (
     /\b(blog|article|news)\b/.test(normalized) ||
     /\b(tax|taxes|taxation|legal|law|laws|regulation|regulations|citizenship law)\b/.test(
       normalized
     ) ||
-    /\b(blog|makale|rehber|haber|yazi|yazı|yazilar|yazılar)\b/.test(normalized) ||
+    /\b(blog|makale|rehber|haber|yazi|yazilar)\b/.test(normalized) ||
     /\b(vergi|vergiler|vergilendirme|kanun|kanunlar|yasa|mevzuat)\b/.test(normalized) ||
-    /\b(مالیات|قانون|مقاله|بلاگ|خبر|راهنما)\b/.test(normalized) ||
-    /[\u0400-\u04FF]/.test(normalized) &&
-      /\b(блог|статья|новость|гайд|налог|налоги|закон|законы|право|регламент)\b/.test(
-        normalized
-      )
+    /\b(\u0431\u043b\u043e\u0433|\u0441\u0442\u0430\u0442\u044c\u044f|\u043d\u043e\u0432\u043e\u0441\u0442\u044c|\u0433\u0430\u0439\u0434|\u043d\u0430\u043b\u043e\u0433|\u043d\u0430\u043b\u043e\u0433\u0438|\u0437\u0430\u043a\u043e\u043d|\u0437\u0430\u043a\u043e\u043d\u044b|\u043f\u0440\u0430\u0432\u043e|\u0440\u0435\u0433\u043b\u0430\u043c\u0435\u043d\u0442)\b/u.test(
+      raw
+    )
   );
 }
 
 function inferConsultantKeywordsFromText(text = "") {
-  return String(text || "")
-    .toLowerCase()
+  return toFoldedText(text)
     .replace(/[^0-9a-z\u00c0-\u024f\u0400-\u04ff\u0600-\u06ff\s-]/gi, " ")
     .split(/\s+/)
     .map((token) => token.trim())
@@ -1383,8 +1514,7 @@ function inferConsultantKeywordsFromText(text = "") {
           "broker",
           "team",
           "danisman",
-          "danışman",
-          "مشاور",
+          "konsultant",
         ].includes(token)
     )
     .slice(0, 5);
@@ -1644,32 +1774,263 @@ async function createChatCompletionWithFallback(openai, basePayload) {
 }
 
 function detectBudgetCurrencyFromText(text = "") {
-  const value = String(text || "").toLowerCase();
+  const folded = toFoldedText(text);
+  const raw = String(text || "").toLowerCase();
 
-  if (/\$|\busd\b|\bdollar\b|\bdolar\b/.test(value)) return "USD";
-  if (/\u20ac|\beur\b|\beuro\b/.test(value)) return "EUR";
-  if (/\u20ba|\btry\b|\btl\b|\blira\b/.test(value)) return "TRY";
+  if (/\$|\busd\b|\bdollar\b|\bdolar\b/.test(folded)) return "USD";
+  if (/\u20ac|\beur\b|\beuro\b/.test(folded)) return "EUR";
+  if (/\u20ba|\btry\b|\btl\b|\blira\b|\bturkish lira\b/.test(folded)) return "TRY";
+
+  if (/\b\u0434\u043e\u043b\u043b\u0430\u0440\b/u.test(raw)) return "USD";
+  if (/\b\u0435\u0432\u0440\u043e\b/u.test(raw)) return "EUR";
+  if (/\b\u043b\u0438\u0440\u0430\b/u.test(raw)) return "TRY";
 
   return "";
 }
 
+function hasUpperBudgetCue(text = "") {
+  const folded = toFoldedText(text);
+  const raw = String(text || "").toLowerCase();
+  return (
+    /\b(under|below|less than|at most|max|maximum|up to|no more than)\b/.test(folded) ||
+    /\b(alti|altinda|en cok|maksimum|en fazla|kadar)\b/.test(folded) ||
+    /\b(\u0434\u043e|\u043d\u0438\u0436\u0435|\u043c\u0435\u043d\u044c\u0448\u0435|\u043c\u0430\u043a\u0441\u0438\u043c\u0443\u043c|\u043d\u0435 \u0431\u043e\u043b\u0435\u0435)\b/u.test(
+      raw
+    )
+  );
+}
+
+function hasLowerBudgetCue(text = "") {
+  const folded = toFoldedText(text);
+  const raw = String(text || "").toLowerCase();
+  return (
+    /\b(over|above|more than|at least|min|minimum|from)\b/.test(folded) ||
+    /\b(ustu|uzeri|uzerinde|en az|minimum)\b/.test(folded) ||
+    /\b(\u043e\u0442|\u0432\u044b\u0448\u0435|\u0431\u043e\u043b\u044c\u0448\u0435|\u043a\u0430\u043a \u043c\u0438\u043d\u0438\u043c\u0443\u043c)\b/u.test(
+      raw
+    )
+  );
+}
+
+function hasBetweenBudgetCue(text = "") {
+  const folded = toFoldedText(text);
+  const raw = String(text || "").toLowerCase();
+  return (
+    /\b(between|range)\b/.test(folded) ||
+    /\b(arasi|araliginda|aralik)\b/.test(folded) ||
+    /\b(\u043c\u0435\u0436\u0434\u0443|\u0434\u0438\u0430\u043f\u0430\u0437\u043e\u043d)\b/u.test(raw)
+  );
+}
+
+function extractBudgetCandidates(text = "") {
+  const raw = String(text || "");
+  const pattern = /\d{1,3}(?:[.,\s]\d{3})+(?:[.,]\d+)?|\d+(?:[.,]\d+)?/g;
+  const matches = raw.match(pattern) || [];
+
+  return matches
+    .map((token) => normalizeNumber(token, NaN))
+    .filter((value) => Number.isFinite(value) && value >= 1000)
+    .slice(0, 6);
+}
+
+function extractBudgetConstraintsFromText(
+  text = "",
+  {
+    inferredBudgetCurrency = "",
+    exactPriceIntent = false,
+    strictBudgetIntent = false,
+  } = {}
+) {
+  const values = extractBudgetCandidates(text);
+  const currency = detectBudgetCurrencyFromText(text) || inferredBudgetCurrency;
+  const constraints = currency ? { budget_currency: currency } : {};
+
+  if (values.length === 0) return constraints;
+
+  const ordered = [...values].sort((a, b) => a - b);
+  if (hasBetweenBudgetCue(text) && ordered.length >= 2) {
+    constraints.budget_min = ordered[0];
+    constraints.budget_max = ordered[1];
+    return constraints;
+  }
+
+  const target = ordered[ordered.length - 1];
+  if (exactPriceIntent) {
+    constraints.exact_price = true;
+    constraints.budget_exact = target;
+    constraints.budget_min = target;
+    constraints.budget_max = target;
+    return constraints;
+  }
+
+  if (hasUpperBudgetCue(text)) {
+    constraints.budget_max = target;
+    return constraints;
+  }
+
+  if (hasLowerBudgetCue(text)) {
+    constraints.budget_min = target;
+    return constraints;
+  }
+
+  constraints.budget_min = target;
+  constraints.budget_max = target;
+  if (!strictBudgetIntent) {
+    constraints.budget_flex_percent = 15;
+  }
+  return constraints;
+}
+
+function detectCityFromText(text = "") {
+  const folded = toFoldedText(text);
+  const raw = String(text || "").toLowerCase();
+
+  const cityRules = [
+    {
+      city: "Istanbul",
+      latin: ["istanbul", "stambul"],
+      cyrillic: /\b\u0441\u0442\u0430\u043c\u0431\u0443\u043b/u,
+    },
+    {
+      city: "Ankara",
+      latin: ["ankara"],
+      cyrillic: /\b\u0430\u043d\u043a\u0430\u0440\u0430/u,
+    },
+    {
+      city: "Izmir",
+      latin: ["izmir", "izmeer"],
+      cyrillic: /\b\u0438\u0437\u043c\u0438\u0440/u,
+    },
+    {
+      city: "Antalya",
+      latin: ["antalya"],
+      cyrillic: /\b\u0430\u043d\u0442\u0430\u043b\u044c\u044f/u,
+    },
+    {
+      city: "Bursa",
+      latin: ["bursa"],
+      cyrillic: /\b\u0431\u0443\u0440\u0441\u0430/u,
+    },
+  ];
+
+  for (const rule of cityRules) {
+    if (rule.latin.some((token) => folded.includes(token))) return rule.city;
+    if (rule.cyrillic.test(raw)) return rule.city;
+  }
+
+  return "";
+}
+
+function hasInstallmentIntent(text = "") {
+  const folded = toFoldedText(text);
+  const raw = String(text || "").toLowerCase();
+  return (
+    /\b(installment|payment plan|monthly payment|mortgage)\b/.test(folded) ||
+    /\b(taksit|odeme plani|kampanya)\b/.test(folded) ||
+    /\b(\u0440\u0430\u0441\u0441\u0440\u043e\u0447|\u0438\u043f\u043e\u0442\u0435\u043a)\b/u.test(raw)
+  );
+}
+
+function hasPropertyIntent(text = "") {
+  const folded = toFoldedText(text);
+  const raw = String(text || "").toLowerCase();
+  const hasRoomPattern = /\b\d+\s*\+\s*\d+\b/.test(raw);
+  const hasBudget = extractBudgetCandidates(text).length > 0 || Boolean(detectBudgetCurrencyFromText(text));
+  const hasLatinPropertyTerm =
+    /\b(property|properties|real estate|apartment|apartments|flat|villa|house|home|listing|listings|project|projects|resale|buy|sale)\b/.test(
+      folded
+    ) ||
+    /\b(emlak|daire|konut|villa|ev|satilik|satin almak|proje|projeler|yatirim|oda)\b/.test(folded);
+  const hasCyrillicPropertyTerm =
+    /\b(\u043d\u0435\u0434\u0432\u0438\u0436|\u043a\u0432\u0430\u0440\u0442\u0438\u0440|\u0432\u0438\u043b\u043b|\u0434\u043e\u043c|\u043f\u0440\u043e\u0435\u043a\u0442|\u043a\u0443\u043f\u0438\u0442|\u043f\u0440\u043e\u0434\u0430\u0436|\u0440\u0430\u0441\u0441\u0440\u043e\u0447)\w*/u.test(
+      raw
+    );
+
+  if (hasRoomPattern) return true;
+  if (hasInstallmentIntent(text)) return true;
+  if (hasLatinPropertyTerm || hasCyrillicPropertyTerm) return true;
+  if (hasBudget && (detectCityFromText(text) || inferLocationTokensFromText(text).length > 0)) return true;
+  return false;
+}
+
+function isBroadDistrictAlias(value = "") {
+  const normalized = toFoldedText(value);
+  const raw = String(value || "").toLowerCase();
+  return (
+    containsAnyPhrase(normalized, [
+      "avrupa yakasi",
+      "anadolu yakasi",
+      "european side",
+      "asian side",
+      "europe side",
+      "asia side",
+    ]) ||
+    /\b(\u0435\u0432\u0440\u043e\u043f\u0435\u0439\u0441\u043a\u0430\u044f \u0441\u0442\u043e\u0440\u043e\u043d\u0430|\u0430\u0437\u0438\u0430\u0442\u0441\u043a\u0430\u044f \u0441\u0442\u043e\u0440\u043e\u043d\u0430|\u0435\u0432\u0440\u043e\u043f\u0435\u0439\u0441\u043a\u0430\u044f \u0447\u0430\u0441\u0442\u044c|\u0430\u0437\u0438\u0430\u0442\u0441\u043a\u0430\u044f \u0447\u0430\u0441\u0442\u044c)\b/u.test(
+      raw
+    )
+  );
+}
+
+function buildPropertyFallbackSearchArgs({
+  userMessage = "",
+  inferredBudgetCurrency = "",
+  inferredPropertyScope = "all",
+  exactPriceIntent = false,
+  strictBudgetIntent = false,
+} = {}) {
+  const room = normalizeRoomToken(userMessage);
+  const city = detectCityFromText(userMessage);
+  const locationKeywords = inferLocationTokensFromText(userMessage);
+  const budgetArgs = extractBudgetConstraintsFromText(userMessage, {
+    inferredBudgetCurrency,
+    exactPriceIntent,
+    strictBudgetIntent,
+  });
+
+  const args = {
+    limit: 6,
+    ...budgetArgs,
+  };
+
+  if (inferredPropertyScope !== "all") {
+    args.property_scope = inferredPropertyScope;
+  }
+  if (room) {
+    args.rooms = room;
+  }
+  if (city) {
+    args.city = city;
+  }
+  if (hasInstallmentIntent(userMessage)) {
+    args.installment_plan = true;
+  }
+  if (locationKeywords.length > 0) {
+    args.keywords = locationKeywords;
+  }
+
+  return args;
+}
+
 function detectPropertyScopeFromText(text = "") {
-  const value = String(text || "").toLowerCase();
+  const value = toFoldedText(text);
+  const raw = String(text || "").toLowerCase();
 
   if (
     /\b(in projects|project only|only projects|projects)\b/.test(value) ||
-    /\b(proje|projeler|sadece proje|projelerde)\b/.test(value) ||
-    /\b(в проектах|проекты|только проекты)\b/.test(value) ||
-    /\b(پروژه|پروژه ها|فقط پروژه)\b/.test(value)
+    /\b(proje|projeler|sadece proje|yalniz proje|projelerde)\b/.test(value) ||
+    /\b(\u0432 \u043f\u0440\u043e\u0435\u043a\u0442\u0430\u0445|\u043f\u0440\u043e\u0435\u043a\u0442\u044b|\u0442\u043e\u043b\u044c\u043a\u043e \u043f\u0440\u043e\u0435\u043a\u0442\u044b)\b/u.test(
+      raw
+    )
   ) {
     return "projects";
   }
 
   if (
-    /\b(listing|listings|resale|only listings)\b/.test(value) ||
-    /\b(ilan|ilanlar|sadece ilan)\b/.test(value) ||
-    /\b(листинг|листинги|перепродажа)\b/.test(value) ||
-    /\b(لیستینگ|آگهی|آگهی ها)\b/.test(value)
+    /\b(listing|listings|resale|only listings|only resale)\b/.test(value) ||
+    /\b(ilan|ilanlar|sadece ilan|yalniz ilan)\b/.test(value) ||
+    /\b(\u043b\u0438\u0441\u0442\u0438\u043d\u0433|\u043b\u0438\u0441\u0442\u0438\u043d\u0433\u0438|\u043f\u0435\u0440\u0435\u043f\u0440\u043e\u0434\u0430\u0436\u0430|\u0442\u043e\u043b\u044c\u043a\u043e \u043b\u0438\u0441\u0442\u0438\u043d\u0433)\b/u.test(
+      raw
+    )
   ) {
     return "listings";
   }
@@ -1678,24 +2039,17 @@ function detectPropertyScopeFromText(text = "") {
 }
 
 function hasExactPriceIntent(text = "") {
-  const value = String(text || "").toLowerCase();
+  const value = toFoldedText(text);
+  const raw = String(text || "").toLowerCase();
   return (
     /\b(exact|exactly|precise|specific|same price|equal to)\b/.test(value) ||
     /\b(tam|tam olarak|net fiyat|birebir|ayni fiyat)\b/.test(value) ||
-    /\b(точно|ровно|именно)\b/.test(value) ||
-    /\b(دقیق|دقیقا|عینا|عین|قیمت دقیق)\b/.test(value)
+    /\b(\u0442\u043e\u0447\u043d\u043e|\u0440\u043e\u0432\u043d\u043e|\u0438\u043c\u0435\u043d\u043d\u043e)\b/u.test(raw)
   );
 }
 
 function hasStrictBudgetIntent(text = "") {
-  const value = String(text || "").toLowerCase();
-  return (
-    /\b(under|below|less than|at most|max|maximum|up to|between|from)\b/.test(value) ||
-    /\b(over|above|more than|at least|min|minimum)\b/.test(value) ||
-    /\b(alti|altı|kadar|en cok|en çok|maksimum|en az|ustu|üstü)\b/.test(value) ||
-    /\b(до|ниже|меньше|максимум|выше|больше|минимум|от|между)\b/.test(value) ||
-    /\b(زیر|کمتر از|حداکثر|حداقل|بیشتر از|بالای|بین)\b/.test(value)
-  );
+  return hasUpperBudgetCue(text) || hasLowerBudgetCue(text) || hasBetweenBudgetCue(text);
 }
 
 export async function runRealEstateAssistant({ message, history = [] }) {
@@ -1713,6 +2067,7 @@ export async function runRealEstateAssistant({ message, history = [] }) {
   const inferredPropertyScope = detectPropertyScopeFromText(userMessage);
   const exactPriceIntent = hasExactPriceIntent(userMessage);
   const strictBudgetIntent = hasStrictBudgetIntent(userMessage);
+  const propertyIntent = hasPropertyIntent(userMessage) && !blogIntent && !consultantIntent;
 
   const openai = getOpenAIClient();
   const messages = [
@@ -1781,6 +2136,24 @@ export async function runRealEstateAssistant({ message, history = [] }) {
         );
         if (blogFallback.length > 0) {
           normalized.blogs = blogFallback;
+        }
+      }
+
+      if (propertyIntent && normalized.results.length === 0) {
+        const propertyFallback = await searchProperties(
+          buildPropertyFallbackSearchArgs({
+            userMessage,
+            inferredBudgetCurrency,
+            inferredPropertyScope,
+            exactPriceIntent,
+            strictBudgetIntent,
+          })
+        );
+        if (propertyFallback.length > 0) {
+          normalized.results = propertyFallback;
+          if (!normalized.reply || normalized.reply === fallback.noMatch || normalized.reply === fallback.noData) {
+            normalized.reply = fallback.found;
+          }
         }
       }
 
@@ -1903,6 +2276,33 @@ export async function runRealEstateAssistant({ message, history = [] }) {
         }
 
         toolOutput = await searchProperties(searchArgs);
+        if (Array.isArray(toolOutput) && toolOutput.length === 0 && propertyIntent) {
+          const explicitScope = normalizeString(searchArgs?.property_scope || searchArgs?.propertyScope);
+          const fallbackArgs = buildPropertyFallbackSearchArgs({
+            userMessage,
+            inferredBudgetCurrency,
+            inferredPropertyScope: explicitScope
+              ? normalizePropertyScope(explicitScope)
+              : inferredPropertyScope,
+            exactPriceIntent,
+            strictBudgetIntent,
+          });
+
+          const preferredRooms = normalizeString(searchArgs?.rooms);
+          if (preferredRooms) {
+            fallbackArgs.rooms = preferredRooms;
+          }
+
+          const preferredLimit = normalizeNumber(searchArgs?.limit, NaN);
+          if (Number.isFinite(preferredLimit)) {
+            fallbackArgs.limit = preferredLimit;
+          }
+
+          const fallbackResults = await searchProperties(fallbackArgs);
+          if (Array.isArray(fallbackResults) && fallbackResults.length > 0) {
+            toolOutput = fallbackResults;
+          }
+        }
       } else if (name === TOOL_NAMES.getPropertyById) {
         toolOutput = await getPropertyById(args.id);
       } else if (name === TOOL_NAMES.searchConsultants) {
@@ -1946,6 +2346,18 @@ export async function runRealEstateAssistant({ message, history = [] }) {
     if (!response.consultants.length) {
       response.reply = response.blogs.length > 0 ? fallback.found : fallback.noMatch;
     }
+  }
+  if (propertyIntent) {
+    response.results = await searchProperties(
+      buildPropertyFallbackSearchArgs({
+        userMessage,
+        inferredBudgetCurrency,
+        inferredPropertyScope,
+        exactPriceIntent,
+        strictBudgetIntent,
+      })
+    );
+    response.reply = response.results.length > 0 ? fallback.found : fallback.noMatch;
   }
   if (hasBuyingIntent(userMessage)) {
     response.lead_prompt = fallback.leadPrompt;
