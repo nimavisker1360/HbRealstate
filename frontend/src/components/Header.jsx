@@ -4,7 +4,7 @@ import Navbar from "./Navbar";
 import { MdArrowBack, MdClose, MdMenu, MdSearch } from "react-icons/md";
 import { FaHandshake, FaWhatsapp } from "react-icons/fa";
 import userIcon from "../assets/user.svg";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth0 } from "@auth0/auth0-react";
 import ProfileMenu from "./ProfileMenu";
 import LoginModal from "./LoginModal";
@@ -28,8 +28,12 @@ const Header = () => {
   const headerRef = useRef(null);
   const { currencies, selectedCurrency, setSelectedCurrency } =
     useContext(CurrencyContext);
+  const location = useLocation();
   const autoLoginTriggeredRef = useRef(false);
   const loginPromptTimerRef = useRef(null);
+  const authStateRef = useRef(false);
+  const authLoadingRef = useRef(true);
+  const authRedirectInProgressRef = useRef(false);
 
   const toggleMenu = () => setMenuOpened(!menuOpened);
   const { isAuthenticated, user, logout, isLoading } = useAuth0();
@@ -66,10 +70,27 @@ const Header = () => {
     };
   }, [menuOpened]);
 
+  authStateRef.current = isAuthenticated;
+  authLoadingRef.current = isLoading;
+  const searchParams = new URLSearchParams(location.search || "");
+  const isAuthRedirectInProgress =
+    (searchParams.has("code") && searchParams.has("state")) ||
+    searchParams.has("error") ||
+    searchParams.has("error_description");
+  authRedirectInProgressRef.current = isAuthRedirectInProgress;
+
   const scheduleLoginPrompt = useCallback((delayMs = 180) => {
     if (loginPromptTimerRef.current) return;
     loginPromptTimerRef.current = setTimeout(() => {
       loginPromptTimerRef.current = null;
+      if (authRedirectInProgressRef.current) return;
+      if (authLoadingRef.current || authStateRef.current) return;
+      const suppressedUntil = Number(
+        window.sessionStorage.getItem("suppress_auto_login_prompt_until") || 0
+      );
+      if (Number.isFinite(suppressedUntil) && suppressedUntil > Date.now()) {
+        return;
+      }
       autoLoginTriggeredRef.current = true;
       setLoginModalOpen(true);
     }, delayMs);
@@ -78,12 +99,13 @@ const Header = () => {
   useEffect(() => {
     if (autoLoginTriggeredRef.current) return;
     if (isLoading) return;
+    if (isAuthRedirectInProgress) return;
     if (!isAuthenticated) {
       scheduleLoginPrompt();
       return;
     }
     autoLoginTriggeredRef.current = true;
-  }, [isAuthenticated, isLoading, scheduleLoginPrompt]);
+  }, [isAuthenticated, isLoading, isAuthRedirectInProgress, scheduleLoginPrompt]);
 
   useEffect(() => {
     if (isLoading) return;
@@ -95,11 +117,26 @@ const Header = () => {
   }, [isAuthenticated, isLoading, scheduleLoginPrompt]);
 
   useEffect(() => {
-    if (isAuthenticated && loginPromptTimerRef.current) {
+    if (!isAuthRedirectInProgress) return;
+    if (loginPromptTimerRef.current) {
       clearTimeout(loginPromptTimerRef.current);
       loginPromptTimerRef.current = null;
     }
-  }, [isAuthenticated]);
+    if (loginModalOpen) {
+      setLoginModalOpen(false);
+    }
+  }, [isAuthRedirectInProgress, loginModalOpen]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    if (loginPromptTimerRef.current) {
+      clearTimeout(loginPromptTimerRef.current);
+      loginPromptTimerRef.current = null;
+    }
+    if (loginModalOpen) {
+      setLoginModalOpen(false);
+    }
+  }, [isAuthenticated, loginModalOpen]);
 
   useEffect(() => {
     return () => {

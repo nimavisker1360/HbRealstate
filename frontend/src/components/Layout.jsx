@@ -27,6 +27,7 @@ const Layout = () => {
   const lastActivityWriteRef = useRef(0);
   const canRecordActivityRef = useRef(false);
   const isForcingLogoutRef = useRef(false);
+  const sessionBootstrappedRef = useRef(false);
 
   // Hide footer on listing, admin, addresses, projects, and blog pages
   const hideFooter =
@@ -169,6 +170,10 @@ const Layout = () => {
     };
 
     if (isAuthenticated && user?.email) {
+      if (!sessionBootstrappedRef.current) {
+        setLastActivityNow();
+        sessionBootstrappedRef.current = true;
+      }
       if (isSessionExpired()) {
         forceLogout();
         return;
@@ -206,6 +211,12 @@ const Layout = () => {
   useEffect(() => {
     hasRegisteredRef.current = false;
   }, [user?.email]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      sessionBootstrappedRef.current = false;
+    }
+  }, [isAuthenticated]);
 
   // Initial inactivity check before recording any new activity
   useEffect(() => {
