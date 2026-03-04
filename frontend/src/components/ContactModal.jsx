@@ -14,6 +14,7 @@ const ContactModal = ({
   onClose,
   propertyId,
   propertyTitle,
+  listingNo,
   userEmail,
   consultantId,
 }) => {
@@ -112,6 +113,7 @@ const ContactModal = ({
         subject: formData.subject || t("contactModal.subjectDefault"),
         propertyId: propertyId || null,
         propertyTitle: propertyTitle || null,
+        listingNo: listingNo || null,
         consultantId: selectedConsultant?.id || null,
         consultantName: selectedConsultant?.name || null,
         consultantEmail: selectedConsultant?.email || null,
@@ -437,6 +439,7 @@ ContactModal.propTypes = {
   onClose: PropTypes.func.isRequired,
   propertyId: PropTypes.string,
   propertyTitle: PropTypes.string,
+  listingNo: PropTypes.string,
   userEmail: PropTypes.string,
   consultantId: PropTypes.string,
 };

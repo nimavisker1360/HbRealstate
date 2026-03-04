@@ -1332,6 +1332,7 @@ const Property = () => {
         onClose={() => setContactModalOpen(false)}
         propertyId={id}
         propertyTitle={data?.title}
+        listingNo={data?.listingNo}
         userEmail={user?.email}
         consultantId={data?.consultant?.id || data?.consultantId}
       />

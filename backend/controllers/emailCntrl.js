@@ -23,6 +23,7 @@ export const sendEmail = asyncHandler(async (req, res) => {
     message,
     propertyId,
     propertyTitle,
+    listingNo,
     consultantId,
     consultantName,
     consultantEmail,
@@ -69,10 +70,11 @@ export const sendEmail = asyncHandler(async (req, res) => {
               <h1 style="color: white; margin: 0; text-align: center;">New Property Inquiry</h1>
             </div>
             <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e0e0e0; border-top: none;">
-              ${propertyTitle ? `
+              ${(propertyTitle || propertyId || listingNo) ? `
               <div style="background: linear-gradient(135deg, #06a84e 0%, #048a3d 100%); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
                 <div style="color: white; font-weight: bold; font-size: 16px; margin-bottom: 5px;">🏠 Property:</div>
-                <div style="color: white; font-size: 14px;">${propertyTitle}</div>
+                ${propertyTitle ? `<div style="color: white; font-size: 14px;">${propertyTitle}</div>` : ""}
+                ${listingNo ? `<div style="color: rgba(255,255,255,0.95); font-size: 13px; margin-top: 5px;"><strong>Listing No:</strong> ${listingNo}</div>` : ""}
                 ${propertyId ? `<div style="color: rgba(255,255,255,0.8); font-size: 12px; margin-top: 5px;">ID: ${propertyId}</div>` : ''}
               </div>
               ` : ''}

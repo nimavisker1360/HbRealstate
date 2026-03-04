@@ -588,6 +588,7 @@ const ProjectDetail = () => {
         message: contactForm.message || `I am interested in the ${project.name} project located in ${project.city}, ${project.district}. Please contact me with more information.`,
         propertyId: project.id,
         propertyTitle: project.name,
+        listingNo: project.ilanNo || propertyData?.listingNo || "",
       };
 
       await sendEmail(emailData);
