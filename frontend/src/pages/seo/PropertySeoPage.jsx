@@ -1,13 +1,20 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useQuery } from "react-query";
-import { useLocation, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Property from "../Property";
 import PropertyGridCard from "../../components/PropertyGridCard";
 import SEO from "../../components/SEO";
 import JsonLd from "../../components/JsonLd";
 import useProperties from "../../hooks/useProperties";
 import { getProperty } from "../../utils/api";
-import { SITE_URL, stripHtml, toAbsoluteUrl, truncateText } from "../../utils/seo";
+import {
+  SITE_URL,
+  extractObjectId,
+  resolvePropertyPath,
+  stripHtml,
+  toAbsoluteUrl,
+  truncateText,
+} from "../../utils/seo";
 
 const toNumber = (value) => {
   const parsed = Number(value);
@@ -108,14 +115,31 @@ const resolveAvailability = (property) => {
 
 const PropertySeoPage = () => {
   const { propertyId = "" } = useParams();
+  const navigate = useNavigate();
   const location = useLocation();
-  const { data: property } = useQuery(["resd", propertyId], () =>
-    getProperty(propertyId),
+  const propertyLookupKey = useMemo(() => {
+    const normalized = String(propertyId || "").trim();
+    if (!normalized) return "";
+    return extractObjectId(normalized) || normalized;
+  }, [propertyId]);
+
+  const { data: property } = useQuery(["resd", propertyLookupKey], () =>
+    getProperty(propertyLookupKey),
     {
-      enabled: Boolean(propertyId),
+      enabled: Boolean(propertyLookupKey),
     }
   );
   const { data: allProperties = [] } = useProperties();
+
+  useEffect(() => {
+    const routeValue = String(propertyId || "").trim();
+    if (!routeValue || !property) return;
+
+    const targetPath = resolvePropertyPath(property);
+    if (!targetPath || targetPath === location.pathname) return;
+
+    navigate(targetPath, { replace: true });
+  }, [location.pathname, navigate, property, propertyId]);
 
   const district = pickText(
     property?.addressDetails?.district,
@@ -126,10 +150,7 @@ const PropertySeoPage = () => {
   const titleOrName = pickText(property?.title, property?.name, "Property");
   const locationLabel = pickText(`${city} ${district}`) || "Turkey";
 
-  const normalizedPathname = normalizePathname(
-    location.pathname,
-    `/listing/${propertyId}`
-  );
+  const normalizedPathname = normalizePathname(location.pathname, `/listing/${propertyId}`);
   const canonicalUrl = `${SITE_URL}${normalizedPathname}`;
 
   const fallbackTitle = "Property Detail | Turkey | For Sale | HB Real Estate";

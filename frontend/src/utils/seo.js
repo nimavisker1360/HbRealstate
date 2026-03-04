@@ -39,8 +39,42 @@ export const truncateText = (value, maxLength = 160) => {
   return `${normalized.slice(0, maxLength - 3).trim()}...`;
 };
 
-export const resolvePropertySlug = (property) =>
-  property?.slug || property?.seoSlug || property?.id || "";
+const removeTrailingObjectIdSegment = (value = "") => {
+  const normalized = String(value || "").trim();
+  if (!normalized) return "";
+  if (/^[a-f0-9]{24}$/i.test(normalized)) return "";
+  return normalized.replace(/-[a-f0-9]{24}$/i, "");
+};
+
+export const resolvePropertySlug = (property) => {
+  const id = String(property?.id || "").trim();
+  const rawSlug = pickText(property?.slug, property?.seoSlug);
+  const city = pickText(property?.city, property?.addressDetails?.city);
+  const isIstanbulListing = slugify(city) === "istanbul";
+
+  if (!isIstanbulListing) {
+    return rawSlug || id || "";
+  }
+
+  const normalizedRawSlug = String(rawSlug || "").trim();
+  const rawSlugHasIstanbul = slugify(normalizedRawSlug).includes("istanbul");
+  if (normalizedRawSlug && rawSlugHasIstanbul) {
+    return normalizedRawSlug;
+  }
+
+  const trailingId = extractObjectId(normalizedRawSlug) || id;
+  const existingBase = slugify(removeTrailingObjectIdSegment(normalizedRawSlug));
+  const titleBase = slugify(pickText(property?.title, property?.name, "property"));
+  const base = existingBase || titleBase || "property";
+  const istanbulBase = base.includes("istanbul") ? base : `${base}-in-istanbul`;
+
+  if (trailingId) {
+    return `${istanbulBase}-${trailingId}`;
+  }
+
+  // Keep original slug if no id exists to avoid unresolved custom slugs.
+  return normalizedRawSlug || istanbulBase;
+};
 
 export const resolvePropertyPath = (property) => {
   const slug = resolvePropertySlug(property);

@@ -98,6 +98,11 @@ const slugify = (value = "") =>
 const isObjectId = (value = "") =>
   /^[a-f0-9]{24}$/i.test(String(value || "").trim());
 
+const extractObjectId = (value = "") => {
+  const match = String(value || "").trim().match(/([a-f0-9]{24})$/i);
+  return match ? match[1] : "";
+};
+
 const pickText = (...values: Array<unknown>) => {
   for (const value of values) {
     if (value === null || value === undefined) continue;
@@ -204,14 +209,42 @@ const buildProjectSlugBase = (property: PropertyEntry) => {
 };
 
 const toListingPath = (property: PropertyEntry): string | null => {
-  const slug = property.slug || property.seoSlug;
-  if (slug) {
-    return `/listing/${encodeURIComponent(slug)}`;
+  const id = String(property.id || "").trim();
+  const rawSlug = pickText(property.slug, property.seoSlug);
+  const city = pickText(property.city, property.addressDetails?.city);
+  const isIstanbulListing = slugify(city) === "istanbul";
+
+  if (!isIstanbulListing) {
+    if (rawSlug) return `/listing/${encodeURIComponent(rawSlug)}`;
+    if (id) return `/listing/${id}`;
+    return null;
   }
-  if (property.id) {
-    return `/listing/${property.id}`;
+
+  const normalizedRawSlug = String(rawSlug || "").trim();
+  const rawSlugHasIstanbul = slugify(normalizedRawSlug).includes("istanbul");
+  if (normalizedRawSlug && rawSlugHasIstanbul) {
+    return `/listing/${encodeURIComponent(normalizedRawSlug)}`;
   }
-  return null;
+
+  const trailingId = extractObjectId(normalizedRawSlug) || id;
+  const existingBase = slugify(
+    normalizedRawSlug
+      .replace(/-[a-f0-9]{24}$/i, "")
+      .replace(/^[a-f0-9]{24}$/i, "")
+  );
+  const titleBase = slugify(pickText(property.title, property.name, "property"));
+  const base = existingBase || titleBase || "property";
+  const istanbulBase = base.includes("istanbul") ? base : `${base}-in-istanbul`;
+
+  if (trailingId) {
+    return `/listing/${encodeURIComponent(`${istanbulBase}-${trailingId}`)}`;
+  }
+
+  if (normalizedRawSlug) {
+    return `/listing/${encodeURIComponent(normalizedRawSlug)}`;
+  }
+
+  return `/listing/${encodeURIComponent(istanbulBase)}`;
 };
 
 const toProjectPath = (property: PropertyEntry): string | null => {
