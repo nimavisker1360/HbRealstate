@@ -7,8 +7,35 @@ import "@mantine/dates/styles.css";
 import { Auth0Provider } from "@auth0/auth0-react";
 import { MantineProvider } from "@mantine/core";
 import { HelmetProvider } from "react-helmet-async";
-import "./i18n"; // Initialize i18n
+import i18n from "./i18n";
 import { Analytics } from "@vercel/analytics/react";
+import {
+  buildLocalizedPath,
+  extractLanguageFromPath,
+  resolvePreferredLanguage,
+} from "./utils/languageRouting";
+
+const currentPathLanguage = extractLanguageFromPath(window.location.pathname);
+
+if (!currentPathLanguage) {
+  const preferredLanguage = resolvePreferredLanguage(
+    i18n.resolvedLanguage ||
+      i18n.language ||
+      window.localStorage.getItem("i18nextLng")
+  );
+
+  const localizedPath = buildLocalizedPath({
+    pathname: window.location.pathname,
+    search: window.location.search,
+    hash: window.location.hash,
+    language: preferredLanguage,
+  });
+
+  window.history.replaceState(null, "", localizedPath);
+  i18n.changeLanguage(preferredLanguage);
+} else {
+  i18n.changeLanguage(currentPathLanguage);
+}
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>

@@ -1,5 +1,11 @@
+import {
+  DEFAULT_LANGUAGE_CODE,
+  SUPPORTED_LANGUAGE_CODES,
+  stripLanguageFromPath,
+} from "./languageRouting";
+
 export const SITE_URL = "https://www.hbrealstate.com";
-export const SUPPORTED_SEO_LANGS = ["en", "tr", "ru"];
+export const SUPPORTED_SEO_LANGS = SUPPORTED_LANGUAGE_CODES;
 
 export const DEFAULT_SEO = {
   title: "HB International Gayrimenkul",
@@ -197,6 +203,11 @@ export const buildLanguageAlternates = (
 
   const alternates = [];
   const seen = new Set();
+  const basePathWithoutLanguage = stripLanguageFromPath(baseUrl.pathname || "/");
+  const normalizedPath =
+    basePathWithoutLanguage && basePathWithoutLanguage !== "/"
+      ? basePathWithoutLanguage
+      : "";
 
   languages.forEach((lang) => {
     if (!lang) return;
@@ -205,10 +216,12 @@ export const buildLanguageAlternates = (
     seen.add(hrefLang);
 
     const localized = new URL(baseUrl.toString());
-    localized.searchParams.set("lang", hrefLang);
+    localized.pathname = `/${hrefLang}${normalizedPath}`;
     alternates.push({ hrefLang, href: localized.toString() });
   });
 
-  alternates.push({ hrefLang: "x-default", href: baseUrl.toString() });
+  const xDefault = new URL(baseUrl.toString());
+  xDefault.pathname = `/${DEFAULT_LANGUAGE_CODE}${normalizedPath}`;
+  alternates.push({ hrefLang: "x-default", href: xDefault.toString() });
   return alternates;
 };

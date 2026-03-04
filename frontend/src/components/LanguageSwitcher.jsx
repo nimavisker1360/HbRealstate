@@ -1,8 +1,11 @@
 import { useTranslation } from 'react-i18next';
+import { useLocation } from "react-router-dom";
+import { buildLocalizedPath, normalizeLanguageCode } from "../utils/languageRouting";
 
 const LanguageSwitcher = ({ className = '' }) => {
   const { i18n } = useTranslation();
-  const currentLang = i18n.language?.toLowerCase() || 'en';
+  const location = useLocation();
+  const currentLang = normalizeLanguageCode(i18n.language);
   
   // Handles locale variants like 'en-US', 'tr-TR', 'ru-RU'
   const isEnglish = currentLang.startsWith('en');
@@ -10,7 +13,20 @@ const LanguageSwitcher = ({ className = '' }) => {
   const isRussian = currentLang.startsWith('ru');
 
   const handleLanguageChange = (langCode) => {
-    i18n.changeLanguage(langCode);
+    const normalizedTargetLanguage = normalizeLanguageCode(langCode);
+    if (normalizedTargetLanguage === currentLang) return;
+
+    window.localStorage.setItem("i18nextLng", normalizedTargetLanguage);
+    i18n.changeLanguage(normalizedTargetLanguage);
+
+    const targetPath = buildLocalizedPath({
+      pathname: location.pathname,
+      search: location.search,
+      hash: location.hash,
+      language: normalizedTargetLanguage,
+    });
+
+    window.location.assign(targetPath);
   };
 
   return (

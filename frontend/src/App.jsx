@@ -8,6 +8,10 @@ import { CurrencyProvider } from "./context/CurrencyContext";
 import Layout from "./components/Layout";
 import ScrollToTop from "./components/ScrollToTop";
 import RouteSeo from "./components/RouteSeo";
+import {
+  DEFAULT_LANGUAGE_CODE,
+  extractLanguageFromPath,
+} from "./utils/languageRouting";
 
 const Home = lazy(() => import("./pages/seo/HomeSeoPage"));
 const Listing = lazy(() => import("./pages/seo/ListingSeoPage"));
@@ -42,6 +46,9 @@ const ReactQueryDevtools = import.meta.env.DEV
   : () => null;
 
 export default function App() {
+  const urlLanguage =
+    extractLanguageFromPath(window.location.pathname) || DEFAULT_LANGUAGE_CODE;
+  const routerBasename = `/${urlLanguage}`;
 
   const queryClient = new QueryClient();
   const [userDetails, setUserDetails] = useState({
@@ -64,7 +71,7 @@ export default function App() {
     <UserDetailContext.Provider value={{ userDetails, setUserDetails }}>
       <CurrencyProvider>
         <QueryClientProvider client={queryClient}>
-            <BrowserRouter>
+            <BrowserRouter basename={routerBasename}>
               <ScrollToTop />
               <RouteSeo />
               <Suspense fallback={null}>
