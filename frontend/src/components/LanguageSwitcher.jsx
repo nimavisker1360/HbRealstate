@@ -16,6 +16,12 @@ const LanguageSwitcher = ({ className = '' }) => {
     const normalizedTargetLanguage = normalizeLanguageCode(langCode);
     if (normalizedTargetLanguage === currentLang) return;
 
+    const searchParams = new URLSearchParams(location.search || "");
+    ["code", "state", "error", "error_description"].forEach((key) =>
+      searchParams.delete(key)
+    );
+    const sanitizedSearch = searchParams.toString();
+
     window.localStorage.setItem("i18nextLng", normalizedTargetLanguage);
     window.sessionStorage.setItem(
       "suppress_auto_login_prompt_until",
@@ -25,7 +31,7 @@ const LanguageSwitcher = ({ className = '' }) => {
 
     const targetPath = buildLocalizedPath({
       pathname: location.pathname,
-      search: location.search,
+      search: sanitizedSearch ? `?${sanitizedSearch}` : "",
       hash: location.hash,
       language: normalizedTargetLanguage,
     });

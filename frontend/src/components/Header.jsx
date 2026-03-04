@@ -4,7 +4,7 @@ import Navbar from "./Navbar";
 import { MdArrowBack, MdClose, MdMenu, MdSearch } from "react-icons/md";
 import { FaHandshake, FaWhatsapp } from "react-icons/fa";
 import userIcon from "../assets/user.svg";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth0 } from "@auth0/auth0-react";
 import ProfileMenu from "./ProfileMenu";
 import LoginModal from "./LoginModal";
@@ -29,6 +29,7 @@ const Header = () => {
   const { currencies, selectedCurrency, setSelectedCurrency } =
     useContext(CurrencyContext);
   const location = useLocation();
+  const navigate = useNavigate();
   const autoLoginTriggeredRef = useRef(false);
   const loginPromptTimerRef = useRef(null);
   const authStateRef = useRef(false);
@@ -122,10 +123,38 @@ const Header = () => {
       clearTimeout(loginPromptTimerRef.current);
       loginPromptTimerRef.current = null;
     }
-    if (loginModalOpen) {
-      setLoginModalOpen(false);
-    }
-  }, [isAuthRedirectInProgress, loginModalOpen]);
+  }, [isAuthRedirectInProgress]);
+
+  useEffect(() => {
+    if (isLoading || !isAuthRedirectInProgress) return;
+
+    const params = new URLSearchParams(location.search || "");
+    let changed = false;
+    ["code", "state", "error", "error_description"].forEach((key) => {
+      if (params.has(key)) {
+        params.delete(key);
+        changed = true;
+      }
+    });
+    if (!changed) return;
+
+    const nextSearch = params.toString();
+    navigate(
+      {
+        pathname: location.pathname,
+        search: nextSearch ? `?${nextSearch}` : "",
+        hash: location.hash || "",
+      },
+      { replace: true }
+    );
+  }, [
+    isLoading,
+    isAuthRedirectInProgress,
+    location.pathname,
+    location.search,
+    location.hash,
+    navigate,
+  ]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
