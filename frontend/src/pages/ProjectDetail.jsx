@@ -26,6 +26,7 @@ import {
   MdCampaign,
   MdPlayCircleOutline,
   MdVideocam,
+  MdShowChart,
   MdCheck,
   MdClose,
   MdChevronLeft,
@@ -51,6 +52,7 @@ import {
   getOptimizedVideoUrl,
 } from "../utils/media";
 import { extractObjectId, resolveProjectPath } from "../utils/seo";
+import IstanbulMarketAnalytics from "../components/market/IstanbulMarketAnalytics";
 
 // All possible Bina Özellikleri (Building Features)
 const ALL_BINA_OZELLIKLERI = [
@@ -264,6 +266,45 @@ const hasSpecialOfferData = (specialOffer) =>
         Number(specialOffer.locationMinutes || 0) > 0)
   );
 
+const inferDistrictFromRawProperty = (propertyData) => {
+  const direct = String(
+    propertyData?.district || propertyData?.addressDetails?.district || ""
+  ).trim();
+  if (direct) return direct;
+
+  const city = String(
+    propertyData?.city || propertyData?.addressDetails?.city || ""
+  )
+    .toLowerCase()
+    .trim();
+
+  const address = String(propertyData?.address || "").trim();
+  if (!address) return "";
+
+  const parts = address
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  if (parts.length <= 1) {
+    const slashParts = address
+      .split("/")
+      .map((part) => part.trim())
+      .filter(Boolean);
+    if (slashParts.length > 0) return slashParts[0];
+    const words = address.split(/\s+/).filter(Boolean);
+    return words[0] || "";
+  }
+
+  const withoutCity = parts.filter((part) => part.toLowerCase() !== city);
+  const districtCandidate =
+    withoutCity.length > 1
+      ? withoutCity[withoutCity.length - 1]
+      : withoutCity[0] || "";
+
+  return districtCandidate;
+};
+
 const ProjectDetail = () => {
   const { projectSlugOrId: routeProjectSlugOrId = "" } = useParams();
   const projectLookupKey = useMemo(() => {
@@ -316,7 +357,11 @@ const ProjectDetail = () => {
   const [isLightboxMediaLoaded, setIsLightboxMediaLoaded] = useState(true);
   const [isMainVideoPreviewActive, setIsMainVideoPreviewActive] = useState(false);
   const [isMainVideoPreviewReady, setIsMainVideoPreviewReady] = useState(false);
+  const [activeOverviewTab, setActiveOverviewTab] = useState("description");
   const mainVideoPreviewRef = useRef(null);
+  const descriptionSectionRef = useRef(null);
+  const locationSectionRef = useRef(null);
+  const marketSectionRef = useRef(null);
   const [contactForm, setContactForm] = useState({
     name: "",
     email: "",
@@ -384,7 +429,7 @@ const ProjectDetail = () => {
       projectName: propertyData.projectName || "",
       propertyType: propertyData.propertyType || "",
       city: propertyData.city,
-      district: propertyData.address?.split(",")[0]?.trim() || "",
+      district: inferDistrictFromRawProperty(propertyData),
       price: propertyData.price,
       currency: propertyData.currency,
       deliveryDate: propertyData.deliveryDate || "",
@@ -556,6 +601,20 @@ const ProjectDetail = () => {
     }
 
     goToNextGalleryItem();
+  };
+
+  const scrollToSection = (sectionKey) => {
+    setActiveOverviewTab(sectionKey);
+
+    const sectionMap = {
+      description: descriptionSectionRef,
+      location: locationSectionRef,
+      market: marketSectionRef,
+    };
+    sectionMap[sectionKey]?.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
   };
 
   const handleContactSubmit = async (e) => {
@@ -877,8 +936,49 @@ const ProjectDetail = () => {
               </div>
             </div>
 
+            <div className="mb-8 flex justify-center">
+              <div className="inline-flex flex-wrap items-center justify-center gap-2 rounded-full border border-slate-200 bg-slate-50 p-1">
+                <button
+                  type="button"
+                  onClick={() => scrollToSection("description")}
+                  className={`flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition-colors ${
+                    activeOverviewTab === "description"
+                      ? "bg-[#0b4f93] text-white"
+                      : "text-slate-700 hover:text-slate-900"
+                  }`}
+                >
+                  <MdDescription size={16} />
+                  {i18n.language?.startsWith("tr") ? "Açıklama" : "Description"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => scrollToSection("location")}
+                  className={`flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition-colors ${
+                    activeOverviewTab === "location"
+                      ? "bg-[#0b4f93] text-white"
+                      : "text-slate-700 hover:text-slate-900"
+                  }`}
+                >
+                  <MdLocationOn size={16} />
+                  {i18n.language?.startsWith("tr") ? "Konumu" : "Location"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => scrollToSection("market")}
+                  className={`flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition-colors ${
+                    activeOverviewTab === "market"
+                      ? "bg-[#0b4f93] text-white"
+                      : "text-slate-700 hover:text-slate-900"
+                  }`}
+                >
+                  <MdShowChart size={16} />
+                  {i18n.language?.startsWith("tr") ? "Emlak Endeksi" : "Market Index"}
+                </button>
+              </div>
+            </div>
+
             {/* About Project */}
-            <section className="mb-8">
+            <section ref={descriptionSectionRef} className="mb-8 scroll-mt-28">
               <h2 className="text-xl font-bold text-gray-900 mb-6">{t("projectDetail.aboutProject")}</h2>
               
               {/* Project Stats */}
@@ -1055,6 +1155,10 @@ const ProjectDetail = () => {
               )}
             </section>
 
+            <section ref={marketSectionRef} className="mb-8 scroll-mt-28">
+              <IstanbulMarketAnalytics districtHint={project.district} />
+            </section>
+
             {/* Floor Plans */}
             {project.dairePlanlari && project.dairePlanlari.length > 0 && (
               <section className="mb-8">
@@ -1173,7 +1277,7 @@ const ProjectDetail = () => {
             )}
 
             {/* Location / Map Section */}
-            <section className="mb-8">
+            <section ref={locationSectionRef} className="mb-8 scroll-mt-28">
               <h2 className="text-xl font-bold text-gray-900 mb-6">{t("projectDetail.location")}</h2>
               <div className="relative">
                 {project.mapImage ? (

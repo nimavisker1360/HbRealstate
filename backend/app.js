@@ -10,6 +10,7 @@ import { blogRoute } from "./routes/blogRoute.js";
 import { housingSalesRoute } from "./routes/housingSalesRoute.js";
 import { testimonialRoute } from "./routes/testimonialRoute.js";
 import { assistantRoute } from "./routes/assistantRoute.js";
+import { marketRoute } from "./routes/marketRoute.js";
 import { getSitemapXml } from "./controllers/sitemapCntrl.js";
 
 dotenv.config();
@@ -33,5 +34,6 @@ app.use("/api/blog", blogRoute);
 app.use("/api/housing-sales", housingSalesRoute);
 app.use("/api/testimonial", testimonialRoute);
 app.use("/api/assistant", assistantRoute);
+app.use("/api/market", marketRoute);
 
 export default app;

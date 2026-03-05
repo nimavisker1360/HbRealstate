@@ -1,4 +1,4 @@
-import { useContext, useState, useEffect } from "react";
+import { useContext, useState, useEffect, useRef } from "react";
 import { useMutation, useQuery } from "react-query";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -23,6 +23,8 @@ import {
   MdLocationCity,
   MdPublic,
   MdVerified,
+  MdDescription,
+  MdShowChart,
   MdCheck,
   MdClose,
   MdPlayCircleOutline,
@@ -174,6 +176,7 @@ const MUHIT_FEATURES = [
 import { CgRuler } from "react-icons/cg";
 import HeartBtn from "../components/HeartBtn";
 import { resolveProjectPath } from "../utils/seo";
+import IstanbulMarketAnalytics from "../components/market/IstanbulMarketAnalytics";
 
 // Format date helper function
 const formatDate = (dateString, showFullDate = false, locale = "en") => {
@@ -216,6 +219,43 @@ const formatDate = (dateString, showFullDate = false, locale = "en") => {
   });
 };
 
+const inferDistrictFromProperty = (property) => {
+  const direct =
+    String(property?.district || property?.addressDetails?.district || "").trim();
+  if (direct) return direct;
+
+  const address = String(property?.address || "").trim();
+  if (!address) return "";
+
+  const city = String(property?.city || property?.addressDetails?.city || "")
+    .toLowerCase()
+    .trim();
+
+  const parts = address
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  if (parts.length <= 1) {
+    const slashParts = address
+      .split("/")
+      .map((part) => part.trim())
+      .filter(Boolean);
+    if (slashParts.length > 0) return slashParts[0];
+    const words = address.split(/\s+/).filter(Boolean);
+    return words[0] || "";
+  }
+
+  if (parts.length > 1) {
+    const withoutCity = parts.filter((part) => part.toLowerCase() !== city);
+    if (withoutCity.length > 1) return withoutCity[withoutCity.length - 1] || "";
+    if (withoutCity.length === 1) return withoutCity[0];
+    return parts[0] || "";
+  }
+
+  return "";
+};
+
 const Property = () => {
   const { t, i18n } = useTranslation();
   const { pathname } = useLocation();
@@ -242,6 +282,10 @@ const Property = () => {
   const [contactModalOpen, setContactModalOpen] = useState(false);
   const [videoModalOpen, setVideoModalOpen] = useState(false);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
+  const [activeOverviewTab, setActiveOverviewTab] = useState("description");
+  const descriptionSectionRef = useRef(null);
+  const locationSectionRef = useRef(null);
+  const marketSectionRef = useRef(null);
   const { validateLogin } = useAuthCheck();
   const { user } = useAuth0();
   const whatsappNumber = normalizeWhatsAppNumber(data?.consultant?.whatsapp);
@@ -313,6 +357,21 @@ const Property = () => {
     ...propertyVideos.map((url) => ({ url, type: "video" })),
     ...propertyImages.map((url) => ({ url, type: "image" })),
   ];
+  const districtHint = inferDistrictFromProperty(data);
+
+  const scrollToSection = (sectionKey) => {
+    setActiveOverviewTab(sectionKey);
+
+    const sectionMap = {
+      description: descriptionSectionRef,
+      location: locationSectionRef,
+      market: marketSectionRef,
+    };
+    sectionMap[sectionKey]?.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
 
   const {
     userDetails: { token, bookings },
@@ -652,10 +711,52 @@ const Property = () => {
           </div>
         </div>
       )}
+
+      <div className="my-5 flex justify-center">
+        <div className="inline-flex flex-wrap items-center justify-center gap-2 rounded-full border border-slate-200 bg-slate-50 p-1">
+          <button
+            type="button"
+            onClick={() => scrollToSection("description")}
+            className={`flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition-colors ${
+              activeOverviewTab === "description"
+                ? "bg-[#0b4f93] text-white"
+                : "text-slate-700 hover:text-slate-900"
+            }`}
+          >
+            <MdDescription size={16} />
+            {i18n.language?.startsWith("tr") ? "Açıklama" : "Description"}
+          </button>
+          <button
+            type="button"
+            onClick={() => scrollToSection("location")}
+            className={`flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition-colors ${
+              activeOverviewTab === "location"
+                ? "bg-[#0b4f93] text-white"
+                : "text-slate-700 hover:text-slate-900"
+            }`}
+          >
+            <FaLocationDot size={14} />
+            {i18n.language?.startsWith("tr") ? "Konumu" : "Location"}
+          </button>
+          <button
+            type="button"
+            onClick={() => scrollToSection("market")}
+            className={`flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition-colors ${
+              activeOverviewTab === "market"
+                ? "bg-[#0b4f93] text-white"
+                : "text-slate-700 hover:text-slate-900"
+            }`}
+          >
+            <MdShowChart size={16} />
+            {i18n.language?.startsWith("tr") ? "Emlak Endeksi" : "Market Index"}
+          </button>
+        </div>
+      </div>
+
       {/* container */}
       <div className="max-w-4xl mx-auto">
         {/* Property Content */}
-        <div className="rounded-2xl bg-white p-2">
+        <div ref={descriptionSectionRef} className="scroll-mt-28 rounded-2xl bg-white p-2">
           <div className="flexBetween mb-2">
             <h5 className="bold-16 text-secondary">{data?.city}</h5>
             {/* Property Type Badge */}
@@ -721,12 +822,16 @@ const Property = () => {
           </div>
 
           {/* Map Section - Moved Higher */}
-          <div className="my-6 rounded-xl overflow-hidden h-[300px]">
+          <div ref={locationSectionRef} className="scroll-mt-28 my-6 rounded-xl overflow-hidden h-[300px]">
             <Map
               address={data?.address}
               city={data?.city}
               country={data?.country}
             />
+          </div>
+
+          <div ref={marketSectionRef} className="scroll-mt-28 my-6">
+            <IstanbulMarketAnalytics districtHint={districtHint} />
           </div>
 
           {/* Property Details Table */}

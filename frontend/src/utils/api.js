@@ -978,3 +978,18 @@ export const getTurkeyStats = async (province, year) => {
     throw error;
   }
 };
+
+// ============ MARKET ANALYTICS API FUNCTIONS ============
+
+export const getIstanbulMarketAnalytics = async (params = {}) => {
+  try {
+    const response = await api.get("/market/istanbul", {
+      params,
+      timeout: 20 * 1000,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching Istanbul market analytics:", error);
+    throw error;
+  }
+};
