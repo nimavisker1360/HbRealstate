@@ -72,6 +72,15 @@ const Consultants = () => {
 
   return (
     <section className="max-padd-container my-[99px] overflow-x-hidden">
+      {/* Top Banner */}
+      <div className="mb-10 sm:mb-14">
+        <img
+          src="/banner.jpg"
+          alt="Consultants banner"
+          className="block w-full h-auto"
+        />
+      </div>
+
       {/* Header Section */}
       <div className="text-center mb-16">
         <span className="medium-18">{t("consultants.subtitle")}</span>
