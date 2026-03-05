@@ -51,7 +51,7 @@ const Consultants = () => {
 
   if (isLoading) {
     return (
-      <section className="max-padd-container my-[99px] flexCenter min-h-[50vh]">
+      <section className="max-padd-container mt-0 sm:mt-10 lg:mt-[99px] mb-[99px] flexCenter min-h-[50vh]">
         <div className="text-center">
           <Loader color="green" size="lg" />
           <p className="text-gray-30 mt-4">Loading consultants...</p>
@@ -62,7 +62,7 @@ const Consultants = () => {
 
   if (isError) {
     return (
-      <section className="max-padd-container my-[99px] flexCenter min-h-[50vh]">
+      <section className="max-padd-container mt-0 sm:mt-10 lg:mt-[99px] mb-[99px] flexCenter min-h-[50vh]">
         <div className="text-center">
           <p className="text-red-500">Error loading consultants.</p>
         </div>
@@ -71,7 +71,7 @@ const Consultants = () => {
   }
 
   return (
-    <section className="max-padd-container my-[99px] overflow-x-hidden">
+    <section className="max-padd-container mt-0 sm:mt-10 lg:mt-[99px] mb-[99px] overflow-x-hidden">
       {/* Top Banner */}
       <div className="mb-10 sm:mb-14">
         <img
