@@ -157,6 +157,11 @@ const Navbar = ({
   };
 
   const getMenuBlogId = async (item) => {
+    if (item?.blogKey) {
+      const statsBlogId = await getMarketAnalysisBlogId(item.blogKey);
+      if (statsBlogId) return statsBlogId;
+    }
+
     const menuKey = item?.menuKey || item?.labelKey;
     let list = Array.isArray(blogs) ? blogs : null;
     let id = menuKey ? findBlogIdByMenuKey(list, menuKey) : null;
@@ -171,11 +176,7 @@ const Navbar = ({
       }
     }
 
-    if (id) return id;
-    if (item?.blogKey) {
-      return await getMarketAnalysisBlogId(item.blogKey);
-    }
-    return null;
+    return id || null;
   };
 
   const handleAboutTurkeyItemClick = async (item) => {

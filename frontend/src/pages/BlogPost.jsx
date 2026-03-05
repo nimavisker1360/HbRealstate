@@ -145,6 +145,11 @@ const BlogPost = () => {
   };
 
   const getMenuBlogId = async (item) => {
+    if (item?.blogKey) {
+      const statsBlogId = await getMarketAnalysisBlogId(item.blogKey);
+      if (statsBlogId) return statsBlogId;
+    }
+
     const menuKey = item?.menuKey || item?.labelKey;
     let list = Array.isArray(blogs) ? blogs : null;
     let id = menuKey ? findBlogIdByMenuKey(list, menuKey) : null;
@@ -159,11 +164,7 @@ const BlogPost = () => {
       }
     }
 
-    if (id) return id;
-    if (item?.blogKey) {
-      return await getMarketAnalysisBlogId(item.blogKey);
-    }
-    return null;
+    return id || null;
   };
 
   const handleAboutTurkeyItemClick = async (item) => {
@@ -235,12 +236,23 @@ const BlogPost = () => {
     );
   }
 
+  const localizedContent = getLocalizedContent("content");
+  const blogContentCandidates = [
+    localizedContent,
+    blog.content,
+    blog.content_en,
+    blog.content_tr,
+    blog.content_ru,
+  ].filter((content) => typeof content === "string");
+  const hasContentMarker = (marker) =>
+    blogContentCandidates.some((content) => content.includes(marker));
+
   // Check if this is a stats blog
-  const isHousingStatsBlog = blog.content?.includes('<!-- HOUSING_STATS_CHART -->');
-  const isForeignSalesBlog = blog.content?.includes('<!-- FOREIGN_SALES_CHART -->');
+  const isHousingStatsBlog = hasContentMarker("HOUSING_STATS_CHART");
+  const isForeignSalesBlog = hasContentMarker("FOREIGN_SALES_CHART");
   const isStatsBlog = isHousingStatsBlog || isForeignSalesBlog;
   const isStatsTheme = false;
-  const readingTime = calculateReadingTime(getLocalizedContent("content"));
+  const readingTime = calculateReadingTime(localizedContent);
   const getLocalizedCategoryLabel = (value) => {
     const raw = fixMojibake(value || "");
     if (!raw || !isRussian) return raw;
@@ -707,9 +719,9 @@ const BlogPost = () => {
 
             <div className="mt-8">
               <div className="prose prose-lg max-w-none blog-content">
-                {blog.content?.includes('<!-- HOUSING_STATS_CHART -->') ? (
+                {isHousingStatsBlog ? (
                   <HousingSalesChart />
-                ) : blog.content?.includes('<!-- FOREIGN_SALES_CHART -->') ? (
+                ) : isForeignSalesBlog ? (
                   <ForeignSalesChart />
                 ) : (
                   <div
@@ -727,7 +739,7 @@ const BlogPost = () => {
                     [&_div.not-prose]:rounded-2xl [&_div.not-prose]:border [&_div.not-prose]:border-emerald-100 [&_div.not-prose]:bg-emerald-50/40 [&_div.not-prose]:p-6 [&_div.not-prose]:shadow-sm
                     [&_div.not-prose_img]:rounded-2xl [&_div.not-prose_img]:shadow-md
                     `}
-                    dangerouslySetInnerHTML={{ __html: getLocalizedContent("content") }}
+                    dangerouslySetInnerHTML={{ __html: localizedContent }}
                   />
                 )}
               </div>

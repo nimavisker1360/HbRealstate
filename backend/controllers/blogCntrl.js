@@ -88,7 +88,10 @@ export const getBlog = asyncHandler(async (req, res) => {
         });
         if (candidate) {
           const candidateFallbackSlug = resolveBlogSlug(candidate).toLowerCase();
-          if (candidateFallbackSlug === normalizedIdentifier) {
+          const hasMatchingIdSuffix = normalizedIdentifier.endsWith(
+            `-${fallbackObjectId}`
+          );
+          if (candidateFallbackSlug === normalizedIdentifier || hasMatchingIdSuffix) {
             blog = candidate;
           }
         }
