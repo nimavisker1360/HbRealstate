@@ -58,13 +58,9 @@ import IstanbulMarketAnalytics from "../components/market/IstanbulMarketAnalytic
 const ALL_BINA_OZELLIKLERI = [
   "Akıllı Ev",
   "Alarm (Yangın)",
-  "Buzdolabı",
-  "Fiber İnternet",
   "Intercom Sistemi",
   "Kablo TV",
-  "Uydu",
   "Jeneratör",
-  "Isı Yalıtımı",
   "Ses Yalıtımı",
   "Su Deposu",
 ];
@@ -73,17 +69,15 @@ const ALL_BINA_OZELLIKLERI = [
 const ALL_DIS_OZELLIKLER = [
   "Bahçe",
   "Buhar Odası",
-  "Garaj",
+  "Sauna",
+  "Türk Hamamı",
+  "SPA",
   "Otopark",
   "Havuz",
   "Çocuk Parkı",
   "Spor Alanı",
-  "Yürüyüş Yolu",
   "Bisiklet Yolu",
   "Peyzaj",
-  "Kapıcı Dairesi",
-  "Kreş",
-  "Siding",
 ];
 
 // All possible Engelli/Yaşlı Uygun (Accessibility Features)
@@ -102,20 +96,14 @@ const ALL_EGLENCE_ALISVERIS = [
   "Cafe",
   "Sinema",
   "Fitness Salonu",
-  "SPA",
-  "Sauna",
-  "Türk Hamamı",
   "Çocuk Kulübü",
-  "Hobi Odası",
 ];
 
 // All possible Güvenlik (Security Features)
 const ALL_GUVENLIK = [
   "24 Saat Güvenlik",
   "Güvenlik Kamerası",
-  "Kapalı Devre TV",
   "Kartlı Giriş Sistemi",
-  "Site İçi Güvenlik",
   "Yangın Merdiveni",
   "Yangın Söndürme Sistemi",
 ];
@@ -124,10 +112,8 @@ const ALL_GUVENLIK = [
 const ALL_MANZARA = [
   "Şehir Manzarası",
   "Deniz Manzarası",
-  "Doğa Manzarası",
   "Göl Manzarası",
   "Orman Manzarası",
-  "Dağ Manzarası",
   "Havuz Manzarası",
   "Bahçe Manzarası",
 ];
@@ -146,7 +132,6 @@ const ALL_MUHIT = [
   "Cami",
   "Üniversite",
   "Alışveriş Merkezi",
-  "Cemevi",
   "Fuar",
   "İlkokul-Ortaokul",
   "Sağlık Ocağı",
@@ -157,29 +142,20 @@ const FEATURE_TRANSLATIONS = {
   // Bina Özellikleri
   "Akıllı Ev": "Smart Home",
   "Alarm (Yangın)": "Fire Alarm",
-  "Fiber İnternet": "Fiber Internet",
   "Intercom Sistemi": "Intercom System",
   "Kablo TV": "Cable TV",
-  "Uydu": "Satellite",
   "Jeneratör": "Generator",
-  "Isı Yalıtımı": "Thermal Insulation",
   "Ses Yalıtımı": "Sound Insulation",
   "Su Deposu": "Water Tank",
-  "Buzdolabı": "Refrigerator",
   // Dış Özellikler
   "Bahçe": "Garden",
   "Buhar Odası": "Steam Room",
-  "Garaj": "Garage",
   "Otopark": "Parking",
   "Havuz": "Pool",
   "Çocuk Parkı": "Playground",
   "Spor Alanı": "Sports Area",
-  "Yürüyüş Yolu": "Walking Path",
   "Bisiklet Yolu": "Bicycle Path",
   "Peyzaj": "Landscaping",
-  "Kapıcı Dairesi": "Doorman Apartment",
-  "Kreş": "Nursery",
-  "Siding": "Siding",
   // Engelli/Yaşlı Uygun
   "Engelli Asansörü": "Disabled Elevator",
   "Engelli Rampası": "Disabled Ramp",
@@ -196,22 +172,17 @@ const FEATURE_TRANSLATIONS = {
   "Sauna": "Sauna",
   "Türk Hamamı": "Turkish Bath",
   "Çocuk Kulübü": "Kids Club",
-  "Hobi Odası": "Hobby Room",
   // Güvenlik
   "24 Saat Güvenlik": "24/7 Security",
   "Güvenlik Kamerası": "Security Camera",
-  "Kapalı Devre TV": "CCTV",
   "Kartlı Giriş Sistemi": "Card Access System",
-  "Site İçi Güvenlik": "On-site Security",
   "Yangın Merdiveni": "Fire Escape",
   "Yangın Söndürme Sistemi": "Fire Suppression System",
   // Manzara
   "Şehir Manzarası": "City View",
   "Deniz Manzarası": "Sea View",
-  "Doğa Manzarası": "Nature View",
   "Göl Manzarası": "Lake View",
   "Orman Manzarası": "Forest View",
-  "Dağ Manzarası": "Mountain View",
   "Havuz Manzarası": "Pool View",
   "Bahçe Manzarası": "Garden View",
   // Muhit
@@ -227,7 +198,6 @@ const FEATURE_TRANSLATIONS = {
   "Cami": "Mosque",
   "Üniversite": "University",
   "Alışveriş Merkezi": "Shopping Center",
-  "Cemevi": "Cemevi",
   "Fuar": "Fair",
   "İlkokul-Ortaokul": "Primary-Middle School",
   "Sağlık Ocağı": "Health Center",

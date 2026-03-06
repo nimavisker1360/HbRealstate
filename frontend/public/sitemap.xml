@@ -2,75 +2,81 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://www.hbrealstate.com/</loc>
-    <lastmod>2026-03-05</lastmod>
+    <lastmod>2026-03-06</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://www.hbrealstate.com/listing</loc>
-    <lastmod>2026-03-05</lastmod>
+    <lastmod>2026-03-06</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://www.hbrealstate.com/projects</loc>
-    <lastmod>2026-03-05</lastmod>
+    <lastmod>2026-03-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.hbrealstate.com/blogs</loc>
-    <lastmod>2026-03-05</lastmod>
+    <lastmod>2026-03-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.hbrealstate.com/consultants</loc>
-    <lastmod>2026-03-05</lastmod>
+    <lastmod>2026-03-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://www.hbrealstate.com/addresses</loc>
-    <lastmod>2026-03-05</lastmod>
+    <lastmod>2026-03-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://www.hbrealstate.com/today</loc>
-    <lastmod>2026-03-05</lastmod>
+    <lastmod>2026-03-06</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.hbrealstate.com/istanbul-apartments</loc>
-    <lastmod>2026-03-05</lastmod>
+    <lastmod>2026-03-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.hbrealstate.com/kyrenia-apartments</loc>
-    <lastmod>2026-03-05</lastmod>
+    <lastmod>2026-03-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.hbrealstate.com/investment-opportunities</loc>
-    <lastmod>2026-03-05</lastmod>
+    <lastmod>2026-03-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.hbrealstate.com/turkey-property-investment</loc>
-    <lastmod>2026-03-05</lastmod>
+    <lastmod>2026-03-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.hbrealstate.com/turkish-citizenship-property</loc>
-    <lastmod>2026-03-05</lastmod>
+    <lastmod>2026-03-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.hbrealstate.com/listing/property-in-istanbul-69aa8449e79c28fe2d22058a</loc>
+    <lastmod>2026-03-06</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.hbrealstate.com/listing/property-in-istanbul-69a93ad919f6ad75bdb98819</loc>
@@ -98,19 +104,19 @@
   </url>
   <url>
     <loc>https://www.hbrealstate.com/listing/property-in-istanbul-69a53afaeb15c6ee33656714</loc>
-    <lastmod>2026-03-02</lastmod>
+    <lastmod>2026-03-06</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.hbrealstate.com/listing/property-in-istanbul-69a2b784b6acf8eff0950271</loc>
-    <lastmod>2026-03-02</lastmod>
+    <lastmod>2026-03-06</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.hbrealstate.com/listing/property-in-istanbul-69a2a922a9c3c24dc765f90f</loc>
-    <lastmod>2026-03-02</lastmod>
+    <lastmod>2026-03-06</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
@@ -158,7 +164,7 @@
   </url>
   <url>
     <loc>https://www.hbrealstate.com/listing/property-in-istanbul-6996f9d0852573dc14cc1311</loc>
-    <lastmod>2026-03-02</lastmod>
+    <lastmod>2026-03-06</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
   </url>
@@ -409,6 +415,12 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://www.hbrealstate.com/projects/luxury-living-in-the-heart-of-acbadem-in-istanbul-2-1-3-1-35-1-4-1-apartments-hb-real-estate-69aa8449e79c28fe2d22058a</loc>
+    <lastmod>2026-03-06</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://www.hbrealstate.com/projects/istanbulun-prestijli-etiler-bolgesinde-luksun-senfonisi-1-1-2-1-3-1-4-1-apartments-hb-real-estate-69a93ad919f6ad75bdb98819</loc>
     <lastmod>2026-03-05</lastmod>
     <changefreq>weekly</changefreq>
@@ -434,19 +446,19 @@
   </url>
   <url>
     <loc>https://www.hbrealstate.com/projects/boutique-living-smart-investment-in-the-heart-of-beyoglu-in-istanbul-2-1-4-2-apartments-hb-real-estate-69a53afaeb15c6ee33656714</loc>
-    <lastmod>2026-03-02</lastmod>
+    <lastmod>2026-03-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.hbrealstate.com/projects/istanbul-stylish-living-in-the-heart-of-beyoglu-halic-2-1-3-2-4-2-apartments-hb-real-estate-69a2b784b6acf8eff0950271</loc>
-    <lastmod>2026-03-02</lastmod>
+    <lastmod>2026-03-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.hbrealstate.com/projects/buyukcekmece-istanbul-marina-family-project-1-1-2-1-2-2-4-1-apartments-hb-real-estate-69a2a922a9c3c24dc765f90f</loc>
-    <lastmod>2026-03-02</lastmod>
+    <lastmod>2026-03-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -494,7 +506,7 @@
   </url>
   <url>
     <loc>https://www.hbrealstate.com/projects/beylikduzu-empires-in-istanbul-1-1-2-1-3-1-apartments-hb-real-estate-6996f9d0852573dc14cc1311</loc>
-    <lastmod>2026-03-02</lastmod>
+    <lastmod>2026-03-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>

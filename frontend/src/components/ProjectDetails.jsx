@@ -39,13 +39,9 @@ import CurrencyContext from "../context/CurrencyContext";
 const BINA_OZELLIKLERI = [
   "Akıllı Ev",
   "Alarm (Yangın)",
-  "Buzdolabı",
-  "Fiber İnternet",
   "Intercom Sistemi",
   "Kablo TV",
-  "Uydu",
   "Jeneratör",
-  "Isı Yalıtımı",
   "Ses Yalıtımı",
   "Su Deposu",
 ];
@@ -53,9 +49,9 @@ const BINA_OZELLIKLERI = [
 const DIS_OZELLIKLER = [
   "Bahçe / Garden",
   "Buhar Odası / Steam Room",
-  "Garaj / Garage",
-  "2 Katlı Garaj / 2 Floors Garage",
-  "Isı Yalıtımı / Heat Insulation",
+  "Sauna",
+  "Türk Hamamı / Turkish Bath",
+  "SPA",
   "Otopark / Parking",
   "Havuz / Pool",
   "Gym",
@@ -64,13 +60,8 @@ const DIS_OZELLIKLER = [
   "Basketbol Sahası / Basketball Court",
   "Futbol Sahası / Football Court",
   "Tenis Kortu / Tennis Court",
-  "Yürüyüş Yolu / Walking Path",
   "Bisiklet Yolu / Bicycle Path",
   "Peyzaj / Landscaping",
-  "Kapıcı Dairesi / Doorman's Apartment",
-  "Kreş / Nursery",
-  "Siding",
-  "Uydu / Satellite",
 ];
 
 const ENGELLI_YASLI_UYGUN = [
@@ -87,19 +78,13 @@ const EGLENCE_ALISVERIS = [
   "Cafe",
   "Sinema / Cinema",
   "Fitness Salonu / Gym",
-  "SPA",
-  "Sauna",
-  "Türk Hamamı / Turkish Bath",
   "Çocuk Kulübü / Kids Club",
-  "Hobi Odası / Hobby Room",
 ];
 
 const GUVENLIK = [
   "24 Saat Güvenlik",
   "Güvenlik Kamerası",
-  "Kapalı Devre TV",
   "Kartlı Giriş Sistemi",
-  "Site İçi Güvenlik",
   "Yangın Merdiveni",
   "Yangın Söndürme Sistemi",
 ];
@@ -107,10 +92,8 @@ const GUVENLIK = [
 const MANZARA = [
   "Şehir Manzarası",
   "Deniz Manzarası",
-  "Doğa Manzarası",
   "Göl Manzarası",
   "Orman Manzarası",
-  "Dağ Manzarası",
   "Havuz Manzarası",
   "Bahçe Manzarası",
 ];
@@ -128,7 +111,6 @@ const MUHIT = [
   "Cami",
   "Üniversite",
   "Alışveriş Merkezi",
-  "Cemevi",
   "Fuar",
   "İlkokul-Ortaokul",
   "Sağlık Ocağı",
