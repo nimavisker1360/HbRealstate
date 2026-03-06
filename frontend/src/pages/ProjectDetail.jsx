@@ -860,9 +860,7 @@ const ProjectDetail = () => {
                         fetchPriority="high"
                         decoding="async"
                       />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors rounded-lg flex items-center justify-center">
-                        <MdZoomIn className="text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" size={48} />
-                      </div>
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors rounded-lg" />
                     </>
                   )}
 
