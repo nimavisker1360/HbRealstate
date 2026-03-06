@@ -458,6 +458,15 @@ const ProjectDetail = () => {
       crop: "limit",
       quality: "auto:good",
     });
+  const withOriginalSrcFallback = (originalUrl) => (event) => {
+    if (!originalUrl) return;
+    const currentSrc = event.currentTarget.getAttribute("src");
+    if (currentSrc === originalUrl) {
+      event.currentTarget.onerror = null;
+      return;
+    }
+    event.currentTarget.setAttribute("src", originalUrl);
+  };
   const getMainVideoPosterUrl = (url) =>
     getOptimizedVideoPosterUrl(url, { width: 1280, height: 860, quality: "auto:good" });
   const getThumbnailVideoPosterUrl = (url) =>
@@ -543,6 +552,7 @@ const ProjectDetail = () => {
     hasSpecialOfferData(offer)
   );
   const isSpecialOfferProject = specialOffersData.length > 0;
+  const showMarketAnalytics = project.propertyType !== "international-project";
 
   const goToPrevGalleryItem = () => {
     const totalItems = project?.galleryItems?.length || 0;
@@ -930,18 +940,20 @@ const ProjectDetail = () => {
                   <MdLocationOn size={16} />
                   {i18n.language?.startsWith("tr") ? "Konumu" : "Location"}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => scrollToSection("market")}
-                  className={`flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition-colors ${
-                    activeOverviewTab === "market"
-                      ? "bg-[#0b4f93] text-white"
-                      : "text-slate-700 hover:text-slate-900"
-                  }`}
-                >
-                  <MdShowChart size={16} />
-                  {i18n.language?.startsWith("tr") ? "Emlak Endeksi" : "Market Index"}
-                </button>
+                {showMarketAnalytics && (
+                  <button
+                    type="button"
+                    onClick={() => scrollToSection("market")}
+                    className={`flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition-colors ${
+                      activeOverviewTab === "market"
+                        ? "bg-[#0b4f93] text-white"
+                        : "text-slate-700 hover:text-slate-900"
+                    }`}
+                  >
+                    <MdShowChart size={16} />
+                    {i18n.language?.startsWith("tr") ? "Emlak Endeksi" : "Market Index"}
+                  </button>
+                )}
               </div>
             </div>
 
@@ -1123,9 +1135,11 @@ const ProjectDetail = () => {
               )}
             </section>
 
-            <section ref={marketSectionRef} className="mb-8 scroll-mt-28">
-              <IstanbulMarketAnalytics districtHint={project.district} />
-            </section>
+            {showMarketAnalytics && (
+              <section ref={marketSectionRef} className="mb-8 scroll-mt-28">
+                <IstanbulMarketAnalytics districtHint={project.district} />
+              </section>
+            )}
 
             {/* Floor Plans */}
             {project.dairePlanlari && project.dairePlanlari.length > 0 && (
@@ -1228,6 +1242,7 @@ const ProjectDetail = () => {
                       height: 1000,
                       crop: "limit",
                     })}
+                    onError={withOriginalSrcFallback(project.vaziyetPlani)}
                     alt={t("projectDetail.sitePlan")}
                     className="w-full h-auto max-h-[500px] object-contain rounded-lg border bg-gray-50"
                     loading="lazy"
@@ -1844,6 +1859,7 @@ const ProjectDetail = () => {
               height: 1400,
               crop: "limit",
             })}
+            onError={withOriginalSrcFallback(project.vaziyetPlani)}
             alt={t("projectDetail.sitePlan")}
             className="w-full h-auto rounded-lg"
             loading="lazy"

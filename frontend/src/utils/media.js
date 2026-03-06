@@ -1,5 +1,6 @@
 const CLOUDINARY_HOST = "res.cloudinary.com";
 const UPLOAD_SEGMENT = "/upload/";
+const SIGNED_SEGMENT_PATTERN = /(^|\/)s--[^/]+--\//;
 
 const splitCloudinaryUrl = (url) => {
   if (typeof url !== "string" || url.length === 0) return null;
@@ -27,6 +28,8 @@ const splitCloudinaryUrl = (url) => {
 const injectCloudinaryTransformation = (url, transformation) => {
   const parts = splitCloudinaryUrl(url);
   if (!parts || !transformation) return url;
+  // Signed delivery URLs break if transformation segments are changed client-side.
+  if (SIGNED_SEGMENT_PATTERN.test(parts.suffix)) return url;
 
   return `${parts.prefix}${transformation}/${parts.suffix}${parts.query}${parts.hash}`;
 };
@@ -97,6 +100,7 @@ export const getOptimizedVideoPosterUrl = (
   if (!url) return url;
   const cloudinaryParts = splitCloudinaryUrl(url);
   if (!cloudinaryParts) return "";
+  if (SIGNED_SEGMENT_PATTERN.test(cloudinaryParts.suffix)) return "";
   const transformations = [
     "so_0",
     `q_${quality}`,
