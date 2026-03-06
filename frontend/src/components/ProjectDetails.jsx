@@ -59,8 +59,6 @@ const DIS_OZELLIKLER = [
   "Spor Alanı / Sports Area",
   "Basketbol Sahası / Basketball Court",
   "Futbol Sahası / Football Court",
-  "Tenis Kortu / Tennis Court",
-  "Bisiklet Yolu / Bicycle Path",
   "Peyzaj / Landscaping",
 ];
 

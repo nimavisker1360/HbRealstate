@@ -309,8 +309,6 @@ const PROJE_DIS_OZELLIKLER = [
   "Spor Alanı / Sports Area",
   "Basketbol Sahası / Basketball Court",
   "Futbol Sahası / Football Court",
-  "Tenis Kortu / Tennis Court",
-  "Bisiklet Yolu / Bicycle Path",
   "Peyzaj / Landscaping",
 ];
 
@@ -424,7 +422,6 @@ const ALL_EXTERIOR_FEATURES = [
   "Ses Yalıtımı",
   "Spor Alanı",
   "Su Deposu",
-  "Tenis Kortu",
   "Yangın Merdiveni",
   "Yüzme Havuzu (Açık)",
   "Yüzme Havuzu (Kapalı)",
@@ -546,6 +543,13 @@ const getInitialSpecialOffers = (property = {}) => {
 const hasAnySpecialOfferData = (specialOffers = []) =>
   Array.isArray(specialOffers) &&
   specialOffers.some((offer) => hasSpecialOfferData(offer));
+
+const filterAllowedFeatures = (selected = [], allowed = []) => {
+  const allowedSet = new Set(allowed);
+  return (Array.isArray(selected) ? selected : []).filter((feature) =>
+    allowedSet.has(feature)
+  );
+};
 
 const formatUsdAmount = (value) =>
   Number(value || 0).toLocaleString("en-US", {
@@ -776,9 +780,15 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
       setImageURLs(property.images || (property.image ? [property.image] : []));
       setVideoURLs(property.videos || []);
       setSelectedConsultantId(property.consultantId || "");
-      setInteriorFeatures(property.interiorFeatures || []);
-      setExteriorFeatures(property.exteriorFeatures || []);
-      setMuhitFeatures(property.muhitFeatures || []);
+      setInteriorFeatures(
+        filterAllowedFeatures(property.interiorFeatures, ALL_INTERIOR_FEATURES)
+      );
+      setExteriorFeatures(
+        filterAllowedFeatures(property.exteriorFeatures, ALL_EXTERIOR_FEATURES)
+      );
+      setMuhitFeatures(
+        filterAllowedFeatures(property.muhitFeatures, MUHIT_FEATURES)
+      );
       
       // Turkish real estate fields
       setListingNo(property.listingNo || "");
@@ -829,13 +839,48 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
       );
       
       // Project-specific features
-      setProjeBinaOzellikleri(property.projeBinaOzellikleri || property.binaOzellikleri || []);
-      setProjeDisOzellikler(property.projeDisOzellikler || property.disOzellikler || []);
-      setProjeEngelliYasliUygun(property.projeEngelliYasliUygun || property.engelliYasliUygun || []);
-      setProjeEglenceAlisveris(property.projeEglenceAlisveris || property.eglenceAlisveris || []);
-      setProjeGuvenlik(property.projeGuvenlik || property.guvenlik || []);
-      setProjeManzara(property.projeManzara || property.manzara || []);
-      setProjeMuhit(property.projeMuhit || property.muhit || []);
+      setProjeBinaOzellikleri(
+        filterAllowedFeatures(
+          property.projeBinaOzellikleri || property.binaOzellikleri,
+          PROJE_BINA_OZELLIKLERI
+        )
+      );
+      setProjeDisOzellikler(
+        filterAllowedFeatures(
+          property.projeDisOzellikler || property.disOzellikler,
+          PROJE_DIS_OZELLIKLER
+        )
+      );
+      setProjeEngelliYasliUygun(
+        filterAllowedFeatures(
+          property.projeEngelliYasliUygun || property.engelliYasliUygun,
+          PROJE_ENGELLI_YASLI_UYGUN
+        )
+      );
+      setProjeEglenceAlisveris(
+        filterAllowedFeatures(
+          property.projeEglenceAlisveris || property.eglenceAlisveris,
+          PROJE_EGLENCE_ALISVERIS
+        )
+      );
+      setProjeGuvenlik(
+        filterAllowedFeatures(
+          property.projeGuvenlik || property.guvenlik,
+          PROJE_GUVENLIK
+        )
+      );
+      setProjeManzara(
+        filterAllowedFeatures(
+          property.projeManzara || property.manzara,
+          PROJE_MANZARA
+        )
+      );
+      setProjeMuhit(
+        filterAllowedFeatures(
+          property.projeMuhit || property.muhit,
+          PROJE_MUHIT
+        )
+      );
       
       setProjeHakkinda({
         ...(property.projeHakkinda || {}),
@@ -1306,9 +1351,15 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
         bathrooms: values.bathrooms || 0,
       },
       consultantId: selectedConsultantId || null,
-      interiorFeatures: isProject ? (property?.interiorFeatures || []) : interiorFeatures,
-      exteriorFeatures: isProject ? (property?.exteriorFeatures || []) : exteriorFeatures,
-      muhitFeatures: isProject ? (property?.muhitFeatures || []) : muhitFeatures,
+      interiorFeatures: isProject
+        ? filterAllowedFeatures(property?.interiorFeatures, ALL_INTERIOR_FEATURES)
+        : filterAllowedFeatures(interiorFeatures, ALL_INTERIOR_FEATURES),
+      exteriorFeatures: isProject
+        ? filterAllowedFeatures(property?.exteriorFeatures, ALL_EXTERIOR_FEATURES)
+        : filterAllowedFeatures(exteriorFeatures, ALL_EXTERIOR_FEATURES),
+      muhitFeatures: isProject
+        ? filterAllowedFeatures(property?.muhitFeatures, MUHIT_FEATURES)
+        : filterAllowedFeatures(muhitFeatures, MUHIT_FEATURES),
       // Turkish real estate fields (only for sale)
       listingNo: isProject ? (property?.listingNo || "") : listingNo,
       listingDate: isProject ? property?.listingDate : listingDate,
@@ -1353,13 +1404,33 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
       iletisim: isProjectType ? iletisim : null,
       ozellikler: isProjectType ? ozellikler : null,
       // Project-specific features (Özellikler tabs)
-      binaOzellikleri: isProject ? projeBinaOzellikleri : [],
-      disOzellikler: isProject ? projeDisOzellikler : [],
-      engelliYasliUygun: isProject ? projeEngelliYasliUygun : [],
-      eglenceAlisveris: isProject ? projeEglenceAlisveris : [],
-      guvenlik: isProject ? projeGuvenlik : [],
-      manzara: isProject ? projeManzara : [],
-      muhit: isProject ? projeMuhit : [],
+      binaOzellikleri: isProject
+        ? filterAllowedFeatures(projeBinaOzellikleri, PROJE_BINA_OZELLIKLERI)
+        : [],
+      disOzellikler: isProject
+        ? filterAllowedFeatures(projeDisOzellikler, PROJE_DIS_OZELLIKLER)
+        : [],
+      engelliYasliUygun: isProject
+        ? filterAllowedFeatures(
+            projeEngelliYasliUygun,
+            PROJE_ENGELLI_YASLI_UYGUN
+          )
+        : [],
+      eglenceAlisveris: isProject
+        ? filterAllowedFeatures(
+            projeEglenceAlisveris,
+            PROJE_EGLENCE_ALISVERIS
+          )
+        : [],
+      guvenlik: isProject
+        ? filterAllowedFeatures(projeGuvenlik, PROJE_GUVENLIK)
+        : [],
+      manzara: isProject
+        ? filterAllowedFeatures(projeManzara, PROJE_MANZARA)
+        : [],
+      muhit: isProject
+        ? filterAllowedFeatures(projeMuhit, PROJE_MUHIT)
+        : [],
     };
 
     mutate(data);

@@ -76,7 +76,6 @@ const ALL_DIS_OZELLIKLER = [
   "Havuz",
   "Çocuk Parkı",
   "Spor Alanı",
-  "Bisiklet Yolu",
   "Peyzaj",
 ];
 
@@ -154,7 +153,6 @@ const FEATURE_TRANSLATIONS = {
   "Havuz": "Pool",
   "Çocuk Parkı": "Playground",
   "Spor Alanı": "Sports Area",
-  "Bisiklet Yolu": "Bicycle Path",
   "Peyzaj": "Landscaping",
   // Engelli/Yaşlı Uygun
   "Engelli Asansörü": "Disabled Elevator",

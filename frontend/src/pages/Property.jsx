@@ -97,7 +97,6 @@ const ALL_EXTERIOR_FEATURES = [
   "Ses Yalıtımı",
   "Spor Alanı",
   "Su Deposu",
-  "Tenis Kortu",
   "Yangın Merdiveni",
   "Yüzme Havuzu (Açık)",
   "Yüzme Havuzu (Kapalı)",

@@ -73,6 +73,12 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://www.hbrealstate.com/listing/property-in-istanbul-69aa9abe4d5e172834d67448</loc>
+    <lastmod>2026-03-06</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://www.hbrealstate.com/listing/property-in-istanbul-69aa8449e79c28fe2d22058a</loc>
     <lastmod>2026-03-06</lastmod>
     <changefreq>daily</changefreq>
@@ -295,12 +301,6 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.hbrealstate.com/listing/akbat-avm-babacan-crown-deluxe-1-1-balkonlu-sat-l-k-daire-in-istanbul-697dac4e32fbfdde24da6811</loc>
-    <lastmod>2026-02-10</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://www.hbrealstate.com/listing/akbat-kozapark-k-nal-gol-manzarl-a-ultra-lux-2-1-sat-l-k-daire-in-istanbul-697c8ac8d604c64c9ed1ee57</loc>
     <lastmod>2026-02-10</lastmod>
     <changefreq>daily</changefreq>
@@ -412,6 +412,12 @@
     <loc>https://www.hbrealstate.com/listing/durusupark-da-muhtesem-in-istanbul-696b4ea73f4615af2d8058c9</loc>
     <lastmod>2026-02-10</lastmod>
     <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.hbrealstate.com/projects/luxury-living-in-the-heart-of-bahcelivler-in-istanbul-1-1-2-1-3-1-4-1-apartments-hb-real-estate-69aa9abe4d5e172834d67448</loc>
+    <lastmod>2026-03-06</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
