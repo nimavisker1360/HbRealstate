@@ -327,6 +327,10 @@ const ProjectDetail = () => {
   const [isMainVideoPreviewReady, setIsMainVideoPreviewReady] = useState(false);
   const [activeOverviewTab, setActiveOverviewTab] = useState("description");
   const mainVideoPreviewRef = useRef(null);
+  const mainGalleryTouchStartXRef = useRef(null);
+  const lightboxTouchStartXRef = useRef(null);
+  const mainGallerySwipeHandledRef = useRef(false);
+  const lightboxSwipeHandledRef = useRef(false);
   const descriptionSectionRef = useRef(null);
   const locationSectionRef = useRef(null);
   const marketSectionRef = useRef(null);
@@ -566,7 +570,78 @@ const ProjectDetail = () => {
     setSelectedImage((prev) => (prev === totalItems - 1 ? 0 : prev + 1));
   };
 
+  const navigateBySwipe = (startX, endX) => {
+    if (typeof startX !== "number" || typeof endX !== "number") return false;
+    const deltaX = endX - startX;
+    const swipeThreshold = 45;
+    if (Math.abs(deltaX) < swipeThreshold) return false;
+
+    if (deltaX > 0) {
+      goToPrevGalleryItem();
+    } else {
+      goToNextGalleryItem();
+    }
+    return true;
+  };
+
+  const handleMainGalleryTouchStart = (event) => {
+    mainGalleryTouchStartXRef.current = event.touches?.[0]?.clientX ?? null;
+    mainGallerySwipeHandledRef.current = false;
+  };
+
+  const handleMainGalleryTouchEnd = (event) => {
+    const startX = mainGalleryTouchStartXRef.current;
+    const endX = event.changedTouches?.[0]?.clientX;
+    mainGalleryTouchStartXRef.current = null;
+    mainGallerySwipeHandledRef.current = navigateBySwipe(startX, endX);
+  };
+
+  const handleLightboxTouchStart = (event) => {
+    lightboxTouchStartXRef.current = event.touches?.[0]?.clientX ?? null;
+    lightboxSwipeHandledRef.current = false;
+  };
+
+  const handleLightboxTouchEnd = (event) => {
+    const startX = lightboxTouchStartXRef.current;
+    const endX = event.changedTouches?.[0]?.clientX;
+    lightboxTouchStartXRef.current = null;
+    lightboxSwipeHandledRef.current = navigateBySwipe(startX, endX);
+  };
+
   const handleLightboxImageClick = (event) => {
+    if (lightboxSwipeHandledRef.current) {
+      lightboxSwipeHandledRef.current = false;
+      return;
+    }
+
+    const totalItems = project?.galleryItems?.length || 0;
+    if (totalItems <= 1) return;
+
+    const { left, width } = event.currentTarget.getBoundingClientRect();
+    const clickPosition = event.clientX - left;
+
+    if (clickPosition < width / 2) {
+      goToPrevGalleryItem();
+      return;
+    }
+
+    goToNextGalleryItem();
+  };
+
+  const handleMainGalleryClick = (event) => {
+    if (mainGallerySwipeHandledRef.current) {
+      mainGallerySwipeHandledRef.current = false;
+      return;
+    }
+
+    const currentItem = project?.galleryItems?.[selectedImage];
+    if (currentItem?.type === "video") {
+      stopMainVideoPreview();
+      setCurrentVideoIndex(selectedImage);
+      setVideoModalOpen(true);
+      return;
+    }
+
     const totalItems = project?.galleryItems?.length || 0;
     if (totalItems <= 1) return;
 
@@ -718,15 +793,9 @@ const ProjectDetail = () => {
                   className="flex-1 relative cursor-pointer group"
                   onMouseEnter={startMainVideoPreview}
                   onMouseLeave={stopMainVideoPreview}
-                  onClick={() => {
-                    if (project.galleryItems[selectedImage]?.type === 'video') {
-                      stopMainVideoPreview();
-                      setCurrentVideoIndex(selectedImage);
-                      setVideoModalOpen(true);
-                    } else {
-                      setLightboxOpen(true);
-                    }
-                  }}
+                  onTouchStart={handleMainGalleryTouchStart}
+                  onTouchEnd={handleMainGalleryTouchEnd}
+                  onClick={handleMainGalleryClick}
                 >
                   {selectedGalleryItem?.type === "video" ? (
                     <>
@@ -792,8 +861,35 @@ const ProjectDetail = () => {
                         decoding="async"
                       />
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors rounded-lg flex items-center justify-center">
-                        <MdZoomIn className="text-white opacity-0 group-hover:opacity-100 transition-opacity" size={48} />
+                        <MdZoomIn className="text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" size={48} />
                       </div>
+                    </>
+                  )}
+
+                  {project.galleryItems.length > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          goToPrevGalleryItem();
+                        }}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-black/45 text-white hover:bg-black/65 transition-colors flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                        aria-label="Previous image"
+                      >
+                        <MdChevronLeft size={24} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          goToNextGalleryItem();
+                        }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-black/45 text-white hover:bg-black/65 transition-colors flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                        aria-label="Next image"
+                      >
+                        <MdChevronRight size={24} />
+                      </button>
                     </>
                   )}
                 </div>
@@ -1691,6 +1787,8 @@ const ProjectDetail = () => {
               className={`w-full h-auto cursor-pointer select-none transition-opacity duration-200 ${
                 isLightboxMediaLoaded ? "opacity-100" : "opacity-0"
               }`}
+              onTouchStart={handleLightboxTouchStart}
+              onTouchEnd={handleLightboxTouchEnd}
               onClick={handleLightboxImageClick}
               onLoad={() => setIsLightboxMediaLoaded(true)}
               onError={() => setIsLightboxMediaLoaded(true)}
