@@ -265,7 +265,6 @@ const Listing = () => {
   const [showPriceDropdown, setShowPriceDropdown] = useState(false);
   const [showRoomsDropdown, setShowRoomsDropdown] = useState(false);
   const [showAllFiltersModal, setShowAllFiltersModal] = useState(false);
-  const [mobileView, setMobileView] = useState("list");
 
   // Refs for closing dropdowns on outside click
   const typeRef = useRef(null);
@@ -948,34 +947,6 @@ const Listing = () => {
               )}
             </div>
 
-            {/* Mobile List/Map Toggle */}
-            <div className="flex items-center justify-between w-full order-4 lg:hidden">
-              <div className="inline-flex items-center bg-gray-100 rounded-full p-1">
-                <button
-                  onClick={() => setMobileView("list")}
-                  className={`px-4 py-1.5 text-xs font-semibold rounded-full transition-colors ${
-                    mobileView === "list"
-                      ? "bg-white text-gray-900 shadow-sm"
-                      : "text-gray-500"
-                  }`}
-                >
-                  {t('listing.list')}
-                </button>
-                <button
-                  onClick={() => setMobileView("map")}
-                  className={`px-4 py-1.5 text-xs font-semibold rounded-full transition-colors ${
-                    mobileView === "map"
-                      ? "bg-white text-gray-900 shadow-sm"
-                      : "text-gray-500"
-                  }`}
-                >
-                  {t('listing.map')}
-                </button>
-              </div>
-              <span className="text-xs text-gray-500">
-                {activeFiltersCount > 0 ? t('listing.filtersApplied', { count: activeFiltersCount }) : t('listing.all')}
-              </span>
-            </div>
           </div>
 
           <div className="pb-3 lg:pb-4">
@@ -1069,14 +1040,12 @@ const Listing = () => {
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
       {/* Left Side - Map */}
       <div
-        className={`w-full lg:w-[60%] relative lg:h-full ${
-          mobileView === "map" ? "flex-1 h-full" : "h-[240px]"
-        } ${mobileView === "list" ? "hidden lg:block" : ""}`}
+        className="w-full h-[260px] sm:h-[320px] lg:w-[60%] lg:h-full relative"
       >
         <PropertiesMap
           properties={filteredData}
           onPropertyClick={handlePropertyClick}
-          resizeKey={mobileView}
+          resizeKey={filteredData.length}
         />
 
         {/* Map Controls */}
@@ -1095,7 +1064,7 @@ const Listing = () => {
       </div>
 
       {/* Right Side - Property Listings */}
-      <div className={`w-full lg:w-[40%] h-full flex flex-col bg-white overflow-hidden ${mobileView === "map" ? "hidden lg:flex" : ""}`}>
+      <div className="w-full lg:w-[40%] h-full flex flex-col bg-white overflow-hidden">
         {/* Header */}
         <div className="p-4 border-b bg-white">
           {/* Search Title */}

@@ -766,20 +766,20 @@ const Properties = () => {
                 </div>
 
                 {/* Project Type Dropdown */}
-                <div ref={typeRef} className="relative w-[96px] shrink-0 sm:w-auto">
+                <div ref={typeRef} className="relative w-[132px] shrink-0 sm:w-auto">
                   <button
                     type="button"
                     onClick={() => setShowTypeDropdown((prev) => !prev)}
                     className="flex w-full items-center justify-between gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-700 transition hover:border-emerald-200 hover:bg-emerald-50"
                   >
-                    <span className="min-w-0 flex-1 truncate">{t("nav.projects")}</span>
+                    <span className="flex-1 text-left">{t("nav.projects")}</span>
                     <MdKeyboardArrowDown
                       className={`transition-transform ${showTypeDropdown ? "rotate-180" : ""}`}
                     />
                   </button>
 
                   <div
-                    className={`absolute top-full left-0 right-0 mt-2 rounded-lg bg-white z-30 sm:right-auto sm:min-w-[220px] origin-top transition-all duration-300 ease-out ${
+                    className={`absolute top-full right-0 mt-2 w-[220px] max-w-[calc(100vw-2rem)] rounded-lg bg-white z-30 sm:left-0 sm:right-auto sm:min-w-[220px] sm:w-auto origin-top transition-all duration-300 ease-out ${
                       showTypeDropdown
                         ? "max-h-[320px] translate-y-0 opacity-100 border border-gray-200 shadow-lg py-1 pointer-events-auto"
                         : "max-h-0 -translate-y-2 opacity-0 border border-transparent shadow-none py-0 pointer-events-none"
@@ -801,7 +801,7 @@ const Properties = () => {
                               <div className="h-7 w-7 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center">
                                 <IconComponent className="text-base" />
                               </div>
-                              <span className="flex-1 min-w-0 truncate">{option.label}</span>
+                              <span className="flex-1 text-left leading-tight whitespace-normal break-words">{option.label}</span>
                             </div>
                           </button>
                         );
