@@ -153,7 +153,9 @@ const Layout = () => {
 
       if (token) {
         localStorage.setItem("access_token", token);
-        setUserDetails((prev) => ({ ...prev, token: token }));
+        setUserDetails((prev) =>
+          prev.token === token ? prev : { ...prev, token: token }
+        );
         console.log("✅ Layout: Token refreshed successfully");
         return token;
       }
@@ -171,7 +173,9 @@ const Layout = () => {
 
         if (token) {
           localStorage.setItem("access_token", token);
-          setUserDetails((prev) => ({ ...prev, token: token }));
+          setUserDetails((prev) =>
+            prev.token === token ? prev : { ...prev, token: token }
+          );
           setLastActivityNow();
           console.log("✅ Layout: ID Token received");
 
@@ -223,7 +227,9 @@ const Layout = () => {
     };
   }, [
     isAuthenticated,
-    user,
+    user?.email,
+    user?.name,
+    user?.picture,
     mutate,
     setUserDetails,
     refreshToken,
@@ -248,12 +254,22 @@ const Layout = () => {
     if (isLoading || isAuthenticated) return;
 
     setTokenRefreshCallback(null);
-    setUserDetails((prev) => ({
-      ...prev,
-      token: null,
-      favourites: [],
-      bookings: [],
-    }));
+    setUserDetails((prev) => {
+      const alreadyCleared =
+        !prev.token &&
+        Array.isArray(prev.favourites) &&
+        prev.favourites.length === 0 &&
+        Array.isArray(prev.bookings) &&
+        prev.bookings.length === 0;
+      if (alreadyCleared) return prev;
+
+      return {
+        ...prev,
+        token: null,
+        favourites: [],
+        bookings: [],
+      };
+    });
 
     try {
       localStorage.removeItem("access_token");

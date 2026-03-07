@@ -14,7 +14,7 @@ const useAdmin = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [retryTick, setRetryTick] = useState(0);
-  const lastCheckedRef = useRef({ email: null, token: null });
+  const lastCheckedRef = useRef({ email: null });
   const retryCountRef = useRef(0);
   const retryTimerRef = useRef(null);
 
@@ -33,7 +33,7 @@ const useAdmin = () => {
         setIsAdmin(false);
         setLoading(false);
         retryCountRef.current = 0;
-        lastCheckedRef.current = { email: null, token: null };
+        lastCheckedRef.current = { email: null };
         return;
       }
 
@@ -42,9 +42,7 @@ const useAdmin = () => {
         return;
       }
 
-      const wasAlreadyChecked =
-        lastCheckedRef.current.email === user.email &&
-        lastCheckedRef.current.token === token;
+      const wasAlreadyChecked = lastCheckedRef.current.email === user.email;
 
       if (wasAlreadyChecked) {
         setLoading(false);
@@ -55,7 +53,7 @@ const useAdmin = () => {
       try {
         const result = await checkAdmin(user.email, token);
         setIsAdmin(Boolean(result?.isAdmin));
-        lastCheckedRef.current = { email: user.email, token };
+        lastCheckedRef.current = { email: user.email };
         retryCountRef.current = 0;
         setLoading(false);
       } catch (error) {
@@ -64,7 +62,7 @@ const useAdmin = () => {
         // Definitive "not admin" states
         if (status === 403 || status === 404) {
           setIsAdmin(false);
-          lastCheckedRef.current = { email: user.email, token };
+          lastCheckedRef.current = { email: user.email };
           retryCountRef.current = 0;
           setLoading(false);
           return;
@@ -97,4 +95,3 @@ const useAdmin = () => {
 };
 
 export default useAdmin;
-

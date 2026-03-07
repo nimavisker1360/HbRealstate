@@ -18,11 +18,8 @@ import {
 const currentPathLanguage = extractLanguageFromPath(window.location.pathname);
 
 if (!currentPathLanguage) {
-  const preferredLanguage = resolvePreferredLanguage(
-    i18n.resolvedLanguage ||
-      i18n.language ||
-      window.localStorage.getItem("i18nextLng")
-  );
+  const preferredLanguage = resolvePreferredLanguage("tr");
+  window.localStorage.setItem("i18nextLng", preferredLanguage);
 
   const localizedPath = buildLocalizedPath({
     pathname: window.location.pathname,
