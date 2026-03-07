@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef } from "react";
+import { useContext } from "react";
 import UserDetailContext from "../context/UserDetailContext";
 import { useQuery } from "react-query";
 import { useAuth0 } from "@auth0/auth0-react";
@@ -6,28 +6,23 @@ import { getAllBookings } from "../utils/api";
 
 const useBookings = () => {
   const { userDetails, setUserDetails } = useContext(UserDetailContext);
-  const queryRef = useRef();
-  const { user, isAuthenticated } = useAuth0();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth0();
+
+  const canFetchBookings =
+    isAuthenticated && !!user?.email && !!userDetails?.token && !authLoading;
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: "allBookings",
-    queryFn: () => getAllBookings(user?.email, userDetails?.token),
-    onSuccess: (data) =>
-      setUserDetails((prev) => ({ ...prev, bookings: data })),
-    // Only enable when user is authenticated AND we have a fresh token
-    enabled: isAuthenticated && user !== undefined && !!userDetails?.token,
+    queryKey: ["allBookings", user?.email, userDetails?.token],
+    queryFn: () => getAllBookings(user.email, userDetails.token),
+    onSuccess: (bookings) =>
+      setUserDetails((prev) => ({
+        ...prev,
+        bookings: Array.isArray(bookings) ? bookings : [],
+      })),
+    enabled: canFetchBookings,
     staleTime: 30000,
-    retry: false, // Don't retry on token errors
+    retry: false,
   });
-
-  queryRef.current = refetch;
-
-  useEffect(() => {
-    // Only refetch when token changes and we have a valid token
-    if (userDetails?.token && queryRef.current) {
-      queryRef.current();
-    }
-  }, [userDetails?.token]);
   
   return { data, isError, isLoading, refetch };
 };

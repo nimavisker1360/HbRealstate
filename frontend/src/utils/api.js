@@ -157,7 +157,7 @@ export const toFav = async (id, email, token) => {
 };
 
 export const getAllFav = async (email, token) => {
-  if (!token) return;
+  if (!token || !email) return [];
   try {
     const res = await api.post(
       `/user/allFav`,
@@ -170,7 +170,7 @@ export const getAllFav = async (email, token) => {
     );
 
     // console.log(res)
-    return res.data["favResidenciesID"];
+    return res.data?.favResidenciesID ?? [];
   } catch (e) {
     toast.error(bilingualKey("toast.fetchFavoritesError"));
     throw e;
@@ -178,7 +178,7 @@ export const getAllFav = async (email, token) => {
 };
 
 export const getAllBookings = async (email, token) => {
-  if (!token) return;
+  if (!token || !email) return [];
   try {
     const res = await api.post(
       `/user/allBookings`,
@@ -191,7 +191,7 @@ export const getAllBookings = async (email, token) => {
     );
 
     // console.log("res", res)
-    return res.data["bookedVisits"];
+    return res.data?.bookedVisits ?? [];
   } catch (e) {
     toast.error(bilingualKey("toast.fetchBookingsError"));
     throw e;

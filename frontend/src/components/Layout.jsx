@@ -20,7 +20,14 @@ const Layout = () => {
   useImageOptimization();
 
   const location = useLocation();
-  const { isAuthenticated, user, getIdTokenClaims, logout, isLoading } = useAuth0();
+  const {
+    isAuthenticated,
+    user,
+    getIdTokenClaims,
+    getAccessTokenSilently,
+    logout,
+    isLoading,
+  } = useAuth0();
   const { setUserDetails } = useContext(UserDetailContext);
   const tokenRefreshIntervalRef = useRef(null);
   const hasRegisteredRef = useRef(false);
@@ -113,6 +120,27 @@ const Layout = () => {
     logout({ logoutParams: { returnTo: window.location.origin } });
   }, [logout, setUserDetails]);
 
+  const getFreshIdToken = useCallback(
+    async (forceRefresh = false) => {
+      if (forceRefresh) {
+        try {
+          await getAccessTokenSilently({
+            cacheMode: "off",
+            authorizationParams: {
+              scope: "openid profile email",
+            },
+          });
+        } catch (error) {
+          // Fall back to cached ID token if silent refresh fails
+        }
+      }
+
+      const claims = await getIdTokenClaims();
+      return claims?.__raw || null;
+    },
+    [getAccessTokenSilently, getIdTokenClaims]
+  );
+
   // Function to refresh token
   const refreshToken = useCallback(async () => {
     if (isSessionExpired()) {
@@ -121,8 +149,7 @@ const Layout = () => {
     }
     try {
       console.log("🔄 Layout: Refreshing token...");
-      const claims = await getIdTokenClaims();
-      const token = claims?.__raw;
+      const token = await getFreshIdToken(true);
 
       if (token) {
         localStorage.setItem("access_token", token);
@@ -134,14 +161,13 @@ const Layout = () => {
       console.error("❌ Layout: Failed to refresh token", error.message);
     }
     return null;
-  }, [getIdTokenClaims, setUserDetails, isSessionExpired, forceLogout]);
+  }, [getFreshIdToken, setUserDetails, isSessionExpired, forceLogout]);
 
   useEffect(() => {
     const getTokenAndRegister = async () => {
       try {
         console.log("🔑 Layout: Getting ID token for", user?.email);
-        const claims = await getIdTokenClaims();
-        const token = claims?.__raw;
+        const token = await getFreshIdToken(true);
 
         if (token) {
           localStorage.setItem("access_token", token);
@@ -198,10 +224,10 @@ const Layout = () => {
   }, [
     isAuthenticated,
     user,
-    getIdTokenClaims,
     mutate,
     setUserDetails,
     refreshToken,
+    getFreshIdToken,
     isSessionExpired,
     forceLogout,
     setLastActivityNow,
@@ -217,6 +243,24 @@ const Layout = () => {
       sessionBootstrappedRef.current = false;
     }
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (isLoading || isAuthenticated) return;
+
+    setTokenRefreshCallback(null);
+    setUserDetails((prev) => ({
+      ...prev,
+      token: null,
+      favourites: [],
+      bookings: [],
+    }));
+
+    try {
+      localStorage.removeItem("access_token");
+    } catch (error) {
+      // Ignore storage errors
+    }
+  }, [isAuthenticated, isLoading, setUserDetails]);
 
   // Initial inactivity check before recording any new activity
   useEffect(() => {
