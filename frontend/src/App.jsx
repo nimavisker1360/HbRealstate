@@ -6,6 +6,7 @@ import { lazy, Suspense, useState, useEffect } from "react";
 import UserDetailContext from "./context/UserDetailContext";
 import { CurrencyProvider } from "./context/CurrencyContext";
 import Layout from "./components/Layout";
+import RequireAuth from "./components/RequireAuth";
 import ScrollToTop from "./components/ScrollToTop";
 import RouteSeo from "./components/RouteSeo";
 import {
@@ -82,10 +83,38 @@ export default function App() {
                       <Route index element={<Listing />} />
                       <Route path=":propertyId" element={<Property />} />
                     </Route>
-                    <Route path="/addproperty" element={<AddProperty />} />
-                    <Route path="/admin" element={<AdminPanel />} />
-                    <Route path="/bookings" element={<Bookings />} />
-                    <Route path="/favourites" element={<Favourites />} />
+                    <Route
+                      path="/addproperty"
+                      element={
+                        <RequireAuth>
+                          <AddProperty />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/admin"
+                      element={
+                        <RequireAuth>
+                          <AdminPanel />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/bookings"
+                      element={
+                        <RequireAuth>
+                          <Bookings />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/favourites"
+                      element={
+                        <RequireAuth>
+                          <Favourites />
+                        </RequireAuth>
+                      }
+                    />
                     <Route path="/consultants" element={<Consultants />} />
                     <Route path="/today" element={<TodayProperties />} />
                     <Route path="/blogs" element={<BlogsPage />} />

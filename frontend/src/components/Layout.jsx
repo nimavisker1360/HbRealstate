@@ -10,10 +10,6 @@ import useFavourites from "../hooks/useFavourites.jsx";
 import useBookings from "../hooks/useBookings.jsx";
 import useImageOptimization from "../hooks/useImageOptimization";
 
-const INACTIVITY_LIMIT_MS = 6 * 60 * 60 * 1000;
-const ACTIVITY_THROTTLE_MS = 60 * 1000;
-const LAST_ACTIVITY_KEY = "last_activity_ts";
-
 const Layout = () => {
   useFavourites();
   useBookings();
@@ -25,16 +21,11 @@ const Layout = () => {
     user,
     getIdTokenClaims,
     getAccessTokenSilently,
-    logout,
     isLoading,
   } = useAuth0();
   const { setUserDetails } = useContext(UserDetailContext);
   const tokenRefreshIntervalRef = useRef(null);
   const hasRegisteredRef = useRef(false);
-  const lastActivityWriteRef = useRef(0);
-  const canRecordActivityRef = useRef(false);
-  const isForcingLogoutRef = useRef(false);
-  const sessionBootstrappedRef = useRef(false);
 
   // Hide footer on listing, admin, addresses, projects, and blog pages
   const hideFooter =
@@ -44,81 +35,10 @@ const Layout = () => {
     location.pathname.startsWith("/projects") ||
     location.pathname.startsWith("/blog");
 
-
   const { mutate } = useMutation({
     mutationKey: [user?.email],
     mutationFn: ({ userData, token }) => createUser(userData, token),
   });
-
-  const getLastActivity = useCallback(() => {
-    try {
-      const raw = localStorage.getItem(LAST_ACTIVITY_KEY);
-      const parsed = raw ? Number(raw) : 0;
-      return Number.isFinite(parsed) ? parsed : 0;
-    } catch (error) {
-      return 0;
-    }
-  }, []);
-
-  const isSessionExpired = useCallback(() => {
-    const lastActivity = getLastActivity();
-    if (!lastActivity) {
-      // No activity yet; treat as active
-      return false;
-    }
-    const diff = Date.now() - lastActivity;
-    const expired = diff > INACTIVITY_LIMIT_MS;
-    return expired;
-  }, [getLastActivity]);
-
-  const recordActivity = useCallback(
-    (force = false) => {
-      if (!canRecordActivityRef.current) return;
-      const now = Date.now();
-      if (!force && now - lastActivityWriteRef.current < ACTIVITY_THROTTLE_MS) {
-        return;
-      }
-      try {
-        localStorage.setItem(LAST_ACTIVITY_KEY, String(now));
-        lastActivityWriteRef.current = now;
-      } catch (error) {
-        // Ignore storage errors (private mode, quota issues)
-      }
-    },
-    []
-  );
-
-  const setLastActivityNow = useCallback(() => {
-    const now = Date.now();
-    try {
-      localStorage.setItem(LAST_ACTIVITY_KEY, String(now));
-      lastActivityWriteRef.current = now;
-    } catch (error) {
-      // Ignore storage errors
-    }
-  }, []);
-
-  const forceLogout = useCallback(() => {
-    if (isForcingLogoutRef.current) return;
-    isForcingLogoutRef.current = true;
-
-    try {
-      localStorage.removeItem("access_token");
-      localStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()));
-    } catch (error) {
-      // Ignore storage errors
-    }
-
-    setUserDetails((prev) => ({
-      ...prev,
-      token: null,
-      favourites: [],
-      bookings: [],
-    }));
-
-    setTokenRefreshCallback(null);
-    logout({ logoutParams: { returnTo: window.location.origin } });
-  }, [logout, setUserDetails]);
 
   const getFreshIdToken = useCallback(
     async (forceRefresh = false) => {
@@ -141,14 +61,8 @@ const Layout = () => {
     [getAccessTokenSilently, getIdTokenClaims]
   );
 
-  // Function to refresh token
   const refreshToken = useCallback(async () => {
-    if (isSessionExpired()) {
-      forceLogout();
-      return null;
-    }
     try {
-      console.log("🔄 Layout: Refreshing token...");
       const token = await getFreshIdToken(true);
 
       if (token) {
@@ -156,19 +70,17 @@ const Layout = () => {
         setUserDetails((prev) =>
           prev.token === token ? prev : { ...prev, token: token }
         );
-        console.log("✅ Layout: Token refreshed successfully");
         return token;
       }
     } catch (error) {
-      console.error("❌ Layout: Failed to refresh token", error.message);
+      console.error("Layout: Failed to refresh token", error?.message);
     }
     return null;
-  }, [getFreshIdToken, setUserDetails, isSessionExpired, forceLogout]);
+  }, [getFreshIdToken, setUserDetails]);
 
   useEffect(() => {
     const getTokenAndRegister = async () => {
       try {
-        console.log("🔑 Layout: Getting ID token for", user?.email);
         const token = await getFreshIdToken(true);
 
         if (token) {
@@ -176,8 +88,6 @@ const Layout = () => {
           setUserDetails((prev) =>
             prev.token === token ? prev : { ...prev, token: token }
           );
-          setLastActivityNow();
-          console.log("✅ Layout: ID Token received");
 
           // Set the token refresh callback for API interceptor
           setTokenRefreshCallback(refreshToken);
@@ -189,25 +99,16 @@ const Layout = () => {
               name: user.name,
               image: user.picture,
             };
-            console.log("📤 Layout: Registering user to database", userData);
             mutate({ userData, token: token });
             hasRegisteredRef.current = true;
           }
         }
       } catch (error) {
-        console.error("❌ Layout: Failed to get token", error.message);
+        console.error("Layout: Failed to get token", error?.message);
       }
     };
 
     if (isAuthenticated && user?.email) {
-      if (!sessionBootstrappedRef.current) {
-        setLastActivityNow();
-        sessionBootstrappedRef.current = true;
-      }
-      if (isSessionExpired()) {
-        forceLogout();
-        return;
-      }
       getTokenAndRegister();
 
       // Set up token refresh every 15 minutes
@@ -216,7 +117,7 @@ const Layout = () => {
       }
       tokenRefreshIntervalRef.current = setInterval(() => {
         refreshToken();
-      }, 15 * 60 * 1000); // 15 minutes
+      }, 15 * 60 * 1000);
     }
 
     // Cleanup interval on unmount
@@ -234,21 +135,12 @@ const Layout = () => {
     setUserDetails,
     refreshToken,
     getFreshIdToken,
-    isSessionExpired,
-    forceLogout,
-    setLastActivityNow,
   ]);
 
   // Reset registration flag when user changes
   useEffect(() => {
     hasRegisteredRef.current = false;
   }, [user?.email]);
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      sessionBootstrappedRef.current = false;
-    }
-  }, [isAuthenticated]);
 
   useEffect(() => {
     if (isLoading || isAuthenticated) return;
@@ -277,60 +169,6 @@ const Layout = () => {
       // Ignore storage errors
     }
   }, [isAuthenticated, isLoading, setUserDetails]);
-
-  // Initial inactivity check before recording any new activity
-  useEffect(() => {
-    if (isLoading) return;
-
-    if (isAuthenticated && isSessionExpired()) {
-      forceLogout();
-      return;
-    }
-
-    canRecordActivityRef.current = true;
-    recordActivity(true);
-  }, [isLoading, isAuthenticated, isSessionExpired, forceLogout, recordActivity]);
-
-  // Record activity on route change
-  useEffect(() => {
-    recordActivity(true);
-  }, [location.pathname, recordActivity]);
-
-  // Record activity on user interactions
-  useEffect(() => {
-    const handleActivity = () => recordActivity();
-    const handleVisibility = () => {
-      if (document.visibilityState === "visible") {
-        recordActivity(true);
-      }
-    };
-
-    const events = ["click", "keydown", "scroll", "mousemove", "touchstart"];
-    events.forEach((event) =>
-      window.addEventListener(event, handleActivity, { passive: true })
-    );
-    document.addEventListener("visibilitychange", handleVisibility);
-    return () => {
-      events.forEach((event) =>
-        window.removeEventListener(event, handleActivity)
-      );
-      document.removeEventListener("visibilitychange", handleVisibility);
-    };
-  }, [recordActivity]);
-
-  // Periodically check for inactivity
-  useEffect(() => {
-    if (isLoading) return;
-
-    const checkInactivity = () => {
-      if (isAuthenticated && isSessionExpired()) {
-        forceLogout();
-      }
-    };
-
-    const intervalId = setInterval(checkInactivity, 60 * 1000);
-    return () => clearInterval(intervalId);
-  }, [isAuthenticated, isLoading, isSessionExpired, forceLogout]);
 
   return (
     <div className="overflow-x-hidden min-h-screen flex flex-col">
