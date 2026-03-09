@@ -47,11 +47,12 @@ const ReactQueryDevtools = import.meta.env.DEV
   : () => null;
 
 export default function App() {
-  const urlLanguage =
+  const getPathLanguage = () =>
     extractLanguageFromPath(window.location.pathname) || DEFAULT_LANGUAGE_CODE;
-  const routerBasename = `/${urlLanguage}`;
+  const [routerLanguage, setRouterLanguage] = useState(getPathLanguage);
+  const routerBasename = `/${routerLanguage}`;
 
-  const queryClient = new QueryClient();
+  const [queryClient] = useState(() => new QueryClient());
   const [userDetails, setUserDetails] = useState({
     favourites: [],
     bookings: [],
@@ -68,11 +69,28 @@ export default function App() {
     window.scrollTo(0, 0);
   }, []);
 
+  useEffect(() => {
+    const syncRouterLanguage = () => {
+      const nextLanguage = getPathLanguage();
+      setRouterLanguage((prevLanguage) =>
+        prevLanguage === nextLanguage ? prevLanguage : nextLanguage
+      );
+    };
+
+    window.addEventListener("popstate", syncRouterLanguage);
+    window.addEventListener("app:language-path-change", syncRouterLanguage);
+
+    return () => {
+      window.removeEventListener("popstate", syncRouterLanguage);
+      window.removeEventListener("app:language-path-change", syncRouterLanguage);
+    };
+  }, []);
+
   return (
     <UserDetailContext.Provider value={{ userDetails, setUserDetails }}>
       <CurrencyProvider>
         <QueryClientProvider client={queryClient}>
-            <BrowserRouter basename={routerBasename}>
+            <BrowserRouter key={routerLanguage} basename={routerBasename}>
               <ScrollToTop />
               <RouteSeo />
               <Suspense fallback={null}>

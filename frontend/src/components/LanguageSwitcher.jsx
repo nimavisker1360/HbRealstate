@@ -27,7 +27,7 @@ const LanguageSwitcher = ({ className = '' }) => {
       "suppress_auto_login_prompt_until",
       String(Date.now() + 12 * 1000)
     );
-    i18n.changeLanguage(normalizedTargetLanguage);
+    void i18n.changeLanguage(normalizedTargetLanguage);
 
     const targetPath = buildLocalizedPath({
       pathname: location.pathname,
@@ -36,7 +36,9 @@ const LanguageSwitcher = ({ className = '' }) => {
       language: normalizedTargetLanguage,
     });
 
-    window.location.assign(targetPath);
+    window.history.pushState(window.history.state, "", targetPath);
+    window.dispatchEvent(new Event("app:language-path-change"));
+    window.dispatchEvent(new PopStateEvent("popstate"));
   };
 
   return (
