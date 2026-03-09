@@ -74,6 +74,15 @@ const RouteSeo = () => {
       };
     }
 
+    if (pathname === "/contact") {
+      return {
+        title: "Contact Us | HB International Real Estate",
+        description:
+          "Send a message to HB International Real Estate and connect with our consultants for property support.",
+        canonicalPath: "/contact",
+      };
+    }
+
     if (pathname === "/addresses") {
       return {
         title: "Our Office Addresses | HB International Real Estate",

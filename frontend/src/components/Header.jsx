@@ -220,7 +220,7 @@ const Header = () => {
             </Link>
             <div className="flex items-center gap-2 sm:gap-3">
               <button
-                onClick={() => setContactModalOpen(true)}
+                onClick={() => navigate("/contact")}
                 className="hidden md:inline-flex items-center gap-2 rounded-md bg-secondary px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-secondary/90"
                 type="button"
               >

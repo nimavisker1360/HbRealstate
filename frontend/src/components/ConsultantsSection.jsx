@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import useConsultants from "../hooks/useConsultants";
 import { MdEmail } from "react-icons/md";
@@ -90,7 +90,8 @@ const ConsultantsSection = () => {
   };
   const { data: consultants, isLoading, isError } = useConsultants();
   const navigate = useNavigate();
-  const [contactModalOpen, setContactModalOpen] = useState(false);
+  const location = useLocation();
+  const isContactRoute = location.pathname === "/contact";
 
   if (isLoading) {
     return (
@@ -134,7 +135,7 @@ const ConsultantsSection = () => {
           </p>
 
           <button
-            onClick={() => setContactModalOpen(true)}
+            onClick={() => navigate("/contact")}
             className="inline-flex items-center gap-3 rounded-[10px] bg-[#00A86B] px-8 py-3 text-white shadow-lg shadow-[#00A86B]/30 transition hover:bg-[#009A61]"
           >
             <MdEmail className="text-xl" />
@@ -331,8 +332,8 @@ const ConsultantsSection = () => {
         </div>
       </AnimatedElement>
       <ContactModal
-        opened={contactModalOpen}
-        onClose={() => setContactModalOpen(false)}
+        opened={isContactRoute}
+        onClose={() => navigate("/", { replace: true })}
       />
     </section>
   );

@@ -15,6 +15,7 @@ import {
 } from "./utils/languageRouting";
 
 const Home = lazy(() => import("./pages/seo/HomeSeoPage"));
+const HomePage = lazy(() => import("./pages/Home"));
 const Listing = lazy(() => import("./pages/seo/ListingSeoPage"));
 const Property = lazy(() => import("./pages/seo/PropertySeoPage"));
 const AddProperty = lazy(() => import("./pages/AddProperty"));
@@ -97,6 +98,7 @@ export default function App() {
                 <Routes>
                   <Route element={<Layout />}>
                     <Route path="/" element={<Home />} />
+                    <Route path="/contact" element={<HomePage />} />
                     <Route path="/listing" >
                       <Route index element={<Listing />} />
                       <Route path=":propertyId" element={<Property />} />
