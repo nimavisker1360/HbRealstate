@@ -7,6 +7,7 @@ import "leaflet/dist/leaflet.css";
 import icon from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
 import { buildTelHref } from "../utils/common";
+import { PRIMARY_CONTACT_PHONE } from "../constant/data";
 
 // Fix leaflet default icon
 let DefaultIcon = L.icon({
@@ -50,7 +51,7 @@ const Addresses = () => {
   ];
 
   const contactInfo = {
-    phone: "+90 212 830 81 30",
+    phone: PRIMARY_CONTACT_PHONE,
     email: "hbrealstate2019@gmail.com",
   };
 
