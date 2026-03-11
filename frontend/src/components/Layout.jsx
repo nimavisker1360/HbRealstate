@@ -9,6 +9,7 @@ import { createUser, setTokenRefreshCallback } from "../utils/api";
 import useFavourites from "../hooks/useFavourites.jsx";
 import useBookings from "../hooks/useBookings.jsx";
 import useImageOptimization from "../hooks/useImageOptimization";
+import { trackWhatsAppConversionFromClick } from "../utils/analytics";
 
 const Layout = () => {
   useFavourites();
@@ -169,6 +170,18 @@ const Layout = () => {
       // Ignore storage errors
     }
   }, [isAuthenticated, isLoading, setUserDetails]);
+
+  useEffect(() => {
+    // Capture phase ensures WhatsApp clicks are tracked even when inner handlers stop propagation.
+    const handleDocumentClick = (event) => {
+      trackWhatsAppConversionFromClick(event);
+    };
+
+    document.addEventListener("click", handleDocumentClick, true);
+    return () => {
+      document.removeEventListener("click", handleDocumentClick, true);
+    };
+  }, []);
 
   return (
     <div className="overflow-x-hidden min-h-screen flex flex-col">

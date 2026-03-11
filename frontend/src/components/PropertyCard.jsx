@@ -170,14 +170,13 @@ const PropertyCard = ({ property, onCardClick }) => {
     }
   };
 
+  const whatsappHref = `https://wa.me/905551234567?text=${encodeURIComponent(
+    `Hi, I'm interested in the property: ${property.title} - ${formattedPrice}`
+  )}`;
+
   const handleWhatsAppClick = (e) => {
     e.stopPropagation();
-    const message = encodeURIComponent(
-      `Hi, I'm interested in the property: ${
-        property.title
-      } - ${formattedPrice}`
-    );
-    window.open(`https://wa.me/905551234567?text=${message}`, "_blank");
+    window.open(whatsappHref, "_blank", "noopener,noreferrer");
   };
 
   return (
@@ -274,6 +273,7 @@ const PropertyCard = ({ property, onCardClick }) => {
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-3">
             <button
               onClick={handleWhatsAppClick}
+              data-whatsapp-url={whatsappHref}
               className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#25D366] rounded-lg hover:bg-[#1da851] transition-colors"
             >
               <FaWhatsapp className="w-4 h-4" />

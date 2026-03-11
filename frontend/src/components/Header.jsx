@@ -256,6 +256,7 @@ const Header = () => {
               <button
                 type="button"
                 onClick={() => setAssistantChatOpen(true)}
+                data-track-whatsapp-click="true"
                 className="animate-whatsapp-ring flex h-9 w-9 items-center justify-center rounded-full border-2 border-emerald-500 text-emerald-500 transition hover:bg-emerald-50"
                 aria-label="WhatsApp"
               >
