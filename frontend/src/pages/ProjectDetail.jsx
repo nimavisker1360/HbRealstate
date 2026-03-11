@@ -3,15 +3,11 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import CurrencyContext from "../context/CurrencyContext";
 import { useQuery } from "react-query";
-import { toast } from "react-toastify";
-import { bilingualKey } from "../utils/bilingualToast";
 import {
   Container,
   Grid,
   Paper,
   Button,
-  TextInput,
-  Textarea,
   Modal,
   Loader,
   Avatar,
@@ -43,7 +39,7 @@ import {
   BsEye, 
   BsGeoAlt 
 } from "react-icons/bs";
-import { getProperty, sendEmail } from "../utils/api";
+import { getProperty } from "../utils/api";
 import useConsultants from "../hooks/useConsultants";
 import { buildTelHref, normalizeWhatsAppNumber } from "../utils/common";
 import {
@@ -52,8 +48,8 @@ import {
   getOptimizedVideoUrl,
 } from "../utils/media";
 import { extractObjectId, resolveProjectPath } from "../utils/seo";
-import { trackFormSubmitConversion } from "../utils/analytics";
 import IstanbulMarketAnalytics from "../components/market/IstanbulMarketAnalytics";
+import InquirySidebarCard from "../components/InquirySidebarCard";
 
 // All possible Bina Özellikleri (Building Features)
 const ALL_BINA_OZELLIKLERI = [
@@ -318,7 +314,6 @@ const ProjectDetail = () => {
   const [featuresTab, setFeaturesTab] = useState("binaOzellikleri");
   const [selectedImage, setSelectedImage] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [floorPlanModal, setFloorPlanModal] = useState({ open: false, plan: null });
   const [sitePlanModalOpen, setSitePlanModalOpen] = useState(false);
   const [videoModalOpen, setVideoModalOpen] = useState(false);
@@ -335,13 +330,6 @@ const ProjectDetail = () => {
   const descriptionSectionRef = useRef(null);
   const locationSectionRef = useRef(null);
   const marketSectionRef = useRef(null);
-  const lastTrackedSubmissionIdRef = useRef("");
-  const [contactForm, setContactForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    message: "",
-  });
 
   // Fetch project data from API
   const { data: propertyData, isLoading, isError } = useQuery(
@@ -670,65 +658,6 @@ const ProjectDetail = () => {
       behavior: "smooth",
       block: "start",
     });
-  };
-
-  const handleContactSubmit = async (e) => {
-    e.preventDefault();
-
-    // Validation
-    if (!contactForm.name.trim()) {
-      toast.error(bilingualKey("projectDetail.errorName"));
-      return;
-    }
-    if (!contactForm.email.trim()) {
-      toast.error(bilingualKey("projectDetail.errorEmail"));
-      return;
-    }
-
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(contactForm.email)) {
-      toast.error(bilingualKey("projectDetail.errorEmailInvalid"));
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const emailData = {
-        name: contactForm.name,
-        email: contactForm.email,
-        phone: contactForm.phone || "",
-        subject: `Project Inquiry: ${project.name}`,
-        message: contactForm.message || `I am interested in the ${project.name} project located in ${project.city}, ${project.district}. Please contact me with more information.`,
-        propertyId: project.id,
-        propertyTitle: project.name,
-        listingNo: project.ilanNo || propertyData?.listingNo || "",
-      };
-
-      const response = await sendEmail(emailData);
-      const submissionId = response?.data?.id || "";
-      if (
-        submissionId &&
-        submissionId !== lastTrackedSubmissionIdRef.current &&
-        trackFormSubmitConversion(submissionId)
-      ) {
-        lastTrackedSubmissionIdRef.current = submissionId;
-      }
-      toast.success(bilingualKey("projectDetail.contactSuccess"));
-      
-      // Reset form
-      setContactForm({
-        name: "",
-        email: "",
-        phone: "",
-        message: "",
-      });
-    } catch (error) {
-      toast.error(bilingualKey("projectDetail.contactError"));
-      console.error("Error sending email:", error);
-    } finally {
-      setLoading(false);
-    }
   };
 
   const selectedGalleryItem = project.galleryItems[selectedImage];
@@ -1641,64 +1570,22 @@ const ProjectDetail = () => {
 
           {/* Right Column - Contact Form */}
           <Grid.Col span={{ base: 12, md: 4 }}>
-            <Paper shadow="sm" className="sticky top-24 p-6 border">
-              <h3 className="text-lg font-bold text-gray-900 mb-2">{t("projectDetail.contactUs")}</h3>
-              <p className="text-sm text-gray-600 mb-4">
-                {project.name} {t("projectDetail.contactDescription")}
-              </p>
-
-              <form onSubmit={handleContactSubmit}>
-                <div className="space-y-4">
-                  <TextInput
-                    placeholder={t("projectDetail.name")}
-                    value={contactForm.name}
-                    onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
-                    required
-                  />
-                  <TextInput
-                    type="email"
-                    placeholder={t("projectDetail.email")}
-                    value={contactForm.email}
-                    onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
-                    required
-                  />
-                  <TextInput
-                    placeholder={t("projectDetail.phone")}
-                    value={contactForm.phone}
-                    onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
-                    rightSection={<span className="text-xs text-gray-400">ⓘ</span>}
-                  />
-                  <Textarea
-                    placeholder={t("projectDetail.messagePlaceholder")}
-                    value={contactForm.message}
-                    onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
-                    rows={4}
-                    maxLength={250}
-                  />
-                  <div className="text-right text-xs text-gray-400">
-                    {contactForm.message.length} / 250
-                  </div>
-                </div>
-
-                <p className="text-xs text-gray-500 my-4">
-                  {t("projectDetail.privacyNotice")}
-                </p>
-
-                <Button 
-                  type="submit" 
-                  fullWidth 
-                  color="orange" 
-                  size="md"
-                  loading={loading}
-                  disabled={loading}
-                >
-                  {t("projectDetail.requestInfo")}
-                </Button>
-              </form>
-            </Paper>
+            <div className="sticky top-24">
+              <InquirySidebarCard
+                propertyId={project.id}
+                propertyTitle={project.name}
+                listingNo={project.ilanNo || propertyData?.listingNo || ""}
+                locationLabel={[project.city, project.district].filter(Boolean).join(" / ")}
+                consultantId={project.consultantId || projectConsultant?.id || ""}
+                subjectPrefix="Project Inquiry"
+              />
+            </div>
 
             {(projectConsultant || project.consultantId) && (
-              <Paper shadow="sm" className="mt-6 p-6 border">
+              <Paper
+                shadow="sm"
+                className="mt-6 overflow-hidden rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_22px_70px_-48px_rgba(15,23,42,0.35)]"
+              >
                 <h3 className="text-lg font-bold text-gray-900 mb-2">
                   {t("projectDetail.consultant")}
                 </h3>

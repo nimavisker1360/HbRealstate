@@ -173,6 +173,7 @@ import { CgRuler } from "react-icons/cg";
 import HeartBtn from "../components/HeartBtn";
 import { resolveProjectPath } from "../utils/seo";
 import IstanbulMarketAnalytics from "../components/market/IstanbulMarketAnalytics";
+import InquirySidebarCard from "../components/InquirySidebarCard";
 
 // Format date helper function
 const formatDate = (dateString, showFullDate = false, locale = "en") => {
@@ -750,7 +751,7 @@ const Property = () => {
       </div>
 
       {/* container */}
-      <div className="max-w-4xl mx-auto">
+      <div className="mx-auto grid max-w-[1320px] gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
         {/* Property Content */}
         <div ref={descriptionSectionRef} className="scroll-mt-28 rounded-2xl bg-white p-2">
           <div className="flexBetween mb-2">
@@ -1335,17 +1336,32 @@ const Property = () => {
             )}
           </div>
 
+        </div>
+
+        <aside className="space-y-6 lg:sticky lg:top-28">
+          <InquirySidebarCard
+            propertyId={id}
+            propertyTitle={data?.title}
+            listingNo={data?.listingNo || ""}
+            locationLabel={
+              [data?.city, districtHint].filter(Boolean).join(" / ") ||
+              [data?.address, data?.city, data?.country].filter(Boolean).join(", ")
+            }
+            consultantId={data?.consultant?.id || data?.consultantId || ""}
+            subjectPrefix="Property Inquiry"
+          />
+
           {/* Consultant Contact Section */}
           {data?.consultant && (
-            <div className="mt-6 p-5 bg-gradient-to-br from-tertiary to-tertiary/90 rounded-2xl text-white">
+            <div className="overflow-hidden rounded-[28px] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 text-white shadow-[0_24px_70px_-46px_rgba(15,23,42,0.78)]">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 bg-secondary rounded-lg flexCenter">
+                <div className="w-9 h-9 rounded-xl bg-white/10 flexCenter">
                   <FaPhone className="text-white text-sm" />
                 </div>
-                <h4 className="font-semibold">{t('propertyDetails.contactConsultant')}</h4>
+                <h4 className="font-semibold text-base">{t('propertyDetails.contactConsultant')}</h4>
               </div>
 
-              <div className="flex items-center gap-4 mb-5">
+              <div className="flex items-center gap-4 mb-5 rounded-2xl border border-white/10 bg-white/5 p-4">
                 <Avatar
                   src={data.consultant.image}
                   alt={data.consultant.name}
@@ -1377,7 +1393,7 @@ const Property = () => {
               </div>
 
               {/* Consultant Specialty */}
-              <div className="mb-4 p-3 bg-white/10 rounded-xl">
+              <div className="mb-4 rounded-2xl border border-white/10 bg-white/5 p-4">
                 <p className="text-white/60 text-xs mb-1">{t('propertyDetails.specialty')}</p>
                 <p className="text-sm">{data.consultant.specialty}</p>
               </div>
@@ -1387,7 +1403,7 @@ const Property = () => {
                 {data?.consultant?.phone && (
                   <a
                     href={buildTelHref(data.consultant.phone)}
-                    className="phone-click-link flexCenter gap-2 bg-white text-tertiary py-3 rounded-xl font-medium text-sm w-full select-text"
+                    className="phone-click-link flexCenter gap-2 rounded-2xl bg-white py-3 text-sm font-medium text-tertiary w-full select-text"
                     data-track-phone-click="true"
                   >
                     <FaPhone className="text-secondary" />
@@ -1398,23 +1414,24 @@ const Property = () => {
                   href={`https://wa.me/${whatsappNumber}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flexCenter gap-2 bg-[#25D366] text-white py-3 rounded-xl hover:bg-[#20bd5a] transition-colors font-medium text-sm w-full"
+                  className="flexCenter gap-2 rounded-2xl bg-[#25D366] py-3 text-sm font-medium text-white transition-colors hover:bg-[#20bd5a] w-full"
                 >
                   <FaWhatsapp />
                   WhatsApp
                 </a>
-                <button
-                  onClick={() => setContactModalOpen(true)}
-                  className="flexCenter gap-2 bg-white text-tertiary py-3 rounded-xl hover:bg-gray-100 transition-colors font-medium text-sm w-full"
-                >
-                  <FaEnvelope className="text-secondary" />
-                  Email
+                  <button
+                    type="button"
+                    onClick={() => setContactModalOpen(true)}
+                    className="flexCenter gap-2 rounded-2xl bg-white py-3 text-sm font-medium text-tertiary transition-colors hover:bg-gray-100 w-full"
+                  >
+                    <FaEnvelope className="text-secondary" />
+                    Email
                 </button>
               </div>
 
               {/* Languages */}
               {data.consultant.languages?.length > 0 && (
-                <div className="mt-4 pt-4 border-t border-white/10">
+                <div className="mt-4 border-t border-white/10 pt-4">
                   <p className="text-white/60 text-xs mb-2">{t('propertyDetails.languages')}</p>
                   <div className="flex flex-wrap gap-2">
                     {data.consultant.languages.map((lang) => (
@@ -1430,7 +1447,7 @@ const Property = () => {
               )}
             </div>
           )}
-        </div>
+        </aside>
       </div>
 
       {/* Contact Modal - Only opens after booking */}
