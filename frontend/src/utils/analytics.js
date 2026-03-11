@@ -1,4 +1,4 @@
-const GOOGLE_ADS_WHATSAPP_SEND_TO = "536343459/GSI2CNrpzYYcEKPn3_8B";
+const GOOGLE_ADS_WHATSAPP_SEND_TO = "AW-536343459/GSI2CNrpzYYcEKPn3_8B";
 const WHATSAPP_EVENT_FLAG = "__hbWhatsAppConversionTracked";
 const WHATSAPP_HOSTS = new Set(["wa.me", "api.whatsapp.com"]);
 
@@ -33,14 +33,8 @@ export const isWhatsAppUrl = (value = "") => {
 export const getWhatsAppTrackingUrl = (target) => {
   if (!target || typeof target.closest !== "function") return "";
 
-  const trackedElement = target.closest(
-    '[data-track-whatsapp-click="true"], [data-whatsapp-url], a[href]'
-  );
+  const trackedElement = target.closest('[data-whatsapp-url], a[href]');
   if (!trackedElement) return "";
-
-  if (trackedElement.getAttribute("data-track-whatsapp-click") === "true") {
-    return "whatsapp-cta";
-  }
 
   const candidateUrl =
     trackedElement.getAttribute("data-whatsapp-url") ||

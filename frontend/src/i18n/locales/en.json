@@ -309,7 +309,8 @@
     "secondBranch": "Second Branch Address",
     "cyprusBranch": "Cyprus Branch Address",
     "contactNumber": "Contact Number",
-    "emailAddress": "Email Address"
+    "emailAddress": "Email Address",
+    "whatsapp": "WhatsApp"
   },
   "contactModal": {
     "title": "Contact Us",

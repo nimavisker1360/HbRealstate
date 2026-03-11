@@ -4,7 +4,8 @@ import { FOOTER_CONTACT_INFO, SOCIALS } from "../constant/data";
 import PropTypes from "prop-types";
 import logo from "../assets/logo.png";
 import { MdLocationOn, MdPhone, MdEmail } from "react-icons/md";
-import { buildTelHref } from "../utils/common";
+import { FaWhatsapp } from "react-icons/fa";
+import { buildTelHref, normalizeWhatsAppNumber } from "../utils/common";
 
 const Footer = () => {
   const { t } = useTranslation();
@@ -67,6 +68,13 @@ const Footer = () => {
       return <MdEmail className="text-[#06a84e] text-xl flex-shrink-0" />;
     return null;
   };
+
+  const whatsappHref = `https://wa.me/${normalizeWhatsAppNumber(
+    FOOTER_CONTACT_INFO.links.find((link) =>
+      link.label.toLowerCase().includes("number") ||
+      link.label.toLowerCase().includes("phone")
+    )?.value
+  )}`;
 
   return (
     <footer className="max-padd-container mb-4 overflow-x-hidden">
@@ -175,41 +183,62 @@ const Footer = () => {
                   link.label.toLowerCase().includes("email")
                 )
                 .map((link, index) => (
-                <li key={index}>
-                  {(() => {
-                    const isPhone =
-                      link.label.toLowerCase().includes("number") ||
-                      link.label.toLowerCase().includes("phone");
-                    const href = isPhone
-                      ? buildTelHref(link.value)
-                      : `mailto:${link.value}`;
-                    const content = (
-                      <>
-                        {getIcon(link.label)}
-                        <div>
-                          <p className="text-white/40 text-xs mb-1">
-                            {isPhone
-                              ? t("contact.contactNumber")
-                              : t("contact.emailAddress")}
-                          </p>
-                          <p className="text-white text-sm">{link.value}</p>
-                        </div>
-                      </>
-                    );
+                  <li key={index}>
+                    {(() => {
+                      const isPhone =
+                        link.label.toLowerCase().includes("number") ||
+                        link.label.toLowerCase().includes("phone");
+                      const href = isPhone
+                        ? buildTelHref(link.value)
+                        : `mailto:${link.value}`;
+                      const content = (
+                        <>
+                          {getIcon(link.label)}
+                          <div>
+                            <p className="text-white/40 text-xs mb-1">
+                              {isPhone
+                                ? t("contact.contactNumber")
+                                : t("contact.emailAddress")}
+                            </p>
+                            <p className="text-white text-sm">{link.value}</p>
+                          </div>
+                        </>
+                      );
 
-                    return href ? (
-                      <a
-                        href={href}
-                        className={`${isPhone ? "phone-click-link " : ""}flex gap-3 items-start transition-colors hover:text-[#06a84e]`}
-                        data-track-phone-click={isPhone ? "true" : undefined}
-                      >
-                        {content}
-                      </a>
-                    ) : (
-                      <div className="flex gap-3 items-start">{content}</div>
-                    );
-                  })()}
-                </li>
+                      return (
+                        <div className="flex flex-col gap-4">
+                          {href ? (
+                            <a
+                              href={href}
+                              className={`${isPhone ? "phone-click-link " : ""}flex gap-3 items-start transition-colors hover:text-[#06a84e]`}
+                              data-track-phone-click={isPhone ? "true" : undefined}
+                            >
+                              {content}
+                            </a>
+                          ) : (
+                            <div className="flex gap-3 items-start">{content}</div>
+                          )}
+
+                          {isPhone ? (
+                            <a
+                              href={whatsappHref}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex gap-3 items-start transition-colors hover:text-[#06a84e]"
+                            >
+                              <FaWhatsapp className="text-[#06a84e] text-xl flex-shrink-0" />
+                              <div>
+                                <p className="text-white/40 text-xs mb-1">
+                                  {t("contact.whatsapp")}
+                                </p>
+                                <p className="text-white text-sm">{link.value}</p>
+                              </div>
+                            </a>
+                          ) : null}
+                        </div>
+                      );
+                    })()}
+                  </li>
               ))}
             </ul>
           </div>

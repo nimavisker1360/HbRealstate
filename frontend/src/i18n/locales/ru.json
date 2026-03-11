@@ -309,7 +309,8 @@
     "secondBranch": "Адрес второго офиса",
     "cyprusBranch": "Адрес офиса на Кипре",
     "contactNumber": "Контактный номер",
-    "emailAddress": "Email адрес"
+    "emailAddress": "Email адрес",
+    "whatsapp": "WhatsApp"
   },
   "contactModal": {
     "title": "Contact Us",

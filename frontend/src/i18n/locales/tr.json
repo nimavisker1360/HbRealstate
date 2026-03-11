@@ -309,7 +309,8 @@
     "secondBranch": "İkinci Şube Adresi",
     "cyprusBranch": "Kıbrıs Şube Adresi",
     "contactNumber": "İletişim Numarası",
-    "emailAddress": "E-posta Adresi"
+    "emailAddress": "E-posta Adresi",
+    "whatsapp": "WhatsApp"
   },
   "contactModal": {
     "title": "Bize Ulaşın",
