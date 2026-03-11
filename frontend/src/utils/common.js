@@ -20,3 +20,19 @@ export const normalizeWhatsAppNumber = (value) => {
   const digits = value?.toString().replace(/\D/g, "") || "";
   return digits.startsWith("00") ? digits.slice(2) : digits;
 };
+
+export const normalizePhoneNumber = (value) => {
+  const raw = value?.toString().trim() || "";
+  const digits = raw.replace(/\D/g, "");
+
+  if (!digits) return "";
+  if (raw.startsWith("+")) return `+${digits}`;
+  if (digits.startsWith("00")) return `+${digits.slice(2)}`;
+
+  return digits;
+};
+
+export const buildTelHref = (value) => {
+  const normalizedPhone = normalizePhoneNumber(value);
+  return normalizedPhone ? `tel:${normalizedPhone}` : undefined;
+};

@@ -13,7 +13,7 @@ import { Loader } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import useConsultants from "../hooks/useConsultants";
 import ContactModal from "../components/ContactModal";
-import { normalizeWhatsAppNumber } from "../utils/common";
+import { buildTelHref, normalizeWhatsAppNumber } from "../utils/common";
 
 // Helper function to get localized field
 const getLocalizedField = (consultant, field, language) => {
@@ -236,13 +236,17 @@ const Consultants = () => {
 
                   {/* Contact Buttons */}
                   <div className="space-y-2">
-                    <div
-                      onClick={(e) => e.stopPropagation()}
-                      className="flexCenter gap-2 bg-tertiary text-white py-3 rounded-xl font-medium w-full select-text cursor-default"
-                    >
-                      <FaPhone />
-                      <span dir="ltr">{consultant.phone}</span>
-                    </div>
+                    {consultant.phone && (
+                      <a
+                        href={buildTelHref(consultant.phone)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="phone-click-link flexCenter gap-2 bg-tertiary text-white py-3 rounded-xl font-medium w-full select-text"
+                        data-track-phone-click="true"
+                      >
+                        <FaPhone />
+                        <span dir="ltr">{consultant.phone}</span>
+                      </a>
+                    )}
                     <a
                       href={`https://wa.me/${normalizeWhatsAppNumber(consultant.whatsapp)}`}
                       target="_blank"
@@ -306,12 +310,18 @@ const Consultants = () => {
               {currentLang === "tr" ? "Hızlı İletişim" : "Quick Contact"}
             </h4>
             <div className="space-y-4">
-              <div className="flex items-center gap-3 text-white/70 select-text cursor-default">
-                <div className="w-10 h-10 bg-white/10 rounded-lg flexCenter">
-                  <FaPhone className="text-secondary" />
-                </div>
-                <span dir="ltr">{consultants?.[0]?.phone || ""}</span>
-              </div>
+              {consultants?.[0]?.phone && (
+                <a
+                  href={buildTelHref(consultants[0].phone)}
+                  className="phone-click-link flex items-center gap-3 text-white/70 transition-colors hover:text-white"
+                  data-track-phone-click="true"
+                >
+                  <div className="w-10 h-10 bg-white/10 rounded-lg flexCenter">
+                    <FaPhone className="text-secondary" />
+                  </div>
+                  <span dir="ltr">{consultants[0].phone}</span>
+                </a>
+              )}
               <button 
                 onClick={() => setContactModalOpen(true)}
                 className="flex items-center gap-3 text-white/70 hover:text-white transition-colors cursor-pointer w-full text-left"
@@ -431,12 +441,16 @@ const Consultants = () => {
 
             {/* Contact Buttons */}
             <div className="p-6 pt-0 space-y-3">
-              <div
-                className="flex items-center justify-center gap-2 bg-white text-slate-900 py-4 rounded-2xl font-semibold shadow-lg w-full select-text cursor-default"
-              >
-                <FaPhone />
-                <span dir="ltr">{selectedConsultant.phone}</span>
-              </div>
+              {selectedConsultant.phone && (
+                <a
+                  href={buildTelHref(selectedConsultant.phone)}
+                  className="phone-click-link flex items-center justify-center gap-2 bg-white text-slate-900 py-4 rounded-2xl font-semibold shadow-lg w-full select-text"
+                  data-track-phone-click="true"
+                >
+                  <FaPhone />
+                  <span dir="ltr">{selectedConsultant.phone}</span>
+                </a>
+              )}
               <a
                 href={`https://wa.me/${normalizeWhatsAppNumber(selectedConsultant.whatsapp)}`}
                 target="_blank"

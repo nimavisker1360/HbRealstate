@@ -6,6 +6,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import icon from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
+import { buildTelHref } from "../utils/common";
 
 // Fix leaflet default icon
 let DefaultIcon = L.icon({
@@ -119,8 +120,9 @@ const Addresses = () => {
               <h3 className="font-semibold text-white mb-4">{t("addresses.contactTitle")}</h3>
               
               <a
-                href={`tel:${contactInfo.phone}`}
-                className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors"
+                href={buildTelHref(contactInfo.phone)}
+                className="phone-click-link flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors"
+                data-track-phone-click="true"
               >
                 <MdPhone className="text-[#06a84e] text-xl" />
                 <div>
