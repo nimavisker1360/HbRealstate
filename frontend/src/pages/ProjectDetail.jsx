@@ -52,6 +52,7 @@ import {
   getOptimizedVideoUrl,
 } from "../utils/media";
 import { extractObjectId, resolveProjectPath } from "../utils/seo";
+import { trackFormSubmitConversion } from "../utils/analytics";
 import IstanbulMarketAnalytics from "../components/market/IstanbulMarketAnalytics";
 
 // All possible Bina Özellikleri (Building Features)
@@ -334,6 +335,7 @@ const ProjectDetail = () => {
   const descriptionSectionRef = useRef(null);
   const locationSectionRef = useRef(null);
   const marketSectionRef = useRef(null);
+  const lastTrackedSubmissionIdRef = useRef("");
   const [contactForm, setContactForm] = useState({
     name: "",
     email: "",
@@ -703,7 +705,15 @@ const ProjectDetail = () => {
         listingNo: project.ilanNo || propertyData?.listingNo || "",
       };
 
-      await sendEmail(emailData);
+      const response = await sendEmail(emailData);
+      const submissionId = response?.data?.id || "";
+      if (
+        submissionId &&
+        submissionId !== lastTrackedSubmissionIdRef.current &&
+        trackFormSubmitConversion(submissionId)
+      ) {
+        lastTrackedSubmissionIdRef.current = submissionId;
+      }
       toast.success(bilingualKey("projectDetail.contactSuccess"));
       
       // Reset form

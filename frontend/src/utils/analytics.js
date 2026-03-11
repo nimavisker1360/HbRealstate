@@ -1,6 +1,10 @@
 const GOOGLE_ADS_WHATSAPP_SEND_TO = "AW-536343459/GSI2CNrpzYYcEKPn3_8B";
+const GOOGLE_ADS_FORM_SUBMIT_SEND_TO = String(
+  import.meta.env.VITE_GOOGLE_ADS_FORM_SUBMIT_SEND_TO || ""
+).trim();
 const WHATSAPP_EVENT_FLAG = "__hbWhatsAppConversionTracked";
 const WHATSAPP_HOSTS = new Set(["wa.me", "api.whatsapp.com"]);
+const trackedGoogleAdsConversionKeys = new Set();
 
 export const isWhatsAppUrl = (value = "") => {
   const rawValue = String(value || "").trim();
@@ -63,6 +67,45 @@ export function trackWhatsAppConversion(event) {
   }
 
   return false;
+}
+
+export function trackGoogleAdsConversion(sendTo, dedupeKey) {
+  try {
+    const normalizedSendTo = String(sendTo || "").trim();
+    if (!normalizedSendTo) return false;
+
+    const normalizedDedupeKey = String(dedupeKey || "").trim();
+    const trackingKey = normalizedDedupeKey
+      ? `${normalizedSendTo}:${normalizedDedupeKey}`
+      : "";
+
+    if (trackingKey && trackedGoogleAdsConversionKeys.has(trackingKey)) {
+      return false;
+    }
+
+    if (typeof window !== "undefined" && typeof window.gtag === "function") {
+      window.gtag("event", "conversion", {
+        send_to: normalizedSendTo,
+      });
+
+      if (trackingKey) {
+        trackedGoogleAdsConversionKeys.add(trackingKey);
+      }
+      return true;
+    }
+  } catch {
+    // Fail silently so form submits are unaffected if tracking is unavailable.
+  }
+
+  return false;
+}
+
+export function trackFormSubmitConversion(submissionId) {
+  // Set VITE_GOOGLE_ADS_FORM_SUBMIT_SEND_TO to the real Google Ads form-submit send_to value.
+  return trackGoogleAdsConversion(
+    GOOGLE_ADS_FORM_SUBMIT_SEND_TO,
+    submissionId
+  );
 }
 
 export const trackWhatsAppConversionFromClick = (event) => {

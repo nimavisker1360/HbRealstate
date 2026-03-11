@@ -1,15 +1,17 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { Button, Paper, TextInput, Textarea } from "@mantine/core";
 import { toast } from "react-toastify";
 import { bilingualKey } from "../utils/bilingualToast";
 import { sendEmail } from "../utils/api";
+import { trackFormSubmitConversion } from "../utils/analytics";
 
 const BlogContactForm = ({ contextTitle, className, fullWidth }) => {
   const { t, i18n } = useTranslation();
   const isTurkish = i18n.language?.toLowerCase().startsWith("tr");
   const [loading, setLoading] = useState(false);
+  const lastTrackedSubmissionIdRef = useRef("");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -54,13 +56,21 @@ const BlogContactForm = ({ contextTitle, className, fullWidth }) => {
 
     setLoading(true);
     try {
-      await sendEmail({
+      const response = await sendEmail({
         name: formData.name,
         email: formData.email,
         phone: formData.phone || "",
         subject,
         message: formData.message,
       });
+      const submissionId = response?.data?.id || "";
+      if (
+        submissionId &&
+        submissionId !== lastTrackedSubmissionIdRef.current &&
+        trackFormSubmitConversion(submissionId)
+      ) {
+        lastTrackedSubmissionIdRef.current = submissionId;
+      }
       toast.success(bilingualKey("projectDetail.contactSuccess"));
       setFormData({
         name: "",
