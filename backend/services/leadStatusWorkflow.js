@@ -1,5 +1,6 @@
 import { buildQualifiedLeadConversionPayload } from "../utils/googleAdsOfflineConversion.js";
 import { normalizeLeadStatus } from "../utils/leadAttribution.js";
+import { uploadQualifiedLeadConversion } from "./googleAdsQualifiedLeadUpload.js";
 
 const QUALIFIED_STATUS = "qualified";
 
@@ -37,10 +38,15 @@ export const handleLeadStatusTransition = async ({
     ...nextLead,
     qualifiedAt: transitionAt,
   });
+  const uploadResult = await uploadQualifiedLeadConversion({
+    lead: nextLead,
+    transitionAt,
+  });
 
   return {
     shouldPrepareQualifiedLeadUpload: true,
-    reason: payload.conversionAction ? "upload_not_implemented" : "missing_config",
+    reason: uploadResult.reason,
     payload,
+    uploadResult,
   };
 };

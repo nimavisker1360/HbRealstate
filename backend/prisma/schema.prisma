@@ -155,6 +155,10 @@ model ContactMessage {
     leadStatus String? @default("new") @map("lead_status")
     leadSource String? @default("form") @map("lead_source")
     submittedAt DateTime? @default(now()) @map("submitted_at")
+    googleAdsQualifiedUploadedAt DateTime? @map("google_ads_qualified_uploaded_at")
+    googleAdsQualifiedRequestId String? @map("google_ads_qualified_request_id")
+    googleAdsQualifiedJobId String? @map("google_ads_qualified_job_id")
+    googleAdsQualifiedUploadError String? @map("google_ads_qualified_upload_error")
     read Boolean @default(false)
     
     createdAt DateTime @default(now())
