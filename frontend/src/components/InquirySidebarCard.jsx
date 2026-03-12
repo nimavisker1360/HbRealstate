@@ -1,10 +1,9 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import { MdInfoOutline } from "react-icons/md";
 import { bilingualKey } from "../utils/bilingualToast";
 import { sendEmail } from "../utils/api";
-import { trackFormSubmitConversion } from "../utils/analytics";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -29,7 +28,6 @@ const InquirySidebarCard = ({
   className = "",
 }) => {
   const { t } = useTranslation();
-  const lastTrackedSubmissionIdRef = useRef("");
   const [loading, setLoading] = useState(false);
   const [contactForm, setContactForm] = useState({
     name: "",
@@ -64,7 +62,7 @@ const InquirySidebarCard = ({
     setLoading(true);
 
     try {
-      const response = await sendEmail({
+      await sendEmail({
         name: contactForm.name.trim(),
         email: contactForm.email.trim(),
         phone: contactForm.phone.trim(),
@@ -77,15 +75,6 @@ const InquirySidebarCard = ({
         listingNo: listingNo || null,
         consultantId: consultantId || null,
       });
-
-      const submissionId = response?.data?.id || response?.id || "";
-      if (
-        submissionId &&
-        submissionId !== lastTrackedSubmissionIdRef.current &&
-        trackFormSubmitConversion(submissionId)
-      ) {
-        lastTrackedSubmissionIdRef.current = submissionId;
-      }
 
       toast.success(bilingualKey("projectDetail.contactSuccess"));
       setContactForm({

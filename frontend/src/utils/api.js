@@ -483,7 +483,16 @@ export const sendEmail = async (emailData) => {
           "form",
       }),
     });
-    return response.data;
+    const result = response.data;
+
+    if (result?.success) {
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({
+        event: "lead_form_submit_success",
+      });
+    }
+
+    return result;
   } catch (error) {
     console.error("Error sending email:", error);
     throw error;
