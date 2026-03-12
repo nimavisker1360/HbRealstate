@@ -2,6 +2,7 @@ import OpenAI from "openai";
 import { toFile } from "openai";
 import { ObjectId } from "mongodb";
 import { getMongoDb } from "../config/prismaConfig.js";
+import { extractLeadAttribution } from "../utils/leadAttribution.js";
 
 let openaiClient = null;
 
@@ -1280,8 +1281,12 @@ async function getPropertyById(id) {
   return normalizePropertyRecord(property);
 }
 
-async function createLead(data = {}) {
+async function createLead(data = {}, attribution = {}) {
   const db = await getMongoDb();
+  const leadAttribution = extractLeadAttribution(
+    { attribution },
+    { defaultLeadSource: "ai_assistant" }
+  );
 
   const lead = {
     name: normalizeString(data.name),
@@ -1290,6 +1295,20 @@ async function createLead(data = {}) {
     budget_range: normalizeString(data.budget_range || data.budgetRange),
     note: normalizeString(data.note),
     source: "ai_assistant",
+    gclid: leadAttribution.gclid,
+    gbraid: leadAttribution.gbraid,
+    wbraid: leadAttribution.wbraid,
+    utm_source: leadAttribution.utmSource,
+    utm_medium: leadAttribution.utmMedium,
+    utm_campaign: leadAttribution.utmCampaign,
+    utm_term: leadAttribution.utmTerm,
+    utm_content: leadAttribution.utmContent,
+    fbclid: leadAttribution.fbclid,
+    landing_page: leadAttribution.landingPage,
+    referrer: leadAttribution.referrer,
+    lead_status: leadAttribution.leadStatus,
+    lead_source: leadAttribution.leadSource,
+    submitted_at: leadAttribution.submittedAt,
     createdAt: new Date(),
   };
 
@@ -2052,7 +2071,11 @@ function hasStrictBudgetIntent(text = "") {
   return hasUpperBudgetCue(text) || hasLowerBudgetCue(text) || hasBetweenBudgetCue(text);
 }
 
-export async function runRealEstateAssistant({ message, history = [] }) {
+export async function runRealEstateAssistant({
+  message,
+  history = [],
+  attribution = {},
+}) {
   const userMessage = normalizeString(message);
   if (!userMessage) {
     throw new Error("message is required");
@@ -2310,7 +2333,7 @@ export async function runRealEstateAssistant({ message, history = [] }) {
       } else if (name === TOOL_NAMES.searchBlogs) {
         toolOutput = blogIntent ? await searchBlogs(args, language) : [];
       } else if (name === TOOL_NAMES.createLead) {
-        toolOutput = await createLead(args);
+        toolOutput = await createLead(args, attribution);
       } else {
         toolOutput = { error: "Unknown tool" };
       }

@@ -1,6 +1,11 @@
 import asyncHandler from "express-async-handler";
 import nodemailer from "nodemailer";
 import { prisma } from "../config/prismaConfig.js";
+import {
+  extractLeadAttribution,
+  LEAD_STATUS_VALUES,
+} from "../utils/leadAttribution.js";
+import { handleLeadStatusTransition } from "../services/leadStatusWorkflow.js";
 
 // Create transporter with Gmail
 const createTransporter = () => {
@@ -28,6 +33,9 @@ export const sendEmail = asyncHandler(async (req, res) => {
     consultantName,
     consultantEmail,
   } = req.body;
+  const leadAttribution = extractLeadAttribution(req, {
+    defaultLeadSource: "form",
+  });
 
   // Validate required fields
   if (!name || !email || !message) {
@@ -51,6 +59,19 @@ export const sendEmail = asyncHandler(async (req, res) => {
         consultantId: consultantId || null,
         consultantName: consultantName || null,
         consultantEmail: consultantEmail || null,
+        gclid: leadAttribution.gclid,
+        gbraid: leadAttribution.gbraid,
+        wbraid: leadAttribution.wbraid,
+        utmSource: leadAttribution.utmSource,
+        utmMedium: leadAttribution.utmMedium,
+        utmCampaign: leadAttribution.utmCampaign,
+        utmTerm: leadAttribution.utmTerm,
+        utmContent: leadAttribution.utmContent,
+        landingPage: leadAttribution.landingPage,
+        referrer: leadAttribution.referrer,
+        leadStatus: leadAttribution.leadStatus,
+        leadSource: leadAttribution.leadSource,
+        submittedAt: leadAttribution.submittedAt,
       },
     });
 
@@ -182,6 +203,60 @@ export const sendEmail = asyncHandler(async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to save message",
+      error: error.message,
+    });
+  }
+});
+
+export const updateLeadStatus = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const nextLeadStatus = extractLeadAttribution(req, {
+    defaultLeadStatus: null,
+    defaultLeadSource: null,
+    defaultSubmittedAt: null,
+  }).leadStatus;
+
+  if (!nextLeadStatus || !LEAD_STATUS_VALUES.includes(nextLeadStatus)) {
+    return res.status(400).json({
+      success: false,
+      message: `lead_status must be one of: ${LEAD_STATUS_VALUES.join(", ")}`,
+    });
+  }
+
+  try {
+    const existingMessage = await prisma.contactMessage.findUnique({
+      where: { id },
+    });
+
+    if (!existingMessage) {
+      return res.status(404).json({
+        success: false,
+        message: "Lead not found",
+      });
+    }
+
+    const transitionAt = new Date();
+    const message = await prisma.contactMessage.update({
+      where: { id },
+      data: { leadStatus: nextLeadStatus },
+    });
+
+    await handleLeadStatusTransition({
+      previousLead: existingMessage,
+      nextLead: message,
+      transitionAt,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Lead status updated successfully",
+      data: message,
+    });
+  } catch (error) {
+    console.error("Error updating lead status:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to update lead status",
       error: error.message,
     });
   }

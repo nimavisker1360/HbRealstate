@@ -14,6 +14,9 @@ import {
   extractLanguageFromPath,
   resolvePreferredLanguage,
 } from "./utils/languageRouting";
+import { captureAttributionParams } from "./utils/attribution";
+
+captureAttributionParams();
 
 const currentPathLanguage = extractLanguageFromPath(window.location.pathname);
 

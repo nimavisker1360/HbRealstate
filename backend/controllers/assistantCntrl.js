@@ -5,7 +5,7 @@ import {
 } from "../services/realEstateAssistant.js";
 
 export const assistantChat = asyncHandler(async (req, res) => {
-  const { message, history } = req.body || {};
+  const { message, history, attribution } = req.body || {};
 
   if (!message || typeof message !== "string") {
     return res.status(400).json({
@@ -14,7 +14,7 @@ export const assistantChat = asyncHandler(async (req, res) => {
   }
 
   try {
-    const result = await runRealEstateAssistant({ message, history });
+    const result = await runRealEstateAssistant({ message, history, attribution });
     return res.status(200).json(result);
   } catch (error) {
     return res.status(500).json({

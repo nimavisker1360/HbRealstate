@@ -5,6 +5,7 @@ datasource db {
     provider = "mongodb"
     url      = env("DATABASE_URL")
 }
+
 model User {
     id String @id @default(auto()) @map("_id") @db.ObjectId
     name String?
@@ -141,6 +142,19 @@ model ContactMessage {
     consultantId String?
     consultantName String?
     consultantEmail String?
+    gclid String?
+    gbraid String?
+    wbraid String?
+    utmSource String? @map("utm_source")
+    utmMedium String? @map("utm_medium")
+    utmCampaign String? @map("utm_campaign")
+    utmTerm String? @map("utm_term")
+    utmContent String? @map("utm_content")
+    landingPage String? @map("landing_page")
+    referrer String?
+    leadStatus String? @default("new") @map("lead_status")
+    leadSource String? @default("form") @map("lead_source")
+    submittedAt DateTime? @default(now()) @map("submitted_at")
     read Boolean @default(false)
     
     createdAt DateTime @default(now())

@@ -2,6 +2,7 @@ import axios from "axios";
 import dayjs from "dayjs";
 import { toast } from "react-toastify";
 import { bilingualFromMessage, bilingualKey } from "./bilingualToast";
+import { buildLeadAttributionPayload } from "./attribution";
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "/api",
@@ -464,7 +465,24 @@ export const getAllUsers = async (token) => {
 // Send Email
 export const sendEmail = async (emailData) => {
   try {
-    const response = await api.post("/email/send", emailData);
+    const { attribution, leadSource, lead_source, ...restEmailData } =
+      emailData || {};
+    const attributionFields =
+      attribution && typeof attribution === "object" && !Array.isArray(attribution)
+        ? attribution
+        : {};
+    const response = await api.post("/email/send", {
+      ...restEmailData,
+      ...buildLeadAttributionPayload({
+        ...attributionFields,
+        lead_source:
+          lead_source ||
+          leadSource ||
+          attributionFields.lead_source ||
+          attributionFields.leadSource ||
+          "form",
+      }),
+    });
     return response.data;
   } catch (error) {
     console.error("Error sending email:", error);
@@ -477,7 +495,13 @@ export const chatWithRealEstateAssistant = async (message, history = []) => {
   try {
     const response = await api.post(
       "/assistant/chat",
-      { message, history },
+      {
+        message,
+        history,
+        ...buildLeadAttributionPayload({
+          lead_source: "ai_assistant",
+        }),
+      },
       { timeout: 45000 }
     );
     return response.data;

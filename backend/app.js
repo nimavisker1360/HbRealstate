@@ -1,5 +1,4 @@
 import express from "express";
-import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import { userRoute } from "./routes/userRoute.js";
@@ -12,8 +11,9 @@ import { testimonialRoute } from "./routes/testimonialRoute.js";
 import { assistantRoute } from "./routes/assistantRoute.js";
 import { marketRoute } from "./routes/marketRoute.js";
 import { getSitemapXml } from "./controllers/sitemapCntrl.js";
+import { loadBackendEnv } from "./config/loadEnv.js";
 
-dotenv.config();
+loadBackendEnv();
 
 const app = express();
 
