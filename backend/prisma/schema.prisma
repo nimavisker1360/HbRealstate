@@ -132,8 +132,8 @@ model Consultant {
 
 model ContactMessage {
     id String @id @default(auto()) @map("_id") @db.ObjectId
-    name String
-    email String
+    name String?
+    email String?
     phone String?
     subject String?
     message String
@@ -154,6 +154,38 @@ model ContactMessage {
     referrer String?
     leadStatus String? @default("new") @map("lead_status")
     leadSource String? @default("form") @map("lead_source")
+    preferredContactMethod String? @map("preferred_contact_method")
+    preferredLanguage String? @map("preferred_language")
+    nationality String?
+    budgetMin Float? @map("budget_min")
+    budgetMax Float? @map("budget_max")
+    budgetNotes String? @map("budget_notes")
+    currency String?
+    purpose String?
+    locationInterest String? @map("location_interest")
+    cityInterest String? @map("city_interest")
+    districtInterest String? @map("district_interest")
+    projectInterest String? @map("project_interest")
+    propertyTypeInterest String? @map("property_type_interest")
+    roomType String? @map("room_type")
+    paymentPlan String? @map("payment_plan")
+    timeline String?
+    citizenshipInterest Boolean? @map("citizenship_interest")
+    consultationMode String? @map("consultation_mode")
+    aiSessionId String? @map("ai_session_id")
+    aiStage String? @map("ai_stage")
+    aiQualifiedAt DateTime? @map("ai_qualified_at")
+    leadScore Int? @default(0) @map("lead_score")
+    leadTemperature String? @map("lead_temperature")
+    sourcePage String? @map("source_page")
+    pageType String? @map("page_type")
+    assignedAgent String? @map("assigned_agent")
+    transcript Json?
+    extractedAnswers Json? @map("extracted_answers")
+    recommendations Json?
+    campaignData Json? @map("campaign_data")
+    crmPayload Json? @map("crm_payload")
+    handoffSummary String? @map("handoff_summary")
     submittedAt DateTime? @default(now()) @map("submitted_at")
     googleAdsQualifiedUploadedAt DateTime? @map("google_ads_qualified_uploaded_at")
     googleAdsQualifiedRequestId String? @map("google_ads_qualified_request_id")

@@ -212,10 +212,7 @@ const matchesQuickAccessFilters = (property, quickFilters) => {
     return false;
   }
 
-  if (
-    quickFilters.citizenshipEligible &&
-    !isCitizenshipEligibleProperty(searchableText)
-  ) {
+  if (quickFilters.citizenshipEligible && !property.gyo) {
     return false;
   }
 

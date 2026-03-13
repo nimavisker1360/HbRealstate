@@ -229,10 +229,7 @@ const matchesQuickAccessFilters = (property, quickFilters) => {
     return false;
   }
 
-  if (
-    quickFilters.citizenshipEligible &&
-    !includesAnyKeyword(searchableText, CITIZENSHIP_KEYWORDS)
-  ) {
+  if (quickFilters.citizenshipEligible && !property.gyo) {
     return false;
   }
 

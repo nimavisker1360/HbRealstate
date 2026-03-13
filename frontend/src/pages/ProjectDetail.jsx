@@ -401,6 +401,7 @@ const ProjectDetail = () => {
       projeHakkinda: propertyData.projeHakkinda,
       dairePlanlari: propertyData.dairePlanlari || [],
       vaziyetPlani: propertyData.vaziyetPlani,
+      brochureUrl: propertyData.brochureUrl || "",
       ozellikler,
       kampanya: propertyData.kampanya,
       mapImage: propertyData.mapImage,
@@ -900,7 +901,16 @@ const ProjectDetail = () => {
                     </span>
                   </button>
                   <span className="text-gray-300">|</span>
-                  <button className="flex items-center gap-2 text-gray-600 hover:text-gray-700">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (project.brochureUrl) {
+                        window.open(project.brochureUrl, "_blank", "noopener,noreferrer");
+                      }
+                    }}
+                    disabled={!project.brochureUrl}
+                    className="flex items-center gap-2 text-gray-600 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
                     <MdDescription size={18} />
                     <span className="text-sm">{t("projectDetail.brochure")}</span>
                   </button>

@@ -1317,6 +1317,7 @@ const AdminPanel = () => {
     projeHakkinda: null,
     dairePlanlari: [],
     vaziyetPlani: "",
+    brochureUrl: "",
     iletisim: null,
     ozellikler: null,
     gyo: false,
@@ -2226,6 +2227,7 @@ const AdminPanel = () => {
       projeHakkinda: null,
       dairePlanlari: [],
       vaziyetPlani: "",
+      brochureUrl: "",
       iletisim: null,
       ozellikler: null,
       gyo: false,
@@ -2974,8 +2976,35 @@ const AdminPanel = () => {
                             </Avatar>
                             <div>
                               <Text size="sm" fw={500}>
-                                {m.name}
+                                {m.name || "AI visitor"}
                               </Text>
+                              {m.leadSource === "ai_agent" && (
+                                <div className="mt-1 flex flex-wrap gap-1">
+                                  <Badge color="teal" variant="light" size="xs">
+                                    AI Agent
+                                  </Badge>
+                                  {m.leadTemperature ? (
+                                    <Badge
+                                      color={
+                                        m.leadTemperature === "hot"
+                                          ? "red"
+                                          : m.leadTemperature === "warm"
+                                          ? "orange"
+                                          : "gray"
+                                      }
+                                      variant="light"
+                                      size="xs"
+                                    >
+                                      {m.leadTemperature}
+                                    </Badge>
+                                  ) : null}
+                                  {typeof m.leadScore === "number" ? (
+                                    <Badge color="blue" variant="light" size="xs">
+                                      {m.leadScore}
+                                    </Badge>
+                                  ) : null}
+                                </div>
+                              )}
                               {m.phone && (
                                 <div className="flex items-center gap-1 text-xs text-gray-500">
                                   <MdPhone size={12} />
@@ -2989,9 +3018,14 @@ const AdminPanel = () => {
                           <div className="flex items-center gap-1 text-xs text-gray-600">
                             <MdEmail size={14} className="text-gray-400" />
                             <Text size="xs" className="truncate max-w-[180px]">
-                              {m.email}
+                              {m.email || "-"}
                             </Text>
                           </div>
+                          {m.preferredLanguage && (
+                            <Text size="xs" color="dimmed" className="mt-1 uppercase">
+                              {m.preferredLanguage}
+                            </Text>
+                          )}
                         </Table.Td>
                         <Table.Td>
                           {m.propertyTitle ? (
@@ -3028,6 +3062,13 @@ const AdminPanel = () => {
                           <Text size="sm" fw={500}>
                             {m.subject || "Property Inquiry"}
                           </Text>
+                          {m.purpose || m.locationInterest || m.projectInterest ? (
+                            <Text size="xs" color="dimmed" lineClamp={2}>
+                              {[m.purpose, m.locationInterest, m.projectInterest]
+                                .filter(Boolean)
+                                .join(" | ")}
+                            </Text>
+                          ) : null}
                         </Table.Td>
                         <Table.Td>
                           {m.consultantName ? (

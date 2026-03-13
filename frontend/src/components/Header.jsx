@@ -12,9 +12,9 @@ import ContactModal from "./ContactModal";
 import ProfileModal from "./ProfileModal";
 import LanguageSwitcher from "./LanguageSwitcher";
 import SearchOverlay from "./SearchOverlay";
-import AssistantChatModal from "./AssistantChatModal";
 import logo from "../assets/logo.png";
 import CurrencyContext from "../context/CurrencyContext";
+import { normalizeWhatsAppNumber } from "../utils/common";
 
 const Header = () => {
   const { t } = useTranslation();
@@ -24,7 +24,6 @@ const Header = () => {
   const [contactModalOpen, setContactModalOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [searchOverlayOpen, setSearchOverlayOpen] = useState(false);
-  const [assistantChatOpen, setAssistantChatOpen] = useState(false);
   const headerRef = useRef(null);
   const { currencies, selectedCurrency, setSelectedCurrency } =
     useContext(CurrencyContext);
@@ -35,6 +34,7 @@ const Header = () => {
   const authStateRef = useRef(false);
   const authLoadingRef = useRef(true);
   const authRedirectInProgressRef = useRef(false);
+  const whatsappHref = `https://wa.me/${normalizeWhatsAppNumber("+90 530 387 10 50")}`;
 
   const toggleMenu = () => setMenuOpened(!menuOpened);
   const { isAuthenticated, user, logout, isLoading } = useAuth0();
@@ -253,14 +253,16 @@ const Header = () => {
               >
                 <MdSearch size={20} />
               </button>
-              <button
-                type="button"
-                onClick={() => setAssistantChatOpen(true)}
+              <a
+                href={whatsappHref}
+                target="_blank"
+                rel="noreferrer"
+                data-whatsapp-url={whatsappHref}
                 className="animate-whatsapp-ring flex h-9 w-9 items-center justify-center rounded-full border-2 border-emerald-500 text-emerald-500 transition hover:bg-emerald-50"
                 aria-label="WhatsApp"
               >
                 <FaWhatsapp size={18} />
-              </button>
+              </a>
               {/* Desktop Only - Profile/Login */}
               <div className="hidden lg:flex items-center">
                 {isLoading ? (
@@ -393,16 +395,10 @@ const Header = () => {
         />
       )}
 
-      <AssistantChatModal
-        opened={assistantChatOpen}
-        onClose={() => setAssistantChatOpen(false)}
-      />
-
     </header>
   );
 };
 
 export default Header;
-
 
 

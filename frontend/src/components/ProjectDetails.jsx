@@ -324,6 +324,7 @@ const ProjectDetails = ({
       // Vaziyet Planı
       vaziyetPlani: propertyDetails.vaziyetPlani || "",
       // Harita Görseli
+      brochureUrl: propertyDetails.brochureUrl || "",
       mapImage: propertyDetails.mapImage || "",
       specialOffers: initialSpecialOffers,
       // Özellikler
@@ -685,6 +686,7 @@ const ProjectDetails = ({
       },
       dairePlanlari: nextFloorPlans,
       vaziyetPlani: form.values.vaziyetPlani,
+      brochureUrl: form.values.brochureUrl,
       mapImage: form.values.mapImage,
       ozellikler: {
         binaOzellikleri: form.values.binaOzellikleri,
@@ -1377,6 +1379,23 @@ const ProjectDetails = ({
           </Paper>
 
           {/* HARİTA GÖRSELİ (Map Image) */}
+          <Paper p="lg" withBorder mb="lg" className="bg-amber-50">
+            <div className="flex items-center gap-2 mb-4">
+              <MdInfo size={24} className="text-amber-600" />
+              <Text fw={700} size="lg" c="yellow.8">Brochure PDF</Text>
+            </div>
+
+            <TextInput
+              label="Brochure URL"
+              placeholder="https://..."
+              value={form.values.brochureUrl}
+              onChange={(event) =>
+                form.setFieldValue("brochureUrl", event.currentTarget.value)
+              }
+              description="PDF brochure link used for automatic WhatsApp delivery."
+            />
+          </Paper>
+
           <Paper p="lg" withBorder mb="lg" className="bg-cyan-50">
             <div className="flex items-center gap-2 mb-4">
               <MdLocationOn size={24} className="text-cyan-600" />
