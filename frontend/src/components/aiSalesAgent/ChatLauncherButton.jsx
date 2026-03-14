@@ -11,7 +11,7 @@ const ChatLauncherButton = ({ isOpen, label, onClick }) => (
   >
     <span className="relative flex h-11 w-11 items-center justify-center rounded-full bg-[linear-gradient(135deg,#0f766e_0%,#10b981_100%)] text-white shadow-[0_14px_30px_-18px_rgba(16,185,129,0.95)]">
       <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400/35" />
-      <FaRobot className="relative" size={18} />
+      <FaRobot className="relative hb-chat-launcher-robot" size={18} />
     </span>
     <span className="pr-1 text-left">
       <span className="block text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-700">

@@ -4,7 +4,7 @@ const copy = {
   en: {
     title: "AI Sales Agent",
     subtitle: "Lead qualification and smart property matching",
-    minimized: "Ask HB AI",
+    minimized: "Ask HB Assistant",
     placeholder: "Tell me your budget, area, purpose, or preferred project",
     restart: "New chat",
     close: "Close",
