@@ -36,3 +36,16 @@ export const buildTelHref = (value) => {
   const normalizedPhone = normalizePhoneNumber(value);
   return normalizedPhone ? `tel:${normalizedPhone}` : undefined;
 };
+
+export const buildEmailHref = (value) => {
+  const email = value?.toString().trim();
+  if (!email) return undefined;
+
+  const params = new URLSearchParams({
+    view: "cm",
+    fs: "1",
+    to: email,
+  });
+
+  return `https://mail.google.com/mail/?${params.toString()}`;
+};

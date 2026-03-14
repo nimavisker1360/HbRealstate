@@ -6,7 +6,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import icon from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
-import { buildTelHref } from "../utils/common";
+import { buildEmailHref, buildTelHref } from "../utils/common";
 import { PRIMARY_CONTACT_PHONE } from "../constant/data";
 
 // Fix leaflet default icon
@@ -52,7 +52,7 @@ const Addresses = () => {
 
   const contactInfo = {
     phone: PRIMARY_CONTACT_PHONE,
-    email: "hbrealstate2019@gmail.com",
+    email: "hprealstate2019@gmail.com",
   };
 
   const handleBranchClick = (branch) => {
@@ -133,7 +133,9 @@ const Addresses = () => {
               </a>
 
               <a
-                href={`mailto:${contactInfo.email}`}
+                href={buildEmailHref(contactInfo.email)}
+                target="_blank"
+                rel="noreferrer"
                 className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors"
               >
                 <MdEmail className="text-[#06a84e] text-xl" />
