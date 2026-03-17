@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import heroBg from "../assets/img1.png";
-import heroCyprus from "../assets/hero/cyprus.jpg";
-import heroDubai from "../assets/hero/dubai.jpg";
+import heroCyprus from "../assets/hero/Cyprus.jpg";
+import heroDubai from "../assets/hero/Dubai.jpg";
 import heroGeorgia from "../assets/hero/Georgia.jpg";
 import heroGreece from "../assets/hero/greece.jpg";
-import heroIstanbul from "../assets/hero/istanbul.jpg";
+import heroIstanbul from "../assets/hero/Istanbul.jpg";
 import iconIstanbul from "../assets/icons/istanbul.png";
 import iconGreece from "../assets/icons/Greece.png";
 import iconDubai from "../assets/icons/dubai.png";

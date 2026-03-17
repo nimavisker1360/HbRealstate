@@ -1,9 +1,7 @@
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
-import { Modal } from "@mantine/core";
-import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { MdClose, MdPerson, MdRefresh, MdSend } from "react-icons/md";
-import { FaWhatsapp } from "react-icons/fa";
+import { FaRobot } from "react-icons/fa";
 import { useAuth0 } from "@auth0/auth0-react";
 import UserDetailContext from "../context/UserDetailContext";
 import aiRobotAvatar from "../assets/ai-robot-avatar.svg";
@@ -156,13 +154,14 @@ const resolveBlogUrl = (item) => {
   return path === "/blogs" ? "" : path;
 };
 
-const AssistantChatModal = ({ opened, onClose }) => {
+const AssistantChatWidget = () => {
   const { i18n } = useTranslation();
   const { user: auth0User, isAuthenticated } = useAuth0();
   const { userDetails } = useContext(UserDetailContext);
   const token = userDetails?.token;
   const profileImageFromContext = String(userDetails?.profile?.image || "").trim();
 
+  const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -187,7 +186,7 @@ const AssistantChatModal = ({ opened, onClose }) => {
     }
 
     const loadUserProfileImage = async () => {
-      if (!opened || !isAuthenticated || !auth0User?.email || !token) return;
+      if (!isOpen || !isAuthenticated || !auth0User?.email || !token) return;
       const profileData = await getUserProfile(auth0User.email, token);
       const image = String(profileData?.image || "").trim();
       if (active && image) {
@@ -200,7 +199,7 @@ const AssistantChatModal = ({ opened, onClose }) => {
     return () => {
       active = false;
     };
-  }, [auth0User?.email, isAuthenticated, opened, profileImageFromContext, token]);
+  }, [auth0User?.email, isAuthenticated, isOpen, profileImageFromContext, token]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -267,24 +266,34 @@ const AssistantChatModal = ({ opened, onClose }) => {
   };
 
   return (
-    <Modal
-      opened={opened}
-      onClose={onClose}
-      centered
-      size="xl"
-      withCloseButton={false}
-      overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
-      radius="xl"
-      padding={0}
-    >
-      <div className="ai-chat-shell flex h-[76vh] max-h-[720px] min-h-[500px] flex-col overflow-hidden">
+    <>
+      {/* Launcher Button */}
+      <div
+        className={`fixed bottom-5 right-5 z-[70] ${
+          isOpen ? "pointer-events-none opacity-0" : "opacity-100"
+        } transition`}
+      >
+        <span className="absolute inset-0 animate-[ripple_2.4s_ease-out_infinite] rounded-full bg-emerald-400/40" />
+        <span className="absolute inset-0 animate-[ripple_2.4s_ease-out_0.6s_infinite] rounded-full bg-emerald-400/25" />
+        <button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          className="relative flex h-14 w-14 items-center justify-center rounded-full bg-[linear-gradient(135deg,#0f766e_0%,#10b981_100%)] text-white shadow-[0_14px_34px_-10px_rgba(16,185,129,0.7)] transition hover:scale-110"
+        >
+          <FaRobot className="animate-[vibrate_2s_ease-in-out_infinite]" size={24} />
+        </button>
+      </div>
+
+      {/* Chat Panel */}
+      {isOpen && (
+      <div className="fixed bottom-5 right-5 z-[80] flex h-[min(80vh,720px)] w-[min(420px,calc(100vw-20px))] flex-col overflow-hidden rounded-[24px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(247,250,252,0.98)_100%)] shadow-[0_38px_80px_-38px_rgba(15,23,42,0.72)] backdrop-blur-xl">
         <div className="relative overflow-hidden border-b border-emerald-100/80 bg-gradient-to-r from-emerald-50 via-white to-teal-50 px-5 py-4">
           <div className="pointer-events-none absolute -left-10 -top-10 h-28 w-28 rounded-full bg-emerald-200/35 blur-2xl" />
           <div className="pointer-events-none absolute -right-10 -bottom-12 h-28 w-28 rounded-full bg-teal-200/40 blur-2xl" />
           <div className="relative flex items-center justify-between">
             <div className="flex min-w-0 items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-emerald-500 text-emerald-500 shadow-sm">
-                <FaWhatsapp size={18} />
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[linear-gradient(135deg,#0f766e_0%,#10b981_100%)] text-white shadow-sm">
+                <FaRobot size={18} />
               </div>
               <div className="min-w-0">
                 <p className="truncate text-[15px] font-semibold text-gray-900">
@@ -305,11 +314,11 @@ const AssistantChatModal = ({ opened, onClose }) => {
               </button>
               <button
                 type="button"
-                onClick={onClose}
-                className="rounded-md p-1 text-gray-500 transition hover:bg-white/80 hover:text-gray-700"
+                onClick={() => setIsOpen(false)}
+                className="rounded-full border border-white/80 bg-white/80 p-2 text-gray-500 transition hover:text-gray-700"
                 aria-label={labels.close}
               >
-                <MdClose size={21} />
+                <MdClose size={18} />
               </button>
             </div>
           </div>
@@ -647,13 +656,9 @@ const AssistantChatModal = ({ opened, onClose }) => {
           </div>
         </div>
       </div>
-    </Modal>
+      )}
+    </>
   );
 };
 
-AssistantChatModal.propTypes = {
-  opened: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired,
-};
-
-export default AssistantChatModal;
+export default AssistantChatWidget;

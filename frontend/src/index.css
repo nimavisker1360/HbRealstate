@@ -589,6 +589,41 @@ body {
   }
 }
 
+@keyframes ripple {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+@keyframes vibrate {
+  0%, 70%, 100% {
+    transform: rotate(0deg);
+  }
+  74% {
+    transform: rotate(-12deg);
+  }
+  78% {
+    transform: rotate(12deg);
+  }
+  82% {
+    transform: rotate(-8deg);
+  }
+  86% {
+    transform: rotate(8deg);
+  }
+  90% {
+    transform: rotate(-4deg);
+  }
+  94% {
+    transform: rotate(0deg);
+  }
+}
+
 .ai-chat-shell {
   border: 1px solid #d7f2e6;
   background: linear-gradient(180deg, #ffffff 0%, #f8fffb 100%);
