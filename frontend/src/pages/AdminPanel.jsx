@@ -2560,8 +2560,27 @@ const AdminPanel = () => {
                         </Table.Td>
                         <Table.Td>
                           <Text size="sm" fw={600} color="green">
-                            {getCurrencySymbol(property.currency)}
-                            {property.price?.toLocaleString()}
+                            {(() => {
+                              let displayPrice = property.price;
+                              let displayCurrency = property.currency;
+                              if (!displayPrice || displayPrice === 0) {
+                                if (property.dairePlanlari?.length > 0) {
+                                  const prices = property.dairePlanlari
+                                    .map(plan => plan.fiyat || plan.fiyatUSD || 0)
+                                    .filter(p => p > 0);
+                                  if (prices.length > 0) {
+                                    displayPrice = Math.min(...prices);
+                                    if (!displayCurrency) {
+                                      const firstPlan = property.dairePlanlari.find(plan => (plan.fiyat || plan.fiyatUSD) > 0);
+                                      displayCurrency = firstPlan?.currency || "USD";
+                                    }
+                                  }
+                                }
+                              }
+                              return displayPrice > 0
+                                ? `${getCurrencySymbol(displayCurrency)}${displayPrice.toLocaleString()}`
+                                : `${getCurrencySymbol(displayCurrency || "USD")}0`;
+                            })()}
                           </Text>
                         </Table.Td>
                         <Table.Td>

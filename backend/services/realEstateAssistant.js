@@ -41,6 +41,42 @@ const TOOL_NAMES = {
 const PROJECT_PROPERTY_TYPES = new Set(["local-project", "international-project"]);
 const SUPPORTED_BUDGET_CURRENCIES = new Set(["USD", "TRY", "EUR"]);
 
+const ISTANBUL_EUROPEAN_DISTRICTS = [
+  "Arnavutköy", "Avcılar", "Bağcılar", "Bahçelievler", "Bakırköy",
+  "Başakşehir", "Bayrampaşa", "Beşiktaş", "Beylikdüzü", "Beyoğlu",
+  "Büyükçekmece", "Çatalca", "Esenler", "Esenyurt", "Eyüpsultan",
+  "Fatih", "Gaziosmanpaşa", "Güngören", "Kağıthane", "Küçükçekmece",
+  "Sarıyer", "Silivri", "Sultangazi", "Şişli", "Zeytinburnu",
+];
+
+const ISTANBUL_ASIAN_DISTRICTS = [
+  "Adalar", "Ataşehir", "Beykoz", "Çekmeköy", "Kadıköy",
+  "Kartal", "Maltepe", "Pendik", "Sancaktepe", "Sultanbeyli",
+  "Şile", "Tuzla", "Ümraniye", "Üsküdar",
+];
+
+function resolveIstanbulSideDistricts(text = "") {
+  const normalized = toFoldedText(text);
+  const raw = String(text || "").toLowerCase();
+  const isEuropean =
+    containsAnyPhrase(normalized, [
+      "avrupa yakasi", "avrupa",
+      "european side", "europe side", "europe part", "european part",
+      "european", "europe",
+    ]) ||
+    /\b(европейская сторона|европейская часть|европейск)\b/u.test(raw);
+  const isAsian =
+    containsAnyPhrase(normalized, [
+      "anadolu yakasi", "anadolu",
+      "asian side", "asia side", "asia part", "asian part",
+      "asian", "asia",
+    ]) ||
+    /\b(азиатская сторона|азиатская часть|азиатск)\b/u.test(raw);
+  if (isEuropean) return ISTANBUL_EUROPEAN_DISTRICTS;
+  if (isAsian) return ISTANBUL_ASIAN_DISTRICTS;
+  return null;
+}
+
 const readPositiveEnvNumber = (name, fallback) => {
   const parsed = Number(process.env[name]);
   if (Number.isFinite(parsed) && parsed > 0) return parsed;
@@ -1025,17 +1061,21 @@ export async function searchProperties(rawArgs = {}) {
       Number.isFinite(budgetMin) &&
       Number.isFinite(budgetMax) &&
       Math.abs(budgetMin - budgetMax) <= 1;
+    const hasExplicitRange =
+      Number.isFinite(budgetMin) &&
+      Number.isFinite(budgetMax) &&
+      !hasEqualBounds;
 
     if (hasEqualBounds) {
       const center = (budgetMin + budgetMax) / 2;
       budgetMin = Math.max(0, center * (1 - flexRatio));
       budgetMax = center * (1 + flexRatio);
+    } else if (hasExplicitRange) {
+      // Both bounds are explicitly set by the user — do NOT expand the range.
     } else if (Number.isFinite(budgetMax) && !Number.isFinite(budgetMin)) {
       budgetMax = budgetMax * (1 + flexRatio);
     } else if (Number.isFinite(budgetMin) && !Number.isFinite(budgetMax)) {
-      budgetMin = Math.max(0, budgetMin * (1 - flexRatio));
-    } else if (Number.isFinite(budgetMin) && Number.isFinite(budgetMax)) {
-      budgetMax = budgetMax * (1 + flexRatio);
+      // Only lower bound set ("above X") — never go below the stated minimum.
     }
   }
 
@@ -1050,11 +1090,19 @@ export async function searchProperties(rawArgs = {}) {
   const countriesArray = (Array.isArray(args.countries) ? args.countries : [])
     .map((c) => normalizeString(c))
     .filter(Boolean);
-  const districtsArray = (Array.isArray(args.districts) ? args.districts : [])
+  let districtsArray = (Array.isArray(args.districts) ? args.districts : [])
     .map((d) => normalizeString(d))
     .filter(Boolean);
   const neighborhoodValue = normalizeString(args.neighborhood);
   const broadDistrictAlias = isBroadDistrictAlias(districtValue);
+
+  if (broadDistrictAlias && districtsArray.length === 0) {
+    const sideDistricts = resolveIstanbulSideDistricts(districtValue);
+    if (sideDistricts) {
+      districtsArray = sideDistricts;
+    }
+  }
+
   let districtCondition = null;
   let neighborhoodCondition = null;
 
@@ -1195,7 +1243,7 @@ export async function searchProperties(rawArgs = {}) {
     }
     return andConditions.length > 0 ? { $and: andConditions } : {};
   };
-  const fetchLimit = Math.min(Math.max(normalizeNumber(args.limit, 6), 1), 20);
+  const fetchLimit = Math.min(Math.max(normalizeNumber(args.limit, 5), 1), 20);
   const prefetchLimit =
     exactPriceEnabled ? 1200 : hasBudgetFilter || roomFilter || propertyScope === "projects" ? 500 : 80;
 
@@ -1270,7 +1318,26 @@ export async function searchProperties(rawArgs = {}) {
       })
     : roomFiltered;
 
-  return filtered.slice(0, fetchLimit).map(normalizePropertyRecord);
+  const results = [];
+  for (const doc of filtered) {
+    if (results.length >= fetchLimit) break;
+    const record = normalizePropertyRecord(doc);
+    if (hasBudgetFilter) {
+      const comparablePrices = collectComparablePrices(doc, budgetCurrency, roomFilter);
+      const matchingPrices = comparablePrices.filter((v) => {
+        if (Number.isFinite(budgetMin) && v < budgetMin) return false;
+        if (Number.isFinite(budgetMax) && v > budgetMax) return false;
+        return true;
+      });
+      if (matchingPrices.length === 0) continue;
+      const bestPrice = Math.min(...matchingPrices);
+      const budgetCur = budgetCurrency || "USD";
+      record.price_usd = Math.round(budgetCur === "USD" ? bestPrice : convertPrice(bestPrice, budgetCur, "USD"));
+      record.price_try = Math.round(budgetCur === "TRY" ? bestPrice : convertPrice(bestPrice, budgetCur, "TRY"));
+    }
+    results.push(record);
+  }
+  return results;
 }
 
 async function searchConsultants(rawArgs = {}, language = "en") {
@@ -1566,6 +1633,26 @@ Behavior rules:
 - For short property queries like "istanbul 350.000 usd 2+1", always call searchProperties at least once before final reply.
 - If user asks exact/specific price, pass "budget_exact" and set "exact_price": true.
 - For rough budgets (e.g., only a number like 400000 USD without under/over), you may pass "budget_flex_percent" (10-20) to allow around-range matches.
+
+Budget range rules (CRITICAL – follow strictly):
+- When user specifies a price RANGE (e.g., "between 500000 and 800000", "500k-800k", "from X to Y", "X ile Y arası", "от X до Y"), you MUST pass BOTH "budget_min" AND "budget_max". Never omit "budget_min" when a lower bound is stated.
+- When user says "under X" / "below X" / "altında" / "ниже", pass only "budget_max".
+- When user says "above X" / "over X" / "üstünde" / "выше", pass only "budget_min".
+- When user gives an explicit range with both bounds, set "budget_flex_percent" to 0 so results stay strictly within the stated range.
+- NEVER return properties outside the user's stated price range. Price accuracy is critical for user trust.
+
+Citizenship / investment eligibility rules:
+- When user asks about citizenship, investment visa, residency-by-investment, "vatandaşlık", "yatırımla vatandaşlık", "гражданство за инвестиции", or similar:
+  1. Explain that Turkish citizenship by investment requires a minimum property purchase of $400,000 USD.
+  2. ALWAYS call searchProperties with "budget_min": 400000, "budget_currency": "USD" to show eligible properties.
+  3. If user also mentions a city or district, include those filters too.
+  4. In your reply, clearly state the $400,000 minimum requirement and show the matching properties.
+
+Istanbul side filtering rules:
+- When user mentions "European side" / "Avrupa Yakası" / "европейская сторона" / "europe part", pass "district": "Avrupa Yakası" or "European side". The backend will automatically expand this to all European-side districts.
+- When user mentions "Asian side" / "Anadolu Yakası" / "азиатская сторона" / "asia part", pass "district": "Anadolu Yakası" or "Asian side". The backend will automatically expand this to all Asian-side districts.
+- Do NOT show properties from the other side of Istanbul when user specifically asks for one side.
+
 - If user says "in projects" or equivalent, pass "property_scope": "projects". If user asks only listings, pass "property_scope": "listings".
 - For consultant intent, call searchConsultants and return consultant profiles in "consultants".
 - For blog/legal/tax content requests, call searchBlogs and return matching posts in "blogs".
@@ -1826,16 +1913,17 @@ const tools = [
       parameters: {
         type: "object",
         properties: {
-          budget_min: { type: "number" },
-          budget_max: { type: "number" },
-          budget_exact: { type: "number" },
-          budget_flex_percent: { type: "number" },
+          budget_min: { type: "number", description: "Minimum budget (lower bound). MUST be set when user states a price range like 'between X and Y'." },
+          budget_max: { type: "number", description: "Maximum budget (upper bound). MUST be set when user states a price range like 'between X and Y'." },
+          budget_exact: { type: "number", description: "Exact target price. Use only when user asks for a specific price." },
+          budget_flex_percent: { type: "number", description: "Flex tolerance percent (0-40). Set to 0 for explicit ranges with both min and max." },
           exact_price: { type: "boolean" },
           budget_currency: { type: "string", enum: ["USD", "TRY", "EUR"] },
           property_scope: { type: "string", enum: ["all", "projects", "listings"] },
           rooms: { type: "string" },
           city: { type: "string" },
-          district: { type: "string" },
+          district: { type: "string", description: "District name OR side of Istanbul. For European side pass 'Avrupa Yakası' or 'European side'. For Asian side pass 'Anadolu Yakası' or 'Asian side'." },
+          districts: { type: "array", items: { type: "string" }, description: "Array of specific district names to filter by." },
           neighborhood: { type: "string" },
           delivery_date: { type: "string" },
           installment_plan: { type: "boolean" },
@@ -2140,13 +2228,19 @@ function isBroadDistrictAlias(value = "") {
   return (
     containsAnyPhrase(normalized, [
       "avrupa yakasi",
+      "avrupa",
       "anadolu yakasi",
+      "anadolu",
       "european side",
       "asian side",
       "europe side",
       "asia side",
+      "europe part",
+      "asia part",
+      "european part",
+      "asian part",
     ]) ||
-    /\b(\u0435\u0432\u0440\u043e\u043f\u0435\u0439\u0441\u043a\u0430\u044f \u0441\u0442\u043e\u0440\u043e\u043d\u0430|\u0430\u0437\u0438\u0430\u0442\u0441\u043a\u0430\u044f \u0441\u0442\u043e\u0440\u043e\u043d\u0430|\u0435\u0432\u0440\u043e\u043f\u0435\u0439\u0441\u043a\u0430\u044f \u0447\u0430\u0441\u0442\u044c|\u0430\u0437\u0438\u0430\u0442\u0441\u043a\u0430\u044f \u0447\u0430\u0441\u0442\u044c)\b/u.test(
+    /\b(европейская сторона|азиатская сторона|европейская часть|азиатская часть)\b/u.test(
       raw
     )
   );
@@ -2189,6 +2283,12 @@ function buildPropertyFallbackSearchArgs({
     args.keywords = locationKeywords;
   }
 
+  const sideDistricts = resolveIstanbulSideDistricts(userMessage);
+  if (sideDistricts) {
+    args.districts = sideDistricts;
+    if (!args.city) args.city = "istanbul";
+  }
+
   return args;
 }
 
@@ -2229,8 +2329,18 @@ function hasExactPriceIntent(text = "") {
   );
 }
 
+function hasCitizenshipIntent(text = "") {
+  const value = toFoldedText(text);
+  const raw = String(text || "").toLowerCase();
+  return (
+    /\b(citizenship|citizen|investment visa|residency by investment|golden visa)\b/.test(value) ||
+    /\b(vatandaslik|yatirimla vatandaslik|turk vatandasligi)\b/.test(value) ||
+    /\b(гражданство|инвестици|вид на жительство)\b/u.test(raw)
+  );
+}
+
 function hasStrictBudgetIntent(text = "") {
-  return hasUpperBudgetCue(text) || hasLowerBudgetCue(text) || hasBetweenBudgetCue(text);
+  return hasUpperBudgetCue(text) || hasLowerBudgetCue(text) || hasBetweenBudgetCue(text) || hasCitizenshipIntent(text);
 }
 
 export async function runRealEstateAssistant({
@@ -2425,12 +2535,14 @@ export async function runRealEstateAssistant({
           }
         }
 
+        const aiSentFlex =
+          searchArgs?.budget_flex_percent !== undefined ||
+          searchArgs?.budgetFlexPercent !== undefined;
         if (
           hasBudget &&
           !exactPriceIntent &&
           !strictBudgetIntent &&
-          !Number.isFinite(normalizeNumber(searchArgs?.budget_flex_percent, NaN)) &&
-          !Number.isFinite(normalizeNumber(searchArgs?.budgetFlexPercent, NaN))
+          !aiSentFlex
         ) {
           searchArgs = {
             ...searchArgs,
@@ -2456,6 +2568,19 @@ export async function runRealEstateAssistant({
             };
             if (inferredTokens.length === 1 && !normalizeString(searchArgs.neighborhood)) {
               searchArgs.neighborhood = inferredTokens[0];
+            }
+          }
+        }
+
+        if (
+          !normalizeString(searchArgs?.district) &&
+          !(Array.isArray(searchArgs?.districts) && searchArgs.districts.length > 0)
+        ) {
+          const userSideDistricts = resolveIstanbulSideDistricts(userMessage);
+          if (userSideDistricts) {
+            searchArgs = { ...searchArgs, districts: userSideDistricts };
+            if (!normalizeString(searchArgs?.city)) {
+              searchArgs.city = "istanbul";
             }
           }
         }
