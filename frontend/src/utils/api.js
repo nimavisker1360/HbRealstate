@@ -499,6 +499,21 @@ export const sendEmail = async (emailData) => {
   }
 };
 
+// Send AI assistant results to user email
+export const sendAssistantResultsEmail = async ({ firstName, lastName, phone, email, results }) => {
+  try {
+    const response = await api.post(
+      "/assistant/send-results",
+      { firstName, lastName, phone, email, results },
+      { timeout: 30000 }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error sending assistant results email:", error);
+    throw error;
+  }
+};
+
 // Real estate AI assistant chat
 export const chatWithRealEstateAssistant = async (message, history = []) => {
   try {

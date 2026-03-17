@@ -5,9 +5,10 @@ import { FaRobot } from "react-icons/fa";
 import { useAuth0 } from "@auth0/auth0-react";
 import UserDetailContext from "../context/UserDetailContext";
 import aiRobotAvatar from "../assets/ai-robot-avatar.svg";
-import { chatWithRealEstateAssistant, getUserProfile } from "../utils/api";
+import { chatWithRealEstateAssistant, getUserProfile, sendAssistantResultsEmail } from "../utils/api";
 import { buildEmailHref, normalizeWhatsAppNumber } from "../utils/common";
 import { resolveBlogPath, resolvePropertyPath } from "../utils/seo";
+import { toast } from "react-toastify";
 
 const UI_TEXT = {
   en: {
@@ -39,6 +40,16 @@ const UI_TEXT = {
     blogCountry: "Country",
     userAvatar: "User",
     assistantAvatar: "AI Assistant",
+    contactFormTitle: "Get these properties sent to your email",
+    firstName: "First Name",
+    lastName: "Last Name",
+    phone: "Phone",
+    emailLabel: "Email",
+    sendToEmail: "Send to my email",
+    sendingToEmail: "Sending...",
+    emailSent: "Sent! Check your inbox.",
+    emailError: "Failed to send. Please try again.",
+    emailSuccessToast: "Sent successfully!",
   },
   tr: {
     title: "AI Emlak Asistani",
@@ -69,6 +80,16 @@ const UI_TEXT = {
     blogCountry: "Ulke",
     userAvatar: "Kullanici",
     assistantAvatar: "AI Asistan",
+    contactFormTitle: "Bu projeleri e-postaniza gonderelim",
+    firstName: "Ad",
+    lastName: "Soyad",
+    phone: "Telefon",
+    emailLabel: "E-posta",
+    sendToEmail: "E-postama gonder",
+    sendingToEmail: "Gonderiliyor...",
+    emailSent: "Gonderildi! Gelen kutunuzu kontrol edin.",
+    emailError: "Gonderilemedi. Lutfen tekrar deneyin.",
+    emailSuccessToast: "Basariyla gonderildi!",
   },
   ru: {
     title: "AI Assistant po Nedvizhimosti",
@@ -99,6 +120,16 @@ const UI_TEXT = {
     blogCountry: "Strana",
     userAvatar: "Polzovatel",
     assistantAvatar: "AI Assistant",
+    contactFormTitle: "Poluchite eti obekty na vash email",
+    firstName: "Imya",
+    lastName: "Familiya",
+    phone: "Telefon",
+    emailLabel: "Email",
+    sendToEmail: "Otpravit na moy email",
+    sendingToEmail: "Otpravlyaetsya...",
+    emailSent: "Otpravleno! Proverte pochtu.",
+    emailError: "Ne udalos otpravit. Poprobuyte snova.",
+    emailSuccessToast: "Uspeshno otpravleno!",
   },
 };
 
@@ -166,6 +197,10 @@ const AssistantChatWidget = () => {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [userProfileImage, setUserProfileImage] = useState("");
+  const [contactForm, setContactForm] = useState({ firstName: "", lastName: "", phone: "", email: "" });
+  const [sendingResults, setSendingResults] = useState(false);
+  const [resultsSent, setResultsSent] = useState(false);
+  const [resultsEmailError, setResultsEmailError] = useState(false);
   const endRef = useRef(null);
 
   const uiLang = detectUiLang(i18n.language);
@@ -263,6 +298,42 @@ const AssistantChatWidget = () => {
   const handleNewChat = () => {
     setMessages([]);
     setInput("");
+    setContactForm({ firstName: "", lastName: "", phone: "", email: "" });
+    setResultsSent(false);
+    setResultsEmailError(false);
+  };
+
+  const allResults = useMemo(
+    () => messages.flatMap((m) => (Array.isArray(m.results) ? m.results : [])),
+    [messages]
+  );
+  const showContactForm = allResults.length > 0 && !resultsSent;
+
+  const handleSendResults = async () => {
+    if (!contactForm.firstName.trim() || !contactForm.email.trim()) return;
+    setSendingResults(true);
+    setResultsEmailError(false);
+    try {
+      const resultsWithUrls = allResults.map((r) => {
+        const url = resolveDetailUrl(r);
+        return { ...r, detail_url: url ? resolveAbsoluteUrl(url) : "" };
+      });
+      await sendAssistantResultsEmail({
+        firstName: contactForm.firstName.trim(),
+        lastName: contactForm.lastName.trim(),
+        phone: contactForm.phone.trim(),
+        email: contactForm.email.trim(),
+        results: resultsWithUrls,
+      });
+      toast.success(labels.emailSuccessToast, { position: "bottom-right" });
+      setTimeout(() => {
+        handleNewChat();
+      }, 1500);
+    } catch {
+      setResultsEmailError(true);
+    } finally {
+      setSendingResults(false);
+    }
   };
 
   return (
@@ -307,10 +378,11 @@ const AssistantChatWidget = () => {
                 type="button"
                 onClick={handleNewChat}
                 disabled={messages.length === 0}
-                className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-white/85 px-2.5 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex items-center justify-center rounded-full border border-emerald-200 bg-white/85 p-2 text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
+                aria-label={labels.newChat}
+                title={labels.newChat}
               >
-                <MdRefresh size={15} />
-                {labels.newChat}
+                <MdRefresh size={20} />
               </button>
               <button
                 type="button"
@@ -636,6 +708,60 @@ const AssistantChatWidget = () => {
         </div>
 
         <div className="border-t border-emerald-100/80 bg-white/95 px-4 py-3">
+          {showContactForm && (
+            <div className="mb-3 rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50/80 to-teal-50/60 p-3">
+              <p className="mb-2.5 text-xs font-semibold text-emerald-700">
+                {labels.contactFormTitle}
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="text"
+                  value={contactForm.firstName}
+                  onChange={(e) => setContactForm((p) => ({ ...p, firstName: e.target.value }))}
+                  placeholder={labels.firstName + " *"}
+                  className="rounded-lg border border-emerald-200 bg-white px-2.5 py-2 text-xs text-gray-800 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                />
+                <input
+                  type="text"
+                  value={contactForm.lastName}
+                  onChange={(e) => setContactForm((p) => ({ ...p, lastName: e.target.value }))}
+                  placeholder={labels.lastName}
+                  className="rounded-lg border border-emerald-200 bg-white px-2.5 py-2 text-xs text-gray-800 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                />
+                <input
+                  type="tel"
+                  value={contactForm.phone}
+                  onChange={(e) => setContactForm((p) => ({ ...p, phone: e.target.value }))}
+                  placeholder={labels.phone}
+                  className="rounded-lg border border-emerald-200 bg-white px-2.5 py-2 text-xs text-gray-800 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                />
+                <input
+                  type="email"
+                  value={contactForm.email}
+                  onChange={(e) => setContactForm((p) => ({ ...p, email: e.target.value }))}
+                  placeholder={labels.emailLabel + " *"}
+                  className="rounded-lg border border-emerald-200 bg-white px-2.5 py-2 text-xs text-gray-800 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                />
+              </div>
+              {resultsEmailError && (
+                <p className="mt-2 text-xs text-red-500">{labels.emailError}</p>
+              )}
+              <button
+                type="button"
+                onClick={handleSendResults}
+                disabled={sendingResults || !contactForm.firstName.trim() || !contactForm.email.trim()}
+                className="mt-2.5 w-full rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:from-emerald-600 hover:to-teal-600 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <MdSend size={14} className="mr-1 inline-block" />
+                {sendingResults ? labels.sendingToEmail : labels.sendToEmail}
+              </button>
+            </div>
+          )}
+          {resultsSent && (
+            <div className="mb-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-center text-xs font-medium text-emerald-700">
+              {labels.emailSent}
+            </div>
+          )}
           <div className="flex items-end gap-2">
             <textarea
               value={input}
