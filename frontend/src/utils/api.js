@@ -549,6 +549,154 @@ export const transcribeRealEstateAssistantAudio = async (
   }
 };
 
+export const startAISalesAgentChat = async ({
+  sessionId,
+  locale,
+  pageContext,
+  website = "",
+} = {}) => {
+  const response = await api.post(
+    "/ai-agent/chat/start",
+    {
+      sessionId,
+      locale,
+      pageContext,
+      website,
+      ...buildLeadAttributionPayload({
+        lead_source: "ai_agent",
+      }),
+    },
+    { timeout: 45000 }
+  );
+  return response.data;
+};
+
+export const sendAISalesAgentMessage = async ({
+  sessionId,
+  locale,
+  message,
+  transcript = [],
+  lead = {},
+  pageContext,
+  website = "",
+} = {}) => {
+  const response = await api.post(
+    "/ai-agent/chat/message",
+    {
+      sessionId,
+      locale,
+      message,
+      transcript,
+      lead,
+      pageContext,
+      website,
+      ...buildLeadAttributionPayload({
+        lead_source: "ai_agent",
+      }),
+    },
+    { timeout: 45000 }
+  );
+  return response.data;
+};
+
+export const submitAISalesAgentLead = async ({
+  sessionId,
+  locale,
+  transcript = [],
+  lead = {},
+  pageContext,
+  website = "",
+} = {}) => {
+  const response = await api.post(
+    "/ai-agent/lead/submit",
+    {
+      sessionId,
+      locale,
+      transcript,
+      lead,
+      pageContext,
+      website,
+      ...buildLeadAttributionPayload({
+        lead_source: "ai_agent",
+      }),
+    },
+    { timeout: 45000 }
+  );
+  return response.data;
+};
+
+export const getAISalesAgentRecommendations = async ({
+  locale,
+  lead = {},
+  pageContext,
+} = {}) => {
+  const response = await api.post(
+    "/ai-agent/recommendations",
+    {
+      locale,
+      lead,
+      pageContext,
+      ...buildLeadAttributionPayload({
+        lead_source: "ai_agent",
+      }),
+    },
+    { timeout: 30000 }
+  );
+  return response.data;
+};
+
+export const createAISalesAgentWhatsAppHandoff = async ({
+  sessionId,
+  locale,
+  transcript = [],
+  lead = {},
+  pageContext,
+  website = "",
+} = {}) => {
+  const response = await api.post(
+    "/ai-agent/handoff/whatsapp",
+    {
+      sessionId,
+      locale,
+      transcript,
+      lead,
+      pageContext,
+      website,
+      ...buildLeadAttributionPayload({
+        lead_source: "ai_agent",
+      }),
+    },
+    { timeout: 30000 }
+  );
+  return response.data;
+};
+
+export const createAISalesAgentEmailHandoff = async ({
+  sessionId,
+  locale,
+  transcript = [],
+  lead = {},
+  pageContext,
+  website = "",
+} = {}) => {
+  const response = await api.post(
+    "/ai-agent/handoff/email",
+    {
+      sessionId,
+      locale,
+      transcript,
+      lead,
+      pageContext,
+      website,
+      ...buildLeadAttributionPayload({
+        lead_source: "ai_agent",
+      }),
+    },
+    { timeout: 30000 }
+  );
+  return response.data;
+};
+
 // Get All Contact Messages
 export const getAllContactMessages = async (token) => {
   try {

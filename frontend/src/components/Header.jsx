@@ -35,7 +35,6 @@ const Header = () => {
   const authStateRef = useRef(false);
   const authLoadingRef = useRef(true);
   const authRedirectInProgressRef = useRef(false);
-
   const toggleMenu = () => setMenuOpened(!menuOpened);
   const { isAuthenticated, user, logout, isLoading } = useAuth0();
   const prevAuthRef = useRef(isAuthenticated);
@@ -257,7 +256,7 @@ const Header = () => {
                 href={`https://wa.me/${normalizeWhatsAppNumber(PRIMARY_CONTACT_PHONE)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-emerald-500 text-emerald-500 transition hover:bg-emerald-50"
+                className="animate-whatsapp-ring flex h-9 w-9 items-center justify-center rounded-full border-2 border-emerald-500 text-emerald-500 transition hover:bg-emerald-50"
                 aria-label="WhatsApp"
               >
                 <FaWhatsapp size={18} />
@@ -399,6 +398,5 @@ const Header = () => {
 };
 
 export default Header;
-
 
 

@@ -615,6 +615,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
   const [projectStatus, setProjectStatus] = useState("devam-ediyor");
   const [listingStatus, setListingStatus] = useState("offplan");
   const [gyo, setGyo] = useState(false);
+  const [brochureUrl, setBrochureUrl] = useState("");
   const [mapImage, setMapImage] = useState("");
   const [specialOffers, setSpecialOffers] = useState([]);
   const [isSpecialOfferEnabled, setIsSpecialOfferEnabled] = useState(false);
@@ -832,6 +833,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
             : listingStatusFromProjectStatus(property.projectStatus) || "offplan")
       );
       setGyo(Boolean(property.gyo));
+      setBrochureUrl(property.brochureUrl || "");
       setMapImage(property.mapImage || "");
       setSpecialOffers(getInitialSpecialOffers(property));
       setIsSpecialOfferEnabled(
@@ -1361,6 +1363,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
       projectStatus: isProjectType ? projectStatus : "",
       listingStatus: normalizedListingStatus,
       gyo: isProjectType ? gyo : false,
+      brochureUrl: isProjectType ? brochureUrl : "",
       mapImage: isProjectType ? mapImage : "",
       projeHakkinda: nextProjeHakkinda,
       dairePlanlari: isProjectType ? nextDairePlanlari : [],
@@ -2551,6 +2554,15 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
 
             {/* Vaziyet Planı & Harita Görseli Upload */}
             <Grid mt="md">
+              <Grid.Col span={12}>
+                <TextInput
+                  label="Brochure URL"
+                  placeholder="https://.../project-brochure.pdf"
+                  value={brochureUrl}
+                  onChange={(event) => setBrochureUrl(event.currentTarget.value)}
+                  description="Used for automatic WhatsApp brochure delivery."
+                />
+              </Grid.Col>
               <Grid.Col span={6}>
                 <Paper p="md" withBorder className="bg-orange-50">
                   <Text fw={600} size="sm" c="orange" mb="sm">Vaziyet Planı</Text>

@@ -327,6 +327,84 @@ function collectFloorPlanPrices(property = {}, roomFilter = "") {
   return prices;
 }
 
+function getPropertySpecialOffers(property = {}) {
+  const offers = [];
+  const nestedOffers = Array.isArray(property?.projeHakkinda?.specialOffers)
+    ? property.projeHakkinda.specialOffers
+    : [];
+
+  for (const offer of nestedOffers) {
+    if (offer && typeof offer === "object") {
+      offers.push(offer);
+    }
+  }
+
+  const legacyOffer = property?.projeHakkinda?.specialOffer;
+  if (legacyOffer && typeof legacyOffer === "object") {
+    offers.push(legacyOffer);
+  }
+
+  return offers;
+}
+
+function hasSpecialOfferData(specialOffer) {
+  const downPayment =
+    specialOffer?.downPaymentAmount ?? specialOffer?.downPaymentPercent;
+
+  return Boolean(
+    specialOffer &&
+      (specialOffer.enabled ||
+        normalizeString(specialOffer.title) ||
+        normalizeString(specialOffer.roomType) ||
+        normalizeNumber(specialOffer.areaM2, 0) > 0 ||
+        normalizeNumber(specialOffer.priceUSD, 0) > 0 ||
+        normalizeNumber(downPayment, 0) > 0 ||
+        normalizeNumber(specialOffer.installmentMonths, 0) > 0 ||
+        normalizeString(specialOffer.locationLabel) ||
+        normalizeNumber(specialOffer.locationMinutes, 0) > 0)
+  );
+}
+
+function collectSpecialOfferPrices(property = {}, roomFilter = "") {
+  const targetRoom = normalizeRoomToken(roomFilter);
+  const prices = [];
+
+  for (const offer of getPropertySpecialOffers(property)) {
+    if (!hasSpecialOfferData(offer)) continue;
+
+    const offerRoom = normalizeRoomToken(offer?.roomType);
+    if (targetRoom && (!offerRoom || offerRoom !== targetRoom)) continue;
+
+    if (hasPositiveNumber(offer?.priceUSD)) {
+      prices.push({
+        value: normalizeNumber(offer.priceUSD, 0),
+        currency: "USD",
+      });
+    }
+  }
+
+  return prices;
+}
+
+function summarizeSpecialOffers(property = {}) {
+  const offers = getPropertySpecialOffers(property).filter((offer) =>
+    hasSpecialOfferData(offer)
+  );
+
+  let specialOfferInstallmentMonths = 0;
+  for (const offer of offers) {
+    specialOfferInstallmentMonths = Math.max(
+      specialOfferInstallmentMonths,
+      normalizeNumber(offer?.installmentMonths, 0)
+    );
+  }
+
+  return {
+    hasSpecialOffer: offers.length > 0,
+    specialOfferInstallmentMonths,
+  };
+}
+
 function propertyMatchesRoomFilter(property = {}, roomFilter = "") {
   const targetRoom = normalizeRoomToken(roomFilter);
   if (!targetRoom) return true;
@@ -351,6 +429,14 @@ function collectComparablePrices(property = {}, budgetCurrency = "USD", roomFilt
 
   if (includeDirect && Number.isFinite(directPrice) && directPrice > 0 && directCurrency) {
     const converted = convertPrice(directPrice, directCurrency, normalizedBudgetCurrency);
+    if (Number.isFinite(converted)) {
+      values.push(converted);
+    }
+  }
+
+  const specialOfferPrices = collectSpecialOfferPrices(property, targetRoom);
+  for (const item of specialOfferPrices) {
+    const converted = convertPrice(item.value, item.currency, normalizedBudgetCurrency);
     if (Number.isFinite(converted)) {
       values.push(converted);
     }
@@ -411,6 +497,20 @@ function toPriceFields(property) {
   const currency = normalizeString(property?.currency).toUpperCase();
   let asUsd = convertPrice(price, currency, "USD");
   let asTry = convertPrice(price, currency, "TRY");
+
+  if ((!Number.isFinite(asUsd) || asUsd <= 0) && (!Number.isFinite(asTry) || asTry <= 0)) {
+    const specialOfferPrices = collectSpecialOfferPrices(property);
+    if (specialOfferPrices.length > 0) {
+      const usdValues = specialOfferPrices
+        .map((item) => convertPrice(item.value, item.currency, "USD"))
+        .filter((v) => Number.isFinite(v) && v > 0);
+      const tryValues = specialOfferPrices
+        .map((item) => convertPrice(item.value, item.currency, "TRY"))
+        .filter((v) => Number.isFinite(v) && v > 0);
+      if (usdValues.length > 0) asUsd = Math.min(...usdValues);
+      if (tryValues.length > 0) asTry = Math.min(...tryValues);
+    }
+  }
 
   if ((!Number.isFinite(asUsd) || asUsd <= 0) && (!Number.isFinite(asTry) || asTry <= 0)) {
     const planPrices = collectFloorPlanPrices(property);
@@ -481,6 +581,8 @@ function normalizePropertyRecord(property) {
   const id = property?._id?.toString?.() || property?.id || "";
   const district = extractDistrict(property);
   const { price_usd, price_try } = toPriceFields(property);
+  const { hasSpecialOffer, specialOfferInstallmentMonths } =
+    summarizeSpecialOffers(property);
   const propertyType = normalizePropertyType(property?.propertyType);
   const paymentPlanRaw =
     normalizeString(property?.paymentPlan) ||
@@ -489,6 +591,14 @@ function normalizePropertyRecord(property) {
   const imageUrl =
     normalizeString(property?.image) ||
     (Array.isArray(property?.images) ? normalizeString(property.images[0]) : "");
+  const brochureUrl =
+    normalizeString(property?.brochureUrl) ||
+    normalizeString(property?.brochure_url) ||
+    normalizeString(property?.brochure) ||
+    normalizeString(property?.pdfUrl) ||
+    normalizeString(property?.pdf) ||
+    normalizeString(property?.documentUrl) ||
+    normalizeString(property?.document_url);
   const fallbackPlanRoom = extractFloorPlanItems(property)
     .map((plan) => normalizeRoomToken(plan?.tip || plan?.rooms || plan?.room))
     .find(Boolean);
@@ -497,6 +607,7 @@ function normalizePropertyRecord(property) {
     id,
     title: normalizeString(property?.title),
     city: normalizeString(property?.city),
+    country: normalizeString(property?.country),
     district,
     price_usd,
     price_try,
@@ -507,8 +618,11 @@ function normalizePropertyRecord(property) {
     tapu_status: normalizeString(property?.deedStatus),
     features: collectFeatures(property),
     image_url: imageUrl,
+    brochure_url: brochureUrl,
     detail_url: buildDetailUrl(id, propertyType),
     property_type: propertyType,
+    has_special_offer: hasSpecialOffer,
+    special_offer_installment_months: specialOfferInstallmentMonths,
   };
 }
 
@@ -648,6 +762,10 @@ function normalizeSearchArgs(args = {}) {
     rooms: args?.rooms,
     city: args?.city,
     district: args?.district,
+    districts: Array.isArray(args?.districts) ? args.districts : [],
+    cities: Array.isArray(args?.cities) ? args.cities : [],
+    country: args?.country,
+    countries: Array.isArray(args?.countries) ? args.countries : [],
     neighborhood:
       args?.neighborhood ??
       args?.neighbourhood ??
@@ -655,6 +773,7 @@ function normalizeSearchArgs(args = {}) {
       args?.location_query,
     deliveryDate: args?.deliveryDate ?? args?.delivery_date,
     installmentPlan: args?.installmentPlan ?? args?.installment_plan,
+    gyo: args?.gyo,
     keywords: Array.isArray(args?.keywords) ? args.keywords : [],
     limit: args?.limit,
   };
@@ -868,7 +987,7 @@ function expandKeywordVariants(rawKeyword = "") {
   return Array.from(variants).filter(Boolean);
 }
 
-async function searchProperties(rawArgs = {}) {
+export async function searchProperties(rawArgs = {}) {
   const args = normalizeSearchArgs(rawArgs);
   const db = await getMongoDb();
 
@@ -915,6 +1034,8 @@ async function searchProperties(rawArgs = {}) {
       budgetMax = budgetMax * (1 + flexRatio);
     } else if (Number.isFinite(budgetMin) && !Number.isFinite(budgetMax)) {
       budgetMin = Math.max(0, budgetMin * (1 - flexRatio));
+    } else if (Number.isFinite(budgetMin) && Number.isFinite(budgetMax)) {
+      budgetMax = budgetMax * (1 + flexRatio);
     }
   }
 
@@ -925,6 +1046,13 @@ async function searchProperties(rawArgs = {}) {
   const propertyScope = normalizePropertyScope(args.propertyScope);
   const cityValue = normalizeString(args.city);
   const districtValue = normalizeString(args.district);
+  const countryValue = normalizeString(args.country);
+  const countriesArray = (Array.isArray(args.countries) ? args.countries : [])
+    .map((c) => normalizeString(c))
+    .filter(Boolean);
+  const districtsArray = (Array.isArray(args.districts) ? args.districts : [])
+    .map((d) => normalizeString(d))
+    .filter(Boolean);
   const neighborhoodValue = normalizeString(args.neighborhood);
   const broadDistrictAlias = isBroadDistrictAlias(districtValue);
   let districtCondition = null;
@@ -952,7 +1080,35 @@ async function searchProperties(rawArgs = {}) {
     });
   }
 
-  if (districtValue && !broadDistrictAlias) {
+  const citiesArray = (Array.isArray(args?.cities) ? args.cities : [])
+    .map((c) => normalizeString(c))
+    .filter(Boolean);
+
+  if (countriesArray.length > 0 || citiesArray.length > 0) {
+    const regionOrConditions = [
+      ...countriesArray.map((c) => ({ country: { $regex: escapeRegex(c), $options: "i" } })),
+      ...citiesArray.map((c) => ({ city: { $regex: escapeRegex(c), $options: "i" } })),
+    ];
+    if (regionOrConditions.length > 0) {
+      baseAndConditions.push({ $or: regionOrConditions });
+    }
+  } else if (countryValue) {
+    baseAndConditions.push({
+      country: { $regex: escapeRegex(countryValue), $options: "i" },
+    });
+  }
+
+  if (districtsArray.length > 0) {
+    const districtOrConditions = districtsArray.flatMap((d) => {
+      const pattern = escapeRegex(d);
+      return [
+        { "addressDetails.district": { $regex: pattern, $options: "i" } },
+        { address: { $regex: pattern, $options: "i" } },
+      ];
+    });
+    districtCondition = { $or: districtOrConditions };
+    baseAndConditions.push(districtCondition);
+  } else if (districtValue && !broadDistrictAlias) {
     const districtPattern = escapeRegex(districtValue);
     districtCondition = {
       $or: [
@@ -987,8 +1143,14 @@ async function searchProperties(rawArgs = {}) {
       $or: [
         { kampanya: { $regex: "taksit|installment|payment", $options: "i" } },
         { paymentPlan: { $regex: "taksit|installment|payment", $options: "i" } },
+        { "projeHakkinda.specialOffers": { $elemMatch: { installmentMonths: { $gt: 0 } } } },
+        { "projeHakkinda.specialOffer.installmentMonths": { $gt: 0 } },
       ],
     });
+  }
+
+  if (args.gyo === true) {
+    baseAndConditions.push({ gyo: true });
   }
 
   const rawKeywords = [
@@ -1192,7 +1354,7 @@ async function searchConsultants(rawArgs = {}, language = "en") {
   return docs.map((item) => normalizeConsultantRecord(item, language));
 }
 
-async function searchBlogs(rawArgs = {}, language = "en") {
+export async function searchBlogs(rawArgs = {}, language = "en") {
   const args = normalizeBlogSearchArgs(rawArgs);
   const db = await getMongoDb();
   const andConditions = [{ published: true }];
@@ -1261,7 +1423,7 @@ async function searchBlogs(rawArgs = {}, language = "en") {
   }
 
   const query = andConditions.length > 0 ? { $and: andConditions } : {};
-  const limit = Math.min(Math.max(normalizeNumber(args.limit, 3), 1), 8);
+  const limit = Math.min(Math.max(normalizeNumber(args.limit, 3), 1), 24);
 
   const docs = await db
     .collection("Blog")

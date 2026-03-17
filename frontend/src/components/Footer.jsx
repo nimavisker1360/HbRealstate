@@ -5,7 +5,11 @@ import PropTypes from "prop-types";
 import logo from "../assets/logo.png";
 import { MdLocationOn, MdPhone, MdEmail } from "react-icons/md";
 import { FaWhatsapp } from "react-icons/fa";
-import { buildTelHref, normalizeWhatsAppNumber } from "../utils/common";
+import {
+  buildEmailHref,
+  buildTelHref,
+  normalizeWhatsAppNumber,
+} from "../utils/common";
 
 const Footer = () => {
   const { t } = useTranslation();
@@ -190,7 +194,7 @@ const Footer = () => {
                         link.label.toLowerCase().includes("phone");
                       const href = isPhone
                         ? buildTelHref(link.value)
-                        : `mailto:${link.value}`;
+                        : buildEmailHref(link.value);
                       const content = (
                         <>
                           {getIcon(link.label)}
@@ -210,6 +214,8 @@ const Footer = () => {
                           {href ? (
                             <a
                               href={href}
+                              target={isPhone ? undefined : "_blank"}
+                              rel={isPhone ? undefined : "noreferrer"}
                               className={`${isPhone ? "phone-click-link " : ""}flex gap-3 items-start transition-colors hover:text-[#06a84e]`}
                               data-track-phone-click={isPhone ? "true" : undefined}
                             >

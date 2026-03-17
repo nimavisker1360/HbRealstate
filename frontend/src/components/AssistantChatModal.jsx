@@ -8,7 +8,7 @@ import { useAuth0 } from "@auth0/auth0-react";
 import UserDetailContext from "../context/UserDetailContext";
 import aiRobotAvatar from "../assets/ai-robot-avatar.svg";
 import { chatWithRealEstateAssistant, getUserProfile } from "../utils/api";
-import { normalizeWhatsAppNumber } from "../utils/common";
+import { buildEmailHref, normalizeWhatsAppNumber } from "../utils/common";
 import { resolveBlogPath, resolvePropertyPath } from "../utils/seo";
 
 const UI_TEXT = {
@@ -557,7 +557,9 @@ const AssistantChatModal = ({ opened, onClose }) => {
                                           ) : null}
                                           {consultant.email ? (
                                             <a
-                                              href={`mailto:${consultant.email}`}
+                                              href={buildEmailHref(consultant.email)}
+                                              target="_blank"
+                                              rel="noreferrer"
                                               className="inline-flex rounded-lg border border-emerald-200 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50"
                                             >
                                               {labels.consultantEmail}
