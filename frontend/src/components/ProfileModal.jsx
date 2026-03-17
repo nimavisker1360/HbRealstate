@@ -16,6 +16,7 @@ import { getUserProfile, updateUserProfile } from "../utils/api";
 import { toast } from "react-toastify";
 import { bilingualKey } from "../utils/bilingualToast";
 import { useTranslation } from "react-i18next";
+import { uploadSingleFile, IMAGE_ACCEPT } from "../utils/upload";
 import {
   MdPerson,
   MdEmail,
@@ -38,6 +39,7 @@ const ProfileModal = ({ opened, setOpened }) => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
+  const [profileUploadProgress, setProfileUploadProgress] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -47,69 +49,26 @@ const ProfileModal = ({ opened, setOpened }) => {
   });
   const [profileComplete, setProfileComplete] = useState(false);
 
-  // Cloudinary widget
-  const cloudinaryRef = useRef();
-  const widgetRef = useRef();
+  const imageInputRef = useRef();
 
-  // Helper function to build cropped Cloudinary URL
-  const buildCroppedUrl = (info) => {
-    const { secure_url, coordinates } = info;
-    
-    // If there are crop coordinates, apply them to the URL
-    if (coordinates?.custom?.[0]) {
-      const [x, y, width, height] = coordinates.custom[0];
-      // Insert crop transformation into the URL
-      const urlParts = secure_url.split('/upload/');
-      if (urlParts.length === 2) {
-        return `${urlParts[0]}/upload/c_crop,x_${Math.round(x)},y_${Math.round(y)},w_${Math.round(width)},h_${Math.round(height)}/${urlParts[1]}`;
+  const handleImageFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageUploading(true);
+    setProfileUploadProgress(null);
+    try {
+      const result = await uploadSingleFile(file, token, "profiles", (p) => setProfileUploadProgress(p));
+      if (result) {
+        setFormData((prev) => ({ ...prev, image: result.url }));
       }
+    } catch (err) {
+      console.error("Image upload failed:", err);
+    } finally {
+      setImageUploading(false);
+      setProfileUploadProgress(null);
+      e.target.value = "";
     }
-    return secure_url;
   };
-
-  useEffect(() => {
-    cloudinaryRef.current = window.cloudinary;
-    widgetRef.current = cloudinaryRef.current?.createUploadWidget(
-      {
-        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
-        uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
-        maxFiles: 1,
-        multiple: false,
-        cropping: true,
-        croppingAspectRatio: 1,
-        croppingShowDimensions: true,
-        croppingCoordinatesMode: "custom",
-        showSkipCropButton: false,
-        resourceType: "image",
-        clientAllowedFormats: [
-          "jpg",
-          "jpeg",
-          "png",
-          "gif",
-          "webp",
-          "bmp",
-          "tiff",
-          "svg",
-          "heic",
-          "heif",
-          "avif",
-          "ico",
-          "raw",
-        ],
-        sources: ["local", "url", "camera"],
-      },
-      (err, result) => {
-        if (result.event === "success") {
-          const croppedUrl = buildCroppedUrl(result.info);
-          setFormData((prev) => ({ ...prev, image: croppedUrl }));
-          setImageUploading(false);
-        }
-        if (result.event === "close") {
-          setImageUploading(false);
-        }
-      }
-    );
-  }, []);
 
   // Fetch user profile when modal opens
   useEffect(() => {
@@ -156,8 +115,7 @@ const ProfileModal = ({ opened, setOpened }) => {
   }, [opened, user, token]);
 
   const openImageUpload = () => {
-    setImageUploading(true);
-    widgetRef.current?.open();
+    imageInputRef.current?.click();
   };
 
   const removeImage = () => {
@@ -232,6 +190,13 @@ const ProfileModal = ({ opened, setOpened }) => {
         </div>
       ) : (
         <div className="space-y-5 py-2">
+          <input
+            type="file"
+            ref={imageInputRef}
+            style={{ display: "none" }}
+            accept={IMAGE_ACCEPT}
+            onChange={handleImageFile}
+          />
           {/* Profile Status */}
           <div
             className={`p-3 rounded-lg flex items-center gap-3 ${
@@ -299,6 +264,17 @@ const ProfileModal = ({ opened, setOpened }) => {
               >
                 <MdOutlineCloudUpload size={28} className="text-gray-400" />
                 <span className="text-xs text-gray-400 mt-1">{t("profile.upload")}</span>
+              </div>
+            )}
+            {imageUploading && profileUploadProgress && (
+              <div className="w-full max-w-[200px]">
+                <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                  <div className="bg-blue-500 h-full rounded-full transition-all duration-300" style={{ width: `${profileUploadProgress.percent}%` }} />
+                </div>
+                <div className="flex justify-between text-[10px] text-gray-400 mt-0.5">
+                  <span>{profileUploadProgress.percent}%</span>
+                  <span>{profileUploadProgress.loadedFormatted} / {profileUploadProgress.totalFormatted}</span>
+                </div>
               </div>
             )}
             {formData.image && (

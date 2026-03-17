@@ -10,10 +10,13 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon index.js",
     "postinstall": "prisma generate",
-    "seed:market-history": "node scripts/seedMarketTrendHistory.js"
+    "seed:market-history": "node scripts/seedMarketTrendHistory.js",
+    "migrate:cloudinary": "node scripts/migrateCloudinary.js",
+    "migrate:cloudinary-to-blob": "node scripts/migrateCloudinaryToBlob.js"
   },
   "dependencies": {
     "@prisma/client": "^6.19.1",
+    "@vercel/blob": "^2.3.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
@@ -21,6 +24,7 @@
     "express-async-handler": "^1.2.0",
     "express-oauth2-jwt-bearer": "^1.7.2",
     "mongodb": "^7.0.0",
+    "multer": "^2.1.1",
     "nodemailer": "^7.0.12",
     "nodemon": "^3.1.11",
     "openai": "^6.16.0",

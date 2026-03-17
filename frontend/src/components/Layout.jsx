@@ -11,6 +11,7 @@ import useBookings from "../hooks/useBookings.jsx";
 import useImageOptimization from "../hooks/useImageOptimization";
 import { trackWhatsAppConversionFromClick } from "../utils/analytics";
 import { captureAttributionParams } from "../utils/attribution";
+import FloatingAssistantChat from "./FloatingAssistantChat";
 
 const Layout = () => {
   useFavourites();
@@ -195,6 +196,7 @@ const Layout = () => {
         <Outlet />
       </div>
       {!hideFooter && <Footer />}
+      <FloatingAssistantChat />
     </div>
   );
 };
