@@ -12,9 +12,8 @@ import ContactModal from "./ContactModal";
 import ProfileModal from "./ProfileModal";
 import LanguageSwitcher from "./LanguageSwitcher";
 import SearchOverlay from "./SearchOverlay";
+import AssistantChatModal from "./AssistantChatModal";
 import logo from "../assets/logo.png";
-import { normalizeWhatsAppNumber } from "../utils/common";
-import { PRIMARY_CONTACT_PHONE } from "../constant/data";
 import CurrencyContext from "../context/CurrencyContext";
 
 const Header = () => {
@@ -25,6 +24,7 @@ const Header = () => {
   const [contactModalOpen, setContactModalOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [searchOverlayOpen, setSearchOverlayOpen] = useState(false);
+  const [assistantChatOpen, setAssistantChatOpen] = useState(false);
   const headerRef = useRef(null);
   const { currencies, selectedCurrency, setSelectedCurrency } =
     useContext(CurrencyContext);
@@ -252,15 +252,14 @@ const Header = () => {
               >
                 <MdSearch size={20} />
               </button>
-              <a
-                href={`https://wa.me/${normalizeWhatsAppNumber(PRIMARY_CONTACT_PHONE)}`}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                type="button"
+                onClick={() => setAssistantChatOpen(true)}
                 className="animate-whatsapp-ring flex h-9 w-9 items-center justify-center rounded-full border-2 border-emerald-500 text-emerald-500 transition hover:bg-emerald-50"
                 aria-label="WhatsApp"
               >
                 <FaWhatsapp size={18} />
-              </a>
+              </button>
               {/* Desktop Only - Profile/Login */}
               <div className="hidden lg:flex items-center">
                 {isLoading ? (
@@ -392,6 +391,11 @@ const Header = () => {
           onClose={() => setSearchOverlayOpen(false)}
         />
       )}
+
+      <AssistantChatModal
+        opened={assistantChatOpen}
+        onClose={() => setAssistantChatOpen(false)}
+      />
 
     </header>
   );

@@ -436,7 +436,6 @@ import UserDetailContext from "../context/UserDetailContext";
 import CurrencyContext from "../context/CurrencyContext";
 import { updateResidency } from "../utils/api";
 import { validateString } from "../utils/common";
-import { uploadFiles, uploadSingleFile, IMAGE_ACCEPT, VIDEO_ACCEPT } from "../utils/upload";
 
 const FIAT_CURRENCIES = [
   { code: "USD", symbol: "$" },
@@ -576,8 +575,9 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
   const [interiorOpened, { toggle: toggleInterior }] = useDisclosure(false);
   const [exteriorOpened, { toggle: toggleExterior }] = useDisclosure(false);
   const [muhitOpened, { toggle: toggleMuhit }] = useDisclosure(false);
-  const imageInputRef = useRef();
-  const videoInputRef = useRef();
+  const cloudinaryRef = useRef();
+  const widgetRef = useRef();
+  const videoWidgetRef = useRef();
 
   // Turkish real estate fields state
   const [listingNo, setListingNo] = useState("");
@@ -664,13 +664,12 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
     muhit: [],
   });
 
-  const vaziyetPlaniInputRef = useRef(null);
-  const mapImageInputRef = useRef(null);
-  const floorPlanInputRef = useRef(null);
-  const activeFloorPlanIndexRef = useRef(null);
+  // Cloudinary widget refs and upload states
+  const vaziyetPlaniWidgetRef = useRef(null);
+  const mapImageWidgetRef = useRef(null);
   const [vaziyetPlaniUploading, setVaziyetPlaniUploading] = useState(false);
   const [mapImageUploading, setMapImageUploading] = useState(false);
-  const [floorPlanUploading, setFloorPlanUploading] = useState(null);
+  const [floorPlanUploading, setFloorPlanUploading] = useState(null); // index of uploading floor plan
 
   const form = useForm({
     initialValues: {
@@ -930,115 +929,152 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
     }
   }, [property]);
 
-  const [imageUploading, setImageUploading] = useState(false);
-  const [videoUploading, setVideoUploading] = useState(false);
-  const [imageProgress, setImageProgress] = useState(null);
-  const [videoProgress, setVideoProgress] = useState(null);
-  const [detailProgress, setDetailProgress] = useState(null);
-
-  const handleImageFiles = async (e) => {
-    const files = e.target.files;
-    if (!files?.length) return;
-    setImageUploading(true);
-    setImageProgress(null);
-    try {
-      const results = await uploadFiles(files, token, "properties/images", (p) => setImageProgress(p));
-      setImageURLs((prev) => [...prev, ...results.map((r) => r.url)]);
-    } catch (err) {
-      toast.error("Image upload failed: " + err.message, { position: "bottom-right" });
-    } finally {
-      setImageUploading(false);
-      setImageProgress(null);
-      e.target.value = "";
-    }
-  };
-
-  const handleVideoFiles = async (e) => {
-    const files = e.target.files;
-    if (!files?.length) return;
-    setVideoUploading(true);
-    setVideoProgress(null);
-    try {
-      const results = await uploadFiles(files, token, "properties/videos", (p) => setVideoProgress(p));
-      setVideoURLs((prev) => [...prev, ...results.map((r) => r.url)]);
-    } catch (err) {
-      toast.error("Video upload failed: " + err.message, { position: "bottom-right" });
-    } finally {
-      setVideoUploading(false);
-      setVideoProgress(null);
-      e.target.value = "";
-    }
-  };
-
-  const handleVaziyetPlaniFile = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setVaziyetPlaniUploading(true);
-    setDetailProgress(null);
-    try {
-      const result = await uploadSingleFile(file, token, "properties/site-plans", (p) => setDetailProgress(p));
-      if (result) setVaziyetPlani(result.url);
-    } catch (err) {
-      toast.error("Upload failed: " + err.message, { position: "bottom-right" });
-    } finally {
-      setVaziyetPlaniUploading(false);
-      setDetailProgress(null);
-      e.target.value = "";
-    }
-  };
-
-  const handleMapImageFile = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setMapImageUploading(true);
-    setDetailProgress(null);
-    try {
-      const result = await uploadSingleFile(file, token, "properties/maps", (p) => setDetailProgress(p));
-      if (result) setMapImage(result.url);
-    } catch (err) {
-      toast.error("Upload failed: " + err.message, { position: "bottom-right" });
-    } finally {
-      setMapImageUploading(false);
-      setDetailProgress(null);
-      e.target.value = "";
-    }
-  };
-
-  const handleFloorPlanFile = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const index = activeFloorPlanIndexRef.current;
-    if (index === null) return;
-    setFloorPlanUploading(index);
-    setDetailProgress(null);
-    try {
-      const result = await uploadSingleFile(file, token, "properties/floor-plans", (p) => setDetailProgress(p));
-      if (result) {
-        const updated = [...dairePlanlari];
-        updated[index].image = result.url;
-        setDairePlanlari(updated);
+  // Initialize Cloudinary widget
+  useEffect(() => {
+    cloudinaryRef.current = window.cloudinary;
+    widgetRef.current = cloudinaryRef.current?.createUploadWidget(
+      {
+        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
+        uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
+        maxFiles: 30,
+        multiple: true,
+        resourceType: "image",
+        clientAllowedFormats: [
+          "jpg",
+          "jpeg",
+          "png",
+          "gif",
+          "webp",
+          "bmp",
+          "tiff",
+          "svg",
+          "heic",
+          "heif",
+          "avif",
+          "ico",
+          "raw",
+        ],
+        sources: ["local", "url", "camera"],
+      },
+      (err, result) => {
+        if (result?.event === "success") {
+          setImageURLs((prev) => [...prev, result.info.secure_url]);
+        }
       }
-    } catch (err) {
-      toast.error("Upload failed: " + err.message, { position: "bottom-right" });
-    } finally {
-      setFloorPlanUploading(null);
-      setDetailProgress(null);
-      activeFloorPlanIndexRef.current = null;
-      e.target.value = "";
-    }
-  };
+    );
 
+    // Video upload widget
+    videoWidgetRef.current = cloudinaryRef.current?.createUploadWidget(
+      {
+        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
+        uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
+        maxFiles: 10,
+        multiple: true,
+        resourceType: "video",
+        clientAllowedFormats: [
+          "mp4",
+          "webm",
+          "mov",
+          "avi",
+          "mkv",
+          "m4v",
+          "ogv",
+          "3gp",
+          "flv",
+        ],
+        sources: ["local", "url", "camera"],
+        maxFileSize: 104857600, // 100MB max file size for videos
+      },
+      (err, result) => {
+        if (result?.event === "success") {
+          setVideoURLs((prev) => [...prev, result.info.secure_url]);
+        }
+      }
+    );
+
+    // Vaziyet Planı Widget
+    vaziyetPlaniWidgetRef.current = cloudinaryRef.current?.createUploadWidget(
+      {
+        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
+        uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
+        maxFiles: 1,
+        multiple: false,
+        resourceType: "image",
+        clientAllowedFormats: ["jpg", "jpeg", "png", "gif", "webp"],
+        sources: ["local", "url", "camera"],
+      },
+      (err, result) => {
+        if (result?.event === "success") {
+          setVaziyetPlani(result.info.secure_url);
+          setVaziyetPlaniUploading(false);
+        }
+        if (result?.event === "close") {
+          setVaziyetPlaniUploading(false);
+        }
+      }
+    );
+
+    // Map Image Widget
+    mapImageWidgetRef.current = cloudinaryRef.current?.createUploadWidget(
+      {
+        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
+        uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
+        maxFiles: 1,
+        multiple: false,
+        resourceType: "image",
+        clientAllowedFormats: ["jpg", "jpeg", "png", "gif", "webp"],
+        sources: ["local", "url", "camera"],
+      },
+      (err, result) => {
+        if (result?.event === "success") {
+          setMapImage(result.info.secure_url);
+          setMapImageUploading(false);
+        }
+        if (result?.event === "close") {
+          setMapImageUploading(false);
+        }
+      }
+    );
+  }, []);
+
+  // Open Vaziyet Planı upload widget
   const openVaziyetPlaniUpload = () => {
-    vaziyetPlaniInputRef.current?.click();
+    setVaziyetPlaniUploading(true);
+    vaziyetPlaniWidgetRef.current?.open();
   };
 
+  // Open Map Image upload widget
   const openMapImageUpload = () => {
-    mapImageInputRef.current?.click();
+    setMapImageUploading(true);
+    mapImageWidgetRef.current?.open();
   };
 
+  // Open Floor Plan image upload widget
   const openFloorPlanUpload = (index) => {
-    activeFloorPlanIndexRef.current = index;
-    floorPlanInputRef.current?.click();
+    setFloorPlanUploading(index);
+    const widget = window.cloudinary?.createUploadWidget(
+      {
+        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
+        uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
+        maxFiles: 1,
+        multiple: false,
+        resourceType: "image",
+        clientAllowedFormats: ["jpg", "jpeg", "png", "gif", "webp"],
+        sources: ["local", "url", "camera"],
+      },
+      (err, result) => {
+        if (result?.event === "success") {
+          const updated = [...dairePlanlari];
+          updated[index].image = result.info.secure_url;
+          setDairePlanlari(updated);
+          setFloorPlanUploading(null);
+        }
+        if (result?.event === "close") {
+          setFloorPlanUploading(null);
+        }
+      }
+    );
+    widget?.open();
   };
 
   const removeImage = (indexToRemove) => {
@@ -1415,23 +1451,6 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
       size="90rem"
       centered
     >
-      <input type="file" ref={imageInputRef} style={{ display: "none" }} accept={IMAGE_ACCEPT} multiple onChange={handleImageFiles} />
-      <input type="file" ref={videoInputRef} style={{ display: "none" }} accept={VIDEO_ACCEPT} multiple onChange={handleVideoFiles} />
-      <input type="file" ref={vaziyetPlaniInputRef} style={{ display: "none" }} accept={IMAGE_ACCEPT} onChange={handleVaziyetPlaniFile} />
-      <input type="file" ref={mapImageInputRef} style={{ display: "none" }} accept={IMAGE_ACCEPT} onChange={handleMapImageFile} />
-      <input type="file" ref={floorPlanInputRef} style={{ display: "none" }} accept={IMAGE_ACCEPT} onChange={handleFloorPlanFile} />
-      {detailProgress && (
-        <div className="mb-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-          <div className="flex items-center gap-2 mb-1.5">
-            <MdOutlineCloudUpload size={16} className="text-blue-500 animate-pulse" />
-            <span className="text-xs text-blue-700 font-medium">در حال آپلود... {detailProgress.percent}%</span>
-            <span className="text-[10px] text-blue-400 ml-auto">{detailProgress.loadedFormatted} / {detailProgress.totalFormatted}</span>
-          </div>
-          <div className="w-full bg-blue-100 rounded-full h-2 overflow-hidden">
-            <div className="bg-blue-500 h-full rounded-full transition-all duration-300" style={{ width: `${detailProgress.percent}%` }} />
-          </div>
-        </div>
-      )}
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -3004,58 +3023,21 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
           {imageURLs.length === 0 && videoURLs.length === 0 ? (
             <div className="flex gap-4">
               <div
-                onClick={() => !imageUploading && imageInputRef.current?.click()}
-                className={`flex-1 flexCenter flex-col h-32 border-dashed border-2 rounded-lg cursor-pointer hover:bg-gray-50 ${imageUploading ? 'pointer-events-none' : ''}`}
+                onClick={() => widgetRef.current?.open()}
+                className="flex-1 flexCenter flex-col h-32 border-dashed border-2 rounded-lg cursor-pointer hover:bg-gray-50"
               >
-                {imageUploading && imageProgress ? (
-                  <div className="w-full px-3 flexCenter flex-col gap-1">
-                    <MdOutlineCloudUpload size={24} className="text-blue-500 animate-pulse" />
-                    <span className="text-xs text-blue-600 font-medium">آپلود تصاویر... {imageProgress.percent}%</span>
-                    <div className="w-full bg-blue-100 rounded-full h-2"><div className="bg-blue-500 h-full rounded-full transition-all duration-300" style={{ width: `${imageProgress.percent}%` }} /></div>
-                    <span className="text-[10px] text-blue-400">{imageProgress.loadedFormatted} / {imageProgress.totalFormatted}</span>
-                  </div>
-                ) : (
-                  <>
-                    <MdOutlineCloudUpload size={32} color="grey" />
-                    <span className="text-sm text-gray-500">Resim Yükle</span>
-                  </>
-                )}
+                <MdOutlineCloudUpload size={32} color="grey" />
+                <span className="text-sm text-gray-500">Resim Yükle</span>
               </div>
               <div
-                onClick={() => !videoUploading && videoInputRef.current?.click()}
-                className={`flex-1 flexCenter flex-col h-32 border-dashed border-2 border-purple-300 rounded-lg cursor-pointer hover:bg-purple-50 ${videoUploading ? 'pointer-events-none' : ''}`}
+                onClick={() => videoWidgetRef.current?.open()}
+                className="flex-1 flexCenter flex-col h-32 border-dashed border-2 border-purple-300 rounded-lg cursor-pointer hover:bg-purple-50"
               >
-                {videoUploading && videoProgress ? (
-                  <div className="w-full px-3 flexCenter flex-col gap-1">
-                    <MdVideocam size={24} className="text-purple-500 animate-pulse" />
-                    <span className="text-xs text-purple-600 font-medium">آپلود ویدیو... {videoProgress.percent}%</span>
-                    <div className="w-full bg-purple-100 rounded-full h-2"><div className="bg-purple-500 h-full rounded-full transition-all duration-300" style={{ width: `${videoProgress.percent}%` }} /></div>
-                    <span className="text-[10px] text-purple-400">{videoProgress.loadedFormatted} / {videoProgress.totalFormatted}</span>
-                  </div>
-                ) : (
-                  <>
-                    <MdVideocam size={32} color="#9333ea" />
-                    <span className="text-sm text-purple-600">Video Yükle</span>
-                  </>
-                )}
+                <MdVideocam size={32} color="#9333ea" />
+                <span className="text-sm text-purple-600">Video Yükle</span>
               </div>
             </div>
           ) : (
-            <>
-            {imageUploading && imageProgress && (
-              <div className="mb-2 p-2 bg-blue-50 rounded-lg">
-                <div className="flex items-center gap-2 text-xs text-blue-700 font-medium mb-1"><MdOutlineCloudUpload size={14} className="animate-pulse" /> آپلود تصاویر... {imageProgress.percent}%</div>
-                <div className="w-full bg-blue-100 rounded-full h-2"><div className="bg-blue-500 h-full rounded-full transition-all duration-300" style={{ width: `${imageProgress.percent}%` }} /></div>
-                <div className="text-[10px] text-blue-400 mt-0.5 text-right">{imageProgress.loadedFormatted} / {imageProgress.totalFormatted}</div>
-              </div>
-            )}
-            {videoUploading && videoProgress && (
-              <div className="mb-2 p-2 bg-purple-50 rounded-lg">
-                <div className="flex items-center gap-2 text-xs text-purple-700 font-medium mb-1"><MdVideocam size={14} className="animate-pulse" /> آپلود ویدیو... {videoProgress.percent}%</div>
-                <div className="w-full bg-purple-100 rounded-full h-2"><div className="bg-purple-500 h-full rounded-full transition-all duration-300" style={{ width: `${videoProgress.percent}%` }} /></div>
-                <div className="text-[10px] text-purple-400 mt-0.5 text-right">{videoProgress.loadedFormatted} / {videoProgress.totalFormatted}</div>
-              </div>
-            )}
             <div
               className="grid gap-3"
               style={{
@@ -3114,8 +3096,8 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
               
               {/* Add Image Button */}
               <div
-                onClick={() => !imageUploading && imageInputRef.current?.click()}
-                className={`flexCenter flex-col h-24 border-dashed border-2 rounded-lg cursor-pointer hover:bg-gray-50 ${imageUploading ? 'opacity-50' : ''}`}
+                onClick={() => widgetRef.current?.open()}
+                className="flexCenter flex-col h-24 border-dashed border-2 rounded-lg cursor-pointer hover:bg-gray-50"
               >
                 <MdOutlineCloudUpload size={20} color="grey" />
                 <span className="text-xs text-gray-500">Resim</span>
@@ -3123,14 +3105,13 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
               
               {/* Add Video Button */}
               <div
-                onClick={() => !videoUploading && videoInputRef.current?.click()}
-                className={`flexCenter flex-col h-24 border-dashed border-2 border-purple-300 rounded-lg cursor-pointer hover:bg-purple-50 ${videoUploading ? 'opacity-50' : ''}`}
+                onClick={() => videoWidgetRef.current?.open()}
+                className="flexCenter flex-col h-24 border-dashed border-2 border-purple-300 rounded-lg cursor-pointer hover:bg-purple-50"
               >
                 <MdVideocam size={20} color="#9333ea" />
                 <span className="text-xs text-purple-500">Video</span>
               </div>
             </div>
-            </>
           )}
         </div>
 

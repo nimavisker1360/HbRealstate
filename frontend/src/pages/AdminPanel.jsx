@@ -63,7 +63,6 @@ import {
 import { toast } from "react-toastify";
 import { bilingualFromMessage, bilingualKey } from "../utils/bilingualToast";
 import { resolveProjectPath } from "../utils/seo";
-import { uploadSingleFile, uploadFiles, IMAGE_ACCEPT, VIDEO_ACCEPT } from "../utils/upload";
 import {
   MdDashboard,
   MdAddHome,
@@ -490,74 +489,160 @@ const AdminPanel = () => {
     { value: "Persian", label: "Persian" },
   ];
 
-  const consultantImageInputRef = useRef();
+  // Cloudinary widget for consultant image upload
+  const cloudinaryRef = useRef();
+  const consultantWidgetRef = useRef();
   const [imageUploading, setImageUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(null);
-  const testimonialImageInputRef = useRef();
+  const testimonialWidgetRef = useRef();
   const [testimonialImageUploading, setTestimonialImageUploading] =
     useState(false);
 
-  const handleConsultantImageFile = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setImageUploading(true);
-    setUploadProgress(null);
-    try {
-      const result = await uploadSingleFile(file, token, "consultants", (p) => setUploadProgress(p));
-      if (result) setConsultantForm((prev) => ({ ...prev, image: result.url }));
-    } catch (err) {
-      toast.error("Upload failed: " + err.message, { position: "bottom-right" });
-    } finally {
-      setImageUploading(false);
-      setUploadProgress(null);
-      e.target.value = "";
+  // Helper function to build cropped Cloudinary URL
+  const buildCroppedUrl = (info) => {
+    const { secure_url, coordinates } = info;
+
+    // If there are crop coordinates, apply them to the URL
+    if (coordinates?.custom?.[0]) {
+      const [x, y, width, height] = coordinates.custom[0];
+      // Insert crop transformation into the URL
+      const urlParts = secure_url.split("/upload/");
+      if (urlParts.length === 2) {
+        return `${urlParts[0]}/upload/c_crop,x_${Math.round(x)},y_${Math.round(
+          y
+        )},w_${Math.round(width)},h_${Math.round(height)}/${urlParts[1]}`;
+      }
     }
+    return secure_url;
   };
 
+  useEffect(() => {
+    cloudinaryRef.current = window.cloudinary;
+    consultantWidgetRef.current = cloudinaryRef.current?.createUploadWidget(
+      {
+        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
+        uploadPreset:
+          import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
+        maxFiles: 1,
+        multiple: false,
+        cropping: true,
+        croppingAspectRatio: 1,
+        croppingShowDimensions: true,
+        croppingCoordinatesMode: "custom",
+        showSkipCropButton: false,
+        resourceType: "image",
+        clientAllowedFormats: [
+          "jpg",
+          "jpeg",
+          "png",
+          "gif",
+          "webp",
+          "bmp",
+          "tiff",
+          "svg",
+          "heic",
+          "heif",
+          "avif",
+          "ico",
+          "raw",
+        ],
+        sources: ["local", "url", "camera"],
+      },
+      (err, result) => {
+        if (result.event === "success") {
+          const croppedUrl = buildCroppedUrl(result.info);
+          setConsultantForm((prev) => ({
+            ...prev,
+            image: croppedUrl,
+          }));
+          setImageUploading(false);
+        }
+        if (result.event === "close") {
+          setImageUploading(false);
+        }
+      }
+    );
+
+    testimonialWidgetRef.current = cloudinaryRef.current?.createUploadWidget(
+      {
+        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
+        uploadPreset:
+          import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
+        maxFiles: 1,
+        multiple: false,
+        cropping: true,
+        croppingAspectRatio: 1,
+        croppingShowDimensions: true,
+        croppingCoordinatesMode: "custom",
+        showSkipCropButton: false,
+        resourceType: "image",
+        clientAllowedFormats: [
+          "jpg",
+          "jpeg",
+          "png",
+          "gif",
+          "webp",
+          "bmp",
+          "tiff",
+          "svg",
+          "heic",
+          "heif",
+          "avif",
+          "ico",
+          "raw",
+        ],
+        sources: ["local", "url", "camera"],
+      },
+      (err, result) => {
+        if (result.event === "success") {
+          const croppedUrl = buildCroppedUrl(result.info);
+          setTestimonialForm((prev) => ({
+            ...prev,
+            image: croppedUrl,
+          }));
+          setTestimonialImageUploading(false);
+        }
+        if (result.event === "close") {
+          setTestimonialImageUploading(false);
+        }
+      }
+    );
+  }, []);
+
   const openConsultantImageUpload = () => {
-    consultantImageInputRef.current?.click();
+    setImageUploading(true);
+    consultantWidgetRef.current?.open();
   };
 
   const removeConsultantImage = () => {
     setConsultantForm((prev) => ({ ...prev, image: "" }));
   };
 
-  const handleTestimonialImageFile = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setTestimonialImageUploading(true);
-    setUploadProgress(null);
-    try {
-      const result = await uploadSingleFile(file, token, "testimonials", (p) => setUploadProgress(p));
-      if (result) setTestimonialForm((prev) => ({ ...prev, image: result.url }));
-    } catch (err) {
-      toast.error("Upload failed: " + err.message, { position: "bottom-right" });
-    } finally {
-      setTestimonialImageUploading(false);
-      setUploadProgress(null);
-      e.target.value = "";
-    }
-  };
-
   const openTestimonialImageUpload = () => {
-    testimonialImageInputRef.current?.click();
+    setTestimonialImageUploading(true);
+    testimonialWidgetRef.current?.open();
   };
 
   const removeTestimonialImage = () => {
     setTestimonialForm((prev) => ({ ...prev, image: "" }));
   };
 
-  const blogImageInputRef = useRef();
+  // Cloudinary widget for blog image upload (main image)
+  const blogWidgetRef = useRef();
   const [blogImageUploading, setBlogImageUploading] = useState(false);
-  const aiBlogImageInputRef = useRef();
+
+  // Cloudinary widget for AI blog image upload
+  const aiBlogWidgetRef = useRef();
   const [aiBlogImageUploading, setAiBlogImageUploading] = useState(false);
-  const blogVideoInputRef = useRef();
+
+  // Cloudinary widget for blog video upload (optional)
+  const blogVideoWidgetRef = useRef();
   const [blogVideoUploading, setBlogVideoUploading] = useState(false);
-  const [blogUploadProgress, setBlogUploadProgress] = useState(null);
-  const blogGalleryInputRef = useRef();
+
+  // Cloudinary widget for blog gallery images (multiple)
+  const blogGalleryWidgetRef = useRef();
   const [blogGalleryUploading, setBlogGalleryUploading] = useState(false);
-  const blockImageInputRef = useRef();
-  const blockVideoInputRef = useRef();
+  const blogBlockWidgetRef = useRef();
+  const blogBlockVideoWidgetRef = useRef();
   const activeBlockIndexRef = useRef(null);
   const activeBlockLineIndexRef = useRef(null);
   const activeBlockLangRef = useRef("en");
@@ -566,175 +651,296 @@ const AdminPanel = () => {
   const [lineImageUploadingKey, setLineImageUploadingKey] = useState(null);
   const [lineVideoUploadingKey, setLineVideoUploadingKey] = useState(null);
 
-  const handleBlogImageFile = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setBlogImageUploading(true);
-    setBlogUploadProgress(null);
-    try {
-      const result = await uploadSingleFile(file, token, "blogs", (p) => setBlogUploadProgress(p));
-      if (result) setBlogForm((prev) => ({ ...prev, image: result.url }));
-    } catch (err) {
-      toast.error("Upload failed: " + err.message, { position: "bottom-right" });
-    } finally {
-      setBlogImageUploading(false);
-      setBlogUploadProgress(null);
-      e.target.value = "";
-    }
-  };
+  useEffect(() => {
+    blogWidgetRef.current = cloudinaryRef.current?.createUploadWidget(
+      {
+        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
+        uploadPreset:
+          import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
+        maxFiles: 1,
+        multiple: false,
+        cropping: true,
+        croppingShowDimensions: true,
+        croppingCoordinatesMode: "custom",
+        showSkipCropButton: false,
+        resourceType: "image",
+        clientAllowedFormats: [
+          "jpg",
+          "jpeg",
+          "png",
+          "gif",
+          "webp",
+          "bmp",
+          "tiff",
+          "svg",
+          "heic",
+          "heif",
+          "avif",
+          "ico",
+          "raw",
+        ],
+        sources: ["local", "url", "camera"],
+      },
+      (err, result) => {
+        if (result.event === "success") {
+          const croppedUrl = buildCroppedUrl(result.info);
+          setBlogForm((prev) => ({
+            ...prev,
+            image: croppedUrl,
+          }));
+          setBlogImageUploading(false);
+        }
+        if (result.event === "close") {
+          setBlogImageUploading(false);
+        }
+        }
+      );
 
-  const handleAiBlogImageFile = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setAiBlogImageUploading(true);
-    setBlogUploadProgress(null);
-    try {
-      const result = await uploadSingleFile(file, token, "blogs", (p) => setBlogUploadProgress(p));
-      if (result) setAiBlogForm((prev) => ({ ...prev, image: result.url }));
-    } catch (err) {
-      toast.error("Upload failed: " + err.message, { position: "bottom-right" });
-    } finally {
-      setAiBlogImageUploading(false);
-      setBlogUploadProgress(null);
-      e.target.value = "";
-    }
-  };
-
-  const handleBlogVideoFile = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setBlogVideoUploading(true);
-    setBlogUploadProgress(null);
-    try {
-      const result = await uploadSingleFile(file, token, "blogs/videos", (p) => setBlogUploadProgress(p));
-      if (result) setBlogForm((prev) => ({ ...prev, video: result.url }));
-    } catch (err) {
-      toast.error("Upload failed: " + err.message, { position: "bottom-right" });
-    } finally {
-      setBlogVideoUploading(false);
-      setBlogUploadProgress(null);
-      e.target.value = "";
-    }
-  };
-
-  const handleBlogGalleryFiles = async (e) => {
-    const files = e.target.files;
-    if (!files?.length) return;
-    setBlogGalleryUploading(true);
-    setBlogUploadProgress(null);
-    try {
-      const results = await uploadFiles(files, token, "blogs/gallery", (p) => setBlogUploadProgress(p));
-      setBlogForm((prev) => ({
-        ...prev,
-        images: [...(prev.images || []), ...results.map((r) => r.url)],
-      }));
-    } catch (err) {
-      toast.error("Upload failed: " + err.message, { position: "bottom-right" });
-    } finally {
-      setBlogGalleryUploading(false);
-      setBlogUploadProgress(null);
-      e.target.value = "";
-    }
-  };
-
-  const handleBlockImageFile = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const index = activeBlockIndexRef.current;
-    const lineIndex = activeBlockLineIndexRef.current;
-    const lang = activeBlockLangRef.current || "en";
-    if (index === null) return;
-    if (lineIndex !== null) {
-      setLineImageUploadingKey(`${lang}-${index}-${lineIndex}`);
-    } else {
-      setBlockImageUploadingIndex(index);
-    }
-    setBlogUploadProgress(null);
-    try {
-      const result = await uploadSingleFile(file, token, "blogs/blocks", (p) => setBlogUploadProgress(p));
-      if (result) {
-        setBlogForm((prev) => {
-          const field = getBlocksField(lang);
-          const blocks = [...(prev[field] || [])];
-          const target = ensureBlockLines(blocks[index] || {});
-          if (lineIndex !== null) {
-            const lines = [...(target.lines || [])];
-            const line = lines[lineIndex] || { text: "", icon: "•", bold: false, image: "", video: "" };
-            lines[lineIndex] = { ...line, image: result.url };
-            blocks[index] = { ...target, lines };
-          } else {
-            blocks[index] = { ...target, image: result.url };
-          }
-          return { ...prev, [field]: blocks };
-        });
+    aiBlogWidgetRef.current = cloudinaryRef.current?.createUploadWidget(
+      {
+        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
+        uploadPreset:
+          import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
+        maxFiles: 1,
+        multiple: false,
+        cropping: true,
+        croppingShowDimensions: true,
+        croppingCoordinatesMode: "custom",
+        showSkipCropButton: false,
+        resourceType: "image",
+        clientAllowedFormats: [
+          "jpg",
+          "jpeg",
+          "png",
+          "gif",
+          "webp",
+          "bmp",
+          "tiff",
+          "svg",
+          "heic",
+          "heif",
+          "avif",
+          "ico",
+          "raw",
+        ],
+        sources: ["local", "url", "camera"],
+      },
+      (err, result) => {
+        if (result.event === "success") {
+          const croppedUrl = buildCroppedUrl(result.info);
+          setAiBlogForm((prev) => ({
+            ...prev,
+            image: croppedUrl,
+          }));
+          setAiBlogImageUploading(false);
+        }
+        if (result.event === "close") {
+          setAiBlogImageUploading(false);
+        }
       }
-    } catch (err) {
-      toast.error("Upload failed: " + err.message, { position: "bottom-right" });
-    } finally {
-      setBlockImageUploadingIndex(null);
-      setLineImageUploadingKey(null);
-      setBlogUploadProgress(null);
-      activeBlockLineIndexRef.current = null;
-      e.target.value = "";
-    }
-  };
+    );
 
-  const handleBlockVideoFile = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const index = activeBlockIndexRef.current;
-    const lineIndex = activeBlockLineIndexRef.current;
-    const lang = activeBlockLangRef.current || "en";
-    if (index === null) return;
-    if (lineIndex !== null) {
-      setLineVideoUploadingKey(`${lang}-${index}-${lineIndex}`);
-    } else {
-      setBlockVideoUploadingIndex(index);
-    }
-    setBlogUploadProgress(null);
-    try {
-      const result = await uploadSingleFile(file, token, "blogs/blocks", (p) => setBlogUploadProgress(p));
-      if (result) {
-        setBlogForm((prev) => {
-          const field = getBlocksField(lang);
-          const blocks = [...(prev[field] || [])];
-          const target = ensureBlockLines(blocks[index] || {});
-          if (lineIndex !== null) {
-            const lines = [...(target.lines || [])];
-            const line = lines[lineIndex] || { text: "", icon: "•", bold: false, image: "", video: "" };
-            lines[lineIndex] = { ...line, video: result.url };
-            blocks[index] = { ...target, lines };
-          } else {
-            blocks[index] = { ...target, video: result.url };
-          }
-          return { ...prev, [field]: blocks };
-        });
+    blogVideoWidgetRef.current = cloudinaryRef.current?.createUploadWidget(
+      {
+        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
+        uploadPreset:
+          import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
+        maxFiles: 1,
+        multiple: false,
+        resourceType: "video",
+        clientAllowedFormats: ["mp4", "mov", "webm", "mkv", "avi", "m4v"],
+        sources: ["local", "url", "camera"],
+      },
+      (err, result) => {
+        if (result.event === "success") {
+          const videoUrl = result.info.secure_url;
+          setBlogForm((prev) => ({
+            ...prev,
+            video: videoUrl,
+          }));
+          setBlogVideoUploading(false);
+        }
+        if (result.event === "close") {
+          setBlogVideoUploading(false);
+        }
       }
-    } catch (err) {
-      toast.error("Upload failed: " + err.message, { position: "bottom-right" });
-    } finally {
-      setBlockVideoUploadingIndex(null);
-      setLineVideoUploadingKey(null);
-      setBlogUploadProgress(null);
-      activeBlockLineIndexRef.current = null;
-      e.target.value = "";
-    }
-  };
+    );
+
+    // Gallery widget for multiple images
+    blogGalleryWidgetRef.current = cloudinaryRef.current?.createUploadWidget(
+      {
+        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
+        uploadPreset:
+          import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
+        maxFiles: 10,
+        multiple: true,
+        resourceType: "image",
+        clientAllowedFormats: [
+          "jpg",
+          "jpeg",
+          "png",
+          "gif",
+          "webp",
+          "bmp",
+          "tiff",
+          "svg",
+          "heic",
+          "heif",
+          "avif",
+        ],
+        sources: ["local", "url", "camera"],
+      },
+      (err, result) => {
+        if (result.event === "success") {
+          const imageUrl = result.info.secure_url;
+          setBlogForm((prev) => ({
+            ...prev,
+            images: [...(prev.images || []), imageUrl],
+          }));
+        }
+        if (result.event === "close") {
+          setBlogGalleryUploading(false);
+        }
+      }
+    );
+
+    blogBlockWidgetRef.current = cloudinaryRef.current?.createUploadWidget(
+      {
+        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
+        uploadPreset:
+          import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
+        maxFiles: 1,
+        multiple: false,
+        cropping: true,
+        croppingShowDimensions: true,
+        croppingCoordinatesMode: "custom",
+        showSkipCropButton: false,
+        resourceType: "image",
+        clientAllowedFormats: [
+          "jpg",
+          "jpeg",
+          "png",
+          "gif",
+          "webp",
+          "bmp",
+          "tiff",
+          "svg",
+          "heic",
+          "heif",
+          "avif",
+        ],
+        sources: ["local", "url", "camera"],
+      },
+      (err, result) => {
+        if (result.event === "success") {
+          const croppedUrl = buildCroppedUrl(result.info);
+          const index = activeBlockIndexRef.current;
+          const lineIndex = activeBlockLineIndexRef.current;
+          const lang = activeBlockLangRef.current || "en";
+          if (index !== null) {
+            setBlogForm((prev) => {
+              const field = getBlocksField(lang);
+              const blocks = [...(prev[field] || [])];
+              const target = ensureBlockLines(blocks[index] || {});
+              if (lineIndex !== null) {
+                const lines = [...(target.lines || [])];
+                const line = lines[lineIndex] || {
+                  text: "",
+                  icon: "â€¢",
+                  bold: false,
+                  image: "",
+                  video: "",
+                };
+                lines[lineIndex] = { ...line, image: croppedUrl };
+                blocks[index] = { ...target, lines };
+              } else {
+                blocks[index] = { ...target, image: croppedUrl };
+              }
+              return { ...prev, [field]: blocks };
+            });
+          }
+          setBlockImageUploadingIndex(null);
+          setLineImageUploadingKey(null);
+          activeBlockLineIndexRef.current = null;
+        }
+        if (result.event === "close") {
+          setBlockImageUploadingIndex(null);
+          setLineImageUploadingKey(null);
+          activeBlockLineIndexRef.current = null;
+        }
+      }
+    );
+
+    blogBlockVideoWidgetRef.current = cloudinaryRef.current?.createUploadWidget(
+      {
+        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
+        uploadPreset:
+          import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
+        maxFiles: 1,
+        multiple: false,
+        resourceType: "video",
+        clientAllowedFormats: ["mp4", "mov", "webm", "mkv", "avi", "m4v"],
+        sources: ["local", "url", "camera"],
+      },
+      (err, result) => {
+        if (result.event === "success") {
+          const videoUrl = result.info.secure_url;
+          const index = activeBlockIndexRef.current;
+          const lineIndex = activeBlockLineIndexRef.current;
+          const lang = activeBlockLangRef.current || "en";
+          if (index !== null) {
+            setBlogForm((prev) => {
+              const field = getBlocksField(lang);
+              const blocks = [...(prev[field] || [])];
+              const target = ensureBlockLines(blocks[index] || {});
+              if (lineIndex !== null) {
+                const lines = [...(target.lines || [])];
+                const line = lines[lineIndex] || {
+                  text: "",
+                  icon: "â€¢",
+                  bold: false,
+                  image: "",
+                  video: "",
+                };
+                lines[lineIndex] = { ...line, video: videoUrl };
+                blocks[index] = { ...target, lines };
+              } else {
+                blocks[index] = { ...target, video: videoUrl };
+              }
+              return { ...prev, [field]: blocks };
+            });
+          }
+          setBlockVideoUploadingIndex(null);
+          setLineVideoUploadingKey(null);
+          activeBlockLineIndexRef.current = null;
+        }
+        if (result.event === "close") {
+          setBlockVideoUploadingIndex(null);
+          setLineVideoUploadingKey(null);
+          activeBlockLineIndexRef.current = null;
+        }
+      }
+    );
+  }, []);
 
   const openBlogImageUpload = () => {
-    blogImageInputRef.current?.click();
+    setBlogImageUploading(true);
+    blogWidgetRef.current?.open();
   };
 
   const openAiBlogImageUpload = () => {
-    aiBlogImageInputRef.current?.click();
+    setAiBlogImageUploading(true);
+    aiBlogWidgetRef.current?.open();
   };
 
   const openBlogVideoUpload = () => {
-    blogVideoInputRef.current?.click();
+    setBlogVideoUploading(true);
+    blogVideoWidgetRef.current?.open();
   };
 
   const openBlogGalleryUpload = () => {
-    blogGalleryInputRef.current?.click();
+    setBlogGalleryUploading(true);
+    blogGalleryWidgetRef.current?.open();
   };
 
   const removeBlogImage = () => {
@@ -863,14 +1069,18 @@ const AdminPanel = () => {
     activeBlockIndexRef.current = index;
     activeBlockLineIndexRef.current = null;
     activeBlockLangRef.current = lang;
-    blockImageInputRef.current?.click();
+    setBlockImageUploadingIndex(index);
+    setLineImageUploadingKey(null);
+    blogBlockWidgetRef.current?.open();
   };
 
   const openContentBlockVideoUpload = (index, lang = contentEditorLang) => {
     activeBlockIndexRef.current = index;
     activeBlockLineIndexRef.current = null;
     activeBlockLangRef.current = lang;
-    blockVideoInputRef.current?.click();
+    setBlockVideoUploadingIndex(index);
+    setLineVideoUploadingKey(null);
+    blogBlockVideoWidgetRef.current?.open();
   };
 
   const getLineUploadKey = (blockIndex, lineIndex, lang = contentEditorLang) =>
@@ -884,7 +1094,9 @@ const AdminPanel = () => {
     activeBlockIndexRef.current = blockIndex;
     activeBlockLineIndexRef.current = lineIndex;
     activeBlockLangRef.current = lang;
-    blockImageInputRef.current?.click();
+    setBlockImageUploadingIndex(null);
+    setLineImageUploadingKey(getLineUploadKey(blockIndex, lineIndex, lang));
+    blogBlockWidgetRef.current?.open();
   };
 
   const openContentBlockLineVideoUpload = (
@@ -895,7 +1107,9 @@ const AdminPanel = () => {
     activeBlockIndexRef.current = blockIndex;
     activeBlockLineIndexRef.current = lineIndex;
     activeBlockLangRef.current = lang;
-    blockVideoInputRef.current?.click();
+    setBlockVideoUploadingIndex(null);
+    setLineVideoUploadingKey(getLineUploadKey(blockIndex, lineIndex, lang));
+    blogBlockVideoWidgetRef.current?.open();
   };
 
   const removeContentBlockLineImage = (
@@ -2062,36 +2276,6 @@ const AdminPanel = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pt-24 pb-12">
-      <input type="file" ref={consultantImageInputRef} style={{ display: "none" }} accept={IMAGE_ACCEPT} onChange={handleConsultantImageFile} />
-      <input type="file" ref={testimonialImageInputRef} style={{ display: "none" }} accept={IMAGE_ACCEPT} onChange={handleTestimonialImageFile} />
-      <input type="file" ref={blogImageInputRef} style={{ display: "none" }} accept={IMAGE_ACCEPT} onChange={handleBlogImageFile} />
-      <input type="file" ref={aiBlogImageInputRef} style={{ display: "none" }} accept={IMAGE_ACCEPT} onChange={handleAiBlogImageFile} />
-      <input type="file" ref={blogVideoInputRef} style={{ display: "none" }} accept={VIDEO_ACCEPT} onChange={handleBlogVideoFile} />
-      <input type="file" ref={blogGalleryInputRef} style={{ display: "none" }} accept={IMAGE_ACCEPT} multiple onChange={handleBlogGalleryFiles} />
-      <input type="file" ref={blockImageInputRef} style={{ display: "none" }} accept={IMAGE_ACCEPT} onChange={handleBlockImageFile} />
-      <input type="file" ref={blockVideoInputRef} style={{ display: "none" }} accept={VIDEO_ACCEPT} onChange={handleBlockVideoFile} />
-      {/* Upload Progress Overlay */}
-      {(uploadProgress || blogUploadProgress) && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[9999] w-80 bg-white rounded-xl shadow-2xl border border-gray-200 p-4 animate-in fade-in">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-5 h-5 rounded-full bg-blue-500 flexCenter">
-              <svg className="animate-spin h-3 w-3 text-white" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
-            </div>
-            <span className="text-sm font-semibold text-gray-700">در حال آپلود...</span>
-            <span className="text-sm font-bold text-blue-600 ml-auto">{(uploadProgress || blogUploadProgress)?.percent || 0}%</span>
-          </div>
-          <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
-            <div
-              className="bg-gradient-to-r from-blue-500 to-blue-600 h-full rounded-full transition-all duration-300 ease-out"
-              style={{ width: `${(uploadProgress || blogUploadProgress)?.percent || 0}%` }}
-            />
-          </div>
-          <div className="flex justify-between mt-1.5 text-xs text-gray-400">
-            <span>{(uploadProgress || blogUploadProgress)?.loadedFormatted}</span>
-            <span>{(uploadProgress || blogUploadProgress)?.totalFormatted}</span>
-          </div>
-        </div>
-      )}
       <Container size="xl">
         {/* Admin Header */}
         <Paper shadow="sm" p="lg" radius="md" className="mb-6">

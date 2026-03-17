@@ -4,8 +4,7 @@ const SIGNED_SEGMENT_PATTERN = /(^|\/)s--[^/]+--\//;
 
 const splitCloudinaryUrl = (url) => {
   if (typeof url !== "string" || url.length === 0) return null;
-  if (!url.includes(CLOUDINARY_HOST) || !url.includes(UPLOAD_SEGMENT))
-    return null;
+  if (!url.includes(CLOUDINARY_HOST) || !url.includes(UPLOAD_SEGMENT)) return null;
 
   const [withoutHash, hashRaw] = url.split("#");
   const [withoutQuery, queryRaw] = withoutHash.split("?");
@@ -55,7 +54,7 @@ const forceJpgExtension = (url) => {
 
 export const getOptimizedImageUrl = (
   url,
-  { width, height, quality = "auto:good", format = "auto", crop = "fill" } = {},
+  { width, height, quality = "auto:good", format = "auto", crop = "fill" } = {}
 ) => {
   if (!url) return url;
 
@@ -76,7 +75,7 @@ export const getOptimizedImageUrl = (
 
 export const getOptimizedVideoUrl = (
   url,
-  { width, height, quality = "auto:good", format = "auto" } = {},
+  { width, height, quality = "auto:good", format = "auto" } = {}
 ) => {
   if (!url) return url;
 
@@ -96,7 +95,7 @@ export const getOptimizedVideoUrl = (
 
 export const getOptimizedVideoPosterUrl = (
   url,
-  { width, height, quality = "auto:good" } = {},
+  { width, height, quality = "auto:good" } = {}
 ) => {
   if (!url) return url;
   const cloudinaryParts = splitCloudinaryUrl(url);

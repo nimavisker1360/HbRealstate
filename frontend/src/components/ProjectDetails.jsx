@@ -1,4 +1,4 @@
-import { useState, useRef, useContext } from "react";
+import { useState, useRef, useEffect, useContext } from "react";
 import {
   Box,
   Button,
@@ -20,9 +20,6 @@ import {
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import PropTypes from "prop-types";
-import { uploadSingleFile, IMAGE_ACCEPT } from "../utils/upload";
-import UserDetailContext from "../context/UserDetailContext";
-import { toast } from "react-toastify";
 import {
   MdDelete,
   MdAdd,
@@ -268,18 +265,13 @@ const ProjectDetails = ({
   propertyDetails,
   setPropertyDetails,
 }) => {
-  const sitePlanInputRef = useRef();
-  const mapImageInputRef = useRef();
-  const floorPlanInputRef = useRef();
-  const activeFloorPlanIndexRef = useRef(null);
+  const cloudinaryRef = useRef();
+  const sitePlanWidgetRef = useRef();
+  const mapImageWidgetRef = useRef();
   const [imageUploading, setImageUploading] = useState(false);
   const [mapImageUploading, setMapImageUploading] = useState(false);
-  const [floorPlanUploading, setFloorPlanUploading] = useState(null);
-  const [detailUploadProgress, setDetailUploadProgress] = useState(null);
+  const [floorPlanUploading, setFloorPlanUploading] = useState(null); // Index of floor plan being uploaded
   const { data: consultants, isLoading: consultantsLoading } = useConsultants();
-  const {
-    userDetails: { token },
-  } = useContext(UserDetailContext);
   const { convertAmount } = useContext(CurrencyContext);
   const floorPlanBaseCurrency = normalizeFiatCurrency(propertyDetails.currency);
   const isSpecialOfferType = propertyDetails.propertyType === "special-offer";
@@ -384,75 +376,85 @@ const ProjectDetails = ({
     form.setFieldValue("dairePlanlari", plans);
   };
 
-  const handleSitePlanFile = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setImageUploading(true);
-    setDetailUploadProgress(null);
-    try {
-      const result = await uploadSingleFile(file, token, "properties/site-plans", (p) => setDetailUploadProgress(p));
-      if (result) form.setFieldValue("vaziyetPlani", result.url);
-    } catch (err) {
-      toast.error("Upload failed: " + err.message, { position: "bottom-right" });
-    } finally {
-      setImageUploading(false);
-      setDetailUploadProgress(null);
-      e.target.value = "";
-    }
-  };
+  // Initialize Cloudinary widgets for site plan and map image
+  useEffect(() => {
+    cloudinaryRef.current = window.cloudinary;
 
-  const handleMapImageFile = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setMapImageUploading(true);
-    setDetailUploadProgress(null);
-    try {
-      const result = await uploadSingleFile(file, token, "properties/maps", (p) => setDetailUploadProgress(p));
-      if (result) form.setFieldValue("mapImage", result.url);
-    } catch (err) {
-      toast.error("Upload failed: " + err.message, { position: "bottom-right" });
-    } finally {
-      setMapImageUploading(false);
-      setDetailUploadProgress(null);
-      e.target.value = "";
-    }
-  };
-
-  const handleFloorPlanFile = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const index = activeFloorPlanIndexRef.current;
-    if (index === null) return;
-    setFloorPlanUploading(index);
-    setDetailUploadProgress(null);
-    try {
-      const result = await uploadSingleFile(file, token, "properties/floor-plans", (p) => setDetailUploadProgress(p));
-      if (result) {
-        const plans = [...form.values.dairePlanlari];
-        plans[index].image = result.url;
-        form.setFieldValue("dairePlanlari", plans);
+    // Site plan image widget
+    sitePlanWidgetRef.current = cloudinaryRef.current?.createUploadWidget(
+      {
+        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
+        uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
+        maxFiles: 1,
+        multiple: false,
+        resourceType: "image",
+        sources: ["local", "url", "camera"],
+      },
+      (err, result) => {
+        if (result.event === "success") {
+          form.setFieldValue("vaziyetPlani", result.info.secure_url);
+        }
+        if (result.event === "close") {
+          setImageUploading(false);
+        }
       }
-    } catch (err) {
-      toast.error("Upload failed: " + err.message, { position: "bottom-right" });
-    } finally {
-      setFloorPlanUploading(null);
-      setDetailUploadProgress(null);
-      activeFloorPlanIndexRef.current = null;
-      e.target.value = "";
-    }
-  };
+    );
+
+    // Map image widget
+    mapImageWidgetRef.current = cloudinaryRef.current?.createUploadWidget(
+      {
+        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
+        uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
+        maxFiles: 1,
+        multiple: false,
+        resourceType: "image",
+        sources: ["local", "url", "camera"],
+      },
+      (err, result) => {
+        if (result.event === "success") {
+          form.setFieldValue("mapImage", result.info.secure_url);
+        }
+        if (result.event === "close") {
+          setMapImageUploading(false);
+        }
+      }
+    );
+  }, []);
 
   const openSitePlanUpload = () => {
-    sitePlanInputRef.current?.click();
+    setImageUploading(true);
+    sitePlanWidgetRef.current?.open();
   };
 
   const openMapImageUpload = () => {
-    mapImageInputRef.current?.click();
+    setMapImageUploading(true);
+    mapImageWidgetRef.current?.open();
   };
 
+  // Open Cloudinary widget for floor plan image
   const openFloorPlanUpload = (index) => {
-    activeFloorPlanIndexRef.current = index;
-    floorPlanInputRef.current?.click();
+    setFloorPlanUploading(index);
+    const floorPlanWidget = cloudinaryRef.current?.createUploadWidget(
+      {
+        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
+        uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
+        maxFiles: 1,
+        multiple: false,
+        resourceType: "image",
+        sources: ["local", "url", "camera"],
+      },
+      (err, result) => {
+        if (result.event === "success") {
+          const plans = [...form.values.dairePlanlari];
+          plans[index].image = result.info.secure_url;
+          form.setFieldValue("dairePlanlari", plans);
+        }
+        if (result.event === "close") {
+          setFloorPlanUploading(null);
+        }
+      }
+    );
+    floorPlanWidget?.open();
   };
 
   const addFloorPlan = () => {
@@ -709,18 +711,6 @@ const ProjectDetails = ({
 
   return (
     <Box maw={"95%"} mx="auto" my={"md"}>
-      {detailUploadProgress && (
-        <div className="mb-3 p-3 bg-blue-50 rounded-xl border border-blue-200">
-          <div className="flex items-center gap-2 mb-1.5">
-            <MdOutlineCloudUpload size={18} className="text-blue-500 animate-pulse" />
-            <span className="text-sm text-blue-700 font-medium">در حال آپلود... {detailUploadProgress.percent}%</span>
-            <span className="text-xs text-blue-400 ml-auto">{detailUploadProgress.loadedFormatted} / {detailUploadProgress.totalFormatted}</span>
-          </div>
-          <div className="w-full bg-blue-100 rounded-full h-2.5 overflow-hidden">
-            <div className="bg-blue-500 h-full rounded-full transition-all duration-300" style={{ width: `${detailUploadProgress.percent}%` }} />
-          </div>
-        </div>
-      )}
       <ScrollArea h="65vh" offsetScrollbars>
         <form
           onSubmit={(e) => {
@@ -728,9 +718,6 @@ const ProjectDetails = ({
             handleSubmit();
           }}
         >
-          <input type="file" ref={sitePlanInputRef} style={{ display: "none" }} accept={IMAGE_ACCEPT} onChange={handleSitePlanFile} />
-          <input type="file" ref={mapImageInputRef} style={{ display: "none" }} accept={IMAGE_ACCEPT} onChange={handleMapImageFile} />
-          <input type="file" ref={floorPlanInputRef} style={{ display: "none" }} accept={IMAGE_ACCEPT} onChange={handleFloorPlanFile} />
           <Checkbox
             label="Special Offer"
             mb="sm"
