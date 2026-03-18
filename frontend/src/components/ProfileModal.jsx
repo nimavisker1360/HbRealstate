@@ -1,4 +1,4 @@
-import { useState, useContext, useEffect, useRef } from "react";
+import { useState, useContext, useEffect } from "react";
 import {
   Modal,
   TextInput,
@@ -26,6 +26,7 @@ import {
   MdLocationOn,
 } from "react-icons/md";
 import { FaWhatsapp } from "react-icons/fa6";
+import { pickAndUploadImages } from "../utils/blobUpload";
 
 const ProfileModal = ({ opened, setOpened }) => {
   const { t } = useTranslation();
@@ -46,70 +47,6 @@ const ProfileModal = ({ opened, setOpened }) => {
     address: "",
   });
   const [profileComplete, setProfileComplete] = useState(false);
-
-  // Cloudinary widget
-  const cloudinaryRef = useRef();
-  const widgetRef = useRef();
-
-  // Helper function to build cropped Cloudinary URL
-  const buildCroppedUrl = (info) => {
-    const { secure_url, coordinates } = info;
-    
-    // If there are crop coordinates, apply them to the URL
-    if (coordinates?.custom?.[0]) {
-      const [x, y, width, height] = coordinates.custom[0];
-      // Insert crop transformation into the URL
-      const urlParts = secure_url.split('/upload/');
-      if (urlParts.length === 2) {
-        return `${urlParts[0]}/upload/c_crop,x_${Math.round(x)},y_${Math.round(y)},w_${Math.round(width)},h_${Math.round(height)}/${urlParts[1]}`;
-      }
-    }
-    return secure_url;
-  };
-
-  useEffect(() => {
-    cloudinaryRef.current = window.cloudinary;
-    widgetRef.current = cloudinaryRef.current?.createUploadWidget(
-      {
-        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
-        uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
-        maxFiles: 1,
-        multiple: false,
-        cropping: true,
-        croppingAspectRatio: 1,
-        croppingShowDimensions: true,
-        croppingCoordinatesMode: "custom",
-        showSkipCropButton: false,
-        resourceType: "image",
-        clientAllowedFormats: [
-          "jpg",
-          "jpeg",
-          "png",
-          "gif",
-          "webp",
-          "bmp",
-          "tiff",
-          "svg",
-          "heic",
-          "heif",
-          "avif",
-          "ico",
-          "raw",
-        ],
-        sources: ["local", "url", "camera"],
-      },
-      (err, result) => {
-        if (result.event === "success") {
-          const croppedUrl = buildCroppedUrl(result.info);
-          setFormData((prev) => ({ ...prev, image: croppedUrl }));
-          setImageUploading(false);
-        }
-        if (result.event === "close") {
-          setImageUploading(false);
-        }
-      }
-    );
-  }, []);
 
   // Fetch user profile when modal opens
   useEffect(() => {
@@ -155,9 +92,16 @@ const ProfileModal = ({ opened, setOpened }) => {
     fetchProfile();
   }, [opened, user, token]);
 
-  const openImageUpload = () => {
-    setImageUploading(true);
-    widgetRef.current?.open();
+  const openImageUpload = async () => {
+    try {
+      setImageUploading(true);
+      const urls = await pickAndUploadImages({ multiple: false });
+      if (urls.length) setFormData((prev) => ({ ...prev, image: urls[0] }));
+    } catch (err) {
+      console.error("Image upload error:", err);
+    } finally {
+      setImageUploading(false);
+    }
   };
 
   const removeImage = () => {

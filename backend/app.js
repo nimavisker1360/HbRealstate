@@ -11,6 +11,7 @@ import { testimonialRoute } from "./routes/testimonialRoute.js";
 import { assistantRoute } from "./routes/assistantRoute.js";
 import { marketRoute } from "./routes/marketRoute.js";
 import { aiSalesAgentRoute } from "./routes/aiSalesAgentRoute.js";
+import { uploadRoute } from "./routes/uploadRoute.js";
 import { getSitemapXml } from "./controllers/sitemapCntrl.js";
 import { loadBackendEnv } from "./config/loadEnv.js";
 
@@ -37,5 +38,6 @@ app.use("/api/testimonial", testimonialRoute);
 app.use("/api/assistant", assistantRoute);
 app.use("/api/ai-agent", aiSalesAgentRoute);
 app.use("/api/market", marketRoute);
+app.use("/api/upload", uploadRoute);
 
 export default app;

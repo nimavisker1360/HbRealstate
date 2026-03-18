@@ -88,7 +88,7 @@ import {
   MdRateReview,
 } from "react-icons/md";
 import { FaStar } from "react-icons/fa6";
-import { useRef } from "react";
+import { pickAndUploadImages, pickAndUploadVideos } from "../utils/blobUpload";
 
 // DnD Kit imports
 import {
@@ -489,458 +489,98 @@ const AdminPanel = () => {
     { value: "Persian", label: "Persian" },
   ];
 
-  // Cloudinary widget for consultant image upload
-  const cloudinaryRef = useRef();
-  const consultantWidgetRef = useRef();
   const [imageUploading, setImageUploading] = useState(false);
-  const testimonialWidgetRef = useRef();
   const [testimonialImageUploading, setTestimonialImageUploading] =
     useState(false);
 
-  // Helper function to build cropped Cloudinary URL
-  const buildCroppedUrl = (info) => {
-    const { secure_url, coordinates } = info;
-
-    // If there are crop coordinates, apply them to the URL
-    if (coordinates?.custom?.[0]) {
-      const [x, y, width, height] = coordinates.custom[0];
-      // Insert crop transformation into the URL
-      const urlParts = secure_url.split("/upload/");
-      if (urlParts.length === 2) {
-        return `${urlParts[0]}/upload/c_crop,x_${Math.round(x)},y_${Math.round(
-          y
-        )},w_${Math.round(width)},h_${Math.round(height)}/${urlParts[1]}`;
-      }
+  const openConsultantImageUpload = async () => {
+    try {
+      setImageUploading(true);
+      const urls = await pickAndUploadImages({ multiple: false });
+      if (urls.length) setConsultantForm((prev) => ({ ...prev, image: urls[0] }));
+    } catch (err) {
+      console.error("Image upload error:", err);
+    } finally {
+      setImageUploading(false);
     }
-    return secure_url;
-  };
-
-  useEffect(() => {
-    cloudinaryRef.current = window.cloudinary;
-    consultantWidgetRef.current = cloudinaryRef.current?.createUploadWidget(
-      {
-        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
-        uploadPreset:
-          import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
-        maxFiles: 1,
-        multiple: false,
-        cropping: true,
-        croppingAspectRatio: 1,
-        croppingShowDimensions: true,
-        croppingCoordinatesMode: "custom",
-        showSkipCropButton: false,
-        resourceType: "image",
-        clientAllowedFormats: [
-          "jpg",
-          "jpeg",
-          "png",
-          "gif",
-          "webp",
-          "bmp",
-          "tiff",
-          "svg",
-          "heic",
-          "heif",
-          "avif",
-          "ico",
-          "raw",
-        ],
-        sources: ["local", "url", "camera"],
-      },
-      (err, result) => {
-        if (result.event === "success") {
-          const croppedUrl = buildCroppedUrl(result.info);
-          setConsultantForm((prev) => ({
-            ...prev,
-            image: croppedUrl,
-          }));
-          setImageUploading(false);
-        }
-        if (result.event === "close") {
-          setImageUploading(false);
-        }
-      }
-    );
-
-    testimonialWidgetRef.current = cloudinaryRef.current?.createUploadWidget(
-      {
-        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
-        uploadPreset:
-          import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
-        maxFiles: 1,
-        multiple: false,
-        cropping: true,
-        croppingAspectRatio: 1,
-        croppingShowDimensions: true,
-        croppingCoordinatesMode: "custom",
-        showSkipCropButton: false,
-        resourceType: "image",
-        clientAllowedFormats: [
-          "jpg",
-          "jpeg",
-          "png",
-          "gif",
-          "webp",
-          "bmp",
-          "tiff",
-          "svg",
-          "heic",
-          "heif",
-          "avif",
-          "ico",
-          "raw",
-        ],
-        sources: ["local", "url", "camera"],
-      },
-      (err, result) => {
-        if (result.event === "success") {
-          const croppedUrl = buildCroppedUrl(result.info);
-          setTestimonialForm((prev) => ({
-            ...prev,
-            image: croppedUrl,
-          }));
-          setTestimonialImageUploading(false);
-        }
-        if (result.event === "close") {
-          setTestimonialImageUploading(false);
-        }
-      }
-    );
-  }, []);
-
-  const openConsultantImageUpload = () => {
-    setImageUploading(true);
-    consultantWidgetRef.current?.open();
   };
 
   const removeConsultantImage = () => {
     setConsultantForm((prev) => ({ ...prev, image: "" }));
   };
 
-  const openTestimonialImageUpload = () => {
-    setTestimonialImageUploading(true);
-    testimonialWidgetRef.current?.open();
+  const openTestimonialImageUpload = async () => {
+    try {
+      setTestimonialImageUploading(true);
+      const urls = await pickAndUploadImages({ multiple: false });
+      if (urls.length) setTestimonialForm((prev) => ({ ...prev, image: urls[0] }));
+    } catch (err) {
+      console.error("Image upload error:", err);
+    } finally {
+      setTestimonialImageUploading(false);
+    }
   };
 
   const removeTestimonialImage = () => {
     setTestimonialForm((prev) => ({ ...prev, image: "" }));
   };
 
-  // Cloudinary widget for blog image upload (main image)
-  const blogWidgetRef = useRef();
   const [blogImageUploading, setBlogImageUploading] = useState(false);
-
-  // Cloudinary widget for AI blog image upload
-  const aiBlogWidgetRef = useRef();
   const [aiBlogImageUploading, setAiBlogImageUploading] = useState(false);
-
-  // Cloudinary widget for blog video upload (optional)
-  const blogVideoWidgetRef = useRef();
   const [blogVideoUploading, setBlogVideoUploading] = useState(false);
-
-  // Cloudinary widget for blog gallery images (multiple)
-  const blogGalleryWidgetRef = useRef();
   const [blogGalleryUploading, setBlogGalleryUploading] = useState(false);
-  const blogBlockWidgetRef = useRef();
-  const blogBlockVideoWidgetRef = useRef();
-  const activeBlockIndexRef = useRef(null);
-  const activeBlockLineIndexRef = useRef(null);
-  const activeBlockLangRef = useRef("en");
   const [blockImageUploadingIndex, setBlockImageUploadingIndex] = useState(null);
   const [blockVideoUploadingIndex, setBlockVideoUploadingIndex] = useState(null);
   const [lineImageUploadingKey, setLineImageUploadingKey] = useState(null);
   const [lineVideoUploadingKey, setLineVideoUploadingKey] = useState(null);
 
-  useEffect(() => {
-    blogWidgetRef.current = cloudinaryRef.current?.createUploadWidget(
-      {
-        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
-        uploadPreset:
-          import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
-        maxFiles: 1,
-        multiple: false,
-        cropping: true,
-        croppingShowDimensions: true,
-        croppingCoordinatesMode: "custom",
-        showSkipCropButton: false,
-        resourceType: "image",
-        clientAllowedFormats: [
-          "jpg",
-          "jpeg",
-          "png",
-          "gif",
-          "webp",
-          "bmp",
-          "tiff",
-          "svg",
-          "heic",
-          "heif",
-          "avif",
-          "ico",
-          "raw",
-        ],
-        sources: ["local", "url", "camera"],
-      },
-      (err, result) => {
-        if (result.event === "success") {
-          const croppedUrl = buildCroppedUrl(result.info);
-          setBlogForm((prev) => ({
-            ...prev,
-            image: croppedUrl,
-          }));
-          setBlogImageUploading(false);
-        }
-        if (result.event === "close") {
-          setBlogImageUploading(false);
-        }
-        }
-      );
 
-    aiBlogWidgetRef.current = cloudinaryRef.current?.createUploadWidget(
-      {
-        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
-        uploadPreset:
-          import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
-        maxFiles: 1,
-        multiple: false,
-        cropping: true,
-        croppingShowDimensions: true,
-        croppingCoordinatesMode: "custom",
-        showSkipCropButton: false,
-        resourceType: "image",
-        clientAllowedFormats: [
-          "jpg",
-          "jpeg",
-          "png",
-          "gif",
-          "webp",
-          "bmp",
-          "tiff",
-          "svg",
-          "heic",
-          "heif",
-          "avif",
-          "ico",
-          "raw",
-        ],
-        sources: ["local", "url", "camera"],
-      },
-      (err, result) => {
-        if (result.event === "success") {
-          const croppedUrl = buildCroppedUrl(result.info);
-          setAiBlogForm((prev) => ({
-            ...prev,
-            image: croppedUrl,
-          }));
-          setAiBlogImageUploading(false);
-        }
-        if (result.event === "close") {
-          setAiBlogImageUploading(false);
-        }
-      }
-    );
-
-    blogVideoWidgetRef.current = cloudinaryRef.current?.createUploadWidget(
-      {
-        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
-        uploadPreset:
-          import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
-        maxFiles: 1,
-        multiple: false,
-        resourceType: "video",
-        clientAllowedFormats: ["mp4", "mov", "webm", "mkv", "avi", "m4v"],
-        sources: ["local", "url", "camera"],
-      },
-      (err, result) => {
-        if (result.event === "success") {
-          const videoUrl = result.info.secure_url;
-          setBlogForm((prev) => ({
-            ...prev,
-            video: videoUrl,
-          }));
-          setBlogVideoUploading(false);
-        }
-        if (result.event === "close") {
-          setBlogVideoUploading(false);
-        }
-      }
-    );
-
-    // Gallery widget for multiple images
-    blogGalleryWidgetRef.current = cloudinaryRef.current?.createUploadWidget(
-      {
-        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
-        uploadPreset:
-          import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
-        maxFiles: 10,
-        multiple: true,
-        resourceType: "image",
-        clientAllowedFormats: [
-          "jpg",
-          "jpeg",
-          "png",
-          "gif",
-          "webp",
-          "bmp",
-          "tiff",
-          "svg",
-          "heic",
-          "heif",
-          "avif",
-        ],
-        sources: ["local", "url", "camera"],
-      },
-      (err, result) => {
-        if (result.event === "success") {
-          const imageUrl = result.info.secure_url;
-          setBlogForm((prev) => ({
-            ...prev,
-            images: [...(prev.images || []), imageUrl],
-          }));
-        }
-        if (result.event === "close") {
-          setBlogGalleryUploading(false);
-        }
-      }
-    );
-
-    blogBlockWidgetRef.current = cloudinaryRef.current?.createUploadWidget(
-      {
-        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
-        uploadPreset:
-          import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
-        maxFiles: 1,
-        multiple: false,
-        cropping: true,
-        croppingShowDimensions: true,
-        croppingCoordinatesMode: "custom",
-        showSkipCropButton: false,
-        resourceType: "image",
-        clientAllowedFormats: [
-          "jpg",
-          "jpeg",
-          "png",
-          "gif",
-          "webp",
-          "bmp",
-          "tiff",
-          "svg",
-          "heic",
-          "heif",
-          "avif",
-        ],
-        sources: ["local", "url", "camera"],
-      },
-      (err, result) => {
-        if (result.event === "success") {
-          const croppedUrl = buildCroppedUrl(result.info);
-          const index = activeBlockIndexRef.current;
-          const lineIndex = activeBlockLineIndexRef.current;
-          const lang = activeBlockLangRef.current || "en";
-          if (index !== null) {
-            setBlogForm((prev) => {
-              const field = getBlocksField(lang);
-              const blocks = [...(prev[field] || [])];
-              const target = ensureBlockLines(blocks[index] || {});
-              if (lineIndex !== null) {
-                const lines = [...(target.lines || [])];
-                const line = lines[lineIndex] || {
-                  text: "",
-                  icon: "â€¢",
-                  bold: false,
-                  image: "",
-                  video: "",
-                };
-                lines[lineIndex] = { ...line, image: croppedUrl };
-                blocks[index] = { ...target, lines };
-              } else {
-                blocks[index] = { ...target, image: croppedUrl };
-              }
-              return { ...prev, [field]: blocks };
-            });
-          }
-          setBlockImageUploadingIndex(null);
-          setLineImageUploadingKey(null);
-          activeBlockLineIndexRef.current = null;
-        }
-        if (result.event === "close") {
-          setBlockImageUploadingIndex(null);
-          setLineImageUploadingKey(null);
-          activeBlockLineIndexRef.current = null;
-        }
-      }
-    );
-
-    blogBlockVideoWidgetRef.current = cloudinaryRef.current?.createUploadWidget(
-      {
-        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
-        uploadPreset:
-          import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
-        maxFiles: 1,
-        multiple: false,
-        resourceType: "video",
-        clientAllowedFormats: ["mp4", "mov", "webm", "mkv", "avi", "m4v"],
-        sources: ["local", "url", "camera"],
-      },
-      (err, result) => {
-        if (result.event === "success") {
-          const videoUrl = result.info.secure_url;
-          const index = activeBlockIndexRef.current;
-          const lineIndex = activeBlockLineIndexRef.current;
-          const lang = activeBlockLangRef.current || "en";
-          if (index !== null) {
-            setBlogForm((prev) => {
-              const field = getBlocksField(lang);
-              const blocks = [...(prev[field] || [])];
-              const target = ensureBlockLines(blocks[index] || {});
-              if (lineIndex !== null) {
-                const lines = [...(target.lines || [])];
-                const line = lines[lineIndex] || {
-                  text: "",
-                  icon: "â€¢",
-                  bold: false,
-                  image: "",
-                  video: "",
-                };
-                lines[lineIndex] = { ...line, video: videoUrl };
-                blocks[index] = { ...target, lines };
-              } else {
-                blocks[index] = { ...target, video: videoUrl };
-              }
-              return { ...prev, [field]: blocks };
-            });
-          }
-          setBlockVideoUploadingIndex(null);
-          setLineVideoUploadingKey(null);
-          activeBlockLineIndexRef.current = null;
-        }
-        if (result.event === "close") {
-          setBlockVideoUploadingIndex(null);
-          setLineVideoUploadingKey(null);
-          activeBlockLineIndexRef.current = null;
-        }
-      }
-    );
-  }, []);
-
-  const openBlogImageUpload = () => {
-    setBlogImageUploading(true);
-    blogWidgetRef.current?.open();
+  const openBlogImageUpload = async () => {
+    try {
+      setBlogImageUploading(true);
+      const urls = await pickAndUploadImages({ multiple: false });
+      if (urls.length) setBlogForm((prev) => ({ ...prev, image: urls[0] }));
+    } catch (err) {
+      console.error("Image upload error:", err);
+    } finally {
+      setBlogImageUploading(false);
+    }
   };
 
-  const openAiBlogImageUpload = () => {
-    setAiBlogImageUploading(true);
-    aiBlogWidgetRef.current?.open();
+  const openAiBlogImageUpload = async () => {
+    try {
+      setAiBlogImageUploading(true);
+      const urls = await pickAndUploadImages({ multiple: false });
+      if (urls.length) setAiBlogForm((prev) => ({ ...prev, image: urls[0] }));
+    } catch (err) {
+      console.error("Image upload error:", err);
+    } finally {
+      setAiBlogImageUploading(false);
+    }
   };
 
-  const openBlogVideoUpload = () => {
-    setBlogVideoUploading(true);
-    blogVideoWidgetRef.current?.open();
+  const openBlogVideoUpload = async () => {
+    try {
+      setBlogVideoUploading(true);
+      const urls = await pickAndUploadVideos({ multiple: false });
+      if (urls.length) setBlogForm((prev) => ({ ...prev, video: urls[0] }));
+    } catch (err) {
+      console.error("Video upload error:", err);
+    } finally {
+      setBlogVideoUploading(false);
+    }
   };
 
-  const openBlogGalleryUpload = () => {
-    setBlogGalleryUploading(true);
-    blogGalleryWidgetRef.current?.open();
+  const openBlogGalleryUpload = async () => {
+    try {
+      setBlogGalleryUploading(true);
+      const urls = await pickAndUploadImages({ multiple: true });
+      if (urls.length) setBlogForm((prev) => ({ ...prev, images: [...(prev.images || []), ...urls] }));
+    } catch (err) {
+      console.error("Image upload error:", err);
+    } finally {
+      setBlogGalleryUploading(false);
+    }
   };
 
   const removeBlogImage = () => {
@@ -1065,51 +705,105 @@ const AdminPanel = () => {
     }));
   };
 
-  const openContentBlockImageUpload = (index, lang = contentEditorLang) => {
-    activeBlockIndexRef.current = index;
-    activeBlockLineIndexRef.current = null;
-    activeBlockLangRef.current = lang;
-    setBlockImageUploadingIndex(index);
-    setLineImageUploadingKey(null);
-    blogBlockWidgetRef.current?.open();
+  const openContentBlockImageUpload = async (index, lang = contentEditorLang) => {
+    try {
+      setBlockImageUploadingIndex(index);
+      setLineImageUploadingKey(null);
+      const urls = await pickAndUploadImages({ multiple: false });
+      if (urls.length && index !== null) {
+        setBlogForm((prev) => {
+          const field = getBlocksField(lang);
+          const blocks = [...(prev[field] || [])];
+          const target = ensureBlockLines(blocks[index] || {});
+          blocks[index] = { ...target, image: urls[0] };
+          return { ...prev, [field]: blocks };
+        });
+      }
+    } catch (err) {
+      console.error("Image upload error:", err);
+    } finally {
+      setBlockImageUploadingIndex(null);
+    }
   };
 
-  const openContentBlockVideoUpload = (index, lang = contentEditorLang) => {
-    activeBlockIndexRef.current = index;
-    activeBlockLineIndexRef.current = null;
-    activeBlockLangRef.current = lang;
-    setBlockVideoUploadingIndex(index);
-    setLineVideoUploadingKey(null);
-    blogBlockVideoWidgetRef.current?.open();
+  const openContentBlockVideoUpload = async (index, lang = contentEditorLang) => {
+    try {
+      setBlockVideoUploadingIndex(index);
+      setLineVideoUploadingKey(null);
+      const urls = await pickAndUploadVideos({ multiple: false });
+      if (urls.length && index !== null) {
+        setBlogForm((prev) => {
+          const field = getBlocksField(lang);
+          const blocks = [...(prev[field] || [])];
+          const target = ensureBlockLines(blocks[index] || {});
+          blocks[index] = { ...target, video: urls[0] };
+          return { ...prev, [field]: blocks };
+        });
+      }
+    } catch (err) {
+      console.error("Video upload error:", err);
+    } finally {
+      setBlockVideoUploadingIndex(null);
+    }
   };
 
   const getLineUploadKey = (blockIndex, lineIndex, lang = contentEditorLang) =>
     `${lang}-${blockIndex}-${lineIndex}`;
 
-  const openContentBlockLineImageUpload = (
+  const openContentBlockLineImageUpload = async (
     blockIndex,
     lineIndex,
     lang = contentEditorLang
   ) => {
-    activeBlockIndexRef.current = blockIndex;
-    activeBlockLineIndexRef.current = lineIndex;
-    activeBlockLangRef.current = lang;
-    setBlockImageUploadingIndex(null);
-    setLineImageUploadingKey(getLineUploadKey(blockIndex, lineIndex, lang));
-    blogBlockWidgetRef.current?.open();
+    try {
+      setBlockImageUploadingIndex(null);
+      setLineImageUploadingKey(getLineUploadKey(blockIndex, lineIndex, lang));
+      const urls = await pickAndUploadImages({ multiple: false });
+      if (urls.length) {
+        setBlogForm((prev) => {
+          const field = getBlocksField(lang);
+          const blocks = [...(prev[field] || [])];
+          const target = ensureBlockLines(blocks[blockIndex] || {});
+          const lines = [...(target.lines || [])];
+          const line = lines[lineIndex] || { text: "", icon: "•", bold: false, image: "", video: "" };
+          lines[lineIndex] = { ...line, image: urls[0] };
+          blocks[blockIndex] = { ...target, lines };
+          return { ...prev, [field]: blocks };
+        });
+      }
+    } catch (err) {
+      console.error("Image upload error:", err);
+    } finally {
+      setLineImageUploadingKey(null);
+    }
   };
 
-  const openContentBlockLineVideoUpload = (
+  const openContentBlockLineVideoUpload = async (
     blockIndex,
     lineIndex,
     lang = contentEditorLang
   ) => {
-    activeBlockIndexRef.current = blockIndex;
-    activeBlockLineIndexRef.current = lineIndex;
-    activeBlockLangRef.current = lang;
-    setBlockVideoUploadingIndex(null);
-    setLineVideoUploadingKey(getLineUploadKey(blockIndex, lineIndex, lang));
-    blogBlockVideoWidgetRef.current?.open();
+    try {
+      setBlockVideoUploadingIndex(null);
+      setLineVideoUploadingKey(getLineUploadKey(blockIndex, lineIndex, lang));
+      const urls = await pickAndUploadVideos({ multiple: false });
+      if (urls.length) {
+        setBlogForm((prev) => {
+          const field = getBlocksField(lang);
+          const blocks = [...(prev[field] || [])];
+          const target = ensureBlockLines(blocks[blockIndex] || {});
+          const lines = [...(target.lines || [])];
+          const line = lines[lineIndex] || { text: "", icon: "•", bold: false, image: "", video: "" };
+          lines[lineIndex] = { ...line, video: urls[0] };
+          blocks[blockIndex] = { ...target, lines };
+          return { ...prev, [field]: blocks };
+        });
+      }
+    } catch (err) {
+      console.error("Video upload error:", err);
+    } finally {
+      setLineVideoUploadingKey(null);
+    }
   };
 
   const removeContentBlockLineImage = (

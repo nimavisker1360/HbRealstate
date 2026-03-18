@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useContext } from "react";
+import { useState, useContext } from "react";
 import {
   Box,
   Button,
@@ -34,6 +34,7 @@ import { BsBuilding, BsGrid, BsShield, BsTree, BsEye, BsPeople } from "react-ico
 import { FaWheelchair, FaShoppingCart } from "react-icons/fa";
 import useConsultants from "../hooks/useConsultants";
 import CurrencyContext from "../context/CurrencyContext";
+import { pickAndUploadImages } from "../utils/blobUpload";
 
 // Feature categories for projects
 const BINA_OZELLIKLERI = [
@@ -265,12 +266,9 @@ const ProjectDetails = ({
   propertyDetails,
   setPropertyDetails,
 }) => {
-  const cloudinaryRef = useRef();
-  const sitePlanWidgetRef = useRef();
-  const mapImageWidgetRef = useRef();
   const [imageUploading, setImageUploading] = useState(false);
   const [mapImageUploading, setMapImageUploading] = useState(false);
-  const [floorPlanUploading, setFloorPlanUploading] = useState(null); // Index of floor plan being uploaded
+  const [floorPlanUploading, setFloorPlanUploading] = useState(null);
   const { data: consultants, isLoading: consultantsLoading } = useConsultants();
   const { convertAmount } = useContext(CurrencyContext);
   const floorPlanBaseCurrency = normalizeFiatCurrency(propertyDetails.currency);
@@ -376,85 +374,44 @@ const ProjectDetails = ({
     form.setFieldValue("dairePlanlari", plans);
   };
 
-  // Initialize Cloudinary widgets for site plan and map image
-  useEffect(() => {
-    cloudinaryRef.current = window.cloudinary;
-
-    // Site plan image widget
-    sitePlanWidgetRef.current = cloudinaryRef.current?.createUploadWidget(
-      {
-        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
-        uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
-        maxFiles: 1,
-        multiple: false,
-        resourceType: "image",
-        sources: ["local", "url", "camera"],
-      },
-      (err, result) => {
-        if (result.event === "success") {
-          form.setFieldValue("vaziyetPlani", result.info.secure_url);
-        }
-        if (result.event === "close") {
-          setImageUploading(false);
-        }
-      }
-    );
-
-    // Map image widget
-    mapImageWidgetRef.current = cloudinaryRef.current?.createUploadWidget(
-      {
-        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
-        uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
-        maxFiles: 1,
-        multiple: false,
-        resourceType: "image",
-        sources: ["local", "url", "camera"],
-      },
-      (err, result) => {
-        if (result.event === "success") {
-          form.setFieldValue("mapImage", result.info.secure_url);
-        }
-        if (result.event === "close") {
-          setMapImageUploading(false);
-        }
-      }
-    );
-  }, []);
-
-  const openSitePlanUpload = () => {
-    setImageUploading(true);
-    sitePlanWidgetRef.current?.open();
+  const openSitePlanUpload = async () => {
+    try {
+      setImageUploading(true);
+      const urls = await pickAndUploadImages({ multiple: false });
+      if (urls.length) form.setFieldValue("vaziyetPlani", urls[0]);
+    } catch (err) {
+      console.error("Upload error:", err);
+    } finally {
+      setImageUploading(false);
+    }
   };
 
-  const openMapImageUpload = () => {
-    setMapImageUploading(true);
-    mapImageWidgetRef.current?.open();
+  const openMapImageUpload = async () => {
+    try {
+      setMapImageUploading(true);
+      const urls = await pickAndUploadImages({ multiple: false });
+      if (urls.length) form.setFieldValue("mapImage", urls[0]);
+    } catch (err) {
+      console.error("Upload error:", err);
+    } finally {
+      setMapImageUploading(false);
+    }
   };
 
-  // Open Cloudinary widget for floor plan image
-  const openFloorPlanUpload = (index) => {
-    setFloorPlanUploading(index);
-    const floorPlanWidget = cloudinaryRef.current?.createUploadWidget(
-      {
-        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
-        uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
-        maxFiles: 1,
-        multiple: false,
-        resourceType: "image",
-        sources: ["local", "url", "camera"],
-      },
-      (err, result) => {
-        if (result.event === "success") {
-          const plans = [...form.values.dairePlanlari];
-          plans[index].image = result.info.secure_url;
-          form.setFieldValue("dairePlanlari", plans);
-        }
-        if (result.event === "close") {
-          setFloorPlanUploading(null);
-        }
+  const openFloorPlanUpload = async (index) => {
+    try {
+      setFloorPlanUploading(index);
+      const urls = await pickAndUploadImages({ multiple: false });
+      if (urls.length) {
+        const plans = [...form.values.dairePlanlari];
+        plans[index].image = urls[0];
+        form.setFieldValue("dairePlanlari", plans);
       }
-    );
-    floorPlanWidget?.open();
+    } catch (err) {
+      console.error("Upload error:", err);
+    } finally {
+      setFloorPlanUploading(null);
+    }
   };
 
   const addFloorPlan = () => {

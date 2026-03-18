@@ -1,8 +1,9 @@
 import { Button, Group } from "@mantine/core";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { MdOutlineCloudUpload, MdPlayCircleOutline, MdVideocam } from "react-icons/md";
 import { AiOutlineClose } from "react-icons/ai";
 import PropTypes from "prop-types";
+import { pickAndUploadImages, pickAndUploadVideos } from "../utils/blobUpload";
 
 const UploadImage = ({
   prevStep,
@@ -15,9 +16,7 @@ const UploadImage = ({
       (propertyDetails.image ? [propertyDetails.image] : [])
   );
   const [videoURLs, setVideoURLs] = useState(propertyDetails.videos || []);
-  const cloudinaryRef = useRef();
-  const imageWidgetRef = useRef();
-  const videoWidgetRef = useRef();
+  const [uploading, setUploading] = useState(false);
 
   const handleNext = () => {
     setPropertyDetails((prev) => ({
@@ -37,70 +36,29 @@ const UploadImage = ({
     setVideoURLs((prev) => prev.filter((_, index) => index !== indexToRemove));
   };
 
-  useEffect(() => {
-    cloudinaryRef.current = window.cloudinary;
-    
-    // Image upload widget
-    imageWidgetRef.current = cloudinaryRef.current.createUploadWidget(
-      {
-        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
-        uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
-        maxFiles: 30,
-        multiple: true,
-        resourceType: "image",
-        clientAllowedFormats: [
-          "jpg",
-          "jpeg",
-          "png",
-          "gif",
-          "webp",
-          "bmp",
-          "tiff",
-          "svg",
-          "heic",
-          "heif",
-          "avif",
-          "ico",
-          "raw",
-        ],
-        sources: ["local", "url", "camera"],
-      },
-      (err, result) => {
-        if (result.event === "success") {
-          setImageURLs((prev) => [...prev, result.info.secure_url]);
-        }
-      }
-    );
+  const handleImageUpload = async () => {
+    try {
+      setUploading(true);
+      const urls = await pickAndUploadImages({ multiple: true });
+      if (urls.length) setImageURLs((prev) => [...prev, ...urls]);
+    } catch (err) {
+      console.error("Image upload error:", err);
+    } finally {
+      setUploading(false);
+    }
+  };
 
-    // Video upload widget
-    videoWidgetRef.current = cloudinaryRef.current.createUploadWidget(
-      {
-        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
-        uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
-        maxFiles: 10,
-        multiple: true,
-        resourceType: "video",
-        clientAllowedFormats: [
-          "mp4",
-          "webm",
-          "mov",
-          "avi",
-          "mkv",
-          "m4v",
-          "ogv",
-          "3gp",
-          "flv",
-        ],
-        sources: ["local", "url", "camera"],
-        maxFileSize: 104857600, // 100MB max file size for videos
-      },
-      (err, result) => {
-        if (result.event === "success") {
-          setVideoURLs((prev) => [...prev, result.info.secure_url]);
-        }
-      }
-    );
-  }, []);
+  const handleVideoUpload = async () => {
+    try {
+      setUploading(true);
+      const urls = await pickAndUploadVideos({ multiple: true });
+      if (urls.length) setVideoURLs((prev) => [...prev, ...urls]);
+    } catch (err) {
+      console.error("Video upload error:", err);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   return (
     <div className="mt-8 flex-col flexCenter">
@@ -119,7 +77,7 @@ const UploadImage = ({
         {imageURLs.length === 0 && videoURLs.length === 0 ? (
           <div className="flex gap-4">
             <div
-              onClick={() => imageWidgetRef.current?.open()}
+              onClick={handleImageUpload}
               className="flex-1 flexCenter flex-col h-[180px] border-dashed border-2 cursor-pointer rounded-xl hover:bg-gray-50 transition-colors"
             >
               <MdOutlineCloudUpload size={44} color="grey" />
@@ -127,7 +85,7 @@ const UploadImage = ({
               <span className="text-gray-400 text-sm">آپلود تصاویر</span>
             </div>
             <div
-              onClick={() => videoWidgetRef.current?.open()}
+              onClick={handleVideoUpload}
               className="flex-1 flexCenter flex-col h-[180px] border-dashed border-2 border-purple-300 cursor-pointer rounded-xl hover:bg-purple-50 transition-colors"
             >
               <MdVideocam size={44} color="#9333ea" />
@@ -202,7 +160,7 @@ const UploadImage = ({
             
             {/* Add Image Button */}
             <div
-              onClick={() => imageWidgetRef.current?.open()}
+              onClick={handleImageUpload}
               className="flexCenter flex-col h-[150px] border-dashed border-2 rounded-xl cursor-pointer hover:bg-gray-50"
             >
               <MdOutlineCloudUpload size={32} color="grey" />
@@ -211,12 +169,19 @@ const UploadImage = ({
             
             {/* Add Video Button */}
             <div
-              onClick={() => videoWidgetRef.current?.open()}
+              onClick={handleVideoUpload}
               className="flexCenter flex-col h-[150px] border-dashed border-2 border-purple-300 rounded-xl cursor-pointer hover:bg-purple-50"
             >
               <MdVideocam size={32} color="#9333ea" />
               <span className="text-sm text-purple-500">Video Ekle</span>
             </div>
+          </div>
+        )}
+
+        {uploading && (
+          <div className="mt-3 text-center text-sm text-gray-500">
+            <div className="animate-spin inline-block w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full mr-2" />
+            Yükleniyor...
           </div>
         )}
       </div>

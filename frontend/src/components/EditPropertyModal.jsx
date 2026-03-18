@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext, useRef } from "react";
+import { useState, useEffect, useContext } from "react";
 import {
   Modal,
   TextInput,
@@ -54,6 +54,7 @@ import {
 import { AiOutlineClose } from "react-icons/ai";
 import { BsHouseDoor, BsTree, BsLightningCharge, BsGeoAlt, BsGrid, BsEye, BsBuilding, BsShield, BsPeople } from "react-icons/bs";
 import { FaLandmark, FaHome, FaBriefcase, FaWheelchair, FaShoppingCart } from "react-icons/fa";
+import { pickAndUploadImages, pickAndUploadVideos } from "../utils/blobUpload";
 
 // Sortable Image Component
 const SortableImage = ({ url, index, onRemove }) => {
@@ -575,9 +576,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
   const [interiorOpened, { toggle: toggleInterior }] = useDisclosure(false);
   const [exteriorOpened, { toggle: toggleExterior }] = useDisclosure(false);
   const [muhitOpened, { toggle: toggleMuhit }] = useDisclosure(false);
-  const cloudinaryRef = useRef();
-  const widgetRef = useRef();
-  const videoWidgetRef = useRef();
+  const [mediaUploading, setMediaUploading] = useState(false);
 
   // Turkish real estate fields state
   const [listingNo, setListingNo] = useState("");
@@ -664,12 +663,9 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
     muhit: [],
   });
 
-  // Cloudinary widget refs and upload states
-  const vaziyetPlaniWidgetRef = useRef(null);
-  const mapImageWidgetRef = useRef(null);
   const [vaziyetPlaniUploading, setVaziyetPlaniUploading] = useState(false);
   const [mapImageUploading, setMapImageUploading] = useState(false);
-  const [floorPlanUploading, setFloorPlanUploading] = useState(null); // index of uploading floor plan
+  const [floorPlanUploading, setFloorPlanUploading] = useState(null);
 
   const form = useForm({
     initialValues: {
@@ -929,152 +925,63 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
     }
   }, [property]);
 
-  // Initialize Cloudinary widget
-  useEffect(() => {
-    cloudinaryRef.current = window.cloudinary;
-    widgetRef.current = cloudinaryRef.current?.createUploadWidget(
-      {
-        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
-        uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
-        maxFiles: 30,
-        multiple: true,
-        resourceType: "image",
-        clientAllowedFormats: [
-          "jpg",
-          "jpeg",
-          "png",
-          "gif",
-          "webp",
-          "bmp",
-          "tiff",
-          "svg",
-          "heic",
-          "heif",
-          "avif",
-          "ico",
-          "raw",
-        ],
-        sources: ["local", "url", "camera"],
-      },
-      (err, result) => {
-        if (result?.event === "success") {
-          setImageURLs((prev) => [...prev, result.info.secure_url]);
-        }
-      }
-    );
-
-    // Video upload widget
-    videoWidgetRef.current = cloudinaryRef.current?.createUploadWidget(
-      {
-        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
-        uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
-        maxFiles: 10,
-        multiple: true,
-        resourceType: "video",
-        clientAllowedFormats: [
-          "mp4",
-          "webm",
-          "mov",
-          "avi",
-          "mkv",
-          "m4v",
-          "ogv",
-          "3gp",
-          "flv",
-        ],
-        sources: ["local", "url", "camera"],
-        maxFileSize: 104857600, // 100MB max file size for videos
-      },
-      (err, result) => {
-        if (result?.event === "success") {
-          setVideoURLs((prev) => [...prev, result.info.secure_url]);
-        }
-      }
-    );
-
-    // Vaziyet Planı Widget
-    vaziyetPlaniWidgetRef.current = cloudinaryRef.current?.createUploadWidget(
-      {
-        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
-        uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
-        maxFiles: 1,
-        multiple: false,
-        resourceType: "image",
-        clientAllowedFormats: ["jpg", "jpeg", "png", "gif", "webp"],
-        sources: ["local", "url", "camera"],
-      },
-      (err, result) => {
-        if (result?.event === "success") {
-          setVaziyetPlani(result.info.secure_url);
-          setVaziyetPlaniUploading(false);
-        }
-        if (result?.event === "close") {
-          setVaziyetPlaniUploading(false);
-        }
-      }
-    );
-
-    // Map Image Widget
-    mapImageWidgetRef.current = cloudinaryRef.current?.createUploadWidget(
-      {
-        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
-        uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
-        maxFiles: 1,
-        multiple: false,
-        resourceType: "image",
-        clientAllowedFormats: ["jpg", "jpeg", "png", "gif", "webp"],
-        sources: ["local", "url", "camera"],
-      },
-      (err, result) => {
-        if (result?.event === "success") {
-          setMapImage(result.info.secure_url);
-          setMapImageUploading(false);
-        }
-        if (result?.event === "close") {
-          setMapImageUploading(false);
-        }
-      }
-    );
-  }, []);
-
-  // Open Vaziyet Planı upload widget
-  const openVaziyetPlaniUpload = () => {
-    setVaziyetPlaniUploading(true);
-    vaziyetPlaniWidgetRef.current?.open();
+  // Blob upload handlers for images/videos
+  const handleImageUpload = async () => {
+    try {
+      const urls = await pickAndUploadImages({ multiple: true });
+      if (urls.length) setImageURLs((prev) => [...prev, ...urls]);
+    } catch (err) {
+      console.error("Image upload error:", err);
+    }
   };
 
-  // Open Map Image upload widget
-  const openMapImageUpload = () => {
-    setMapImageUploading(true);
-    mapImageWidgetRef.current?.open();
+  const handleVideoUpload = async () => {
+    try {
+      const urls = await pickAndUploadVideos({ multiple: true });
+      if (urls.length) setVideoURLs((prev) => [...prev, ...urls]);
+    } catch (err) {
+      console.error("Video upload error:", err);
+    }
   };
 
-  // Open Floor Plan image upload widget
-  const openFloorPlanUpload = (index) => {
-    setFloorPlanUploading(index);
-    const widget = window.cloudinary?.createUploadWidget(
-      {
-        cloudName: import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "ducct0j1f",
-        uploadPreset: import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "auvy3sl6",
-        maxFiles: 1,
-        multiple: false,
-        resourceType: "image",
-        clientAllowedFormats: ["jpg", "jpeg", "png", "gif", "webp"],
-        sources: ["local", "url", "camera"],
-      },
-      (err, result) => {
-        if (result?.event === "success") {
-          const updated = [...dairePlanlari];
-          updated[index].image = result.info.secure_url;
-          setDairePlanlari(updated);
-          setFloorPlanUploading(null);
-        }
-        if (result?.event === "close") {
-          setFloorPlanUploading(null);
-        }
+  const openVaziyetPlaniUpload = async () => {
+    try {
+      setVaziyetPlaniUploading(true);
+      const urls = await pickAndUploadImages({ multiple: false });
+      if (urls.length) setVaziyetPlani(urls[0]);
+    } catch (err) {
+      console.error("Upload error:", err);
+    } finally {
+      setVaziyetPlaniUploading(false);
+    }
+  };
+
+  const openMapImageUpload = async () => {
+    try {
+      setMapImageUploading(true);
+      const urls = await pickAndUploadImages({ multiple: false });
+      if (urls.length) setMapImage(urls[0]);
+    } catch (err) {
+      console.error("Upload error:", err);
+    } finally {
+      setMapImageUploading(false);
+    }
+  };
+
+  const openFloorPlanUpload = async (index) => {
+    try {
+      setFloorPlanUploading(index);
+      const urls = await pickAndUploadImages({ multiple: false });
+      if (urls.length) {
+        const updated = [...dairePlanlari];
+        updated[index].image = urls[0];
+        setDairePlanlari(updated);
       }
-    );
-    widget?.open();
+    } catch (err) {
+      console.error("Upload error:", err);
+    } finally {
+      setFloorPlanUploading(null);
+    }
   };
 
   const removeImage = (indexToRemove) => {
@@ -3023,14 +2930,14 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
           {imageURLs.length === 0 && videoURLs.length === 0 ? (
             <div className="flex gap-4">
               <div
-                onClick={() => widgetRef.current?.open()}
+                onClick={handleImageUpload}
                 className="flex-1 flexCenter flex-col h-32 border-dashed border-2 rounded-lg cursor-pointer hover:bg-gray-50"
               >
                 <MdOutlineCloudUpload size={32} color="grey" />
                 <span className="text-sm text-gray-500">Resim Yükle</span>
               </div>
               <div
-                onClick={() => videoWidgetRef.current?.open()}
+                onClick={handleVideoUpload}
                 className="flex-1 flexCenter flex-col h-32 border-dashed border-2 border-purple-300 rounded-lg cursor-pointer hover:bg-purple-50"
               >
                 <MdVideocam size={32} color="#9333ea" />
@@ -3096,7 +3003,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
               
               {/* Add Image Button */}
               <div
-                onClick={() => widgetRef.current?.open()}
+                onClick={handleImageUpload}
                 className="flexCenter flex-col h-24 border-dashed border-2 rounded-lg cursor-pointer hover:bg-gray-50"
               >
                 <MdOutlineCloudUpload size={20} color="grey" />
@@ -3105,7 +3012,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
               
               {/* Add Video Button */}
               <div
-                onClick={() => videoWidgetRef.current?.open()}
+                onClick={handleVideoUpload}
                 className="flexCenter flex-col h-24 border-dashed border-2 border-purple-300 rounded-lg cursor-pointer hover:bg-purple-50"
               >
                 <MdVideocam size={20} color="#9333ea" />

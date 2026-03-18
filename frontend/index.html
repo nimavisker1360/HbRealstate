@@ -8,8 +8,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preconnect" href="https://res.cloudinary.com" />
-    <link rel="preconnect" href="https://upload-widget.cloudinary.com" />
     <link rel="preconnect" href="https://www.googletagmanager.com" />
     <meta
       name="description"
@@ -53,12 +51,6 @@
           typeof navigator !== "undefined" &&
           /ReactSnap/i.test(String(navigator.userAgent || ""));
         if (isReactSnap) return;
-
-        const cloudinaryScript = document.createElement("script");
-        cloudinaryScript.src = "https://upload-widget.cloudinary.com/global/all.js";
-        cloudinaryScript.type = "text/javascript";
-        cloudinaryScript.defer = true;
-        document.head.appendChild(cloudinaryScript);
 
         const analyticsScript = document.createElement("script");
         analyticsScript.async = true;
