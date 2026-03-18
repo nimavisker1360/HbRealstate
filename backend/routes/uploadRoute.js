@@ -1,12 +1,44 @@
 import { Router } from "express";
 import multer from "multer";
 import { put } from "@vercel/blob";
+import { handleUpload } from "@vercel/blob/client";
 
 const router = Router();
 
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 100 * 1024 * 1024 },
+});
+
+router.post("/client", async (req, res) => {
+  try {
+    const jsonResponse = await handleUpload({
+      body: req.body,
+      request: req,
+      onBeforeGenerateToken: async () => {
+        return {
+          allowedContentTypes: [
+            "image/jpeg", "image/png", "image/gif", "image/webp",
+            "image/bmp", "image/tiff", "image/svg+xml", "image/avif",
+            "image/heic", "image/heif", "image/x-icon",
+            "video/mp4", "video/webm", "video/quicktime", "video/x-msvideo",
+            "video/x-matroska", "video/x-m4v", "video/ogg", "video/3gpp",
+            "video/x-flv",
+          ],
+          addRandomSuffix: true,
+          maximumSizeInBytes: 500 * 1024 * 1024,
+          tokenPayload: JSON.stringify({}),
+        };
+      },
+      onUploadCompleted: async ({ blob }) => {
+        console.log("Client upload completed:", blob.url);
+      },
+    });
+    res.json(jsonResponse);
+  } catch (error) {
+    console.error("Client upload error:", error);
+    res.status(400).json({ error: error.message });
+  }
 });
 
 router.post("/", upload.single("file"), async (req, res) => {
