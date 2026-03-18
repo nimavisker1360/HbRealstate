@@ -952,9 +952,14 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
         multiple: true,
         onProgress: setUploadProgress,
       });
-      if (urls.length) setVideoURLs((prev) => [...prev, ...urls]);
+      if (urls.length) {
+        setVideoURLs((prev) => [...prev, ...urls]);
+      }
     } catch (err) {
       console.error("Video upload error:", err);
+      toast.error("Video yüklenirken hata oluştu / خطا در آپلود ویدیو", {
+        position: "bottom-right",
+      });
     } finally {
       setMediaUploading(false);
       setUploadProgress(null);
@@ -2987,30 +2992,30 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
               {videoURLs.map((url, index) => (
                 <div
                   key={`video-${index}`}
-                  className="relative h-24 rounded-lg overflow-hidden group bg-gray-900"
+                  className="relative rounded-lg overflow-hidden group bg-gradient-to-br from-purple-900 to-gray-900"
+                  style={{ height: 96, minWidth: 100 }}
                 >
                   <video
-                    src={url}
-                    className="h-full w-full object-cover"
+                    src={`${url}#t=0.1`}
+                    className="absolute inset-0 w-full h-full object-cover"
                     muted
-                    preload="metadata"
+                    preload="auto"
                     playsInline
-                    onLoadedMetadata={(e) => {
-                      e.target.currentTime = 0.1;
+                    onLoadedData={(e) => {
+                      e.target.style.opacity = "1";
                     }}
-                    onMouseEnter={(e) => e.target.play()}
-                    onMouseLeave={(e) => {
-                      e.target.pause();
-                      e.target.currentTime = 0.1;
-                    }}
+                    onMouseEnter={(e) => { try { e.target.play(); } catch {} }}
+                    onMouseLeave={(e) => { try { e.target.pause(); e.target.currentTime = 0.1; } catch {} }}
+                    style={{ opacity: 0, transition: "opacity 0.3s" }}
                   />
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <MdPlayCircleOutline size={32} color="white" className="opacity-80" />
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <MdPlayCircleOutline size={28} color="white" className="opacity-90 drop-shadow-lg" />
+                    <span className="text-white text-[10px] mt-1 opacity-80">Video {index + 1}</span>
                   </div>
                   <button
                     type="button"
                     onClick={() => removeVideo(index)}
-                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
                   >
                     <AiOutlineClose size={12} />
                   </button>
