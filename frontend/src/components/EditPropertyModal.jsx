@@ -1181,44 +1181,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
       primarySpecialOffer?.locationMinutes || 0
     );
 
-    let nextDairePlanlari = [...dairePlanlari];
-    if (
-      isSpecialOfferType &&
-      primarySpecialOffer &&
-      (specialOfferRoomTypeValue ||
-        specialOfferAreaValue > 0 ||
-        specialOfferPriceValue > 0 ||
-        nextDairePlanlari.length > 0)
-    ) {
-      const firstPlan = nextDairePlanlari[0]
-        ? { ...nextDairePlanlari[0] }
-        : {
-            id: Date.now(),
-            varyant: "",
-            image: "",
-          };
-
-      firstPlan.tip = specialOfferRoomTypeValue || firstPlan.tip || "";
-      firstPlan.metrekare = specialOfferAreaValue || firstPlan.metrekare || 0;
-      firstPlan.currency = "USD";
-      firstPlan.fiyatUSD = specialOfferPriceValue;
-      firstPlan.fiyatEUR = toRoundedPrice(
-        convertAmount(specialOfferPriceValue, "USD", "EUR")
-      );
-      firstPlan.fiyatGBP = toRoundedPrice(
-        convertAmount(specialOfferPriceValue, "USD", "GBP")
-      );
-      firstPlan.fiyatTRY = toRoundedPrice(
-        convertAmount(specialOfferPriceValue, "USD", "TRY")
-      );
-      firstPlan.fiyat = specialOfferPriceValue;
-
-      if (nextDairePlanlari.length > 0) {
-        nextDairePlanlari[0] = firstPlan;
-      } else {
-        nextDairePlanlari = [firstPlan];
-      }
-    }
+    const nextDairePlanlari = [...dairePlanlari];
 
     const generatedCampaign = [];
     if (specialOfferDownPaymentValue > 0) {

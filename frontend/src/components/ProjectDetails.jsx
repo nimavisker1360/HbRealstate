@@ -539,41 +539,7 @@ const ProjectDetails = ({
       listingStatusFromProjectStatus(form.values.projectStatus) ||
       "offplan";
 
-    let nextFloorPlans = [...form.values.dairePlanlari];
-    if (
-      isSpecialOfferActive &&
-      primarySpecialOffer &&
-      (primarySpecialOffer.roomType || specialAreaM2 > 0 || specialPriceUSD > 0)
-    ) {
-      const firstPlan = nextFloorPlans[0]
-        ? { ...nextFloorPlans[0] }
-        : {
-            id: Date.now(),
-            varyant: "",
-            image: "",
-          };
-
-      firstPlan.tip = primarySpecialOffer.roomType || firstPlan.tip || "";
-      firstPlan.metrekare = specialAreaM2 || firstPlan.metrekare || 0;
-      firstPlan.currency = "USD";
-      firstPlan.fiyatUSD = specialPriceUSD;
-      firstPlan.fiyatEUR = toRoundedPrice(
-        convertAmount(specialPriceUSD, "USD", "EUR")
-      );
-      firstPlan.fiyatGBP = toRoundedPrice(
-        convertAmount(specialPriceUSD, "USD", "GBP")
-      );
-      firstPlan.fiyatTRY = toRoundedPrice(
-        convertAmount(specialPriceUSD, "USD", "TRY")
-      );
-      firstPlan.fiyat = specialPriceUSD;
-
-      if (nextFloorPlans.length > 0) {
-        nextFloorPlans[0] = firstPlan;
-      } else {
-        nextFloorPlans = [firstPlan];
-      }
-    }
+    const nextFloorPlans = [...form.values.dairePlanlari];
 
     let nextYakinMesafeler = form.values.yakinMesafeler.filter(
       (m) => m.yer.trim() !== ""
