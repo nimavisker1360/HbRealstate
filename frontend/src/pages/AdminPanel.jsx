@@ -4892,6 +4892,7 @@ const AdminPanel = () => {
                                       muted
                                       playsInline
                                       preload="metadata"
+                                      onLoadedMetadata={(e) => { e.target.currentTime = 0.1; }}
                                     />
                                   ) : line.image ? (
                                     <img
@@ -4993,6 +4994,7 @@ const AdminPanel = () => {
                                 muted
                                 playsInline
                                 preload="metadata"
+                                onLoadedMetadata={(e) => { e.target.currentTime = 0.1; }}
                               />
                             ) : block.image ? (
                               <img
@@ -5629,6 +5631,7 @@ const AdminPanel = () => {
                                       muted
                                       playsInline
                                       preload="metadata"
+                                      onLoadedMetadata={(e) => { e.target.currentTime = 0.1; }}
                                     />
                                   ) : line.image ? (
                                     <img
@@ -5730,6 +5733,7 @@ const AdminPanel = () => {
                                 muted
                                 playsInline
                                 preload="metadata"
+                                onLoadedMetadata={(e) => { e.target.currentTime = 0.1; }}
                               />
                             ) : block.image ? (
                               <img

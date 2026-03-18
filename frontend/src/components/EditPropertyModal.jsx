@@ -2993,10 +2993,15 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
                     src={url}
                     className="h-full w-full object-cover"
                     muted
+                    preload="metadata"
+                    playsInline
+                    onLoadedMetadata={(e) => {
+                      e.target.currentTime = 0.1;
+                    }}
                     onMouseEnter={(e) => e.target.play()}
                     onMouseLeave={(e) => {
                       e.target.pause();
-                      e.target.currentTime = 0;
+                      e.target.currentTime = 0.1;
                     }}
                   />
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -3010,7 +3015,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
                     <AiOutlineClose size={12} />
                   </button>
                   <span className="absolute bottom-1 left-1 bg-purple-600 text-white text-[10px] px-1 py-0.5 rounded">
-                    Video
+                    Video {index + 1}
                   </span>
                 </div>
               ))}

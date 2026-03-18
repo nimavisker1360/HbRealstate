@@ -122,10 +122,15 @@ const UploadImage = ({
                   src={url}
                   className="h-full w-full object-cover"
                   muted
+                  preload="metadata"
+                  playsInline
+                  onLoadedMetadata={(e) => {
+                    e.target.currentTime = 0.1;
+                  }}
                   onMouseEnter={(e) => e.target.play()}
                   onMouseLeave={(e) => {
                     e.target.pause();
-                    e.target.currentTime = 0;
+                    e.target.currentTime = 0.1;
                   }}
                 />
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
