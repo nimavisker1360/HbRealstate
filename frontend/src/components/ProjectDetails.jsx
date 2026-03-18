@@ -35,6 +35,7 @@ import { FaWheelchair, FaShoppingCart } from "react-icons/fa";
 import useConsultants from "../hooks/useConsultants";
 import CurrencyContext from "../context/CurrencyContext";
 import { pickAndUploadImages } from "../utils/blobUpload";
+import UploadProgressBar from "./UploadProgressBar";
 
 // Feature categories for projects
 const BINA_OZELLIKLERI = [
@@ -269,6 +270,7 @@ const ProjectDetails = ({
   const [imageUploading, setImageUploading] = useState(false);
   const [mapImageUploading, setMapImageUploading] = useState(false);
   const [floorPlanUploading, setFloorPlanUploading] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(null);
   const { data: consultants, isLoading: consultantsLoading } = useConsultants();
   const { convertAmount } = useContext(CurrencyContext);
   const floorPlanBaseCurrency = normalizeFiatCurrency(propertyDetails.currency);
@@ -377,31 +379,45 @@ const ProjectDetails = ({
   const openSitePlanUpload = async () => {
     try {
       setImageUploading(true);
-      const urls = await pickAndUploadImages({ multiple: false });
+      setUploadProgress(0);
+      const urls = await pickAndUploadImages({
+        multiple: false,
+        onProgress: setUploadProgress,
+      });
       if (urls.length) form.setFieldValue("vaziyetPlani", urls[0]);
     } catch (err) {
       console.error("Upload error:", err);
     } finally {
       setImageUploading(false);
+      setUploadProgress(null);
     }
   };
 
   const openMapImageUpload = async () => {
     try {
       setMapImageUploading(true);
-      const urls = await pickAndUploadImages({ multiple: false });
+      setUploadProgress(0);
+      const urls = await pickAndUploadImages({
+        multiple: false,
+        onProgress: setUploadProgress,
+      });
       if (urls.length) form.setFieldValue("mapImage", urls[0]);
     } catch (err) {
       console.error("Upload error:", err);
     } finally {
       setMapImageUploading(false);
+      setUploadProgress(null);
     }
   };
 
   const openFloorPlanUpload = async (index) => {
     try {
       setFloorPlanUploading(index);
-      const urls = await pickAndUploadImages({ multiple: false });
+      setUploadProgress(0);
+      const urls = await pickAndUploadImages({
+        multiple: false,
+        onProgress: setUploadProgress,
+      });
       if (urls.length) {
         const plans = [...form.values.dairePlanlari];
         plans[index].image = urls[0];
@@ -411,6 +427,7 @@ const ProjectDetails = ({
       console.error("Upload error:", err);
     } finally {
       setFloorPlanUploading(null);
+      setUploadProgress(null);
     }
   };
 
@@ -1332,6 +1349,7 @@ const ProjectDetails = ({
                   </div>
                 </Button>
               )}
+              {imageUploading && <UploadProgressBar progress={uploadProgress} />}
             </div>
           </Paper>
 
@@ -1394,6 +1412,7 @@ const ProjectDetails = ({
                   </div>
                 </Button>
               )}
+              {mapImageUploading && <UploadProgressBar progress={uploadProgress} />}
             </div>
           </Paper>
 

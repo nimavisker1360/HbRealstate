@@ -4,6 +4,7 @@ import { MdOutlineCloudUpload, MdPlayCircleOutline, MdVideocam } from "react-ico
 import { AiOutlineClose } from "react-icons/ai";
 import PropTypes from "prop-types";
 import { pickAndUploadImages, pickAndUploadVideos } from "../utils/blobUpload";
+import UploadProgressBar from "./UploadProgressBar";
 
 const UploadImage = ({
   prevStep,
@@ -17,6 +18,7 @@ const UploadImage = ({
   );
   const [videoURLs, setVideoURLs] = useState(propertyDetails.videos || []);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(null);
 
   const handleNext = () => {
     setPropertyDetails((prev) => ({
@@ -39,24 +41,34 @@ const UploadImage = ({
   const handleImageUpload = async () => {
     try {
       setUploading(true);
-      const urls = await pickAndUploadImages({ multiple: true });
+      setUploadProgress(0);
+      const urls = await pickAndUploadImages({
+        multiple: true,
+        onProgress: setUploadProgress,
+      });
       if (urls.length) setImageURLs((prev) => [...prev, ...urls]);
     } catch (err) {
       console.error("Image upload error:", err);
     } finally {
       setUploading(false);
+      setUploadProgress(null);
     }
   };
 
   const handleVideoUpload = async () => {
     try {
       setUploading(true);
-      const urls = await pickAndUploadVideos({ multiple: true });
+      setUploadProgress(0);
+      const urls = await pickAndUploadVideos({
+        multiple: true,
+        onProgress: setUploadProgress,
+      });
       if (urls.length) setVideoURLs((prev) => [...prev, ...urls]);
     } catch (err) {
       console.error("Video upload error:", err);
     } finally {
       setUploading(false);
+      setUploadProgress(null);
     }
   };
 
@@ -178,12 +190,7 @@ const UploadImage = ({
           </div>
         )}
 
-        {uploading && (
-          <div className="mt-3 text-center text-sm text-gray-500">
-            <div className="animate-spin inline-block w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full mr-2" />
-            Yükleniyor...
-          </div>
-        )}
+        {uploading && <UploadProgressBar progress={uploadProgress} />}
       </div>
 
       <Group justify="center" mt="xl">

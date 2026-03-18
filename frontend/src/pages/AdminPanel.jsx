@@ -89,6 +89,7 @@ import {
 } from "react-icons/md";
 import { FaStar } from "react-icons/fa6";
 import { pickAndUploadImages, pickAndUploadVideos } from "../utils/blobUpload";
+import UploadProgressBar from "../components/UploadProgressBar";
 
 // DnD Kit imports
 import {
@@ -492,16 +493,19 @@ const AdminPanel = () => {
   const [imageUploading, setImageUploading] = useState(false);
   const [testimonialImageUploading, setTestimonialImageUploading] =
     useState(false);
+  const [uploadProgress, setUploadProgress] = useState(null);
 
   const openConsultantImageUpload = async () => {
     try {
       setImageUploading(true);
-      const urls = await pickAndUploadImages({ multiple: false });
+      setUploadProgress(0);
+      const urls = await pickAndUploadImages({ multiple: false, onProgress: setUploadProgress });
       if (urls.length) setConsultantForm((prev) => ({ ...prev, image: urls[0] }));
     } catch (err) {
       console.error("Image upload error:", err);
     } finally {
       setImageUploading(false);
+      setUploadProgress(null);
     }
   };
 
@@ -512,12 +516,14 @@ const AdminPanel = () => {
   const openTestimonialImageUpload = async () => {
     try {
       setTestimonialImageUploading(true);
-      const urls = await pickAndUploadImages({ multiple: false });
+      setUploadProgress(0);
+      const urls = await pickAndUploadImages({ multiple: false, onProgress: setUploadProgress });
       if (urls.length) setTestimonialForm((prev) => ({ ...prev, image: urls[0] }));
     } catch (err) {
       console.error("Image upload error:", err);
     } finally {
       setTestimonialImageUploading(false);
+      setUploadProgress(null);
     }
   };
 
@@ -538,48 +544,56 @@ const AdminPanel = () => {
   const openBlogImageUpload = async () => {
     try {
       setBlogImageUploading(true);
-      const urls = await pickAndUploadImages({ multiple: false });
+      setUploadProgress(0);
+      const urls = await pickAndUploadImages({ multiple: false, onProgress: setUploadProgress });
       if (urls.length) setBlogForm((prev) => ({ ...prev, image: urls[0] }));
     } catch (err) {
       console.error("Image upload error:", err);
     } finally {
       setBlogImageUploading(false);
+      setUploadProgress(null);
     }
   };
 
   const openAiBlogImageUpload = async () => {
     try {
       setAiBlogImageUploading(true);
-      const urls = await pickAndUploadImages({ multiple: false });
+      setUploadProgress(0);
+      const urls = await pickAndUploadImages({ multiple: false, onProgress: setUploadProgress });
       if (urls.length) setAiBlogForm((prev) => ({ ...prev, image: urls[0] }));
     } catch (err) {
       console.error("Image upload error:", err);
     } finally {
       setAiBlogImageUploading(false);
+      setUploadProgress(null);
     }
   };
 
   const openBlogVideoUpload = async () => {
     try {
       setBlogVideoUploading(true);
-      const urls = await pickAndUploadVideos({ multiple: false });
+      setUploadProgress(0);
+      const urls = await pickAndUploadVideos({ multiple: false, onProgress: setUploadProgress });
       if (urls.length) setBlogForm((prev) => ({ ...prev, video: urls[0] }));
     } catch (err) {
       console.error("Video upload error:", err);
     } finally {
       setBlogVideoUploading(false);
+      setUploadProgress(null);
     }
   };
 
   const openBlogGalleryUpload = async () => {
     try {
       setBlogGalleryUploading(true);
-      const urls = await pickAndUploadImages({ multiple: true });
+      setUploadProgress(0);
+      const urls = await pickAndUploadImages({ multiple: true, onProgress: setUploadProgress });
       if (urls.length) setBlogForm((prev) => ({ ...prev, images: [...(prev.images || []), ...urls] }));
     } catch (err) {
       console.error("Image upload error:", err);
     } finally {
       setBlogGalleryUploading(false);
+      setUploadProgress(null);
     }
   };
 
@@ -709,7 +723,8 @@ const AdminPanel = () => {
     try {
       setBlockImageUploadingIndex(index);
       setLineImageUploadingKey(null);
-      const urls = await pickAndUploadImages({ multiple: false });
+      setUploadProgress(0);
+      const urls = await pickAndUploadImages({ multiple: false, onProgress: setUploadProgress });
       if (urls.length && index !== null) {
         setBlogForm((prev) => {
           const field = getBlocksField(lang);
@@ -723,6 +738,7 @@ const AdminPanel = () => {
       console.error("Image upload error:", err);
     } finally {
       setBlockImageUploadingIndex(null);
+      setUploadProgress(null);
     }
   };
 
@@ -730,7 +746,8 @@ const AdminPanel = () => {
     try {
       setBlockVideoUploadingIndex(index);
       setLineVideoUploadingKey(null);
-      const urls = await pickAndUploadVideos({ multiple: false });
+      setUploadProgress(0);
+      const urls = await pickAndUploadVideos({ multiple: false, onProgress: setUploadProgress });
       if (urls.length && index !== null) {
         setBlogForm((prev) => {
           const field = getBlocksField(lang);
@@ -744,6 +761,7 @@ const AdminPanel = () => {
       console.error("Video upload error:", err);
     } finally {
       setBlockVideoUploadingIndex(null);
+      setUploadProgress(null);
     }
   };
 
@@ -758,7 +776,8 @@ const AdminPanel = () => {
     try {
       setBlockImageUploadingIndex(null);
       setLineImageUploadingKey(getLineUploadKey(blockIndex, lineIndex, lang));
-      const urls = await pickAndUploadImages({ multiple: false });
+      setUploadProgress(0);
+      const urls = await pickAndUploadImages({ multiple: false, onProgress: setUploadProgress });
       if (urls.length) {
         setBlogForm((prev) => {
           const field = getBlocksField(lang);
@@ -775,6 +794,7 @@ const AdminPanel = () => {
       console.error("Image upload error:", err);
     } finally {
       setLineImageUploadingKey(null);
+      setUploadProgress(null);
     }
   };
 
@@ -786,7 +806,8 @@ const AdminPanel = () => {
     try {
       setBlockVideoUploadingIndex(null);
       setLineVideoUploadingKey(getLineUploadKey(blockIndex, lineIndex, lang));
-      const urls = await pickAndUploadVideos({ multiple: false });
+      setUploadProgress(0);
+      const urls = await pickAndUploadVideos({ multiple: false, onProgress: setUploadProgress });
       if (urls.length) {
         setBlogForm((prev) => {
           const field = getBlocksField(lang);
@@ -803,6 +824,7 @@ const AdminPanel = () => {
       console.error("Video upload error:", err);
     } finally {
       setLineVideoUploadingKey(null);
+      setUploadProgress(null);
     }
   };
 
@@ -1970,6 +1992,7 @@ const AdminPanel = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pt-24 pb-12">
+      <UploadProgressBar progress={uploadProgress} floating />
       <Container size="xl">
         {/* Admin Header */}
         <Paper shadow="sm" p="lg" radius="md" className="mb-6">

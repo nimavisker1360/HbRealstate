@@ -43,7 +43,7 @@ export function openFileDialog({ accept, multiple = false }) {
   });
 }
 
-export async function pickAndUploadImages({ multiple = true } = {}) {
+export async function pickAndUploadImages({ multiple = true, onProgress } = {}) {
   const files = await openFileDialog({
     accept: IMAGE_ACCEPT,
     multiple,
@@ -51,13 +51,13 @@ export async function pickAndUploadImages({ multiple = true } = {}) {
   if (!files.length) return [];
 
   if (files.length === 1) {
-    const url = await uploadFileToBlob(files[0]);
+    const url = await uploadFileToBlob(files[0], onProgress);
     return [url];
   }
-  return uploadFilesToBlob(files);
+  return uploadFilesToBlob(files, onProgress);
 }
 
-export async function pickAndUploadVideos({ multiple = true } = {}) {
+export async function pickAndUploadVideos({ multiple = true, onProgress } = {}) {
   const files = await openFileDialog({
     accept: VIDEO_ACCEPT,
     multiple,
@@ -65,10 +65,10 @@ export async function pickAndUploadVideos({ multiple = true } = {}) {
   if (!files.length) return [];
 
   if (files.length === 1) {
-    const url = await uploadFileToBlob(files[0]);
+    const url = await uploadFileToBlob(files[0], onProgress);
     return [url];
   }
-  return uploadFilesToBlob(files);
+  return uploadFilesToBlob(files, onProgress);
 }
 
 export { IMAGE_ACCEPT, VIDEO_ACCEPT };

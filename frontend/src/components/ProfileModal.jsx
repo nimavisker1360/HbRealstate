@@ -27,6 +27,7 @@ import {
 } from "react-icons/md";
 import { FaWhatsapp } from "react-icons/fa6";
 import { pickAndUploadImages } from "../utils/blobUpload";
+import UploadProgressBar from "./UploadProgressBar";
 
 const ProfileModal = ({ opened, setOpened }) => {
   const { t } = useTranslation();
@@ -39,6 +40,7 @@ const ProfileModal = ({ opened, setOpened }) => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -95,12 +97,17 @@ const ProfileModal = ({ opened, setOpened }) => {
   const openImageUpload = async () => {
     try {
       setImageUploading(true);
-      const urls = await pickAndUploadImages({ multiple: false });
+      setUploadProgress(0);
+      const urls = await pickAndUploadImages({
+        multiple: false,
+        onProgress: setUploadProgress,
+      });
       if (urls.length) setFormData((prev) => ({ ...prev, image: urls[0] }));
     } catch (err) {
       console.error("Image upload error:", err);
     } finally {
       setImageUploading(false);
+      setUploadProgress(null);
     }
   };
 
@@ -255,6 +262,7 @@ const ProfileModal = ({ opened, setOpened }) => {
                 {t("profile.change")}
               </Button>
             )}
+            {imageUploading && <UploadProgressBar progress={uploadProgress} />}
           </div>
 
           {/* Form Fields */}

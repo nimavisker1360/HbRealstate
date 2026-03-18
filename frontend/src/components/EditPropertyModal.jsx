@@ -55,6 +55,7 @@ import { AiOutlineClose } from "react-icons/ai";
 import { BsHouseDoor, BsTree, BsLightningCharge, BsGeoAlt, BsGrid, BsEye, BsBuilding, BsShield, BsPeople } from "react-icons/bs";
 import { FaLandmark, FaHome, FaBriefcase, FaWheelchair, FaShoppingCart } from "react-icons/fa";
 import { pickAndUploadImages, pickAndUploadVideos } from "../utils/blobUpload";
+import UploadProgressBar from "./UploadProgressBar";
 
 // Sortable Image Component
 const SortableImage = ({ url, index, onRemove }) => {
@@ -577,6 +578,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
   const [exteriorOpened, { toggle: toggleExterior }] = useDisclosure(false);
   const [muhitOpened, { toggle: toggleMuhit }] = useDisclosure(false);
   const [mediaUploading, setMediaUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(null);
 
   // Turkish real estate fields state
   const [listingNo, setListingNo] = useState("");
@@ -925,53 +927,82 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
     }
   }, [property]);
 
-  // Blob upload handlers for images/videos
   const handleImageUpload = async () => {
     try {
-      const urls = await pickAndUploadImages({ multiple: true });
+      setMediaUploading(true);
+      setUploadProgress(0);
+      const urls = await pickAndUploadImages({
+        multiple: true,
+        onProgress: setUploadProgress,
+      });
       if (urls.length) setImageURLs((prev) => [...prev, ...urls]);
     } catch (err) {
       console.error("Image upload error:", err);
+    } finally {
+      setMediaUploading(false);
+      setUploadProgress(null);
     }
   };
 
   const handleVideoUpload = async () => {
     try {
-      const urls = await pickAndUploadVideos({ multiple: true });
+      setMediaUploading(true);
+      setUploadProgress(0);
+      const urls = await pickAndUploadVideos({
+        multiple: true,
+        onProgress: setUploadProgress,
+      });
       if (urls.length) setVideoURLs((prev) => [...prev, ...urls]);
     } catch (err) {
       console.error("Video upload error:", err);
+    } finally {
+      setMediaUploading(false);
+      setUploadProgress(null);
     }
   };
 
   const openVaziyetPlaniUpload = async () => {
     try {
       setVaziyetPlaniUploading(true);
-      const urls = await pickAndUploadImages({ multiple: false });
+      setUploadProgress(0);
+      const urls = await pickAndUploadImages({
+        multiple: false,
+        onProgress: setUploadProgress,
+      });
       if (urls.length) setVaziyetPlani(urls[0]);
     } catch (err) {
       console.error("Upload error:", err);
     } finally {
       setVaziyetPlaniUploading(false);
+      setUploadProgress(null);
     }
   };
 
   const openMapImageUpload = async () => {
     try {
       setMapImageUploading(true);
-      const urls = await pickAndUploadImages({ multiple: false });
+      setUploadProgress(0);
+      const urls = await pickAndUploadImages({
+        multiple: false,
+        onProgress: setUploadProgress,
+      });
       if (urls.length) setMapImage(urls[0]);
     } catch (err) {
       console.error("Upload error:", err);
     } finally {
       setMapImageUploading(false);
+      setUploadProgress(null);
     }
   };
 
   const openFloorPlanUpload = async (index) => {
     try {
       setFloorPlanUploading(index);
-      const urls = await pickAndUploadImages({ multiple: false });
+      setUploadProgress(0);
+      const urls = await pickAndUploadImages({
+        multiple: false,
+        onProgress: setUploadProgress,
+      });
       if (urls.length) {
         const updated = [...dairePlanlari];
         updated[index].image = urls[0];
@@ -981,6 +1012,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
       console.error("Upload error:", err);
     } finally {
       setFloorPlanUploading(null);
+      setUploadProgress(null);
     }
   };
 
@@ -3020,6 +3052,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
               </div>
             </div>
           )}
+          {mediaUploading && <UploadProgressBar progress={uploadProgress} />}
         </div>
 
         {/* Actions */}
