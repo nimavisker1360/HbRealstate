@@ -6,7 +6,8 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import icon from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
-import { buildEmailHref, buildTelHref } from "../utils/common";
+import { buildEmailHref } from "../utils/common";
+import PhoneLink from "../components/PhoneLink";
 import { PRIMARY_CONTACT_PHONE } from "../constant/data";
 
 // Fix leaflet default icon
@@ -120,17 +121,16 @@ const Addresses = () => {
             <div className="mt-8 pt-6 border-t border-white/20">
               <h3 className="font-semibold text-white mb-4">{t("addresses.contactTitle")}</h3>
               
-              <a
-                href={buildTelHref(contactInfo.phone)}
-                className="phone-click-link flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors"
-                data-track-phone-click="true"
+              <PhoneLink
+                phone={contactInfo.phone}
+                className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors"
               >
                 <MdPhone className="text-[#06a84e] text-xl" />
                 <div>
                   <p className="text-xs text-white/50">{t("contact.contactNumber")}</p>
                   <p className="text-sm font-medium text-white">{contactInfo.phone}</p>
                 </div>
-              </a>
+              </PhoneLink>
 
               <a
                 href={buildEmailHref(contactInfo.email)}

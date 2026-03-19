@@ -41,7 +41,8 @@ import {
 } from "react-icons/bs";
 import { getProperty } from "../utils/api";
 import useConsultants from "../hooks/useConsultants";
-import { buildTelHref, normalizeWhatsAppNumber } from "../utils/common";
+import { normalizeWhatsAppNumber } from "../utils/common";
+import PhoneLink from "../components/PhoneLink";
 import {
   getOptimizedImageUrl,
   getOptimizedVideoPosterUrl,
@@ -1637,16 +1638,13 @@ const ProjectDetail = () => {
                     </div>
 
                     <div className="space-y-2">
-                      {projectConsultant.phone && (
-                        <a
-                          href={buildTelHref(projectConsultant.phone)}
-                          className="phone-click-link flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 transition-colors hover:border-green-500 hover:text-green-600"
-                          data-track-phone-click="true"
-                        >
-                          <FaPhone className="text-gray-500" />
-                          <span dir="ltr">{projectConsultant.phone}</span>
-                        </a>
-                      )}
+                      <PhoneLink
+                        phone={projectConsultant.phone}
+                        className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 transition-colors hover:border-green-500 hover:text-green-600"
+                      >
+                        <FaPhone className="text-gray-500" />
+                        <span dir="ltr">{projectConsultant.phone}</span>
+                      </PhoneLink>
                       {consultantWhatsApp && (
                         <a
                           href={`https://wa.me/${consultantWhatsApp}`}

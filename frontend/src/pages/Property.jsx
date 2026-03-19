@@ -14,7 +14,8 @@ import CurrencyContext from "../context/CurrencyContext";
 import { Button, Avatar } from "@mantine/core";
 import { toast } from "react-toastify";
 import { bilingualKey } from "../utils/bilingualToast";
-import { buildTelHref, normalizeWhatsAppNumber } from "../utils/common";
+import { normalizeWhatsAppNumber } from "../utils/common";
+import PhoneLink from "../components/PhoneLink";
 import {
   MdOutlineBed,
   MdOutlineBathtub,
@@ -1400,16 +1401,13 @@ const Property = () => {
 
               {/* Contact Buttons */}
               <div className="space-y-2">
-                {data?.consultant?.phone && (
-                  <a
-                    href={buildTelHref(data.consultant.phone)}
-                    className="phone-click-link flexCenter gap-2 rounded-2xl bg-white py-3 text-sm font-medium text-tertiary w-full select-text"
-                    data-track-phone-click="true"
-                  >
-                    <FaPhone className="text-secondary" />
-                    <span dir="ltr">{data.consultant.phone}</span>
-                  </a>
-                )}
+                <PhoneLink
+                  phone={data?.consultant?.phone}
+                  className="flexCenter gap-2 rounded-2xl bg-white py-3 text-sm font-medium text-tertiary w-full select-text"
+                >
+                  <FaPhone className="text-secondary" />
+                  <span dir="ltr">{data.consultant.phone}</span>
+                </PhoneLink>
                 <a
                   href={`https://wa.me/${whatsappNumber}`}
                   target="_blank"
