@@ -217,6 +217,22 @@ const getTranslatedFeature = (feature, language) => {
   return feature;
 };
 
+const getYouTubeEmbedUrl = (url) => {
+  if (!url) return null;
+  let videoId = null;
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname.includes("youtube.com")) {
+      videoId = parsed.searchParams.get("v");
+    } else if (parsed.hostname === "youtu.be") {
+      videoId = parsed.pathname.slice(1);
+    }
+  } catch {
+    return null;
+  }
+  return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
+};
+
 const hasSpecialOfferData = (specialOffer) =>
   Boolean(
     specialOffer &&
@@ -318,6 +334,7 @@ const ProjectDetail = () => {
   const [floorPlanModal, setFloorPlanModal] = useState({ open: false, plan: null });
   const [sitePlanModalOpen, setSitePlanModalOpen] = useState(false);
   const [videoModalOpen, setVideoModalOpen] = useState(false);
+  const [showYouTube, setShowYouTube] = useState(false);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [isLightboxMediaLoaded, setIsLightboxMediaLoaded] = useState(true);
   const [isMainVideoPreviewActive, setIsMainVideoPreviewActive] = useState(false);
@@ -902,19 +919,30 @@ const ProjectDetail = () => {
                     </span>
                   </button>
                   <span className="text-gray-300">|</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (project.brochureUrl) {
-                        window.open(project.brochureUrl, "_blank", "noopener,noreferrer");
-                      }
-                    }}
-                    disabled={!project.brochureUrl}
-                    className="flex items-center gap-2 text-gray-600 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <MdDescription size={18} />
-                    <span className="text-sm">{t("projectDetail.brochure")}</span>
-                  </button>
+                  {getYouTubeEmbedUrl(project.brochureUrl) ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowYouTube((prev) => !prev)}
+                      className="flex items-center gap-2 text-red-600 hover:text-red-700"
+                    >
+                      <MdPlayCircle size={18} />
+                      <span className="text-sm">YouTube</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (project.brochureUrl) {
+                          window.open(project.brochureUrl, "_blank", "noopener,noreferrer");
+                        }
+                      }}
+                      disabled={!project.brochureUrl}
+                      className="flex items-center gap-2 text-gray-600 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <MdDescription size={18} />
+                      <span className="text-sm">{t("projectDetail.brochure")}</span>
+                    </button>
+                  )}
                 </div>
 
                 {/* Right: Price and Delivery */}
@@ -957,6 +985,20 @@ const ProjectDetail = () => {
                 </div>
               </div>
             </div>
+
+            {showYouTube && getYouTubeEmbedUrl(project.brochureUrl) && (
+              <div className="mb-6 overflow-hidden rounded-xl border border-slate-200 shadow-sm">
+                <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
+                  <iframe
+                    className="absolute inset-0 h-full w-full"
+                    src={getYouTubeEmbedUrl(project.brochureUrl)}
+                    title={project.projectName || project.name || "YouTube Video"}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
+              </div>
+            )}
 
             <div className="mb-8 flex justify-center">
               <div className="inline-flex flex-wrap items-center justify-center gap-2 rounded-full border border-slate-200 bg-slate-50 p-1">

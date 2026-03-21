@@ -2483,11 +2483,11 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
             <Grid mt="md">
               <Grid.Col span={12}>
                 <TextInput
-                  label="Brochure URL"
-                  placeholder="https://.../project-brochure.pdf"
+                  label="Brochure URL / YouTube Link"
+                  placeholder="https://www.youtube.com/watch?v=... or https://.../brochure.pdf"
                   value={brochureUrl}
                   onChange={(event) => setBrochureUrl(event.currentTarget.value)}
-                  description="Used for automatic WhatsApp brochure delivery."
+                  description="YouTube video link or PDF brochure for WhatsApp delivery."
                 />
               </Grid.Col>
               <Grid.Col span={6}>

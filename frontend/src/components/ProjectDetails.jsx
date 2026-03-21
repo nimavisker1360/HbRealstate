@@ -1325,17 +1325,17 @@ const ProjectDetails = ({
           <Paper p="lg" withBorder mb="lg" className="bg-amber-50">
             <div className="flex items-center gap-2 mb-4">
               <MdInfo size={24} className="text-amber-600" />
-              <Text fw={700} size="lg" c="yellow.8">Brochure PDF</Text>
+              <Text fw={700} size="lg" c="yellow.8">Brochure / YouTube</Text>
             </div>
 
             <TextInput
-              label="Brochure URL"
-              placeholder="https://..."
+              label="Brochure URL / YouTube Link"
+              placeholder="https://www.youtube.com/watch?v=... or https://.../brochure.pdf"
               value={form.values.brochureUrl}
               onChange={(event) =>
                 form.setFieldValue("brochureUrl", event.currentTarget.value)
               }
-              description="PDF brochure link used for automatic WhatsApp delivery."
+              description="YouTube video link or PDF brochure for WhatsApp delivery."
             />
           </Paper>
 
