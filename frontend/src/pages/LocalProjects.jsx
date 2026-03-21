@@ -263,7 +263,7 @@ const hasSpecialOfferData = (specialOffer) =>
         specialOffer.title ||
         specialOffer.roomType ||
         Number(specialOffer.areaM2 || 0) > 0 ||
-        Number(specialOffer.priceUSD || 0) > 0 ||
+        Number(specialOffer.priceGBP || specialOffer.priceUSD || 0) > 0 ||
         Number(specialOffer.downPaymentAmount || 0) > 0 ||
         Number(specialOffer.downPaymentPercent || 0) > 0 ||
         Number(specialOffer.installmentMonths || 0) > 0 ||
@@ -349,7 +349,7 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
         p.dairePlanlari
           ?.map((d) => Number(d.fiyat || d.fiyatUSD || 0))
           .filter((price) => price > 0) || [];
-      const specialOfferPrice = Number(activeSpecialOffer.priceUSD || 0);
+      const specialOfferPrice = Number(activeSpecialOffer.priceGBP || activeSpecialOffer.priceUSD || 0);
       const startingPrice =
         Number(p.price || 0) > 0
           ? Number(p.price || 0)
@@ -362,7 +362,7 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
         Number(p.price || 0) > 0
           ? p.currency || baseCurrency
           : specialOfferPrice > 0
-          ? "USD"
+          ? "GBP"
           : p.currency || baseCurrency;
 
       const roomTypes = [
@@ -410,7 +410,7 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
           title: activeSpecialOffer.title || p.projectName || p.title || "",
           roomType: activeSpecialOffer.roomType || roomTypes[0] || "",
           areaM2: Number(activeSpecialOffer.areaM2 || areaMin || 0),
-          priceUSD: specialOfferPrice || startingPrice || 0,
+          priceGBP: specialOfferPrice || startingPrice || 0,
           downPaymentAmount: Number(
             activeSpecialOffer.downPaymentAmount ??
               activeSpecialOffer.downPaymentPercent ??

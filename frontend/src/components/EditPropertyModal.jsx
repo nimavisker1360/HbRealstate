@@ -487,7 +487,7 @@ const hasSpecialOfferData = (specialOffer) =>
         specialOffer.title ||
         specialOffer.roomType ||
         Number(specialOffer.areaM2 || 0) > 0 ||
-        Number(specialOffer.priceUSD || 0) > 0 ||
+        Number(specialOffer.priceGBP || specialOffer.priceUSD || 0) > 0 ||
         Number(specialOffer.downPaymentAmount || 0) > 0 ||
         Number(specialOffer.downPaymentPercent || 0) > 0 ||
         Number(specialOffer.installmentMonths || 0) > 0 ||
@@ -506,7 +506,7 @@ const createSpecialOfferDraft = (overrides = {}) => {
     title: String(overrides.title || ""),
     roomType: String(overrides.roomType || ""),
     areaM2: Number(overrides.areaM2) || 0,
-    priceUSD: toRoundedPrice(overrides.priceUSD),
+    priceGBP: toRoundedPrice(overrides.priceGBP || overrides.priceUSD),
     downPaymentPercent: downPayment,
     downPaymentAmount: downPayment,
     installmentMonths: Number(overrides.installmentMonths) || 0,
@@ -533,8 +533,9 @@ const getInitialSpecialOffers = (property = {}) => {
       title: property.projectName || "",
       roomType: property.dairePlanlari?.[0]?.tip || "",
       areaM2: Number(property.dairePlanlari?.[0]?.metrekare || 0),
-      priceUSD: toRoundedPrice(
-        property.dairePlanlari?.[0]?.fiyatUSD ||
+      priceGBP: toRoundedPrice(
+        property.dairePlanlari?.[0]?.fiyatGBP ||
+          property.dairePlanlari?.[0]?.fiyatUSD ||
           property.dairePlanlari?.[0]?.fiyat ||
           0
       ),
@@ -1062,10 +1063,10 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
       areaM2:
         Number(firstOffer.areaM2) ||
         Number(dairePlanlari?.[0]?.metrekare || 0),
-      priceUSD:
-        Number(firstOffer.priceUSD) ||
+      priceGBP:
+        Number(firstOffer.priceGBP || firstOffer.priceUSD) ||
         toRoundedPrice(
-          dairePlanlari?.[0]?.fiyatUSD || dairePlanlari?.[0]?.fiyat || 0
+          dairePlanlari?.[0]?.fiyatGBP || dairePlanlari?.[0]?.fiyatUSD || dairePlanlari?.[0]?.fiyat || 0
         ),
       downPaymentPercent: Number(firstOffer.downPaymentPercent || 0),
       installmentMonths: Number(firstOffer.installmentMonths || 0),
@@ -1151,7 +1152,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
           title: String(offer?.title || projectName || "").trim(),
           roomType: String(offer?.roomType || "").trim(),
           areaM2: Number(offer?.areaM2) || 0,
-          priceUSD: toRoundedPrice(offer?.priceUSD),
+          priceGBP: toRoundedPrice(offer?.priceGBP || offer?.priceUSD),
           downPaymentPercent: downPaymentValue,
           downPaymentAmount: downPaymentValue,
           installmentMonths: Number(offer?.installmentMonths) || 0,
@@ -1167,7 +1168,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
       primarySpecialOffer?.roomType || ""
     ).trim();
     const specialOfferAreaValue = Number(primarySpecialOffer?.areaM2 || 0);
-    const specialOfferPriceValue = toRoundedPrice(primarySpecialOffer?.priceUSD);
+    const specialOfferPriceValue = toRoundedPrice(primarySpecialOffer?.priceGBP || primarySpecialOffer?.priceUSD);
     const specialOfferDownPaymentValue = Number(
       primarySpecialOffer?.downPaymentPercent || 0
     );
@@ -1205,7 +1206,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
                 title: specialOfferTitleValue,
                 roomType: specialOfferRoomTypeValue,
                 areaM2: specialOfferAreaValue,
-                priceUSD: specialOfferPriceValue,
+                priceGBP: specialOfferPriceValue,
                 downPaymentPercent: specialOfferDownPaymentValue,
                 downPaymentAmount: specialOfferDownPaymentValue,
                 installmentMonths: specialOfferInstallmentValue,
@@ -2269,19 +2270,19 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
                       <Grid mt="xs">
                         <Grid.Col span={3}>
                           <NumberInput
-                            label="Price (USD)"
+                            label="Price (GBP)"
                             min={0}
                             thousandSeparator="."
                             decimalSeparator=","
-                            value={offer.priceUSD ?? 0}
+                            value={offer.priceGBP ?? 0}
                             onChange={(value) =>
-                              updateSpecialOfferField(index, "priceUSD", Number(value) || 0)
+                              updateSpecialOfferField(index, "priceGBP", Number(value) || 0)
                             }
                           />
                         </Grid.Col>
                         <Grid.Col span={3}>
                           <NumberInput
-                            label="Down Payment (USD)"
+                            label="Down Payment (GBP)"
                             min={0}
                             thousandSeparator="."
                             decimalSeparator=","

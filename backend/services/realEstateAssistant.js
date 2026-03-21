@@ -86,8 +86,10 @@ const readPositiveEnvNumber = (name, fallback) => {
 // Exchange assumptions for chat budget filtering (override via backend/.env).
 // ASSISTANT_TRY_PER_USD: how many TRY for 1 USD.
 // ASSISTANT_USD_PER_EUR: how many USD for 1 EUR.
+// ASSISTANT_USD_PER_GBP: how many USD for 1 GBP.
 const ASSISTANT_TRY_PER_USD = readPositiveEnvNumber("ASSISTANT_TRY_PER_USD", 36);
 const ASSISTANT_USD_PER_EUR = readPositiveEnvNumber("ASSISTANT_USD_PER_EUR", 1.08);
+const ASSISTANT_USD_PER_GBP = readPositiveEnvNumber("ASSISTANT_USD_PER_GBP", 1.27);
 
 function toFoldedText(value = "") {
   return String(value || "")
@@ -393,6 +395,7 @@ function hasSpecialOfferData(specialOffer) {
         normalizeString(specialOffer.title) ||
         normalizeString(specialOffer.roomType) ||
         normalizeNumber(specialOffer.areaM2, 0) > 0 ||
+        normalizeNumber(specialOffer.priceGBP, 0) > 0 ||
         normalizeNumber(specialOffer.priceUSD, 0) > 0 ||
         normalizeNumber(downPayment, 0) > 0 ||
         normalizeNumber(specialOffer.installmentMonths, 0) > 0 ||
@@ -411,7 +414,12 @@ function collectSpecialOfferPrices(property = {}, roomFilter = "") {
     const offerRoom = normalizeRoomToken(offer?.roomType);
     if (targetRoom && (!offerRoom || offerRoom !== targetRoom)) continue;
 
-    if (hasPositiveNumber(offer?.priceUSD)) {
+    if (hasPositiveNumber(offer?.priceGBP)) {
+      prices.push({
+        value: normalizeNumber(offer.priceGBP, 0),
+        currency: "GBP",
+      });
+    } else if (hasPositiveNumber(offer?.priceUSD)) {
       prices.push({
         value: normalizeNumber(offer.priceUSD, 0),
         currency: "USD",
@@ -500,11 +508,13 @@ function convertPrice(value, fromCurrency, toCurrency) {
   if (from === "USD") usdValue = amount;
   if (from === "TRY") usdValue = amount / ASSISTANT_TRY_PER_USD;
   if (from === "EUR") usdValue = amount * ASSISTANT_USD_PER_EUR;
+  if (from === "GBP") usdValue = amount * ASSISTANT_USD_PER_GBP;
   if (!Number.isFinite(usdValue)) return NaN;
 
   if (to === "USD") return usdValue;
   if (to === "TRY") return usdValue * ASSISTANT_TRY_PER_USD;
   if (to === "EUR") return usdValue / ASSISTANT_USD_PER_EUR;
+  if (to === "GBP") return usdValue / ASSISTANT_USD_PER_GBP;
   return NaN;
 }
 

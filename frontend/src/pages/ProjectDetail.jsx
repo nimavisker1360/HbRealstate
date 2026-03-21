@@ -224,7 +224,7 @@ const hasSpecialOfferData = (specialOffer) =>
         specialOffer.title ||
         specialOffer.roomType ||
         Number(specialOffer.areaM2 || 0) > 0 ||
-        Number(specialOffer.priceUSD || 0) > 0 ||
+        Number(specialOffer.priceGBP || specialOffer.priceUSD || 0) > 0 ||
         Number(specialOffer.downPaymentAmount || 0) > 0 ||
         Number(specialOffer.downPaymentPercent || 0) > 0 ||
         Number(specialOffer.installmentMonths || 0) > 0 ||
@@ -1084,7 +1084,7 @@ const ProjectDetail = () => {
                               ? `${formatMoney(
                                   convertAmount(
                                     specialOfferDownPaymentAmount,
-                                    "USD",
+                                    "GBP",
                                     displayCurrency
                                   ),
                                   displayCurrency,
@@ -1099,28 +1099,38 @@ const ProjectDetail = () => {
                           </div>
                         </div>
 
-                        <div className="flex flex-wrap items-end justify-between gap-3 border-t border-rose-100 pt-3">
-                          <div>
-                            <div className="text-xs text-slate-500">{t("projectDetail.startingFrom")}</div>
-                            <div className="text-2xl font-extrabold text-rose-700">
-                              {formatMoney(
-                                convertAmount(
-                                  Number(offer.priceUSD || project.price || 0),
-                                  Number(offer.priceUSD || 0) > 0
-                                    ? "USD"
-                                    : project.currency || baseCurrency,
-                                  displayCurrency
-                                ),
-                                displayCurrency,
-                                i18n.language === "tr" ? "tr-TR" : "en-US"
-                              )}
+                        <div className="border-t border-rose-100 pt-3">
+                          <div className="flex flex-wrap items-end justify-between gap-3">
+                            <div>
+                              <div className="text-xs text-slate-500">{t("projectDetail.startingFrom")}</div>
+                              <div className="text-2xl font-extrabold text-rose-700">
+                                {formatMoney(
+                                  Number(offer.priceGBP || offer.priceUSD || project.price || 0),
+                                  "GBP",
+                                  i18n.language === "tr" ? "tr-TR" : "en-US"
+                                )}
+                              </div>
                             </div>
+                            {specialOfferLocationText && (
+                              <div className="text-sm font-medium text-slate-700">
+                                {specialOfferLocationText}
+                              </div>
+                            )}
                           </div>
-                          {specialOfferLocationText && (
-                            <div className="text-sm font-medium text-slate-700">
-                              {specialOfferLocationText}
-                            </div>
-                          )}
+                          {(() => {
+                            const gbpPrice = Number(offer.priceGBP || offer.priceUSD || project.price || 0);
+                            if (gbpPrice <= 0) return null;
+                            const locale = i18n.language === "tr" ? "tr-TR" : "en-US";
+                            return (
+                              <div className="mt-2 flex flex-wrap gap-3 text-sm text-slate-600">
+                                <span>{formatMoney(convertAmount(gbpPrice, "GBP", "TRY"), "TRY", locale)}</span>
+                                <span className="text-slate-300">|</span>
+                                <span>{formatMoney(convertAmount(gbpPrice, "GBP", "USD"), "USD", locale)}</span>
+                                <span className="text-slate-300">|</span>
+                                <span>{formatMoney(convertAmount(gbpPrice, "GBP", "EUR"), "EUR", locale)}</span>
+                              </div>
+                            );
+                          })()}
                         </div>
                       </div>
                     );

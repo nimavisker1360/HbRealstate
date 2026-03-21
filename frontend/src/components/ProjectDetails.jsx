@@ -192,7 +192,7 @@ const hasSpecialOfferData = (specialOffer) =>
         specialOffer.title ||
         specialOffer.roomType ||
         Number(specialOffer.areaM2 || 0) > 0 ||
-        Number(specialOffer.priceUSD || 0) > 0 ||
+        Number(specialOffer.priceGBP || specialOffer.priceUSD || 0) > 0 ||
         Number(specialOffer.downPaymentAmount || 0) > 0 ||
         Number(specialOffer.downPaymentPercent || 0) > 0 ||
         Number(specialOffer.installmentMonths || 0) > 0 ||
@@ -211,7 +211,7 @@ const createSpecialOfferDraft = (overrides = {}) => {
     title: String(overrides.title || ""),
     roomType: String(overrides.roomType || ""),
     areaM2: Number(overrides.areaM2) || 0,
-    priceUSD: toRoundedPrice(overrides.priceUSD),
+    priceGBP: toRoundedPrice(overrides.priceGBP || overrides.priceUSD),
     downPaymentPercent: downPayment,
     downPaymentAmount: downPayment,
     installmentMonths: Number(overrides.installmentMonths) || 0,
@@ -238,7 +238,8 @@ const getInitialSpecialOffers = (propertyDetails = {}) => {
       title: propertyDetails.projectName || "",
       roomType: propertyDetails.dairePlanlari?.[0]?.tip || "",
       areaM2: propertyDetails.dairePlanlari?.[0]?.metrekare || 0,
-      priceUSD:
+      priceGBP:
+        propertyDetails.dairePlanlari?.[0]?.fiyatGBP ||
         propertyDetails.dairePlanlari?.[0]?.fiyatUSD ||
         propertyDetails.dairePlanlari?.[0]?.fiyat ||
         0,
@@ -470,10 +471,11 @@ const ProjectDetails = ({
       areaM2:
         Number(firstOffer.areaM2) ||
         Number(form.values.dairePlanlari?.[0]?.metrekare || 0),
-      priceUSD:
-        Number(firstOffer.priceUSD) ||
+      priceGBP:
+        Number(firstOffer.priceGBP || firstOffer.priceUSD) ||
         Number(
-          form.values.dairePlanlari?.[0]?.fiyatUSD ||
+          form.values.dairePlanlari?.[0]?.fiyatGBP ||
+            form.values.dairePlanlari?.[0]?.fiyatUSD ||
             form.values.dairePlanlari?.[0]?.fiyat ||
             0
         ),
@@ -514,7 +516,7 @@ const ProjectDetails = ({
           title: String(offer?.title || form.values.projectName || "").trim(),
           roomType: String(offer?.roomType || "").trim(),
           areaM2: Number(offer?.areaM2) || 0,
-          priceUSD: toRoundedPrice(offer?.priceUSD),
+          priceGBP: toRoundedPrice(offer?.priceGBP || offer?.priceUSD),
           downPaymentPercent: downPaymentValue,
           downPaymentAmount: downPaymentValue,
           installmentMonths: Number(offer?.installmentMonths) || 0,
@@ -525,7 +527,7 @@ const ProjectDetails = ({
       .filter((offer) => hasSpecialOfferData(offer));
 
     const primarySpecialOffer = normalizedSpecialOffers[0] || null;
-    const specialPriceUSD = primarySpecialOffer?.priceUSD || 0;
+    const specialPriceGBP = primarySpecialOffer?.priceGBP || primarySpecialOffer?.priceUSD || 0;
     const specialAreaM2 = Number(primarySpecialOffer?.areaM2 || 0);
     const specialDownPaymentPercent = Number(
       primarySpecialOffer?.downPaymentPercent || 0
@@ -583,11 +585,11 @@ const ProjectDetails = ({
       projectName: form.values.projectName,
       price:
         isSpecialOfferType && isSpecialOfferActive && primarySpecialOffer
-          ? specialPriceUSD
+          ? specialPriceGBP
           : prev.price,
       currency:
         isSpecialOfferType && isSpecialOfferActive && primarySpecialOffer
-          ? "USD"
+          ? "GBP"
           : prev.currency,
       ilanNo: form.values.ilanNo,
       consultantId: form.values.consultantId || null,
@@ -747,20 +749,20 @@ const ProjectDetails = ({
                     <Grid mt="sm">
                       <Grid.Col span={3}>
                         <NumberInput
-                          label="Price (USD)"
+                          label="Price (GBP)"
                           placeholder="299000"
                           min={0}
                           thousandSeparator="."
                           decimalSeparator=","
-                          value={offer.priceUSD ?? 0}
+                          value={offer.priceGBP ?? 0}
                           onChange={(value) =>
-                            updateSpecialOfferField(index, "priceUSD", value)
+                            updateSpecialOfferField(index, "priceGBP", value)
                           }
                         />
                       </Grid.Col>
                       <Grid.Col span={3}>
                         <NumberInput
-                          label="Down Payment (USD)"
+                          label="Down Payment (GBP)"
                           placeholder="149500"
                           min={0}
                           thousandSeparator="."
