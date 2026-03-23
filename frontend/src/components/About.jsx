@@ -140,7 +140,7 @@ const About = () => {
               return (
                 <div
                   key={i}
-                  className="absolute inset-0 w-[240px] sm:w-[280px] h-[320px] sm:h-[380px] rounded-3xl bg-white p-2 shadow-2xl transition-all duration-500 ease-[cubic-bezier(0.33,1,0.68,1)]"
+                  className="absolute inset-0 w-[240px] sm:w-[280px] h-[320px] sm:h-[380px] rounded-3xl bg-white p-2 shadow-2xl overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.33,1,0.68,1)]"
                   style={{
                     zIndex: isHovered ? 40 : pos.zIndex,
                     opacity: pos.opacity,
