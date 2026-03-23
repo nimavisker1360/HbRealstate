@@ -82,12 +82,34 @@ const About = () => {
   const [isMissionExpanded, setIsMissionExpanded] = useState(false);
   const [isFanned, setIsFanned] = useState(false);
   const [hoveredCard, setHoveredCard] = useState(null);
+  const [frozenFrames, setFrozenFrames] = useState({});
 
   const cardData = [
-    { src: "/Arnatakoy.gif", alt: "Arnavutköy", href: "https://www.hbrealstate.com/en/blog/why-invest-in-arnavutky" },
-    { src: "/banner.gif", alt: "Salamis Holiday Home", href: "https://www.hbrealstate.com/en/projects/salamis-holiday-home-apartments-hb-real-estate-69be44337d9987ae6278ad9c" },
+    { src: "/Arnatakoy.gif", alt: "Arnavutköy", href: "https://www.hbrealstate.com/en/blog/why-invest-in-arnavutky", animated: true },
+    { src: "/banner.gif", alt: "Salamis Holiday Home", href: "https://www.hbrealstate.com/en/projects/salamis-holiday-home-apartments-hb-real-estate-69be44337d9987ae6278ad9c", animated: true },
     { src: photoTest, alt: "Property", href: null },
   ];
+
+  const activeCard = isFanned ? hoveredCard : 0;
+
+  useEffect(() => {
+    [
+      { index: 0, src: "/Arnatakoy.gif" },
+      { index: 1, src: "/banner.gif" },
+    ].forEach(({ index, src }) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        canvas.getContext("2d").drawImage(img, 0, 0);
+        try {
+          setFrozenFrames((prev) => ({ ...prev, [index]: canvas.toDataURL() }));
+        } catch {}
+      };
+      img.src = src;
+    });
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -101,7 +123,6 @@ const About = () => {
 
     window.addEventListener("scroll", handleScroll);
 
-    // Cleanup function to remove the event listener
     return () => {
       window.removeEventListener("scroll", handleScroll);
     };
@@ -154,7 +175,7 @@ const About = () => {
                   }}
                 >
                   <img
-                    src={card.src}
+                    src={card.animated && i !== activeCard && frozenFrames[i] ? frozenFrames[i] : card.src}
                     alt={card.alt}
                     loading={i === 0 ? "eager" : "lazy"}
                     className="w-full h-full object-cover rounded-2xl"
