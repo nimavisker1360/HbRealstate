@@ -14,7 +14,7 @@ import LanguageSwitcher from "./LanguageSwitcher";
 import SearchOverlay from "./SearchOverlay";
 import { normalizeWhatsAppNumber } from "../utils/common";
 import { PRIMARY_CONTACT_PHONE } from "../constant/data";
-import logo from "../assets/logo.png";
+
 import CurrencyContext from "../context/CurrencyContext";
 
 const Header = () => {
@@ -211,11 +211,9 @@ const Header = () => {
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-12">
           <div className="flex flex-wrap items-center justify-between gap-3 py-3">
             <Link to={"/"} className="flex items-center gap-x-2">
-              <img
-                src={logo}
-                alt="HB International"
-                className="h-11 sm:h-12 md:h-14 w-auto object-contain"
-              />
+              <span className="text-2xl sm:text-3xl md:text-4xl font-bold text-secondary">
+                Demo
+              </span>
             </Link>
             <div className="flex items-center gap-2 sm:gap-3">
               <button

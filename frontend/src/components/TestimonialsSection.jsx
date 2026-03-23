@@ -96,7 +96,7 @@ const TestimonialsSection = ({
   const useRemote = !Array.isArray(testimonials);
   const { data, isLoading } = useTestimonials({ enabled: useRemote });
 
-  const items = Array.isArray(testimonials) ? testimonials : data || [];
+  const items = Array.isArray(testimonials) ? testimonials : (Array.isArray(data) ? data : []);
   const displayTestimonials = limit ? items.slice(0, limit) : items;
   const sampleTestimonials = [
     {
