@@ -3,7 +3,7 @@ import { loadBackendEnv } from "./loadEnv.js";
 
 loadBackendEnv();
 
-const fallbackAudience = "BxBZ7tbUCQk1y0zngWitB0k0vTdIACft";
+const fallbackAudience = "N7a0UjSNt8egPgXFOZI5EZifFeCekPoP";
 const fallbackIssuerBaseURL = "https://dev-pdz8rd3zuiwyzqzo.us.auth0.com/";
 const auth0Domain = String(process.env.AUTH0_DOMAIN || "")
   .trim()

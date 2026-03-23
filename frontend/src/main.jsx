@@ -22,7 +22,7 @@ const currentPathLanguage = extractLanguageFromPath(window.location.pathname);
 const auth0Domain =
   import.meta.env.VITE_AUTH0_DOMAIN || "dev-pdz8rd3zuiwyzqzo.us.auth0.com";
 const auth0ClientId =
-  import.meta.env.VITE_AUTH0_CLIENT_ID || "BxBZ7tbUCQk1y0zngWitB0k0vTdIACft";
+  import.meta.env.VITE_AUTH0_CLIENT_ID || "N7a0UjSNt8egPgXFOZI5EZifFeCekPoP";
 
 if (!currentPathLanguage) {
   const preferredLanguage = resolvePreferredLanguage("tr");
