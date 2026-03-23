@@ -10,7 +10,7 @@ import {
 import { FcGoogle } from "react-icons/fc";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
-import logo from "../assets/logo.png";
+
 
 const LoginModal = ({ isOpen, onClose }) => {
   const { loginWithRedirect } = useAuth0();
@@ -79,12 +79,10 @@ const LoginModal = ({ isOpen, onClose }) => {
           <div className="relative z-10 p-8 pt-6">
             {/* Logo & Header */}
             <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center bg-white rounded-2xl p-3 mb-4 shadow-lg">
-                <img
-                  src={logo}
-                  alt="HB International"
-                  className="h-14 object-contain"
-                />
+              <div className="inline-flex items-center justify-center bg-white rounded-2xl px-6 py-3 mb-4 shadow-lg">
+                <span className="text-3xl font-bold text-secondary">
+                  Demo
+                </span>
               </div>
               <h2 className="text-2xl font-bold text-white mb-2">
                 Hoş Geldiniz

@@ -2,7 +2,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { FOOTER_CONTACT_INFO, SOCIALS } from "../constant/data";
 import PropTypes from "prop-types";
-import logo from "../assets/logo.png";
+
 import { MdLocationOn, MdPhone, MdEmail } from "react-icons/md";
 import { FaWhatsapp } from "react-icons/fa";
 import {
@@ -128,11 +128,9 @@ const Footer = () => {
           {/* Logo & Description */}
           <div>
             <Link to={"/"} className="inline-block mb-4">
-              <img
-                src={logo}
-                alt="HB International"
-                className="h-12 w-auto object-contain brightness-0 invert"
-              />
+              <span className="text-3xl font-bold text-white">
+                Demo
+              </span>
             </Link>
             <p className="text-white/50 text-sm leading-relaxed">
               {t('footer.visionText')}
