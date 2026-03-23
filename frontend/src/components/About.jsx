@@ -84,8 +84,8 @@ const About = () => {
   const [hoveredCard, setHoveredCard] = useState(null);
 
   const cardData = [
-    { src: "/Arnatakoy.gif", alt: "Arnavutköy", href: "https://www.hbrealstate.com/en/blog/why-invest-in-arnavutky" },
-    { src: "/banner.gif", alt: "Salamis Holiday Home", href: "https://www.hbrealstate.com/en/projects/salamis-holiday-home-apartments-hb-real-estate-69be44337d9987ae6278ad9c" },
+    { src: "/Arnatakoy.gif", alt: "Arnavutköy", href: "https://www.demo.com/en/blog/why-invest-in-arnavutky" },
+    { src: "/banner.gif", alt: "Salamis Holiday Home", href: "https://www.demo.com/en/projects/salamis-holiday-home-apartments-demo-real-estate-69be44337d9987ae6278ad9c" },
     { src: photoTest, alt: "Property", href: null },
   ];
 

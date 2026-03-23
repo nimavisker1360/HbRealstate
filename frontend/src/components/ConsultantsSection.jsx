@@ -120,7 +120,7 @@ const ConsultantsSection = () => {
         {/* Left Side - Text (Transparent/Simple) */}
         <AnimatedElement delay={0} className="lg:w-[400px] flex-shrink-0">
           <div className="mb-2">
-            <span className="text-red-500 font-semibold">HB Gayrimenkul </span>
+            <span className="text-red-500 font-semibold">Demo </span>
             <span className="text-gray-900 font-semibold">INTERNATIONAL™</span>
           </div>
 

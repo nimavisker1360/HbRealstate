@@ -153,9 +153,9 @@ const PropertySeoPage = () => {
   const normalizedPathname = normalizePathname(location.pathname, `/listing/${propertyId}`);
   const canonicalUrl = `${SITE_URL}${normalizedPathname}`;
 
-  const fallbackTitle = "Property Detail | Turkey | For Sale | HB Real Estate";
+  const fallbackTitle = "Property Detail | Turkey | For Sale | Demo Real Estate";
   const propertyTitle = property
-    ? `${titleOrName} | ${locationLabel} | For Sale | HB Real Estate`
+    ? `${titleOrName} | ${locationLabel} | For Sale | Demo Real Estate`
     : fallbackTitle;
 
   const sourceDescription =
@@ -197,7 +197,7 @@ const PropertySeoPage = () => {
       descriptionParts.join(". "),
       170
     ) ||
-    "Explore this property detail and contact HB Real Estate for current price and availability.";
+    "Explore this property detail and contact Demo Real Estate for current price and availability.";
 
   const primaryImage = property?.images?.[0] || property?.image || "/og-image.png";
 

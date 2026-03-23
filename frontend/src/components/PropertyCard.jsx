@@ -170,7 +170,7 @@ const PropertyCard = ({ property, onCardClick }) => {
     }
   };
 
-  const whatsappHref = `https://wa.me/905551234567?text=${encodeURIComponent(
+  const whatsappHref = `https://wa.me/905550000000?text=${encodeURIComponent(
     `Hi, I'm interested in the property: ${property.title} - ${formattedPrice}`
   )}`;
 

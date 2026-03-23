@@ -15,7 +15,7 @@ const ChatLauncherButton = ({ isOpen, label, onClick }) => (
     </span>
     <span className="pr-1 text-left">
       <span className="block text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-700">
-        HB
+        Demo
       </span>
       <span className="block text-sm font-semibold text-slate-900">{label}</span>
     </span>

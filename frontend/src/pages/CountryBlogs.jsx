@@ -157,7 +157,7 @@ const CountryBlogs = () => {
   return (
     <>
       <SEO
-        title={`${countryName || "Country"} Real Estate Articles | HB International Real Estate`}
+        title={`${countryName || "Country"} Real Estate Articles | Demo Real Estate`}
         description={description}
         canonicalPath={canonicalPath}
         languageAlternates={buildLanguageAlternates(canonicalPath)}

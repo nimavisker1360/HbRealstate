@@ -291,7 +291,7 @@ const Consultants = () => {
                 {currentLang === "tr" ? "Geri Arama İste" : "Request Callback"}
               </button>
               <a 
-                href={`https://wa.me/${normalizeWhatsAppNumber("+90 542 435 96 94")}`}
+                href={`https://wa.me/${normalizeWhatsAppNumber("+90 555 000 00 00")}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 bg-[#25D366] text-white font-medium px-7 py-[10px] rounded-lg hover:bg-[#20bd5a] transition-colors"

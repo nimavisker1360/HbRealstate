@@ -1,4 +1,4 @@
-﻿import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "react-query";
 import { getBlog } from "../utils/api";
 import { MdArrowBack, MdCalendarToday, MdCategory, MdErrorOutline, MdAccessTime, MdShare, MdClose, MdChevronLeft, MdChevronRight, MdArticle } from "react-icons/md";
@@ -275,7 +275,7 @@ const BlogPost = () => {
     ? `/blog/${encodeURIComponent(resolvedBlogSlug)}`
     : `/blog/${routeIdentifier || ""}`;
   const fallbackDescription =
-    "Read practical real estate insights and market updates from HB Real Estate.";
+    "Read practical real estate insights and market updates from Demo Real Estate.";
   const resolvedDescription =
     truncateText(
       getLocalizedContent("summary") ||
@@ -302,7 +302,7 @@ const BlogPost = () => {
     mainEntityOfPage: toAbsoluteUrl(canonicalPath),
     publisher: {
       "@type": "Organization",
-      name: "HB International Real Estate",
+      name: "Demo Real Estate",
       url: SITE_URL,
       logo: {
         "@type": "ImageObject",
@@ -311,7 +311,7 @@ const BlogPost = () => {
     },
     author: {
       "@type": "Organization",
-      name: "HB International Real Estate",
+      name: "Demo Real Estate",
     },
     wordCount,
     timeRequired: `PT${Math.max(readingTime, 1)}M`,
@@ -360,7 +360,7 @@ const BlogPost = () => {
   return (
     <>
       <SEO
-        title={`${localizedTitle} | HB Real Estate`}
+        title={`${localizedTitle} | Demo Real Estate`}
         description={resolvedDescription}
         canonicalPath={canonicalPath}
         image={seoImage}

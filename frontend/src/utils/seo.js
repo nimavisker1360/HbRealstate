@@ -4,15 +4,15 @@ import {
   stripLanguageFromPath,
 } from "./languageRouting";
 
-export const SITE_URL = "https://www.hbrealstate.com";
+export const SITE_URL = "https://www.demo.com";
 export const SUPPORTED_SEO_LANGS = SUPPORTED_LANGUAGE_CODES;
 
 export const DEFAULT_SEO = {
-  title: "HB International Gayrimenkul",
+  title: "Demo Real Estate",
   description:
-    "Discover premium real estate investment opportunities in Istanbul, Antalya, and across Turkey with HB International Real Estate.",
+    "Discover premium real estate investment opportunities in Istanbul, Antalya, and across Turkey with Demo Real Estate.",
   image: "/og-image.png",
-  siteName: "HB International Gayrimenkul",
+  siteName: "Demo Real Estate",
   twitterCard: "summary_large_image",
   locale: "en_US",
   localeAlternates: ["tr_TR", "ru_RU"],
@@ -178,11 +178,11 @@ const buildProjectSlugBase = (property) => {
   const sections = [
     locationLabel ? `${projectTitle} in ${locationLabel}` : projectTitle,
     roomTypes.length > 0 ? `${roomTypes.join(", ")} Apartments` : "Apartments",
-    "HB Real Estate",
+    "Demo Real Estate",
   ];
 
   const slugBase = slugify(sections.join(" | "));
-  if (!slugBase) return "hb-real-estate-project";
+  if (!slugBase) return "demo-real-estate-project";
   return slugBase.slice(0, 170).replace(/-+$/g, "");
 };
 

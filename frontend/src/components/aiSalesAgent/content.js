@@ -4,11 +4,11 @@ const copy = {
   en: {
     title: "AI Sales Agent",
     subtitle: "Lead qualification and smart property matching",
-    minimized: "Ask HB Assistant",
+    minimized: "Ask Demo Assistant",
     placeholder: "Tell me your budget, area, purpose, or preferred project",
     restart: "New chat",
     close: "Close",
-    typing: "HB AI is preparing the next step",
+    typing: "Demo AI is preparing the next step",
     welcome: "Start with a quick action or ask naturally.",
     leadFormTitle: "Where should we send the details?",
     leadFormSubtitle:
@@ -58,11 +58,11 @@ const copy = {
   tr: {
     title: "AI Satis Asistani",
     subtitle: "Niteliklendirme ve akilli portfoy eslestirme",
-    minimized: "HB AI'ya Sor",
+    minimized: "Demo AI'ya Sor",
     placeholder: "Butce, bolge, hedef veya proje tercihinizi yazin",
     restart: "Yeni sohbet",
     close: "Kapat",
-    typing: "HB AI sonraki adimi hazirliyor",
+    typing: "Demo AI sonraki adimi hazirliyor",
     welcome: "Hizli aksiyonlardan baslayin veya dogal sekilde yazin.",
     leadFormTitle: "Detaylari nereye gonderelim?",
     leadFormSubtitle:
@@ -112,11 +112,11 @@ const copy = {
   ru: {
     title: "AI Sales Agent",
     subtitle: "Kvalifikatsiya lida i umnyy podbor obektov",
-    minimized: "Sprosit HB AI",
+    minimized: "Sprosit Demo AI",
     placeholder: "Napishite byudzhet, rayon, tsel ili interesuyushchiy proekt",
     restart: "Novyy chat",
     close: "Zakryt",
-    typing: "HB AI gotovit sleduyushchiy shag",
+    typing: "Demo AI gotovit sleduyushchiy shag",
     welcome: "Nachnite s bystroy komandy ili napishite estestvenno.",
     leadFormTitle: "Kuda otpravit detali?",
     leadFormSubtitle:

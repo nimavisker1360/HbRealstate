@@ -5,8 +5,8 @@
   "redirects": [
     {
       "source": "/:path*",
-      "has": [{ "type": "host", "value": "hbrealstate.com" }],
-      "destination": "https://www.hbrealstate.com/:path*",
+      "has": [{ "type": "host", "value": "demo.com" }],
+      "destination": "https://www.demo.com/:path*",
       "permanent": true
     }
   ],

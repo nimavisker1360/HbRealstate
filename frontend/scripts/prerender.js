@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-const SITE_URL = "https://www.hbrealstate.com";
+const SITE_URL = "https://www.demo.com";
 const API_BASE = process.env.SITEMAP_API_URL || `${SITE_URL}/api`;
 const ENABLE_REACT_SNAP = process.env.ENABLE_REACT_SNAP === "1";
 const parsedLimit = Number(process.env.PRERENDER_PROPERTY_LIMIT || 0);
@@ -15,19 +15,19 @@ const BASE_HTML_PATH = path.join(DIST_DIR, "index.html");
 const STATIC_PAGE_META = {
   "/": {
     title:
-      "HB International Real Estate | Turkey Property & Investment Opportunities",
+      "Demo Real Estate | Turkey Property & Investment Opportunities",
     description:
-      "Explore apartments, villas, and investment-ready projects across Istanbul, Kyrenia, and major Turkish markets with HB International Real Estate.",
+      "Explore apartments, villas, and investment-ready projects across Istanbul, Kyrenia, and major Turkish markets with Demo Real Estate.",
     canonical: `${SITE_URL}/`,
   },
   "/listing": {
-    title: "Turkey Property Listings | HB International Real Estate",
+    title: "Turkey Property Listings | Demo Real Estate",
     description:
-      "Browse verified apartments, villas, and investment opportunities across Turkey. Compare prices, features, and locations with HB International Real Estate.",
+      "Browse verified apartments, villas, and investment opportunities across Turkey. Compare prices, features, and locations with Demo Real Estate.",
     canonical: `${SITE_URL}/listing`,
   },
   "/projects": {
-    title: "Real Estate Projects | HB International Real Estate",
+    title: "Real Estate Projects | Demo Real Estate",
     description:
       "Discover local and international real estate projects with delivery timelines, plan options, and pricing insights.",
     canonical: `${SITE_URL}/projects`,
@@ -96,7 +96,7 @@ const setSeoHead = (html, meta) => {
   const canonical = meta.canonical || `${SITE_URL}/`;
   const ogImage = meta.ogImage || `${SITE_URL}/og-image.png`;
   const description = meta.description || "";
-  const title = meta.title || "HB Real Estate";
+  const title = meta.title || "Demo Real Estate";
 
   let result = html;
   result = result
@@ -257,11 +257,11 @@ const buildProjectSlugBase = (property) => {
   const sections = [
     includeLocation ? `${projectTitle} in ${location}` : projectTitle,
     roomTypes.length > 0 ? `${roomTypes.join(", ")} Apartments` : "Apartments",
-    "HB Real Estate",
+    "Demo Real Estate",
   ];
 
   const slugBase = slugify(sections.join(" | "));
-  if (!slugBase) return "hb-real-estate-project";
+  if (!slugBase) return "demo-real-estate-project";
   return slugBase.slice(0, 170).replace(/-+$/g, "");
 };
 
@@ -399,9 +399,9 @@ const buildPropertyMeta = (property, route) => {
 
   const finalDescription =
     description ||
-    "Explore this property detail and contact HB Real Estate for current price and availability.";
+    "Explore this property detail and contact Demo Real Estate for current price and availability.";
 
-  const title = `${titleOrName} | ${locationLabel} | For Sale | HB Real Estate`;
+  const title = `${titleOrName} | ${locationLabel} | For Sale | Demo Real Estate`;
   const ogImage = toAbsoluteImage(property?.images?.[0] || property?.image);
   const images = [
     ...(Array.isArray(property?.images) ? property.images : []),
@@ -624,9 +624,9 @@ const buildProjectMeta = (property, route) => {
 
   const finalDescription =
     description ||
-    "Explore this project detail and contact HB Real Estate for current availability and pricing.";
+    "Explore this project detail and contact Demo Real Estate for current availability and pricing.";
 
-  const title = `${projectName} | ${locationLabel} | Project | HB Real Estate`;
+  const title = `${projectName} | ${locationLabel} | Project | Demo Real Estate`;
   const ogImage = toAbsoluteImage(property?.images?.[0] || property?.image);
   const images = [
     ...(Array.isArray(property?.images) ? property.images : []),

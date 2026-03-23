@@ -189,11 +189,11 @@
     "shouldUseSolicitor": "Should I use a solicitor to buy property in Turkey",
     "powerOfAttorney": "Power of Attorney in Turkey",
     "financeForProperty": "Finance for property in Turkey",
-    "propertyInspectionTrips": "HB international Inspection Trips",
+    "propertyInspectionTrips": "Demo Inspection Trips",
     "propertyMaintenanceFees": "Turkey property maintenance fees and costs",
     "designAndBuildYourOwn": "How to design and build your own",
     "howToGetTitleDeed": "How to get a Turkish title deed (TAPU)",
-    "virtualTourWithPropertyTurkey": "Virtual Tour with HB international",
+    "virtualTourWithPropertyTurkey": "Virtual Tour with Demo",
     "residencyPermitsAndVisas": "Residency permits and visas",
     "residencePermitAndVisaInfo": "Residence permit and Turkish visa information",
     "workPermitsInTurkey": "Work permits in Turkey",
@@ -230,14 +230,14 @@
   },
   "hero": {
     "title": "Right Location, Right Time, Right Investment",
-    "subtitle": "Discover premium real estate opportunities with HB International",
+    "subtitle": "Discover premium real estate opportunities with Demo",
     "searchPlaceholder": "Search by city, address or property name...",
     "exploreBtn": "Explore Properties"
   },
   "about": {
     "title": "About Us",
     "subtitle": "Your Trusted Partner in Turkish Real Estate",
-    "description": "HB International Real Estate has been helping clients find their perfect properties in Turkey since 2019. With our experienced team and extensive network, we provide comprehensive real estate services.",
+    "description": "Demo Real Estate has been helping clients find their perfect properties in Turkey since 2019. With our experienced team and extensive network, we provide comprehensive real estate services.",
     "yearsExperience": "Years of Experience",
     "happyClients": "Happy Clients",
     "propertiesSold": "Properties Sold",
@@ -246,7 +246,7 @@
     "projectCompleted": "Projects We Worked On",
     "unveilingJourney": "Unveiling Our Journey",
     "commitmentTitle": "Be the Architect of Value\nCreate Value\nAdd Value to Every Customer",
-    "missionText": "As HB Gayrimenkul INTERNATIONAL, our mission is not merely to offer real estate to our clients, but to turn the right investment opportunities into profitable outcomes. We approach every portfolio with professional analysis and aim to achieve maximum results in the shortest possible time through accurate pricing and effective marketing strategies. By providing transparent, reliable, and high-performance consultancy services to both individual and corporate investors, we build long-term business partnerships. Our goal is to become a reference brand in the sector through our transaction-focused approach, strong on-site organization, and expert consultant team. The vision of HB Gayrimenkul INTERNATIONAL is to be a leading brand that elevates real estate consultancy to a new level in Turkey and international markets, recognized for its high sales performance and strong corporate structure.",
+    "missionText": "As Demo Real Estate, our mission is not merely to offer real estate to our clients, but to turn the right investment opportunities into profitable outcomes. We approach every portfolio with professional analysis and aim to achieve maximum results in the shortest possible time through accurate pricing and effective marketing strategies. By providing transparent, reliable, and high-performance consultancy services to both individual and corporate investors, we build long-term business partnerships. Our goal is to become a reference brand in the sector through our transaction-focused approach, strong on-site organization, and expert consultant team. The vision of Demo Real Estate is to be a leading brand that elevates real estate consultancy to a new level in Turkey and international markets, recognized for its high sales performance and strong corporate structure.",
     "showMore": "Show more",
     "showLess": "Show less",
     "recommendedHomes": "Recommended homes",
@@ -358,10 +358,10 @@
     "customerReviews": "Customer Reviews",
     "addresses": "Addresses",
     "contactUs": "Contact Us",
-    "copyright": "© 2025 HB International Real Estate. All rights reserved.",
+    "copyright": "© 2025 Demo Real Estate. All rights reserved.",
     "exploreTitle": "Explore real estate opportunities with us",
     "exploreDescription": "Through technology-driven marketing methods, a continuously evolving team structure, and a global investment network, we aim to be an institution that offers investors the most accurate opportunities.",
-    "visionText": "The vision of HB Gayrimenkul INTERNATIONAL is to be a leading brand that elevates real estate consultancy to a new level in Turkey and international markets."
+    "visionText": "The vision of Demo Real Estate is to be a leading brand that elevates real estate consultancy to a new level in Turkey and international markets."
   },
   "admin": {
     "panel": "Admin Panel",

@@ -21,9 +21,9 @@ const RouteSeo = () => {
 
     if (isNoIndex) {
       return {
-        title: "HB International Real Estate",
+        title: "Demo Real Estate",
         description:
-          "Internal dashboard page for HB International Real Estate.",
+          "Internal dashboard page for Demo Real Estate.",
         canonicalPath: pathname,
         noindex: true,
       };
@@ -49,7 +49,7 @@ const RouteSeo = () => {
 
     if (pathname === "/projects") {
       return {
-        title: "Real Estate Projects | HB International Real Estate",
+        title: "Real Estate Projects | Demo Real Estate",
         description:
           "Discover curated local and international real estate projects with pricing and availability details.",
         canonicalPath: "/projects",
@@ -58,7 +58,7 @@ const RouteSeo = () => {
 
     if (pathname.startsWith("/projects/")) {
       return {
-        title: "Project Detail | HB International Real Estate",
+        title: "Project Detail | Demo Real Estate",
         description:
           "Review project details, amenities, location insights, and contact options.",
         canonicalPath: pathname,
@@ -67,7 +67,7 @@ const RouteSeo = () => {
 
     if (pathname === "/consultants") {
       return {
-        title: "Real Estate Consultants | HB International Real Estate",
+        title: "Real Estate Consultants | Demo Real Estate",
         description:
           "Connect with multilingual real estate consultants for investment planning and property support.",
         canonicalPath: "/consultants",
@@ -76,27 +76,27 @@ const RouteSeo = () => {
 
     if (pathname === "/contact") {
       return {
-        title: "Contact Us | HB International Real Estate",
+        title: "Contact Us | Demo Real Estate",
         description:
-          "Send a message to HB International Real Estate and connect with our consultants for property support.",
+          "Send a message to Demo Real Estate and connect with our consultants for property support.",
         canonicalPath: "/contact",
       };
     }
 
     if (pathname === "/addresses") {
       return {
-        title: "Our Office Addresses | HB International Real Estate",
+        title: "Our Office Addresses | Demo Real Estate",
         description:
-          "Find office addresses and contact points for HB International Real Estate.",
+          "Find office addresses and contact points for Demo Real Estate.",
         canonicalPath: "/addresses",
       };
     }
 
     if (pathname === "/today") {
       return {
-        title: "Today's Price List | HB International Real Estate",
+        title: "Today's Price List | Demo Real Estate",
         description:
-          "Track current property pricing updates and featured opportunities from HB International Real Estate.",
+          "Track current property pricing updates and featured opportunities from Demo Real Estate.",
         canonicalPath: "/today",
       };
     }

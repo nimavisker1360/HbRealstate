@@ -45,7 +45,7 @@ interface SitemapUrl {
   priority?: string;
 }
 
-const SITE_URL = "https://www.hbrealstate.com";
+const SITE_URL = "https://www.demo.com";
 const rawApiBase =
   process.env.SITEMAP_API_URL ||
   process.env.VITE_API_URL ||
@@ -200,11 +200,11 @@ const buildProjectSlugBase = (property: PropertyEntry) => {
   const sections = [
     locationLabel ? `${projectTitle} in ${locationLabel}` : projectTitle,
     roomTypes.length > 0 ? `${roomTypes.join(", ")} Apartments` : "Apartments",
-    "HB Real Estate",
+    "Demo Real Estate",
   ];
 
   const slugBase = slugify(sections.join(" | "));
-  if (!slugBase) return "hb-real-estate-project";
+  if (!slugBase) return "demo-real-estate-project";
   return slugBase.slice(0, 170).replace(/-+$/g, "");
 };
 

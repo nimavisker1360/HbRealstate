@@ -178,8 +178,8 @@ export const sendEmail = asyncHandler(async (req, res) => {
               <p style="color: #555; line-height: 1.6;">Thank you for contacting HB International Real Estate. We have received your inquiry and will get back to you as soon as possible.</p>
               <p style="color: #555; line-height: 1.6;">In the meantime, feel free to browse our properties or contact us directly:</p>
               <div style="background: white; padding: 15px; border-radius: 5px; margin: 20px 0; border: 1px solid #e0e0e0;">
-                <p style="margin: 5px 0; color: #555;"><strong>Phone:</strong> +90 542 435 9694</p>
-                <p style="margin: 5px 0; color: #555;"><strong>Email:</strong> hprealstate2019@gmail.com</p>
+                <p style="margin: 5px 0; color: #555;"><strong>Phone:</strong> +90 555 000 0000</p>
+                <p style="margin: 5px 0; color: #555;"><strong>Email:</strong> demo.realestate@gmail.com</p>
               </div>
               <p style="color: #555; line-height: 1.6;">Best regards,<br><strong style="color: #06a84e;">HB International Team</strong></p>
             </div>

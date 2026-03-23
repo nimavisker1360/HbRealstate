@@ -150,7 +150,7 @@ const BlogsPage = () => {
   return (
     <>
       <SEO
-        title="Real Estate Blog Countries | HB International Real Estate"
+        title="Real Estate Blog Countries | Demo Real Estate"
         description={description}
         canonicalPath={canonicalPath}
         languageAlternates={buildLanguageAlternates(canonicalPath)}

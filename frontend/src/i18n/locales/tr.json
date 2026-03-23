@@ -189,11 +189,11 @@
     "shouldUseSolicitor": "Türkiye'de gayrimenkul alırken avukat kullanmalı mıyım",
     "powerOfAttorney": "Türkiye'de vekaletname",
     "financeForProperty": "Türkiye'de gayrimenkul finansmanı",
-    "propertyInspectionTrips": "HB international inceleme gezileri",
+    "propertyInspectionTrips": "Demo inceleme gezileri",
     "propertyMaintenanceFees": "Türkiye gayrimenkul aidat ve giderleri",
     "designAndBuildYourOwn": "Kendi tasarımınızı ve inşaatınızı nasıl yaparsınız",
     "howToGetTitleDeed": "Türk tapusu (TAPU) nasıl alınır",
-    "virtualTourWithPropertyTurkey": "HB international ile sanal tur",
+    "virtualTourWithPropertyTurkey": "Demo ile sanal tur",
     "residencyPermitsAndVisas": "İkamet izinleri ve vizeler",
     "residencePermitAndVisaInfo": "İkamet izni ve Türk vizesi bilgileri",
     "workPermitsInTurkey": "Türkiye'de çalışma izinleri",
@@ -230,14 +230,14 @@
   },
   "hero": {
     "title": "Doğru Lokasyon, Doğru Zaman, Doğru Yatırım",
-    "subtitle": "HB International ile premium gayrimenkul fırsatlarını keşfedin",
+    "subtitle": "Demo ile premium gayrimenkul fırsatlarını keşfedin",
     "searchPlaceholder": "şehir, adres veya mülk adı ile arayın...",
     "exploreBtn": "Mülkleri Keşfet"
   },
   "about": {
     "title": "Hakkımızda",
     "subtitle": "Türk Gayrimenkulünde Güvenilir Ortağınız",
-    "description": "HB International Gayrimenkul, 2019 yılından bu yana müşterilerine Türkiye'de mükemmel mülkler bulmalarında yardımcı olmaktadır. Deneyimli ekibimiz ve geniş ağımız ile kapsamlı gayrimenkul hizmetleri sunuyoruz.",
+    "description": "Demo Real Estate, 2019 yılından bu yana müşterilerine Türkiye'de mükemmel mülkler bulmalarında yardımcı olmaktadır. Deneyimli ekibimiz ve geniş ağımız ile kapsamlı gayrimenkul hizmetleri sunuyoruz.",
     "yearsExperience": "Yıllık Deneyim",
     "happyClients": "Mutlu Müşteri",
     "propertiesSold": "Satılan Mülk",
@@ -246,7 +246,7 @@
     "projectCompleted": "Çalıştığımız projeler",
     "unveilingJourney": "Yolculuğumuz",
     "commitmentTitle": "Değerin Mimarı Olmak\nDeğer Üretmek\nHer Müşteriye Değer Katmak",
-    "missionText": "HB Gayrimenkul INTERNATIONAL olarak misyonumuz, müşterilerimize sadece gayrimenkul sunmak değil, doğru yatırım fırsatlarını karlı sonuçlara dönüştürmektir. Her portföye profesyonel analizle yaklaşıyor, doğru fiyatlandırma ve etkili pazarlama stratejileri ile en kısa sürede maksimum sonuçlara ulaşmayı hedefliyoruz. Bireysel ve kurumsal yatırımcılara Şeffaf, güvenilir ve yüksek performanslı danışmanlık hizmetleri sunarak uzun vadeli iş ortaklıkları kuruyoruz. Hedefimiz, işlem odaklı yaklaşımımız, güçlü yerinde organizasyonumuz ve uzman danışman ekibimiz ile sektörde referans marka olmaktır. HB Gayrimenkul INTERNATIONAL'ın vizyonu, yüksek satış performansı ve güçlü kurumsal yapısıyla tanınan, Türkiye ve uluslararası pazarlarda gayrimenkul danışmanlığını yeni bir seviyeye taşıyan lider bir marka olmaktır.",
+    "missionText": "Demo Real Estate olarak misyonumuz, müşterilerimize sadece gayrimenkul sunmak değil, doğru yatırım fırsatlarını karlı sonuçlara dönüştürmektir. Her portföye profesyonel analizle yaklaşıyor, doğru fiyatlandırma ve etkili pazarlama stratejileri ile en kısa sürede maksimum sonuçlara ulaşmayı hedefliyoruz. Bireysel ve kurumsal yatırımcılara Şeffaf, güvenilir ve yüksek performanslı danışmanlık hizmetleri sunarak uzun vadeli iş ortaklıkları kuruyoruz. Hedefimiz, işlem odaklı yaklaşımımız, güçlü yerinde organizasyonumuz ve uzman danışman ekibimiz ile sektörde referans marka olmaktır. Demo Real Estate'ın vizyonu, yüksek satış performansı ve güçlü kurumsal yapısıyla tanınan, Türkiye ve uluslararası pazarlarda gayrimenkul danışmanlığını yeni bir seviyeye taşıyan lider bir marka olmaktır.",
     "showMore": "Daha fazla göster",
     "showLess": "Daha az göster",
     "recommendedHomes": "Önerilen evler",
@@ -358,10 +358,10 @@
     "customerReviews": "Müşteri Yorumları",
     "addresses": "Adresler",
     "contactUs": "Bize Ulaşın",
-    "copyright": "© 2025 HB International Gayrimenkul. Tüm hakları saklıdır.",
+    "copyright": "© 2025 Demo Real Estate. Tüm hakları saklıdır.",
     "exploreTitle": "Bizimle gayrimenkul fırsatlarını keşfedin",
     "exploreDescription": "Teknoloji odaklı pazarlama yöntemleri, sürekli gelişen ekip yapısı ve küresel yatırım ağı ile yatırımcılara en doğru fırsatları sunan bir kurum olmayı hedefliyoruz.",
-    "visionText": "HB Gayrimenkul INTERNATIONAL'ın vizyonu, Türkiye ve uluslararası pazarlarda gayrimenkul danışmanlığını yeni bir seviyeye taşıyan lider bir marka olmaktır."
+    "visionText": "Demo Real Estate'ın vizyonu, Türkiye ve uluslararası pazarlarda gayrimenkul danışmanlığını yeni bir seviyeye taşıyan lider bir marka olmaktır."
   },
   "admin": {
     "panel": "Yönetim Paneli",
