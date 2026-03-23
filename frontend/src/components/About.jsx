@@ -80,6 +80,14 @@ const About = () => {
 
   const [isVisible, setIsVisible] = useState(false);
   const [isMissionExpanded, setIsMissionExpanded] = useState(false);
+  const [isFanned, setIsFanned] = useState(false);
+  const [hoveredCard, setHoveredCard] = useState(null);
+
+  const cardData = [
+    { src: "/Arnatakoy.gif", alt: "Arnavutköy", href: "https://www.hbrealstate.com/en/blog/why-invest-in-arnavutky" },
+    { src: "/banner.gif", alt: "Salamis Holiday Home", href: "https://www.hbrealstate.com/en/projects/salamis-holiday-home-apartments-hb-real-estate-69be44337d9987ae6278ad9c" },
+    { src: photoTest, alt: "Property", href: null },
+  ];
 
   useEffect(() => {
     const handleScroll = () => {
@@ -112,27 +120,54 @@ const About = () => {
             isVisible ? "animate-about-slide-left" : "opacity-0"
           }`}
         >
-          {/* Background Cards (stacked effect) */}
-          <div className="absolute top-8 right-4 w-[240px] sm:w-[280px] h-[320px] sm:h-[380px] bg-white rounded-3xl shadow-lg transform rotate-6 opacity-60"></div>
-          <div className="absolute top-4 right-8 w-[240px] sm:w-[280px] h-[320px] sm:h-[380px] bg-white rounded-3xl shadow-lg transform rotate-3 opacity-80"></div>
+          {/* Stacked Cards */}
+          <div
+            className="relative w-[240px] sm:w-[280px] h-[320px] sm:h-[380px] ml-16 sm:ml-24"
+            onMouseEnter={() => setIsFanned(true)}
+            onMouseLeave={() => { setIsFanned(false); setHoveredCard(null); }}
+          >
+            {cardData.map((card, i) => {
+              const isHovered = hoveredCard === i;
 
-          {/* Main Property Card */}
-          <div className="relative w-[240px] sm:w-[280px] h-[320px] sm:h-[380px] bg-white rounded-3xl shadow-2xl overflow-hidden z-10 flex flex-col">
-            {/* Property Image */}
-            <div className="relative flex-1 overflow-hidden">
-              <img
-                src={photoTest}
-                alt="Property"
-                className="w-full h-full object-cover"
-              />
-            </div>
+              const collapsed = { x: i * 12, y: i * 10, rotate: i * 3, zIndex: 30 - i * 10, opacity: 1 - i * 0.12 };
+              const fanAngle = (i - 1) * 18;
+              const fanX = (i - 1) * 90;
+              const fanned = { x: fanX, y: 0, rotate: fanAngle, zIndex: 30 - i * 10, opacity: 1 };
 
+              const pos = isFanned ? fanned : collapsed;
+              const liftY = isHovered && isFanned ? -40 : 0;
+
+              return (
+                <div
+                  key={i}
+                  className="absolute inset-0 w-[240px] sm:w-[280px] h-[320px] sm:h-[380px] rounded-3xl bg-white p-2 shadow-2xl transition-all duration-500 ease-[cubic-bezier(0.33,1,0.68,1)]"
+                  style={{
+                    zIndex: isHovered ? 40 : pos.zIndex,
+                    opacity: pos.opacity,
+                    transform: `translate(${pos.x}px, ${pos.y + liftY}px) rotate(${pos.rotate}deg)${isHovered ? " scale(1.03)" : ""}`,
+                    cursor: card.href ? "pointer" : "default",
+                  }}
+                  onMouseEnter={() => setHoveredCard(i)}
+                  onMouseLeave={() => setHoveredCard(null)}
+                  onClick={() => {
+                    if (card.href) window.open(card.href, "_blank", "noopener,noreferrer");
+                  }}
+                >
+                  <img
+                    src={card.src}
+                    alt={card.alt}
+                    loading={i === 0 ? "eager" : "lazy"}
+                    className="w-full h-full object-cover rounded-2xl"
+                  />
+                </div>
+              );
+            })}
           </div>
 
           {/* Floating Labels */}
           {/* Budget Label */}
           <div
-            className={`absolute top-8 sm:top-12 -left-2 sm:left-0 bg-white rounded-full px-3 sm:px-4 py-2 sm:py-2.5 shadow-xl flex items-center gap-2 sm:gap-3 z-20 ${
+            className={`absolute top-1/3 -left-2 sm:left-0 bg-white rounded-full px-3 sm:px-4 py-2 sm:py-2.5 shadow-xl flex items-center gap-2 sm:gap-3 z-50 ${
               isVisible ? "animate-float" : ""
             }`}
           >
@@ -164,7 +199,7 @@ const About = () => {
 
           {/* Location Label */}
           <div
-            className={`absolute top-28 sm:top-36 -left-4 sm:-left-2 bg-white rounded-full px-3 sm:px-4 py-2 sm:py-2.5 shadow-xl flex items-center gap-2 sm:gap-3 z-20 ${
+            className={`absolute top-1/2 -left-4 sm:-left-2 bg-white rounded-full px-3 sm:px-4 py-2 sm:py-2.5 shadow-xl flex items-center gap-2 sm:gap-3 z-50 ${
               isVisible ? "animate-float-delayed" : ""
             }`}
           >

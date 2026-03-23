@@ -1735,6 +1735,7 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
               </div>
             ))}
           </div>
+
         </div>
         )}
 
