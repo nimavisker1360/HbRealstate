@@ -18,7 +18,7 @@ const LoginModal = ({ isOpen, onClose }) => {
   const [loginError, setLoginError] = useState("");
   const { t } = useTranslation();
   const auth0DatabaseConnection = String(
-    import.meta.env.VITE_AUTH0_DB_CONNECTION || ""
+    import.meta.env.VITE_AUTH0_DB_CONNECTION || "Username-Password-Authentication"
   ).trim();
 
   const resolveLoginErrorMessage = (error) =>
