@@ -1,28 +1,32 @@
 import asyncHandler from "express-async-handler";
 import { prisma } from "../config/prismaConfig.js";
+import {
+  buildUserCreateData,
+  isConfiguredAdminEmail,
+  normalizeEmail,
+  resolveRequestEmail,
+} from "../utils/authenticatedEmail.js";
 
-const normalizeEmail = (value = "") => String(value || "").trim().toLowerCase();
-
-const buildUserCreateData = (payload = {}) => ({
-  email: normalizeEmail(payload.email),
-  name: payload.name || null,
-  image: payload.image || null,
-  phone: payload.phone || null,
-  address: payload.address || null,
-  bookedVisits: [],
-  favResidenciesID: [],
+const buildUserUpdateData = (payload = {}, email = "") => ({
+  name: payload?.name || undefined,
+  image: payload?.image || undefined,
+  phone: payload?.phone || undefined,
+  address: payload?.address || undefined,
+  ...(isConfiguredAdminEmail(email) ? { isAdmin: true } : {}),
 });
 
 const findOrCreateUser = async (email) => {
+  const shouldBeAdmin = isConfiguredAdminEmail(email);
+
   return prisma.user.upsert({
     where: { email },
-    update: {},
-    create: buildUserCreateData({ email }),
+    update: shouldBeAdmin ? { isAdmin: true } : {},
+    create: buildUserCreateData({ email, isAdmin: shouldBeAdmin }),
   });
 };
 
 export const createUser = asyncHandler(async (req, res) => {
-  const email = normalizeEmail(req.body?.email);
+  const email = resolveRequestEmail(req);
 
   if (!email) {
     return res.status(400).json({ message: "Email is required" });
@@ -31,12 +35,7 @@ export const createUser = asyncHandler(async (req, res) => {
   const existingUser = await prisma.user.findUnique({ where: { email } });
   const user = await prisma.user.upsert({
     where: { email },
-    update: {
-      name: req.body?.name || undefined,
-      image: req.body?.image || undefined,
-      phone: req.body?.phone || undefined,
-      address: req.body?.address || undefined,
-    },
+    update: buildUserUpdateData(req.body, email),
     create: buildUserCreateData({ ...req.body, email }),
   });
 
@@ -54,7 +53,7 @@ export const createUser = asyncHandler(async (req, res) => {
 });
 
 export const bookVisit = asyncHandler(async (req, res) => {
-  const email = normalizeEmail(req.body?.email);
+  const email = resolveRequestEmail(req);
   const { date } = req.body;
   const { id } = req.params;
 
@@ -107,7 +106,7 @@ export const allBookings = asyncHandler(async (req, res) => {
 });
 
 export const cancelBooking = asyncHandler(async (req, res) => {
-  const email = normalizeEmail(req.body?.email);
+  const email = resolveRequestEmail(req);
   const { id } = req.params;
 
   try {
@@ -144,7 +143,7 @@ export const cancelBooking = asyncHandler(async (req, res) => {
 });
 
 export const toFav = asyncHandler(async (req, res) => {
-  const email = normalizeEmail(req.body?.email);
+  const email = resolveRequestEmail(req);
   const { rid } = req.params;
 
   try {
@@ -187,7 +186,7 @@ export const toFav = asyncHandler(async (req, res) => {
 });
 
 export const getAllFav = asyncHandler(async (req, res) => {
-  const email = normalizeEmail(req.body?.email);
+  const email = resolveRequestEmail(req);
 
   try {
     if (!email) {
@@ -206,21 +205,44 @@ export const getAllFav = asyncHandler(async (req, res) => {
 });
 
 export const checkAdmin = asyncHandler(async (req, res) => {
-  const email = normalizeEmail(req.body?.email);
+  const email = resolveRequestEmail(req);
 
   try {
-    const user = await prisma.user.findUnique({
+    if (!email) {
+      return res.status(400).json({ isAdmin: false, message: "Email is required" });
+    }
+
+    let user = await prisma.user.findUnique({
       where: { email },
       select: { isAdmin: true },
     });
 
-    if (!user) {
-      return res
-        .status(404)
-        .json({ isAdmin: false, message: "User not found" });
+    if (!user && isConfiguredAdminEmail(email)) {
+      user = await prisma.user.upsert({
+        where: { email },
+        update: { isAdmin: true },
+        create: buildUserCreateData({ email, isAdmin: true }),
+        select: { isAdmin: true },
+      });
+    } else if (user && !user.isAdmin && isConfiguredAdminEmail(email)) {
+      user = await prisma.user.update({
+        where: { email },
+        data: { isAdmin: true },
+        select: { isAdmin: true },
+      });
     }
 
-    return res.status(200).json({ isAdmin: user.isAdmin || false });
+    if (!user) {
+      return res.status(200).json({
+        isAdmin: false,
+        userExists: false,
+      });
+    }
+
+    return res.status(200).json({
+      isAdmin: user.isAdmin || false,
+      userExists: true,
+    });
   } catch (err) {
     throw new Error(err.message);
   }
@@ -247,7 +269,7 @@ export const setAdmin = asyncHandler(async (req, res) => {
 });
 
 export const getUserProfile = asyncHandler(async (req, res) => {
-  const email = normalizeEmail(req.body?.email);
+  const email = resolveRequestEmail(req);
 
   try {
     const user = await prisma.user.findUnique({
@@ -275,7 +297,7 @@ export const getUserProfile = asyncHandler(async (req, res) => {
 });
 
 export const updateUserProfile = asyncHandler(async (req, res) => {
-  const email = normalizeEmail(req.body?.email);
+  const email = resolveRequestEmail(req);
   const { name, image, phone, address } = req.body;
 
   try {

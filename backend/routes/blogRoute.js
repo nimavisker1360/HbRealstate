@@ -12,6 +12,7 @@ import {
   generateMultipleAIBlogs,
 } from "../controllers/blogCntrl.js";
 import jwtCheck from "../config/authOConfig.js";
+import { requireAdminUser } from "../middleware/requireAdminUser.js";
 
 const router = express.Router();
 
@@ -20,15 +21,15 @@ router.get("/all", getAllBlogs);
 router.get("/:id", getBlog);
 
 // Admin routes (protected)
-router.get("/admin/all", jwtCheck, getAllBlogsAdmin);
-router.post("/create", jwtCheck, createBlog);
-router.put("/update/:id", jwtCheck, updateBlog);
-router.delete("/delete/:id", jwtCheck, deleteBlog);
-router.patch("/toggle/:id", jwtCheck, togglePublish);
-router.put("/reorder", jwtCheck, reorderBlogs);
+router.get("/admin/all", jwtCheck, requireAdminUser, getAllBlogsAdmin);
+router.post("/create", jwtCheck, requireAdminUser, createBlog);
+router.put("/update/:id", jwtCheck, requireAdminUser, updateBlog);
+router.delete("/delete/:id", jwtCheck, requireAdminUser, deleteBlog);
+router.patch("/toggle/:id", jwtCheck, requireAdminUser, togglePublish);
+router.put("/reorder", jwtCheck, requireAdminUser, reorderBlogs);
 
 // AI Generation routes (protected)
-router.post("/generate-ai", jwtCheck, generateAIBlog);
-router.post("/generate-ai-multiple", jwtCheck, generateMultipleAIBlogs);
+router.post("/generate-ai", jwtCheck, requireAdminUser, generateAIBlog);
+router.post("/generate-ai-multiple", jwtCheck, requireAdminUser, generateMultipleAIBlogs);
 
 export { router as blogRoute };

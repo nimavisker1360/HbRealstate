@@ -57,7 +57,11 @@ export default function App() {
   const [userDetails, setUserDetails] = useState({
     favourites: [],
     bookings: [],
-    token: null
+    token: null,
+    userReady: false,
+    userReadyEmail: null,
+    adminStatus: null,
+    adminStatusEmail: null,
   })
 
   // Scroll to top on initial load and disable browser scroll restoration

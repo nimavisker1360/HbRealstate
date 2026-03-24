@@ -5,16 +5,17 @@ import { checkAdmin } from "../utils/api";
 
 const MAX_ADMIN_CHECK_RETRIES = 3;
 const ADMIN_CHECK_RETRY_DELAY_MS = 1200;
+const normalizeEmail = (value = "") => String(value || "").trim().toLowerCase();
 
 const useAdmin = () => {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth0();
-  const {
-    userDetails: { token },
-  } = useContext(UserDetailContext);
+  const { userDetails } = useContext(UserDetailContext);
+  const { token, userReady, userReadyEmail, adminStatus, adminStatusEmail } =
+    userDetails;
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [retryTick, setRetryTick] = useState(0);
-  const lastCheckedRef = useRef({ email: null });
+  const lastCheckedRef = useRef({ email: null, token: null });
   const retryCountRef = useRef(0);
   const retryTimerRef = useRef(null);
 
@@ -25,6 +26,8 @@ const useAdmin = () => {
     }
 
     const fetchAdminStatus = async () => {
+      const normalizedEmail = normalizeEmail(user?.email);
+
       if (authLoading) {
         return;
       }
@@ -33,16 +36,31 @@ const useAdmin = () => {
         setIsAdmin(false);
         setLoading(false);
         retryCountRef.current = 0;
-        lastCheckedRef.current = { email: null };
+        lastCheckedRef.current = { email: null, token: null };
         return;
       }
 
-      if (!user?.email || !token) {
+      if (!normalizedEmail || !token) {
         setLoading(true);
         return;
       }
 
-      const wasAlreadyChecked = lastCheckedRef.current.email === user.email;
+      if (!userReady || userReadyEmail !== normalizedEmail) {
+        setLoading(true);
+        return;
+      }
+
+      if (adminStatusEmail === normalizedEmail && typeof adminStatus === "boolean") {
+        setIsAdmin(adminStatus);
+        setLoading(false);
+        lastCheckedRef.current = { email: normalizedEmail, token };
+        retryCountRef.current = 0;
+        return;
+      }
+
+      const wasAlreadyChecked =
+        lastCheckedRef.current.email === normalizedEmail &&
+        lastCheckedRef.current.token === token;
 
       if (wasAlreadyChecked) {
         setLoading(false);
@@ -51,9 +69,9 @@ const useAdmin = () => {
 
       setLoading(true);
       try {
-        const result = await checkAdmin(user.email, token);
+        const result = await checkAdmin(normalizedEmail, token);
         setIsAdmin(Boolean(result?.isAdmin));
-        lastCheckedRef.current = { email: user.email };
+        lastCheckedRef.current = { email: normalizedEmail, token };
         retryCountRef.current = 0;
         setLoading(false);
       } catch (error) {
@@ -62,7 +80,7 @@ const useAdmin = () => {
         // Definitive "not admin" states
         if (status === 403 || status === 404) {
           setIsAdmin(false);
-          lastCheckedRef.current = { email: user.email };
+          lastCheckedRef.current = { email: normalizedEmail, token };
           retryCountRef.current = 0;
           setLoading(false);
           return;
@@ -89,7 +107,17 @@ const useAdmin = () => {
         retryTimerRef.current = null;
       }
     };
-  }, [isAuthenticated, authLoading, user?.email, token, retryTick]);
+  }, [
+    isAuthenticated,
+    authLoading,
+    user?.email,
+    token,
+    retryTick,
+    userReady,
+    userReadyEmail,
+    adminStatus,
+    adminStatusEmail,
+  ]);
 
   return { isAdmin, loading };
 };

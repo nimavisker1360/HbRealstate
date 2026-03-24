@@ -1,23 +1,10 @@
 import asyncHandler from "express-async-handler";
 import { prisma } from "../config/prismaConfig.js";
-
-const getAuthenticatedEmail = (req) => {
-  const payload = req?.auth?.payload;
-  if (!payload || typeof payload !== "object") return "";
-
-  const candidates = [
-    payload.email,
-    payload["https://hbrealstate.com/email"],
-    payload["https://www.hbrealstate.com/email"],
-  ];
-
-  for (const value of candidates) {
-    const normalized = String(value || "").trim().toLowerCase();
-    if (normalized) return normalized;
-  }
-
-  return "";
-};
+import {
+  buildUserCreateData,
+  getAuthenticatedEmail,
+  isConfiguredAdminEmail,
+} from "../utils/authenticatedEmail.js";
 
 export const requireAdminUser = asyncHandler(async (req, res, next) => {
   const email = getAuthenticatedEmail(req);
@@ -28,7 +15,7 @@ export const requireAdminUser = asyncHandler(async (req, res, next) => {
     });
   }
 
-  const user = await prisma.user.findUnique({
+  let user = await prisma.user.findUnique({
     where: { email },
     select: {
       id: true,
@@ -36,6 +23,19 @@ export const requireAdminUser = asyncHandler(async (req, res, next) => {
       isAdmin: true,
     },
   });
+
+  if ((!user || !user.isAdmin) && isConfiguredAdminEmail(email)) {
+    user = await prisma.user.upsert({
+      where: { email },
+      update: { isAdmin: true },
+      create: buildUserCreateData({ email, isAdmin: true }),
+      select: {
+        id: true,
+        email: true,
+        isAdmin: true,
+      },
+    });
+  }
 
   if (!user?.isAdmin) {
     return res.status(403).json({

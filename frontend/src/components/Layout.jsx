@@ -13,6 +13,8 @@ import { trackWhatsAppConversionFromClick } from "../utils/analytics";
 import { captureAttributionParams } from "../utils/attribution";
 import AssistantChatWidget from "./AssistantChatModal";
 
+const normalizeEmail = (value = "") => String(value || "").trim().toLowerCase();
+
 const Layout = () => {
   useFavourites();
   useBookings();
@@ -38,7 +40,7 @@ const Layout = () => {
     location.pathname.startsWith("/projects") ||
     location.pathname.startsWith("/blog");
 
-  const { mutate } = useMutation({
+  const { mutateAsync: registerUser } = useMutation({
     mutationKey: [user?.email],
     mutationFn: ({ userData, token }) => createUser(userData, token),
   });
@@ -102,6 +104,8 @@ const Layout = () => {
 
   useEffect(() => {
     const getTokenAndRegister = async () => {
+      const normalizedEmail = normalizeEmail(user?.email);
+
       try {
         const token = await getFreshIdToken(true);
 
@@ -116,13 +120,52 @@ const Layout = () => {
 
           // Send user data to database (only once per session)
           if (!hasRegisteredRef.current) {
+            setUserDetails((prev) => ({
+              ...prev,
+              userReady: false,
+              userReadyEmail: normalizedEmail || null,
+              adminStatus: null,
+              adminStatusEmail: null,
+            }));
+
             const userData = {
               email: user.email,
               name: user.name,
               image: user.picture,
             };
-            mutate({ userData, token: token });
-            hasRegisteredRef.current = true;
+
+            try {
+              const registrationResult = await registerUser({
+                userData,
+                token,
+              });
+
+              hasRegisteredRef.current = true;
+              setUserDetails((prev) => ({
+                ...prev,
+                userReady: true,
+                userReadyEmail: normalizedEmail || null,
+                adminStatus:
+                  typeof registrationResult?.user?.isAdmin === "boolean"
+                    ? registrationResult.user.isAdmin
+                    : null,
+                adminStatusEmail: normalizedEmail || null,
+              }));
+            } catch (error) {
+              setUserDetails((prev) => ({
+                ...prev,
+                userReady: true,
+                userReadyEmail: normalizedEmail || null,
+                adminStatus: null,
+                adminStatusEmail: null,
+              }));
+              console.error("Layout: Failed to sync user", error?.message);
+            }
+          } else {
+            setUserDetails((prev) => ({
+              ...prev,
+              userReadyEmail: normalizedEmail || null,
+            }));
           }
         } else {
           // Token expired and can't be refreshed — clear stale state
@@ -159,7 +202,7 @@ const Layout = () => {
     user?.email,
     user?.name,
     user?.picture,
-    mutate,
+    registerUser,
     setUserDetails,
     refreshToken,
     getFreshIdToken,
@@ -180,16 +223,24 @@ const Layout = () => {
         Array.isArray(prev.favourites) &&
         prev.favourites.length === 0 &&
         Array.isArray(prev.bookings) &&
-        prev.bookings.length === 0;
+        prev.bookings.length === 0 &&
+        !prev.userReady &&
+        !prev.userReadyEmail &&
+        prev.adminStatus === null &&
+        !prev.adminStatusEmail;
       if (alreadyCleared) return prev;
 
-      return {
-        ...prev,
-        token: null,
-        favourites: [],
-        bookings: [],
-      };
-    });
+        return {
+          ...prev,
+          token: null,
+          favourites: [],
+          bookings: [],
+          userReady: false,
+          userReadyEmail: null,
+          adminStatus: null,
+          adminStatusEmail: null,
+        };
+      });
 
     try {
       localStorage.removeItem("access_token");
