@@ -118,15 +118,28 @@ const buildDirectMongoUrl = (srvUrl, srvRecords = [], txtRecords = []) => {
   }`;
 };
 
+const withTimeout = (promise, ms) =>
+  Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error(`DNS lookup timed out after ${ms}ms`)), ms)
+    ),
+  ]);
+
+const DNS_TIMEOUT_MS = 8000;
+
 const resolveAtlasDnsRecords = async (hostname) => {
   const srvLookupName = `_mongodb._tcp.${hostname}`;
   const publicDnsServers = parseDnsServers(process.env.MONGODB_DNS_SERVERS);
 
   try {
-    const [srvRecords, txtRecords] = await Promise.all([
-      dns.resolveSrv(srvLookupName),
-      dns.resolveTxt(hostname).catch(() => []),
-    ]);
+    const [srvRecords, txtRecords] = await withTimeout(
+      Promise.all([
+        dns.resolveSrv(srvLookupName),
+        dns.resolveTxt(hostname).catch(() => []),
+      ]),
+      DNS_TIMEOUT_MS
+    );
 
     return {
       srvRecords,
@@ -139,10 +152,13 @@ const resolveAtlasDnsRecords = async (hostname) => {
     resolver.setServers(publicDnsServers);
 
     try {
-      const [srvRecords, txtRecords] = await Promise.all([
-        resolver.resolveSrv(srvLookupName),
-        resolver.resolveTxt(hostname).catch(() => []),
-      ]);
+      const [srvRecords, txtRecords] = await withTimeout(
+        Promise.all([
+          resolver.resolveSrv(srvLookupName),
+          resolver.resolveTxt(hostname).catch(() => []),
+        ]),
+        DNS_TIMEOUT_MS
+      );
 
       return {
         srvRecords,
