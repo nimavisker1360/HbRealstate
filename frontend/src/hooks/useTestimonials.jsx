@@ -8,7 +8,13 @@ const useTestimonials = (options = {}) => {
     { refetchOnWindowFocus: false, ...options }
   );
 
-  return { data, isLoading, isError, refetch };
+  const normalized = Array.isArray(data)
+    ? data
+    : Array.isArray(data?.testimonials)
+      ? data.testimonials
+      : [];
+
+  return { data: normalized, isLoading, isError, refetch };
 };
 
 export default useTestimonials;
