@@ -54,12 +54,27 @@ const Layout = () => {
             },
           });
         } catch (error) {
-          // Fall back to cached ID token if silent refresh fails
+          console.warn("Layout: Silent token refresh failed:", error?.message);
         }
       }
 
       const claims = await getIdTokenClaims();
-      return claims?.__raw || null;
+      const rawToken = claims?.__raw;
+      if (!rawToken) return null;
+
+      try {
+        const payload = JSON.parse(atob(rawToken.split(".")[1]));
+        const nowSec = Math.floor(Date.now() / 1000);
+        if (payload.exp && payload.exp < nowSec + 30) {
+          console.warn("Layout: ID token expired or expiring within 30 s");
+          return null;
+        }
+      } catch (_) {
+        // Malformed token — treat as unusable
+        return null;
+      }
+
+      return rawToken;
     },
     [getAccessTokenSilently, getIdTokenClaims]
   );
@@ -75,6 +90,10 @@ const Layout = () => {
         );
         return token;
       }
+
+      // Token couldn't be refreshed — clear stale state
+      localStorage.removeItem("access_token");
+      setUserDetails((prev) => (prev.token ? { ...prev, token: null } : prev));
     } catch (error) {
       console.error("Layout: Failed to refresh token", error?.message);
     }
@@ -86,14 +105,14 @@ const Layout = () => {
       try {
         const token = await getFreshIdToken(true);
 
+        // Always register the refresh callback so the 401 interceptor can try
+        setTokenRefreshCallback(refreshToken);
+
         if (token) {
           localStorage.setItem("access_token", token);
           setUserDetails((prev) =>
             prev.token === token ? prev : { ...prev, token: token }
           );
-
-          // Set the token refresh callback for API interceptor
-          setTokenRefreshCallback(refreshToken);
 
           // Send user data to database (only once per session)
           if (!hasRegisteredRef.current) {
@@ -105,6 +124,12 @@ const Layout = () => {
             mutate({ userData, token: token });
             hasRegisteredRef.current = true;
           }
+        } else {
+          // Token expired and can't be refreshed — clear stale state
+          localStorage.removeItem("access_token");
+          setUserDetails((prev) =>
+            prev.token ? { ...prev, token: null } : prev
+          );
         }
       } catch (error) {
         console.error("Layout: Failed to get token", error?.message);

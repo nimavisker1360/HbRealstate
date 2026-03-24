@@ -31,7 +31,6 @@ api.interceptors.response.use(
         try {
           const newToken = await tokenRefreshCallback();
           if (newToken) {
-            // Update the authorization header and retry
             originalRequest.headers.Authorization = `Bearer ${newToken}`;
             return api(originalRequest);
           }
@@ -40,7 +39,11 @@ api.interceptors.response.use(
         }
       }
 
-      // Show toast only once every 5 seconds to avoid spam
+      // Clear the stale token from storage so hooks stop sending expired JWTs
+      try {
+        localStorage.removeItem("access_token");
+      } catch (_) { /* ignore */ }
+
       const now = Date.now();
       if (now - lastToastTime > 5000) {
         lastToastTime = now;
@@ -170,10 +173,11 @@ export const getAllFav = async (email, token) => {
       }
     );
 
-    // console.log(res)
     return res.data?.favResidenciesID ?? [];
   } catch (e) {
-    toast.error(bilingualKey("toast.fetchFavoritesError"));
+    if (e.response?.status !== 401) {
+      toast.error(bilingualKey("toast.fetchFavoritesError"));
+    }
     throw e;
   }
 };
@@ -191,10 +195,11 @@ export const getAllBookings = async (email, token) => {
       }
     );
 
-    // console.log("res", res)
     return res.data?.bookedVisits ?? [];
   } catch (e) {
-    toast.error(bilingualKey("toast.fetchBookingsError"));
+    if (e.response?.status !== 401) {
+      toast.error(bilingualKey("toast.fetchBookingsError"));
+    }
     throw e;
   }
 };
