@@ -1,11 +1,11 @@
 import { upload } from "@vercel/blob/client";
+import { API_BASE_URL } from "./apiBaseUrl";
 
 const IMAGE_ACCEPT =
   ".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,.svg,.heic,.heif,.avif,.ico";
 const VIDEO_ACCEPT = ".mp4,.webm,.mov,.avi,.mkv,.m4v,.ogv,.3gp,.flv";
 
-const HANDLE_UPLOAD_URL =
-  (import.meta.env.VITE_API_URL || "/api") + "/upload/client";
+const HANDLE_UPLOAD_URL = `${API_BASE_URL}/upload/client`;
 
 export async function uploadFileToBlob(file, onProgress) {
   const blob = await upload(file.name, file, {
