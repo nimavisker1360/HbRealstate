@@ -166,6 +166,7 @@ const getDefaultFiatCurrency = () => {
   ).toUpperCase();
   return ["USD", "EUR", "GBP", "TRY"].includes(currency) ? currency : "USD";
 };
+const ensureArray = (value) => (Array.isArray(value) ? value : []);
 
 const AdminPanel = () => {
   const [active, setActive] = useState(0);
@@ -185,7 +186,7 @@ const AdminPanel = () => {
 
   // Properties state
   const {
-    data: properties,
+    data: propertiesData,
     isLoading: propertiesLoading,
     refetch: refetchProperties,
   } = useProperties();
@@ -198,7 +199,7 @@ const AdminPanel = () => {
 
   // Consultants state
   const {
-    data: consultants,
+    data: consultantsData,
     isLoading: consultantsLoading,
     refetch: refetchConsultants,
   } = useConsultants();
@@ -213,12 +214,18 @@ const AdminPanel = () => {
 
   // Ordered consultants state for drag-and-drop
   const [orderedConsultants, setOrderedConsultants] = useState([]);
+  const properties = useMemo(
+    () => ensureArray(propertiesData),
+    [propertiesData]
+  );
+  const consultants = useMemo(
+    () => ensureArray(consultantsData),
+    [consultantsData]
+  );
 
   // Update ordered consultants when consultants data changes
   useEffect(() => {
-    if (consultants && consultants.length > 0) {
-      setOrderedConsultants(consultants);
-    }
+    setOrderedConsultants(ensureArray(consultants));
   }, [consultants]);
 
   // DnD sensors
@@ -231,7 +238,7 @@ const AdminPanel = () => {
 
   // Consultant IDs for sortable context
   const consultantIds = useMemo(
-    () => orderedConsultants.map((c) => c.id),
+    () => ensureArray(orderedConsultants).map((c) => c.id),
     [orderedConsultants]
   );
 
@@ -293,7 +300,7 @@ const AdminPanel = () => {
   };
 
   const countryOptions = useMemo(() => {
-    const allCountries = getAllCountries();
+    const allCountries = ensureArray(getAllCountries());
     const countryMap = new Map(
       allCountries.map((country) => [
         country.value.toLowerCase(),
@@ -1051,7 +1058,7 @@ const AdminPanel = () => {
     setBookingsLoading(true);
     try {
       const data = await getAdminAllBookings(token);
-      setBookings(data.bookings || []);
+      setBookings(ensureArray(data.bookings));
       setTotalBookings(data.totalBookings || 0);
     } catch (error) {
       console.error("Error fetching bookings:", error);
@@ -1072,7 +1079,7 @@ const AdminPanel = () => {
     setMessagesLoading(true);
     try {
       const data = await getAllContactMessages(token);
-      setContactMessages(data.messages || []);
+      setContactMessages(ensureArray(data.messages));
       setTotalMessages(data.totalMessages || 0);
     } catch (error) {
       console.error("Error fetching messages:", error);
@@ -1093,7 +1100,7 @@ const AdminPanel = () => {
     setBlogsLoading(true);
     try {
       const data = await getAllBlogsAdmin(token);
-      setBlogs(data.blogs || []);
+      setBlogs(ensureArray(data.blogs));
       setTotalBlogs(data.totalBlogs || 0);
     } catch (error) {
       console.error("Error fetching blogs:", error);
@@ -1114,7 +1121,7 @@ const AdminPanel = () => {
     setTestimonialsLoading(true);
     try {
       const data = await getAllTestimonialsAdmin(token);
-      setTestimonials(data.testimonials || []);
+      setTestimonials(ensureArray(data.testimonials));
       setTotalTestimonials(data.totalTestimonials || 0);
     } catch (error) {
       console.error("Error fetching testimonials:", error);

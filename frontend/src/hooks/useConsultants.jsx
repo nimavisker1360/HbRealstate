@@ -1,6 +1,8 @@
 import { useQuery } from "react-query";
 import { getAllConsultants } from "../utils/api";
 
+const ensureArray = (value) => (Array.isArray(value) ? value : []);
+
 const useConsultants = () => {
   const { data, isLoading, isError, refetch } = useQuery(
     "allConsultants",
@@ -9,7 +11,7 @@ const useConsultants = () => {
   );
 
   return {
-    data,
+    data: ensureArray(data),
     isError,
     isLoading,
     refetch,
