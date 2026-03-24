@@ -135,7 +135,7 @@ const LoginModal = ({ isOpen, onClose }) => {
 
               {/* Email Login */}
               <button
-                onClick={() => handleLogin()}
+                onClick={() => handleLogin({ connection: "Username-Password-Authentication" })}
                 disabled={isLoading}
                 className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-2xl font-semibold text-white transition-all duration-200 shadow-lg shadow-secondary/30 hover:shadow-xl hover:shadow-secondary/40 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed group bg-gradient-to-r from-secondary via-green-500 to-secondaryBlue border border-white/10"
               >
