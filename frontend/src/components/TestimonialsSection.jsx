@@ -263,6 +263,7 @@ const TestimonialsSection = ({
   const hasTestimonials = resolvedTestimonials.length > 0;
   const baseTestimonials = hasTestimonials ? resolvedTestimonials : sampleDisplay;
 
+  const safeBase = Array.isArray(baseTestimonials) ? baseTestimonials : [];
   const minSliderItems = 5;
   const sliderItems =
     safeBase.length >= minSliderItems
@@ -277,7 +278,6 @@ const TestimonialsSection = ({
           })
         : sampleDisplay;
 
-  const safeBase = Array.isArray(baseTestimonials) ? baseTestimonials : [];
   const averageRating = safeBase.length
     ? Math.round(
         (safeBase.reduce(
