@@ -14,6 +14,26 @@ import { captureAttributionParams } from "../utils/attribution";
 import AssistantChatWidget from "./AssistantChatModal";
 
 const normalizeEmail = (value = "") => String(value || "").trim().toLowerCase();
+const decodeBase64Url = (value = "") => {
+  const normalizedValue = String(value || "").replace(/-/g, "+").replace(/_/g, "/");
+  const paddingLength = normalizedValue.length % 4;
+  const paddedValue = paddingLength
+    ? normalizedValue.padEnd(normalizedValue.length + (4 - paddingLength), "=")
+    : normalizedValue;
+
+  return atob(paddedValue);
+};
+const parseTokenPayload = (token = "") => {
+  try {
+    const [, payloadSegment] = String(token || "").split(".");
+    if (!payloadSegment) return null;
+    return JSON.parse(decodeBase64Url(payloadSegment));
+  } catch (_) {
+    return null;
+  }
+};
+const resolveAuthEmail = (...candidates) =>
+  candidates.map((candidate) => normalizeEmail(candidate)).find(Boolean) || "";
 
 const Layout = () => {
   useFavourites();
@@ -81,9 +101,31 @@ const Layout = () => {
     [getAccessTokenSilently, getIdTokenClaims]
   );
 
+  const getFreshAuthSession = useCallback(
+    async (forceRefresh = false) => {
+      const token = await getFreshIdToken(forceRefresh);
+      if (!token) return null;
+
+      const claims = await getIdTokenClaims();
+      const payload = parseTokenPayload(token);
+      const normalizedEmail = resolveAuthEmail(
+        user?.email,
+        claims?.email,
+        payload?.email
+      );
+
+      return {
+        token,
+        email: normalizedEmail || null,
+      };
+    },
+    [getFreshIdToken, getIdTokenClaims, user?.email]
+  );
+
   const refreshToken = useCallback(async () => {
     try {
-      const token = await getFreshIdToken(true);
+      const session = await getFreshAuthSession(true);
+      const token = session?.token;
 
       if (token) {
         localStorage.setItem("access_token", token);
@@ -100,14 +142,14 @@ const Layout = () => {
       console.error("Layout: Failed to refresh token", error?.message);
     }
     return null;
-  }, [getFreshIdToken, setUserDetails]);
+  }, [getFreshAuthSession, setUserDetails]);
 
   useEffect(() => {
     const getTokenAndRegister = async () => {
-      const normalizedEmail = normalizeEmail(user?.email);
-
       try {
-        const token = await getFreshIdToken(true);
+        const session = await getFreshAuthSession(true);
+        const token = session?.token;
+        const normalizedEmail = resolveAuthEmail(session?.email, user?.email);
 
         // Always register the refresh callback so the 401 interceptor can try
         setTokenRefreshCallback(refreshToken);
@@ -117,6 +159,17 @@ const Layout = () => {
           setUserDetails((prev) =>
             prev.token === token ? prev : { ...prev, token: token }
           );
+
+          if (!normalizedEmail) {
+            setUserDetails((prev) => ({
+              ...prev,
+              userReady: false,
+              userReadyEmail: null,
+              adminStatus: null,
+              adminStatusEmail: null,
+            }));
+            return;
+          }
 
           // Send user data to database (only once per session)
           if (!hasRegisteredRef.current) {
@@ -129,7 +182,7 @@ const Layout = () => {
             }));
 
             const userData = {
-              email: user.email,
+              email: normalizedEmail,
               name: user.name,
               image: user.picture,
             };
@@ -179,7 +232,7 @@ const Layout = () => {
       }
     };
 
-    if (isAuthenticated && user?.email) {
+    if (isAuthenticated) {
       getTokenAndRegister();
 
       // Set up token refresh every 15 minutes
@@ -199,19 +252,20 @@ const Layout = () => {
     };
   }, [
     isAuthenticated,
+    user?.sub,
     user?.email,
     user?.name,
     user?.picture,
     registerUser,
     setUserDetails,
     refreshToken,
-    getFreshIdToken,
+    getFreshAuthSession,
   ]);
 
   // Reset registration flag when user changes
   useEffect(() => {
     hasRegisteredRef.current = false;
-  }, [user?.email]);
+  }, [user?.sub, user?.email]);
 
   useEffect(() => {
     if (isLoading || isAuthenticated) return;

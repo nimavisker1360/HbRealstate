@@ -6,6 +6,12 @@ import { checkAdmin } from "../utils/api";
 const MAX_ADMIN_CHECK_RETRIES = 3;
 const ADMIN_CHECK_RETRY_DELAY_MS = 1200;
 const normalizeEmail = (value = "") => String(value || "").trim().toLowerCase();
+const CONFIGURED_ADMIN_EMAILS = new Set(
+  String(import.meta.env.VITE_ADMIN_EMAILS || "")
+    .split(/[,\s;]+/)
+    .map((value) => normalizeEmail(value))
+    .filter(Boolean)
+);
 
 const useAdmin = () => {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth0();
@@ -26,7 +32,9 @@ const useAdmin = () => {
     }
 
     const fetchAdminStatus = async () => {
-      const normalizedEmail = normalizeEmail(user?.email);
+      const normalizedEmail = normalizeEmail(
+        userReadyEmail || adminStatusEmail || user?.email
+      );
 
       if (authLoading) {
         return;
@@ -40,7 +48,20 @@ const useAdmin = () => {
         return;
       }
 
-      if (!normalizedEmail || !token) {
+      if (!normalizedEmail) {
+        setLoading(true);
+        return;
+      }
+
+      if (CONFIGURED_ADMIN_EMAILS.has(normalizedEmail)) {
+        setIsAdmin(true);
+        setLoading(false);
+        retryCountRef.current = 0;
+        lastCheckedRef.current = { email: normalizedEmail, token };
+        return;
+      }
+
+      if (!token) {
         setLoading(true);
         return;
       }

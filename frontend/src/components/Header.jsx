@@ -14,6 +14,7 @@ import LanguageSwitcher from "./LanguageSwitcher";
 import SearchOverlay from "./SearchOverlay";
 import { normalizeWhatsAppNumber } from "../utils/common";
 import { PRIMARY_CONTACT_PHONE } from "../constant/data";
+import useAdmin from "../hooks/useAdmin";
 
 import CurrencyContext from "../context/CurrencyContext";
 
@@ -37,6 +38,7 @@ const Header = () => {
   const authRedirectInProgressRef = useRef(false);
   const toggleMenu = () => setMenuOpened(!menuOpened);
   const { isAuthenticated, user, logout, isLoading } = useAuth0();
+  const { isAdmin, loading: adminLoading } = useAdmin();
   const prevAuthRef = useRef(isAuthenticated);
 
   const handleLoginClick = () => {
@@ -281,7 +283,18 @@ const Header = () => {
                     <span>{t("common.login")}</span>
                   </button>
                 ) : (
-                  <ProfileMenu user={user} logout={logout} />
+                  <div className="flex items-center gap-3">
+                    {!adminLoading && isAdmin && (
+                      <button
+                        type="button"
+                        onClick={() => navigate("/admin")}
+                        className="rounded-md border border-secondary px-3 py-2 text-xs font-semibold text-secondary transition hover:bg-secondary hover:text-white"
+                      >
+                        {t("profile.adminPanel")}
+                      </button>
+                    )}
+                    <ProfileMenu user={user} logout={logout} />
+                  </div>
                 )}
               </div>
             </div>
@@ -397,5 +410,4 @@ const Header = () => {
 };
 
 export default Header;
-
 
