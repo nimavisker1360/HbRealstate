@@ -15,26 +15,42 @@ import { useTranslation } from "react-i18next";
 const LoginModal = ({ isOpen, onClose }) => {
   const { loginWithRedirect } = useAuth0();
   const [isLoading, setIsLoading] = useState(false);
+  const [loginError, setLoginError] = useState("");
   const { t } = useTranslation();
+  const auth0DatabaseConnection = String(
+    import.meta.env.VITE_AUTH0_DB_CONNECTION || ""
+  ).trim();
+
+  const resolveLoginErrorMessage = (error) =>
+    error?.error_description ||
+    error?.message ||
+    t("common.somethingNotRightTryAgain");
 
   const handleLogin = async ({
     connection = null,
     screenHint = null,
+    forceLoginScreen = false,
   } = {}) => {
     setIsLoading(true);
+    setLoginError("");
     try {
-      const authorizationParams = {};
+      const authorizationParams = {
+        scope: "openid profile email",
+      };
       if (connection) {
         authorizationParams.connection = connection;
       }
       if (screenHint) {
         authorizationParams.screen_hint = screenHint;
+      } else if (forceLoginScreen) {
+        authorizationParams.screen_hint = "login";
       }
       await loginWithRedirect({
         authorizationParams,
       });
     } catch (error) {
       console.error("Login error:", error);
+      setLoginError(resolveLoginErrorMessage(error));
       setIsLoading(false);
     }
   };
@@ -135,7 +151,13 @@ const LoginModal = ({ isOpen, onClose }) => {
 
               {/* Email Login */}
               <button
-                onClick={() => handleLogin({ connection: "Username-Password-Authentication" })}
+                onClick={() =>
+                  handleLogin(
+                    auth0DatabaseConnection
+                      ? { connection: auth0DatabaseConnection }
+                      : { forceLoginScreen: true }
+                  )
+                }
                 disabled={isLoading}
                 className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-2xl font-semibold text-white transition-all duration-200 shadow-lg shadow-secondary/30 hover:shadow-xl hover:shadow-secondary/40 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed group bg-gradient-to-r from-secondary via-green-500 to-secondaryBlue border border-white/10"
               >
@@ -143,6 +165,12 @@ const LoginModal = ({ isOpen, onClose }) => {
                 <span>{t("auth.loginWithEmail")}</span>
                 <MdArrowForward className="text-lg opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
               </button>
+
+              {loginError && (
+                <p className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+                  {loginError}
+                </p>
+              )}
             </div>
 
             {/* Sign Up */}
