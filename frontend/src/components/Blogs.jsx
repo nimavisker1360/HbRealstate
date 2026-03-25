@@ -137,7 +137,7 @@ const Blogs = ({ limit = null, showMore = false }) => {
 
   return (
     <section className="max-padd-container overflow-x-hidden mb-16">
-      <div className="relative rounded-[32px] border border-white/70 bg-white/90 p-6 sm:p-10 shadow-[0_24px_60px_-45px_rgba(15,23,42,0.35)]">
+      <div className="relative mx-auto w-full max-w-[1320px] rounded-[32px] border border-white/70 bg-white/90 p-6 sm:p-10 shadow-[0_24px_60px_-45px_rgba(15,23,42,0.35)]">
         <div className="pointer-events-none absolute -top-6 left-10 h-12 w-12 rounded-2xl border border-emerald-200 bg-white/90 shadow-sm flexCenter">
           <MdArticle className="text-emerald-600 text-xl" />
         </div>
