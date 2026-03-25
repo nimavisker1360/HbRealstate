@@ -616,6 +616,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
   const [deliveryDate, setDeliveryDate] = useState("");
   const [projectStatus, setProjectStatus] = useState("devam-ediyor");
   const [listingStatus, setListingStatus] = useState("offplan");
+  const [isDraft, setIsDraft] = useState(false);
   const [gyo, setGyo] = useState(false);
   const [brochureUrl, setBrochureUrl] = useState("");
   const [mapImage, setMapImage] = useState("");
@@ -755,7 +756,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
 
   // Initialize form when property changes
   useEffect(() => {
-    if (property) {
+    if (property && opened) {
       form.setValues({
         title: property.title || "",
         description: property.description || "",
@@ -830,6 +831,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
             ? "ready"
             : listingStatusFromProjectStatus(property.projectStatus) || "offplan")
       );
+      setIsDraft(property.published === false);
       setGyo(Boolean(property.gyo));
       setBrochureUrl(property.brochureUrl || "");
       setMapImage(property.mapImage || "");
@@ -926,7 +928,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
         muhit: [],
       });
     }
-  }, [property]);
+  }, [property, opened]);
 
   const handleImageUpload = async () => {
     try {
@@ -1306,6 +1308,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
       deliveryDate: isProjectType ? deliveryDate : "",
       projectStatus: isProjectType ? projectStatus : "",
       listingStatus: normalizedListingStatus,
+      published: !isDraft,
       gyo: isProjectType ? gyo : false,
       brochureUrl: isProjectType ? brochureUrl : "",
       mapImage: isProjectType ? mapImage : "",
@@ -3030,6 +3033,14 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
         </div>
 
         {/* Actions */}
+        <div className="mt-6">
+          <Switch
+            label="Draft"
+            description="Aciksa bu kayit ana sayfa ve genel listelerde gosterilmez."
+            checked={isDraft}
+            onChange={(event) => setIsDraft(event.currentTarget.checked)}
+          />
+        </div>
         <Group justify="flex-end" mt="xl">
           <Button variant="default" onClick={() => setOpened(false)}>
             İptal
@@ -3058,4 +3069,3 @@ EditPropertyModal.propTypes = {
 };
 
 export default EditPropertyModal;
-

@@ -65,6 +65,17 @@ const extractObjectIdCandidate = (identifier) => {
   return null;
 };
 
+const normalizePublishedState = (value) => {
+  if (typeof value === "string") {
+    return value.trim().toLowerCase() !== "false";
+  }
+  return value !== false;
+};
+
+const PUBLIC_RESIDENCY_FILTER = {
+  published: { $ne: false },
+};
+
 export const createResidency = asyncHandler(async (req, res) => {
   const {
     title,
@@ -128,6 +139,7 @@ export const createResidency = asyncHandler(async (req, res) => {
     deliveryDate,
     projectStatus,
     listingStatus,
+    published,
     gyo,
     // Project-specific features (Özellikler tabs)
     binaOzellikleri,
@@ -230,6 +242,7 @@ export const createResidency = asyncHandler(async (req, res) => {
       deliveryDate: deliveryDate || null,
       projectStatus: projectStatus || "devam-ediyor",
       listingStatus: normalizeListingStatus(listingStatus, projectStatus),
+      published: normalizePublishedState(published),
       gyo: Boolean(gyo),
       // Project-specific features (Özellikler tabs)
       binaOzellikleri: binaOzellikleri || [],
@@ -284,15 +297,17 @@ export const getAllResidencies = asyncHandler(async (req, res) => {
   try {
     // Use MongoDB directly to get all fields including new ones
     const db = await getMongoDb();
+    const filter = req.adminUser ? {} : PUBLIC_RESIDENCY_FILTER;
     const residencies = await db
       .collection("Residency")
-      .find({})
+      .find(filter)
       .sort({ createdAt: -1 })
       .toArray();
 
     // Transform _id to id for consistency
     const transformed = residencies.map((r) => {
       r.id = r._id.toString();
+      r.published = normalizePublishedState(r.published);
       delete r._id;
       return r;
     });
@@ -359,9 +374,16 @@ export const getResidency = asyncHandler(async (req, res) => {
       });
     }
 
+    if (!residency || residency.published === false) {
+      return res.status(404).send({
+        message: "Residency not found",
+      });
+    }
+
     if (residency) {
       // Transform _id to id for consistency
       residency.id = residency._id.toString();
+      residency.published = normalizePublishedState(residency.published);
       delete residency._id;
 
       // Fetch consultant if consultantId exists
@@ -451,6 +473,7 @@ export const updateResidency = asyncHandler(async (req, res) => {
     deliveryDate,
     projectStatus,
     listingStatus,
+    published,
     gyo,
     // Project-specific features (Özellikler tabs)
     binaOzellikleri,
@@ -537,6 +560,7 @@ export const updateResidency = asyncHandler(async (req, res) => {
       deliveryDate: deliveryDate || null,
       projectStatus: projectStatus || "devam-ediyor",
       listingStatus: normalizeListingStatus(listingStatus, projectStatus),
+      published: normalizePublishedState(published),
       gyo: Boolean(gyo),
       // Project-specific features (Özellikler tabs)
       binaOzellikleri: binaOzellikleri || [],
@@ -578,6 +602,7 @@ export const updateResidency = asyncHandler(async (req, res) => {
       .collection("Residency")
       .findOne({ _id: new ObjectId(id) });
     residency.id = residency._id.toString();
+    residency.published = normalizePublishedState(residency.published);
     delete residency._id;
 
     res.status(200).send({

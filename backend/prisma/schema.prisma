@@ -40,6 +40,7 @@ model Residency {
     images String[]
     videos String[]
     facilities Json?
+    published Boolean @default(true)
     propertyType String @default("sale") // "sale" or "rent"
     category String @default("residential") // residential, commercial, land, building, timeshare, tourist-facility
     

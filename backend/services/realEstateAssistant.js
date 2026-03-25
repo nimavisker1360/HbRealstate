@@ -1037,7 +1037,7 @@ export async function searchProperties(rawArgs = {}) {
   const args = normalizeSearchArgs(rawArgs);
   const db = await getMongoDb();
 
-  const baseAndConditions = [];
+  const baseAndConditions = [{ published: { $ne: false } }];
   let budgetMin = normalizeNumber(args.budgetMin, NaN);
   let budgetMax = normalizeNumber(args.budgetMax, NaN);
   const budgetExact = normalizeNumber(args.budgetExact, NaN);
@@ -1515,7 +1515,10 @@ export async function searchBlogs(rawArgs = {}, language = "en") {
 async function getPropertyById(id) {
   if (!ObjectId.isValid(id)) return null;
   const db = await getMongoDb();
-  const property = await db.collection("Residency").findOne({ _id: new ObjectId(id) });
+  const property = await db.collection("Residency").findOne({
+    _id: new ObjectId(id),
+    published: { $ne: false },
+  });
   if (!property) return null;
   return normalizePropertyRecord(property);
 }
@@ -2684,5 +2687,4 @@ export async function runRealEstateAssistant({
   }
   return response;
 }
-
 

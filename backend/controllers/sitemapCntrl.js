@@ -170,7 +170,7 @@ export const getSitemapXml = asyncHandler(async (_req, res) => {
     const residencies = await db
       .collection("Residency")
       .find(
-        {},
+        { published: { $ne: false } },
         {
           projection: {
             _id: 1,

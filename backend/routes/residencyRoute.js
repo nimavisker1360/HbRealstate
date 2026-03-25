@@ -8,11 +8,13 @@ import {
   deleteResidency,
 } from "../controllers/resdCntrl.js";
 import jwtCheck from "../config/authOConfig.js";
+import { requireAdminUser } from "../middleware/requireAdminUser.js";
 
 const router = express.Router();
 
 router.post("/create", jwtCheck, createResidency);
 router.get("/allresd", getAllResidencies);
+router.get("/admin/all", jwtCheck, requireAdminUser, getAllResidencies);
 router.get("/consultant/:consultantId", getResidenciesByConsultant);
 router.get("/:id", getResidency);
 router.put("/update/:id", jwtCheck, updateResidency);

@@ -54,11 +54,23 @@ api.interceptors.response.use(
   }
 );
 
-export const getAllProperties = async () => {
+export const getAllProperties = async ({
+  includeDraft = false,
+  token,
+} = {}) => {
   try {
-    const response = await api.get("/residency/allresd", {
-      timeout: 10 * 1000,
-    });
+    const response = await api.get(
+      includeDraft ? "/residency/admin/all" : "/residency/allresd",
+      {
+        timeout: 10 * 1000,
+        headers:
+          includeDraft && token
+            ? {
+                Authorization: `Bearer ${token}`,
+              }
+            : undefined,
+      }
+    );
     if (response.status === 400 || response.status === 500) {
       throw response.data;
     }

@@ -188,7 +188,11 @@ const AdminPanel = () => {
     data: properties,
     isLoading: propertiesLoading,
     refetch: refetchProperties,
-  } = useProperties();
+  } = useProperties({
+    includeDraft: true,
+    token,
+    enabled: Boolean(token && isAdmin),
+  });
   const [propertyFilter, setPropertyFilter] = useState("all"); // all, sale, local-project, international-project
   const [editModalOpened, setEditModalOpened] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState(null);
@@ -2164,7 +2168,7 @@ const AdminPanel = () => {
                   Property List
                 </Title>
                 <Text size="sm" color="dimmed" className="mt-1">
-                  View, edit or delete all registered properties
+                  View, edit, draft or delete all registered properties
                 </Text>
               </div>
               <Button
@@ -2235,6 +2239,7 @@ const AdminPanel = () => {
                       <Table.Th>Fiyat</Table.Th>
                       <Table.Th>Tür</Table.Th>
                       <Table.Th>Consultant</Table.Th>
+                      <Table.Th>Durum</Table.Th>
                       <Table.Th>İşlemler</Table.Th>
                     </Table.Tr>
                   </Table.Thead>
@@ -2346,6 +2351,15 @@ const AdminPanel = () => {
                           )}
                         </Table.Td>
                         <Table.Td>
+                          <Badge
+                            color={property.published ? "green" : "gray"}
+                            variant="light"
+                            size="sm"
+                          >
+                            {property.published ? "Published" : "Draft"}
+                          </Badge>
+                        </Table.Td>
+                        <Table.Td>
                           <Group gap="xs">
                             <ActionIcon
                               variant="light"
@@ -2418,6 +2432,12 @@ const AdminPanel = () => {
                           (p) => p.propertyType === "international-project"
                         ).length
                       }
+                    </Text>
+                    <Text size="sm" color="dimmed">
+                      Published: {properties.filter((p) => p.published).length}
+                    </Text>
+                    <Text size="sm" color="dimmed">
+                      Draft: {properties.filter((p) => !p.published).length}
                     </Text>
                   </div>
                 </div>
