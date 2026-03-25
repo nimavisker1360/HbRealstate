@@ -760,7 +760,7 @@ const Properties = () => {
         </div>
 
         {/* Filter Bar */}
-        <div className="max-w-5xl mx-auto mb-12 relative z-20">
+        <div className="mb-12 relative z-20">
           <div className="rounded-2xl border border-gray-200/80 bg-white/90 shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur isolation-isolate">
             <div className="flex flex-col gap-3 p-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center sm:gap-3 sm:p-4">
               <div className="flex items-center gap-2 w-full sm:flex-1 sm:min-w-[260px]">

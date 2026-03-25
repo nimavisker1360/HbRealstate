@@ -1,6 +1,7 @@
 import React from 'react'
 import { Link } from "react-router-dom";
 import Hero from '../components/Hero'
+import HomeContactStrip from "../components/HomeContactStrip";
 import About from '../components/About'
 import Properties from '../components/Properties'
 import ConsultantsSection from '../components/ConsultantsSection'
@@ -12,6 +13,7 @@ const Home = () => {
     return (
         <main>
             <Hero />
+            <HomeContactStrip />
             <About />
             {/* Divider Line */}
             <div className="w-full border-t border-gray-300"></div>
