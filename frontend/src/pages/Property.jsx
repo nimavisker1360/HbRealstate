@@ -171,7 +171,6 @@ const MUHIT_FEATURES = [
 ];
 
 import { CgRuler } from "react-icons/cg";
-import HeartBtn from "../components/HeartBtn";
 import { resolveProjectPath } from "../utils/seo";
 import IstanbulMarketAnalytics from "../components/market/IstanbulMarketAnalytics";
 import InquirySidebarCard from "../components/InquirySidebarCard";
@@ -495,10 +494,6 @@ const Property = () => {
                 <MdOutlineBed className="rotate-180 text-xl" />‹
               </button>
             )}
-            {/* Like Button */}
-            <div className="absolute top-4 right-4 z-10">
-              <HeartBtn id={id} />
-            </div>
           </div>
 
           {/* Right Side - 2x2 Grid */}

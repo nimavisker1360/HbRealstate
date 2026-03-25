@@ -21,6 +21,7 @@ import useProperties from "../hooks/useProperties";
 import CurrencyContext from "../context/CurrencyContext";
 import PropertiesMap from "../components/PropertiesMap";
 import PropertyCard from "../components/PropertyCard";
+import HeartBtn from "../components/HeartBtn";
 import { getOptimizedImageUrl } from "../utils/media";
 import { resolveProjectPath } from "../utils/seo";
 
@@ -1565,6 +1566,9 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
                         {isSpecialOffersPage ? "SPECIAL OFFER" : "OFF"}
                       </div>
                     )}
+                    <div className="absolute right-3 top-3 z-20">
+                      <HeartBtn id={project.id} size={18} className="p-1" />
+                    </div>
                   </div>
 
                   {/* Project Info */}

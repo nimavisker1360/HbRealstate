@@ -4,19 +4,14 @@ import {
   MdSell,
   MdEmail,
 } from "react-icons/md";
-import { FaHeart, FaRegHeart, FaWhatsapp } from "react-icons/fa";
+import { FaWhatsapp } from "react-icons/fa";
 import PropTypes from "prop-types";
-import { useContext } from "react";
-import UserDetailContext from "../context/UserDetailContext";
 import CurrencyContext from "../context/CurrencyContext";
-import { useMutation } from "react-query";
-import { toFav } from "../utils/api";
-import { useAuth0 } from "@auth0/auth0-react";
-import { toast } from "react-toastify";
-import { bilingualKey } from "../utils/bilingualToast";
+import { useContext } from "react";
 import { getOptimizedImageUrl } from "../utils/media";
 import { getPropertyDisplayPriceInfo } from "../utils/propertyPricing";
 import { resolveProjectPath, resolvePropertyPath } from "../utils/seo";
+import HeartBtn from "./HeartBtn";
 
 // Get category display name (bilingual)
 const getCategoryLabel = (category, propertyType, lang = "tr") => {
@@ -59,8 +54,6 @@ const getCategoryLabel = (category, propertyType, lang = "tr") => {
 const PropertyCard = ({ property, onCardClick }) => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
-  const { user } = useAuth0();
-  const { userDetails, setUserDetails } = useContext(UserDetailContext);
   const { selectedCurrency, baseCurrency, rates, convertAmount, formatMoney } =
     useContext(CurrencyContext);
   const isForSale = property.propertyType === "sale" || !property.propertyType;
@@ -122,36 +115,6 @@ const PropertyCard = ({ property, onCardClick }) => {
     return property.description_en || property.description_tr || property.description;
   };
 
-  const isFavorite = userDetails?.favourites?.includes(property.id);
-
-  const { mutate: toggleFav } = useMutation({
-    mutationFn: () => toFav(property.id, user?.email, userDetails?.token),
-    onSuccess: () => {
-      if (isFavorite) {
-        setUserDetails((prev) => ({
-          ...prev,
-          favourites: prev.favourites.filter((id) => id !== property.id),
-        }));
-        toast.success(bilingualKey("favorites.removedFromFavorites"));
-      } else {
-        setUserDetails((prev) => ({
-          ...prev,
-          favourites: [...prev.favourites, property.id],
-        }));
-        toast.success(bilingualKey("favorites.addedToFavorites"));
-      }
-    },
-  });
-
-  const handleFavoriteClick = (e) => {
-    e.stopPropagation();
-    if (!user) {
-      toast.error(bilingualKey("toast.loginFirst"));
-      return;
-    }
-    toggleFav();
-  };
-
   const handleCardClick = () => {
     if (onCardClick) {
       onCardClick(property.id, property.propertyType);
@@ -211,19 +174,11 @@ const PropertyCard = ({ property, onCardClick }) => {
               </p>
             </div>
             {/* Favorite Button */}
-            <button
-              onClick={handleFavoriteClick}
-              className="group p-2 rounded-full transition-colors flex-shrink-0"
-            >
-              {isFavorite ? (
-                <FaHeart className="w-5 h-5 text-red-500" />
-              ) : (
-                <span className="relative inline-flex w-5 h-5">
-                  <FaRegHeart className="w-5 h-5 text-gray-400 transition-opacity duration-150 group-hover:opacity-0" />
-                  <FaHeart className="w-5 h-5 text-emerald-600 absolute inset-0 opacity-0 transition-opacity duration-150 group-hover:opacity-100" />
-                </span>
-              )}
-            </button>
+            <HeartBtn
+              id={property.id}
+              size={20}
+              className="relative z-10 flex-shrink-0 p-1"
+            />
           </div>
 
           {/* Price */}
