@@ -1,5 +1,5 @@
 import { useState, useMemo, useContext, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import PropTypes from "prop-types";
 import {
@@ -291,6 +291,7 @@ const normalizeProjectType = (value) => {
 
 const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const hotOffersQuery = String(searchParams.get("hotOffers") || "")
     .trim()
@@ -473,6 +474,19 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
     setPriceMinGBP("");
     setPriceMaxGBP("");
   }, [resolvedProjectType, isSpecialOffersPage, isHotOffersMode]);
+
+  useEffect(() => {
+    if (location.hash !== "#local-projects") return;
+
+    const scrollToProjects = () => {
+      document
+        .getElementById("local-projects")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+
+    const timer = window.setTimeout(scrollToProjects, 50);
+    return () => window.clearTimeout(timer);
+  }, [location.hash]);
 
   // Popover states
   const [cityPopoverOpened, setCityPopoverOpened] = useState(false);
@@ -1402,7 +1416,7 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
       </Container>
 
       {/* Projects Listing Section */}
-      <Container size="lg" className="py-8">
+      <Container id="local-projects" size="lg" className="scroll-mt-28 py-8">
         {/* Active Filters Summary */}
         {(selectedCity || selectedDistricts.length > 0 || priceMinGBP || priceMaxGBP) && (
           <div className="flex flex-wrap items-center gap-2 mb-4">

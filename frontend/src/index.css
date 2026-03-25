@@ -120,6 +120,67 @@ body {
   border-color: #8ac243 !important;
 }
 
+@keyframes hero-pill-glow {
+  0%,
+  100% {
+    box-shadow: 0 10px 24px rgba(16, 185, 129, 0.18);
+  }
+  50% {
+    box-shadow: 0 14px 30px rgba(16, 185, 129, 0.26);
+  }
+}
+
+@keyframes hero-pill-shine {
+  0% {
+    transform: translateX(-160%) skewX(-18deg);
+  }
+  100% {
+    transform: translateX(220%) skewX(-18deg);
+  }
+}
+
+.hero-project-pill {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #60dbac 0%, #20bf79 100%);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  animation: hero-pill-glow 3.4s ease-in-out infinite;
+}
+
+.hero-project-pill::after {
+  content: "";
+  position: absolute;
+  inset: -35%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.06) 35%,
+    rgba(255, 255, 255, 0.34) 50%,
+    rgba(255, 255, 255, 0.06) 65%,
+    transparent 100%
+  );
+  animation: hero-pill-shine 3s ease-in-out infinite;
+}
+
+.hero-project-pill__label {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-project-pill,
+  .hero-project-pill::after {
+    animation: none;
+  }
+}
+
 @layer utilities {
   .btn-white {
     @apply medium-15 bg-white px-7 py-3 text-tertiary;

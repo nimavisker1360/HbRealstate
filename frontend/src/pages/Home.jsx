@@ -5,7 +5,7 @@ import HomeContactStrip from "../components/HomeContactStrip";
 import About from '../components/About'
 import Properties from '../components/Properties'
 import ConsultantsSection from '../components/ConsultantsSection'
-import TestimonialsSection from '../components/TestimonialsSection'
+import HomeLocalProjectsSection from "../components/HomeLocalProjectsSection";
 import Blogs from '../components/Blogs'
 
 
@@ -21,7 +21,7 @@ const Home = () => {
             {/* Divider Line */}
             <div className="w-full border-t border-gray-300"></div>
             <ConsultantsSection />
-            <TestimonialsSection autoScroll />
+            <HomeLocalProjectsSection />
             <Blogs limit={4} showMore />
             <nav aria-label="SEO internal links" className="sr-only">
                 <Link to="/listing">Listing</Link>
