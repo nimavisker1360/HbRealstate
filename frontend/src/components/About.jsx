@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import photoTest from "../assets/phototst.jpg";
 
@@ -83,6 +83,11 @@ const About = () => {
   const [isFanned, setIsFanned] = useState(false);
   const [hoveredCard, setHoveredCard] = useState(null);
   const [frozenFrames, setFrozenFrames] = useState({});
+  const cardsDeckRef = useRef(null);
+  const activePointerIdRef = useRef(null);
+  const pointerStartRef = useRef(null);
+  const didPointerMoveRef = useRef(false);
+  const lastPointerTypeRef = useRef("mouse");
 
   const cardData = [
     { src: "/Arnatakoy.gif", alt: "Arnavutköy", href: "https://www.hbrealstate.com/en/blog/why-invest-in-arnavutky", animated: true },
@@ -91,6 +96,159 @@ const About = () => {
   ];
 
   const activeCard = isFanned ? hoveredCard : 0;
+
+  const openCardLink = (card) => {
+    if (card?.href) {
+      window.open(card.href, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  const getCardIndexFromPoint = (clientX, clientY) => {
+    const deck = cardsDeckRef.current;
+    if (!deck) return null;
+
+    const pointElements = document.elementsFromPoint(clientX, clientY);
+    const pointCard = pointElements.find((element) =>
+      element instanceof Element && element.closest("[data-about-card-index]")
+    );
+    const indexedCard = pointCard?.closest("[data-about-card-index]");
+
+    if (indexedCard) {
+      return Number(indexedCard.getAttribute("data-about-card-index"));
+    }
+
+    const cardElements = Array.from(
+      deck.querySelectorAll("[data-about-card-index]")
+    );
+
+    if (cardElements.length === 0) {
+      return null;
+    }
+
+    const nearestCard = cardElements.reduce(
+      (closest, element) => {
+        const rect = element.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const distance = Math.hypot(clientX - centerX, (clientY - centerY) * 0.65);
+
+        if (!closest || distance < closest.distance) {
+          return {
+            distance,
+            index: Number(element.getAttribute("data-about-card-index")),
+          };
+        }
+
+        return closest;
+      },
+      null
+    );
+
+    return nearestCard?.index ?? null;
+  };
+
+  const updateHoveredCardFromPoint = (clientX, clientY) => {
+    const nextCardIndex = getCardIndexFromPoint(clientX, clientY);
+    setHoveredCard(nextCardIndex);
+  };
+
+  const resetDeckInteraction = () => {
+    activePointerIdRef.current = null;
+    pointerStartRef.current = null;
+    didPointerMoveRef.current = false;
+    setIsFanned(false);
+    setHoveredCard(null);
+  };
+
+  const handleDeckPointerEnter = (event) => {
+    if (event.pointerType !== "mouse") return;
+
+    lastPointerTypeRef.current = event.pointerType;
+    setIsFanned(true);
+    updateHoveredCardFromPoint(event.clientX, event.clientY);
+  };
+
+  const handleDeckPointerDown = (event) => {
+    lastPointerTypeRef.current = event.pointerType;
+
+    if (event.pointerType !== "mouse") {
+      activePointerIdRef.current = event.pointerId;
+      pointerStartRef.current = { x: event.clientX, y: event.clientY };
+      didPointerMoveRef.current = false;
+      event.currentTarget.setPointerCapture?.(event.pointerId);
+    }
+
+    setIsFanned(true);
+    updateHoveredCardFromPoint(event.clientX, event.clientY);
+  };
+
+  const handleDeckPointerMove = (event) => {
+    const isTrackedTouchPointer =
+      activePointerIdRef.current !== null &&
+      activePointerIdRef.current === event.pointerId;
+
+    if (event.pointerType !== "mouse" && !isTrackedTouchPointer) {
+      return;
+    }
+
+    if (event.pointerType !== "mouse" && pointerStartRef.current) {
+      const deltaX = event.clientX - pointerStartRef.current.x;
+      const deltaY = event.clientY - pointerStartRef.current.y;
+
+      if (Math.hypot(deltaX, deltaY) > 8) {
+        didPointerMoveRef.current = true;
+      }
+    }
+
+    setIsFanned(true);
+    updateHoveredCardFromPoint(event.clientX, event.clientY);
+  };
+
+  const handleDeckPointerLeave = (event) => {
+    if (event.pointerType !== "mouse") return;
+    resetDeckInteraction();
+  };
+
+  const handleDeckPointerUp = (event) => {
+    lastPointerTypeRef.current = event.pointerType;
+
+    if (event.pointerType === "mouse") {
+      return;
+    }
+
+    if (activePointerIdRef.current !== event.pointerId) {
+      return;
+    }
+
+    event.currentTarget.releasePointerCapture?.(event.pointerId);
+
+    if (!didPointerMoveRef.current) {
+      const selectedCardIndex = getCardIndexFromPoint(event.clientX, event.clientY);
+      const selectedCard =
+        selectedCardIndex !== null ? cardData[selectedCardIndex] : null;
+
+      openCardLink(selectedCard);
+    }
+
+    resetDeckInteraction();
+  };
+
+  const handleDeckPointerCancel = (event) => {
+    if (activePointerIdRef.current === event.pointerId) {
+      event.currentTarget.releasePointerCapture?.(event.pointerId);
+    }
+
+    resetDeckInteraction();
+  };
+
+  const handleCardClick = (card, event) => {
+    if (lastPointerTypeRef.current === "touch" || lastPointerTypeRef.current === "pen") {
+      event.preventDefault();
+      return;
+    }
+
+    openCardLink(card);
+  };
 
   useEffect(() => {
     [
@@ -143,9 +301,15 @@ const About = () => {
         >
           {/* Stacked Cards */}
           <div
+            ref={cardsDeckRef}
             className="relative w-[240px] sm:w-[280px] h-[320px] sm:h-[380px] ml-16 sm:ml-24"
-            onMouseEnter={() => setIsFanned(true)}
-            onMouseLeave={() => { setIsFanned(false); setHoveredCard(null); }}
+            style={{ touchAction: "none", userSelect: "none" }}
+            onPointerEnter={handleDeckPointerEnter}
+            onPointerDown={handleDeckPointerDown}
+            onPointerMove={handleDeckPointerMove}
+            onPointerLeave={handleDeckPointerLeave}
+            onPointerUp={handleDeckPointerUp}
+            onPointerCancel={handleDeckPointerCancel}
           >
             {cardData.map((card, i) => {
               const isHovered = hoveredCard === i;
@@ -161,6 +325,7 @@ const About = () => {
               return (
                 <div
                   key={i}
+                  data-about-card-index={i}
                   className="absolute inset-0 w-[240px] sm:w-[280px] h-[320px] sm:h-[380px] rounded-3xl bg-white p-2 shadow-2xl overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.33,1,0.68,1)]"
                   style={{
                     zIndex: isHovered ? 40 : pos.zIndex,
@@ -168,10 +333,15 @@ const About = () => {
                     transform: `translate(${pos.x}px, ${pos.y + liftY}px) rotate(${pos.rotate}deg)${isHovered ? " scale(1.03)" : ""}`,
                     cursor: card.href ? "pointer" : "default",
                   }}
-                  onMouseEnter={() => setHoveredCard(i)}
-                  onMouseLeave={() => setHoveredCard(null)}
-                  onClick={() => {
-                    if (card.href) window.open(card.href, "_blank", "noopener,noreferrer");
+                  role={card.href ? "link" : undefined}
+                  tabIndex={card.href ? 0 : -1}
+                  onClick={(event) => handleCardClick(card, event)}
+                  onKeyDown={(event) => {
+                    if (!card.href) return;
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      openCardLink(card);
+                    }
                   }}
                 >
                   <img
