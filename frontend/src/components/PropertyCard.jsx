@@ -15,6 +15,7 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { toast } from "react-toastify";
 import { bilingualKey } from "../utils/bilingualToast";
 import { getOptimizedImageUrl } from "../utils/media";
+import { getPropertyDisplayPriceInfo } from "../utils/propertyPricing";
 import { resolveProjectPath, resolvePropertyPath } from "../utils/seo";
 
 // Get category display name (bilingual)
@@ -72,32 +73,21 @@ const PropertyCard = ({ property, onCardClick }) => {
       ? resolveProjectPath(targetProperty)
       : resolvePropertyPath(targetProperty);
 
-  // Get display price - for projects, use minimum floor plan price if main price is 0
-  const getDisplayPrice = () => {
-    if (property.price > 0) {
-      return property.price;
-    }
-    // Try to get minimum price from floor plans
-    if (property.dairePlanlari && property.dairePlanlari.length > 0) {
-      const prices = property.dairePlanlari
-        .map(plan => plan.fiyat || 0)
-        .filter(p => p > 0);
-      if (prices.length > 0) {
-        return Math.min(...prices);
-      }
-    }
-    return 0;
-  };
-  
-  const displayPrice = getDisplayPrice();
-  const sourceCurrency = property.currency || baseCurrency;
   const displayCurrency =
     selectedCurrency && (selectedCurrency === baseCurrency || rates?.[selectedCurrency])
       ? selectedCurrency
       : baseCurrency;
+  const sourceCurrency = property.currency || baseCurrency;
+  const displayPriceInfo = getPropertyDisplayPriceInfo(property, {
+    convertAmount,
+    comparisonCurrency: baseCurrency,
+    defaultCurrency: baseCurrency,
+  });
+  const displayPrice = displayPriceInfo.amount;
+  const displayPriceCurrency = displayPriceInfo.currency || sourceCurrency;
   const convertedDisplayPrice = convertAmount(
     displayPrice,
-    sourceCurrency,
+    displayPriceCurrency,
     displayCurrency
   );
   const convertedPrice = convertAmount(

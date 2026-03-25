@@ -19,6 +19,9 @@ import { FaLandmark, FaHome, FaBriefcase, FaHotel, FaUmbrellaBeach, FaCity } fro
 import { HiOutlineOfficeBuilding } from "react-icons/hi";
 import { BsBuildingsFill } from "react-icons/bs";
 import CurrencyContext from "../context/CurrencyContext";
+import {
+  getPropertyComparablePrice,
+} from "../utils/propertyPricing";
 import { resolveProjectPath, resolvePropertyPath } from "../utils/seo";
 
 const normalizeText = (value) =>
@@ -84,6 +87,8 @@ const OFFPLAN_KEYWORDS = [
   "devam-ediyor",
   "pre sale",
 ];
+
+const CITIZENSHIP_MIN_USD = 400000;
 
 const includesAnyKeyword = (text, keywords) =>
   keywords.some((keyword) => text.includes(keyword));
@@ -215,7 +220,11 @@ const getReadyOffPlanState = (property, searchableText) => {
   return null;
 };
 
-const matchesQuickAccessFilters = (property, quickFilters) => {
+const matchesQuickAccessFilters = (
+  property,
+  quickFilters,
+  { convertAmount, defaultCurrency = "USD" } = {}
+) => {
   const searchableText = collectPropertySearchText(property);
 
   if (quickFilters.seaView && !includesAnyKeyword(searchableText, SEA_VIEW_KEYWORDS)) {
@@ -229,8 +238,16 @@ const matchesQuickAccessFilters = (property, quickFilters) => {
     return false;
   }
 
-  if (quickFilters.citizenshipEligible && !property.gyo) {
-    return false;
+  if (quickFilters.citizenshipEligible) {
+    const priceInUsd = getPropertyComparablePrice(property, {
+      convertAmount,
+      comparisonCurrency: "USD",
+      defaultCurrency,
+    });
+
+    if (!property.gyo || priceInUsd < CITIZENSHIP_MIN_USD) {
+      return false;
+    }
   }
 
   if (quickFilters.status) {
@@ -498,11 +515,11 @@ const Listing = () => {
     })
     .filter((property) => {
       if (!minPrice && !maxPrice) return true;
-      const priceValue = convertAmount(
-        property.price || 0,
-        property.currency || baseCurrency,
-        displayCurrency
-      );
+      const priceValue = getPropertyComparablePrice(property, {
+        convertAmount,
+        comparisonCurrency: displayCurrency,
+        defaultCurrency: baseCurrency,
+      });
       if (minPrice && priceValue < parseInt(minPrice)) return false;
       if (maxPrice && priceValue > parseInt(maxPrice)) return false;
       return true;
@@ -538,7 +555,12 @@ const Listing = () => {
       }
       return true;
     })
-    .filter((property) => matchesQuickAccessFilters(property, quickFilters))
+    .filter((property) =>
+      matchesQuickAccessFilters(property, quickFilters, {
+        convertAmount,
+        defaultCurrency: baseCurrency,
+      })
+    )
     .filter(
       (property) =>
         property.title.toLowerCase().includes(filter.toLowerCase()) ||

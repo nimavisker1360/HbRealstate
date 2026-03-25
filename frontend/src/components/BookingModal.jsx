@@ -12,7 +12,7 @@ import dayjs from "dayjs";
 import { MdWarning, MdPerson } from "react-icons/md";
 import ProfileModal from "./ProfileModal";
 
-const BookingModal = ({ opened, setOpened, email, propertyId }) => {
+const BookingModal = ({ opened, setOpened, email, propertyId, onBooked }) => {
   const { t } = useTranslation();
   const [value, setValue] = useState(null);
   const [profileComplete, setProfileComplete] = useState(null);
@@ -57,6 +57,7 @@ const BookingModal = ({ opened, setOpened, email, propertyId }) => {
         },
       ],
     }));
+    onBooked?.();
   };
 
   const { mutate, isLoading } = useMutation({
@@ -163,6 +164,7 @@ BookingModal.propTypes = {
   setOpened: PropTypes.func.isRequired,
   email: PropTypes.string.isRequired,
   propertyId: PropTypes.string.isRequired,
+  onBooked: PropTypes.func,
 };
 
 export default BookingModal;

@@ -5,6 +5,7 @@ import { MdLocationOn } from "react-icons/md";
 import { useContext } from "react";
 import CurrencyContext from "../context/CurrencyContext";
 import { getOptimizedImageUrl } from "../utils/media";
+import { getPropertyDisplayPriceInfo } from "../utils/propertyPricing";
 import { resolveProjectPath, resolvePropertyPath } from "../utils/seo";
 
 // Get category display name (bilingual)
@@ -50,12 +51,21 @@ const PropertyGridCard = ({ property }) => {
   const { i18n } = useTranslation();
   const { selectedCurrency, baseCurrency, rates, convertAmount, formatMoney } =
     useContext(CurrencyContext);
-  const sourceCurrency = property.currency || baseCurrency;
   const displayCurrency =
     selectedCurrency && (selectedCurrency === baseCurrency || rates?.[selectedCurrency])
       ? selectedCurrency
       : baseCurrency;
-  const convertedPrice = convertAmount(property.price, sourceCurrency, displayCurrency);
+  const sourceCurrency = property.currency || baseCurrency;
+  const displayPriceInfo = getPropertyDisplayPriceInfo(property, {
+    convertAmount,
+    comparisonCurrency: baseCurrency,
+    defaultCurrency: baseCurrency,
+  });
+  const convertedPrice = convertAmount(
+    displayPriceInfo.amount,
+    displayPriceInfo.currency || sourceCurrency,
+    displayCurrency
+  );
   const formattedPrice = formatMoney(
     convertedPrice,
     displayCurrency,

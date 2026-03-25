@@ -17,6 +17,9 @@ const ContactModal = ({
   listingNo,
   userEmail,
   consultantId,
+  modalSize = "md",
+  overlayBlur = 3,
+  overlayOpacity = 0.55,
 }) => {
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language === "tr" ? "tr" : "en";
@@ -202,11 +205,11 @@ const ContactModal = ({
         </div>
       }
       centered
-      size="md"
+      size={modalSize}
       radius="lg"
       overlayProps={{
-        backgroundOpacity: 0.55,
-        blur: 3,
+        backgroundOpacity: overlayOpacity,
+        blur: overlayBlur,
       }}
     >
       <div className="space-y-4">
@@ -442,6 +445,9 @@ ContactModal.propTypes = {
   listingNo: PropTypes.string,
   userEmail: PropTypes.string,
   consultantId: PropTypes.string,
+  modalSize: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  overlayBlur: PropTypes.number,
+  overlayOpacity: PropTypes.number,
 };
 
 export default ContactModal;

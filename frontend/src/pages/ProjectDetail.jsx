@@ -2,7 +2,7 @@ import { useState, useMemo, useContext, useEffect, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import CurrencyContext from "../context/CurrencyContext";
-import { useQuery } from "react-query";
+import { useMutation, useQuery } from "react-query";
 import {
   Container,
   Grid,
@@ -29,7 +29,7 @@ import {
   MdChevronRight,
 } from "react-icons/md";
 import { FaKey } from "react-icons/fa";
-import { FaPhone, FaWhatsapp } from "react-icons/fa6";
+import { FaCalendarPlus, FaPhone, FaRegClock, FaWhatsapp } from "react-icons/fa6";
 import { 
   BsHouseDoor, 
   BsTree, 
@@ -39,10 +39,16 @@ import {
   BsEye, 
   BsGeoAlt 
 } from "react-icons/bs";
-import { getProperty } from "../utils/api";
+import { useAuth0 } from "@auth0/auth0-react";
+import { toast } from "react-toastify";
+import { getProperty, removeBooking } from "../utils/api";
+import useAuthCheck from "../hooks/useAuthCheck";
 import useConsultants from "../hooks/useConsultants";
+import UserDetailContext from "../context/UserDetailContext";
 import { normalizeWhatsAppNumber } from "../utils/common";
+import { bilingualKey } from "../utils/bilingualToast";
 import PhoneLink from "../components/PhoneLink";
+import BookingModal from "../components/BookingModal";
 import {
   getOptimizedImageUrl,
   getOptimizedVideoPosterUrl,
@@ -217,6 +223,28 @@ const getTranslatedFeature = (feature, language) => {
   return feature;
 };
 
+const formatDate = (dateString, showFullDate = false, locale = "en") => {
+  if (!dateString) return null;
+  const date = new Date(dateString);
+  const localeCode = locale === "tr" ? "tr-TR" : "en-US";
+
+  if (showFullDate) {
+    return date.toLocaleDateString(localeCode, {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+
+  return date.toLocaleDateString(localeCode, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+};
+
 const getYouTubeEmbedUrl = (url) => {
   if (!url) return null;
   let videoId = null;
@@ -297,6 +325,8 @@ const ProjectDetail = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t, i18n } = useTranslation();
+  const { validateLogin } = useAuthCheck();
+  const { user } = useAuth0();
   const {
     currencies,
     selectedCurrency,
@@ -305,6 +335,10 @@ const ProjectDetail = () => {
     convertAmount,
     formatMoney,
   } = useContext(CurrencyContext);
+  const {
+    userDetails: { token, bookings },
+    setUserDetails,
+  } = useContext(UserDetailContext);
   const displayCurrency =
     selectedCurrency && (selectedCurrency === baseCurrency || rates?.[selectedCurrency])
       ? selectedCurrency
@@ -339,6 +373,8 @@ const ProjectDetail = () => {
   const [isLightboxMediaLoaded, setIsLightboxMediaLoaded] = useState(true);
   const [isMainVideoPreviewActive, setIsMainVideoPreviewActive] = useState(false);
   const [isMainVideoPreviewReady, setIsMainVideoPreviewReady] = useState(false);
+  const [bookingModalOpened, setBookingModalOpened] = useState(false);
+  const [inquiryModalOpen, setInquiryModalOpen] = useState(false);
   const [activeOverviewTab, setActiveOverviewTab] = useState("description");
   const mainVideoPreviewRef = useRef(null);
   const mainGalleryTouchStartXRef = useRef(null);
@@ -428,8 +464,34 @@ const ProjectDetail = () => {
       gyo: Boolean(propertyData.gyo),
       specialOffer: specialOffers[0] || null,
       specialOffers,
+      createdAt: propertyData.createdAt || "",
+      updatedAt: propertyData.updatedAt || "",
     };
   }, [propertyData]);
+
+  const isBookableProject =
+    project?.propertyType === "local-project" ||
+    project?.propertyType === "international-project";
+  const hasBookingMeta =
+    Boolean(project?.createdAt) ||
+    Boolean(project?.updatedAt && project?.updatedAt !== project?.createdAt);
+  const bookedProjectVisit = bookings?.find((booking) => booking?.id === project?.id);
+
+  const { mutate: cancelBooking, isLoading: cancelling } = useMutation({
+    mutationFn: () => removeBooking(project?.id, user?.email, token),
+    onSuccess: () => {
+      if (!project?.id) return;
+
+      setUserDetails((prev) => ({
+        ...prev,
+        bookings: prev.bookings.filter((booking) => booking?.id !== project.id),
+      }));
+
+      toast.success(bilingualKey("booking.bookingCancelled"), {
+        position: "bottom-right",
+      });
+    },
+  });
 
   const projectConsultant = useMemo(() => {
     if (!propertyData) return null;
@@ -997,6 +1059,79 @@ const ProjectDetail = () => {
                     allowFullScreen
                   />
                 </div>
+              </div>
+            )}
+
+            {isBookableProject && (
+              <div className="mb-8 rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_22px_70px_-48px_rgba(15,23,42,0.28)]">
+                {hasBookingMeta && (
+                  <div className="flex flex-wrap gap-4 rounded-xl bg-primary p-4">
+                    {project.createdAt && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary/10">
+                          <FaCalendarPlus className="text-secondary" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-30">{t("propertyDetails.listedOn")}</p>
+                          <p className="font-medium text-tertiary">
+                            {formatDate(project.createdAt, true, i18n.language)}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {project.updatedAt && project.updatedAt !== project.createdAt && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10">
+                          <FaRegClock className="text-blue-500" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-30">{t("propertyDetails.lastUpdated")}</p>
+                          <p className="font-medium text-tertiary">
+                            {formatDate(project.updatedAt, true, i18n.language)}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className={`${hasBookingMeta ? "mt-4" : ""} space-y-3`}>
+                  {bookedProjectVisit ? (
+                    <>
+                      <Button
+                        onClick={() => cancelBooking()}
+                        variant="outline"
+                        color="red"
+                        className="w-full"
+                        disabled={cancelling}
+                      >
+                        {t("propertyDetails.cancelBooking")}
+                      </Button>
+                      <p className="flex items-center gap-2 text-green-600">
+                        <MdCheck className="text-lg" />
+                        {t("propertyDetails.bookedVisit")} {bookedProjectVisit.date}
+                      </p>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        validateLogin() && setBookingModalOpened(true);
+                      }}
+                      className="btn-secondary w-full rounded-xl !px-5 !py-[7px] shadow-sm"
+                    >
+                      {t("propertyDetails.bookVisit")}
+                    </button>
+                  )}
+                </div>
+
+                <BookingModal
+                  opened={bookingModalOpened}
+                  setOpened={setBookingModalOpened}
+                  propertyId={project.id}
+                  email={user?.email || ""}
+                  onBooked={() => setInquiryModalOpen(true)}
+                />
               </div>
             )}
 
@@ -1716,6 +1851,41 @@ const ProjectDetail = () => {
           </Grid.Col>
         </Grid>
       </Container>
+
+      {/* Inquiry Modal */}
+      <Modal
+        opened={inquiryModalOpen}
+        onClose={() => setInquiryModalOpen(false)}
+        centered
+        size={460}
+        padding={0}
+        withCloseButton={false}
+        overlayProps={{
+          backgroundOpacity: 0.45,
+          blur: 8,
+        }}
+      >
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setInquiryModalOpen(false)}
+            className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-slate-600 shadow-sm transition hover:bg-white hover:text-slate-900"
+            aria-label="Close inquiry form"
+          >
+            <MdClose size={20} />
+          </button>
+          <InquirySidebarCard
+            propertyId={project?.id}
+            propertyTitle={project?.name}
+            listingNo={project?.ilanNo || propertyData?.listingNo || ""}
+            locationLabel={[project?.city, project?.district].filter(Boolean).join(" / ")}
+            consultantId={project?.consultantId || projectConsultant?.id || ""}
+            subjectPrefix="Project Inquiry"
+            className="border-0 shadow-none"
+            onSuccess={() => setInquiryModalOpen(false)}
+          />
+        </div>
+      </Modal>
 
       {/* Image/Video Lightbox */}
       <Modal

@@ -16,6 +16,7 @@ import {
 } from "react-icons/md";
 import CurrencyContext from "../context/CurrencyContext";
 import useConsultants from "../hooks/useConsultants";
+import { getPropertyComparablePrice } from "../utils/propertyPricing";
 
 const normalizeText = (value) =>
   String(value || "")
@@ -80,6 +81,8 @@ const OFFPLAN_KEYWORDS = [
   "devam-ediyor",
   "pre sale",
 ];
+
+const CITIZENSHIP_MIN_USD = 400000;
 
 const includesAnyKeyword = (text, keywords) =>
   keywords.some((keyword) => text.includes(keyword));
@@ -198,7 +201,11 @@ const getReadyOffPlanState = (property, searchableText) => {
   return null;
 };
 
-const matchesQuickAccessFilters = (property, quickFilters) => {
+const matchesQuickAccessFilters = (
+  property,
+  quickFilters,
+  { convertAmount, defaultCurrency = "USD" } = {}
+) => {
   const searchableText = collectPropertySearchText(property);
 
   if (quickFilters.seaView && !isSeaViewProperty(searchableText)) {
@@ -212,8 +219,16 @@ const matchesQuickAccessFilters = (property, quickFilters) => {
     return false;
   }
 
-  if (quickFilters.citizenshipEligible && !property.gyo) {
-    return false;
+  if (quickFilters.citizenshipEligible) {
+    const priceInUsd = getPropertyComparablePrice(property, {
+      convertAmount,
+      comparisonCurrency: "USD",
+      defaultCurrency,
+    });
+
+    if (!property.gyo || priceInUsd < CITIZENSHIP_MIN_USD) {
+      return false;
+    }
   }
 
   if (quickFilters.status) {
@@ -391,11 +406,11 @@ const Properties = () => {
       })
       .filter((property) => {
         if (!priceRange.min && !priceRange.max) return true;
-        const priceValue = convertAmount(
-          property.price || 0,
-          property.currency || baseCurrency,
-          displayCurrency
-        );
+        const priceValue = getPropertyComparablePrice(property, {
+          convertAmount,
+          comparisonCurrency: displayCurrency,
+          defaultCurrency: baseCurrency,
+        });
         if (priceRange.min && priceValue < Number(priceRange.min)) return false;
         if (priceRange.max && priceValue > Number(priceRange.max)) return false;
         return true;
@@ -427,7 +442,12 @@ const Properties = () => {
         if (roomsFilter === "5+") return bedrooms >= 5;
         return bedrooms === parseInt(roomsFilter, 10);
       })
-      .filter((property) => matchesQuickAccessFilters(property, quickFilters))
+      .filter((property) =>
+        matchesQuickAccessFilters(property, quickFilters, {
+          convertAmount,
+          defaultCurrency: baseCurrency,
+        })
+      )
       .filter((property) => {
         if (!query) return true;
         const title = property.title?.toLowerCase() || "";
@@ -580,11 +600,11 @@ const Properties = () => {
       })
       .filter((property) => {
         if (!priceRange.min && !priceRange.max) return true;
-        const priceValue = convertAmount(
-          property.price || 0,
-          property.currency || baseCurrency,
-          displayCurrency
-        );
+        const priceValue = getPropertyComparablePrice(property, {
+          convertAmount,
+          comparisonCurrency: displayCurrency,
+          defaultCurrency: baseCurrency,
+        });
         if (priceRange.min && priceValue < Number(priceRange.min)) return false;
         if (priceRange.max && priceValue > Number(priceRange.max)) return false;
         return true;
@@ -616,7 +636,12 @@ const Properties = () => {
         if (roomsFilter === "5+") return bedrooms >= 5;
         return bedrooms === parseInt(roomsFilter, 10);
       })
-      .filter((property) => matchesQuickAccessFilters(property, quickFilters))
+      .filter((property) =>
+        matchesQuickAccessFilters(property, quickFilters, {
+          convertAmount,
+          defaultCurrency: baseCurrency,
+        })
+      )
       .filter((property) => {
         if (!query) return true;
         const title = property.title?.toLowerCase() || "";

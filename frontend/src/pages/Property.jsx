@@ -1054,6 +1054,7 @@ const Property = () => {
               setOpened={setModalOpened}
               propertyId={id}
               email={user?.email}
+              onBooked={() => setContactModalOpen(true)}
             />
           </div>
 
@@ -1457,6 +1458,9 @@ const Property = () => {
         listingNo={data?.listingNo}
         userEmail={user?.email}
         consultantId={data?.consultant?.id || data?.consultantId}
+        modalSize={460}
+        overlayBlur={8}
+        overlayOpacity={0.45}
       />
     </section>
   );

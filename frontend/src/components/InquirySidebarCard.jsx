@@ -26,6 +26,7 @@ const InquirySidebarCard = ({
   consultantId = "",
   subjectPrefix = "Property Inquiry",
   className = "",
+  onSuccess,
 }) => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
@@ -83,6 +84,7 @@ const InquirySidebarCard = ({
         phone: "",
         message: "",
       });
+      onSuccess?.();
     } catch (error) {
       toast.error(bilingualKey("projectDetail.contactError"));
       console.error("Error sending inquiry email:", error);
