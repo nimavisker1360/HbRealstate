@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import heroBg from "../assets/img1.png";
 import heroCyprus from "../assets/hero/Cyprus.jpg";
@@ -11,19 +11,99 @@ import iconGreece from "../assets/icons/Greece.png";
 import iconDubai from "../assets/icons/dubai.png";
 import iconGeorgia from "../assets/icons/boat.png";
 import iconCyprus from "../assets/icons/cyprus.png";
+import HeroDownloadModal from "./HeroDownloadModal";
+
+const ALL_SLIDE_INTERVAL_MS = 10000;
+const ALL_SLIDE_TRANSITION_MS = 900;
+
+const ALL_HERO_SLIDES = [
+  {
+    type: "video",
+    src: "/citizen.mp4",
+    alt: "HB International featured property film",
+    showContent: false,
+    showDownloadButton: true,
+  },
+  {
+    type: "image",
+    src: heroBg,
+    alt: "HB International featured residence",
+    showContent: true,
+    showDownloadButton: false,
+  },
+  // Add new slides here, for example: { src: "/new-slide.jpg", alt: "New slide" },
+];
 
 const Hero = () => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("ALL");
+  const [activeAllSlideIndex, setActiveAllSlideIndex] = useState(0);
+  const [nextAllSlideIndex, setNextAllSlideIndex] = useState(null);
+  const [isAllSlidesAnimating, setIsAllSlidesAnimating] = useState(false);
+  const [allSlideDirection, setAllSlideDirection] = useState("next");
+  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (
+      activeTab !== "ALL" ||
+      ALL_HERO_SLIDES.length <= 1 ||
+      isAllSlidesAnimating ||
+      isDownloadModalOpen
+    ) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setAllSlideDirection("next");
+      setNextAllSlideIndex(
+        (activeAllSlideIndex + 1) % ALL_HERO_SLIDES.length
+      );
+      setIsAllSlidesAnimating(true);
+    }, ALL_SLIDE_INTERVAL_MS);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [activeAllSlideIndex, activeTab, isAllSlidesAnimating, isDownloadModalOpen]);
+
+  useEffect(() => {
+    if (!isAllSlidesAnimating || nextAllSlideIndex === null) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setActiveAllSlideIndex(nextAllSlideIndex);
+      setNextAllSlideIndex(null);
+      setIsAllSlidesAnimating(false);
+    }, ALL_SLIDE_TRANSITION_MS);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [isAllSlidesAnimating, nextAllSlideIndex]);
+
   const heroImages = {
-    ALL: heroBg,
     ISTANBUL: heroIstanbul,
     GREECE: heroGreece,
     DUBAI: heroDubai,
     GEORGIA: heroGeorgia,
     CYPRUS: heroCyprus,
   };
-  const activeHeroImage = heroImages[activeTab] || heroBg;
+  const visibleAllSlideIndex =
+    nextAllSlideIndex !== null ? nextAllSlideIndex : activeAllSlideIndex;
+  const activeHeroMedia =
+    activeTab === "ALL"
+      ? ALL_HERO_SLIDES[visibleAllSlideIndex]
+      : {
+          src: heroImages[activeTab] || heroBg,
+          alt: `${activeTab} hero background`,
+          showContent: true,
+          showDownloadButton: false,
+        };
+  const shouldShowHeroContent =
+    activeTab === "ALL"
+      ? !isAllSlidesAnimating && activeHeroMedia.showContent
+      : activeHeroMedia.showContent;
+  const shouldShowDownloadButton =
+    activeTab === "ALL" &&
+    !isAllSlidesAnimating &&
+    activeHeroMedia.showDownloadButton;
   const locationTabs = [
     {
       label: "ALL",
@@ -110,33 +190,194 @@ const Hero = () => {
 
   const handleTabClick = (label) => {
     setActiveTab(label);
+    setNextAllSlideIndex(null);
+    setIsAllSlidesAnimating(false);
+    setAllSlideDirection("next");
+    if (label === "ALL") {
+      setActiveAllSlideIndex(0);
+    }
+  };
+
+  const handlePreviousSlide = () => {
+    if (
+      activeTab !== "ALL" ||
+      ALL_HERO_SLIDES.length <= 1 ||
+      isAllSlidesAnimating ||
+      isDownloadModalOpen
+    ) {
+      return;
+    }
+
+    setAllSlideDirection("prev");
+    setNextAllSlideIndex(
+      (activeAllSlideIndex - 1 + ALL_HERO_SLIDES.length) %
+        ALL_HERO_SLIDES.length
+    );
+    setIsAllSlidesAnimating(true);
+  };
+
+  const handleNextSlide = () => {
+    if (
+      activeTab !== "ALL" ||
+      ALL_HERO_SLIDES.length <= 1 ||
+      isAllSlidesAnimating ||
+      isDownloadModalOpen
+    ) {
+      return;
+    }
+
+    setAllSlideDirection("next");
+    setNextAllSlideIndex(
+      (activeAllSlideIndex + 1) % ALL_HERO_SLIDES.length
+    );
+    setIsAllSlidesAnimating(true);
+  };
+
+  const handleDownloadClick = () => {
+    setIsDownloadModalOpen(true);
+  };
+
+  const renderSlideMedia = (slide, className) => {
+    if (slide.type === "video") {
+      return (
+        <video
+          key={slide.src}
+          className={className}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          aria-hidden="true"
+        >
+          <source src={slide.src} type="video/mp4" />
+        </video>
+      );
+    }
+
+    return (
+      <img
+        key={slide.src}
+        src={slide.src}
+        alt={slide.alt}
+        loading="eager"
+        decoding="async"
+        fetchpriority="high"
+        className={className}
+      />
+    );
   };
 
   return (
     <section className="relative h-[520px] sm:h-[600px] md:h-[720px] overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0">
-        <img
-          key={activeTab}
-          src={activeHeroImage}
-          alt="city skyline"
-          loading="eager"
-          decoding="async"
-          fetchpriority="high"
-          className="w-full h-full object-cover object-center animate-hero-fade hero-bg"
-        />
+        {activeTab === "ALL" ? (
+          <>
+            {renderSlideMedia(
+              ALL_HERO_SLIDES[activeAllSlideIndex],
+              `absolute inset-0 h-full w-full object-cover object-center hero-bg ${
+                isAllSlidesAnimating
+                  ? allSlideDirection === "next"
+                    ? "animate-hero-slide-out-left"
+                    : "animate-hero-slide-out-right"
+                  : ""
+              }`
+            )}
+            {nextAllSlideIndex !== null && (
+              renderSlideMedia(
+                ALL_HERO_SLIDES[nextAllSlideIndex],
+                `absolute inset-0 h-full w-full object-cover object-center hero-bg ${
+                  allSlideDirection === "next"
+                    ? "animate-hero-slide-in-right"
+                    : "animate-hero-slide-in-left"
+                }`
+              )
+            )}
+          </>
+        ) : (
+          <img
+            key={activeTab}
+            src={activeHeroMedia.src}
+            alt={activeHeroMedia.alt}
+            loading="eager"
+            decoding="async"
+            fetchpriority="high"
+            className="h-full w-full object-cover object-center hero-bg"
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-b from-[#0f172a]/55 via-[#0f172a]/25 to-[#0f172a]/60" />
       </div>
 
       {/* Content */}
-      <div className="relative max-w-[1100px] mx-auto h-full px-6 sm:px-10 flex flex-col items-center justify-center text-white text-center gap-4">
-        <h1 className="text-[36px] sm:text-[48px] md:text-[64px] font-semibold leading-tight italic">
-          {t("hero.title")}
-        </h1>
-        <p className="text-lg sm:text-xl text-white/90 italic">
-          {t("hero.subtitle")}
-        </p>
-      </div>
+      {shouldShowHeroContent && (
+        <div
+          key={activeTab === "ALL" ? `content-${activeAllSlideIndex}` : `content-${activeTab}`}
+          className="relative max-w-[1100px] mx-auto h-full px-6 sm:px-10 flex flex-col items-center justify-center text-white text-center gap-4 animate-hero-fade"
+        >
+          <h1 className="text-[36px] sm:text-[48px] md:text-[64px] font-semibold leading-tight italic">
+            {t("hero.title")}
+          </h1>
+          <p className="text-lg sm:text-xl text-white/90 italic">
+            {t("hero.subtitle")}
+          </p>
+        </div>
+      )}
+
+      {shouldShowDownloadButton && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-[92px] z-10 flex justify-center px-6 sm:bottom-[108px]">
+          <button
+            type="button"
+            onClick={handleDownloadClick}
+            className="hero-download-button pointer-events-auto inline-flex h-[54px] min-w-[230px] items-center justify-center rounded-[10px] border border-[#7e1716] px-8 text-[16px] font-extrabold uppercase tracking-[0.04em] text-white transition hover:bg-[#8e1d1a] animate-hero-fade"
+          >
+            {t("hero.downloadNow", { defaultValue: "Download Now" })}
+          </button>
+        </div>
+      )}
+
+      {activeTab === "ALL" && ALL_HERO_SLIDES.length > 1 && (
+        <div className="pointer-events-none absolute inset-x-0 top-1/2 z-10 flex -translate-y-1/2 items-center justify-between px-4 sm:px-8">
+          <button
+            type="button"
+            onClick={handlePreviousSlide}
+            className="pointer-events-auto inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/30 bg-black/25 text-white backdrop-blur-sm transition hover:bg-black/40"
+            aria-label="Previous slide"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              className="h-6 w-6"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            onClick={handleNextSlide}
+            className="pointer-events-auto inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/30 bg-black/25 text-white backdrop-blur-sm transition hover:bg-black/40"
+            aria-label="Next slide"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              className="h-6 w-6"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       {/* Location Tabs */}
       <div className="absolute inset-x-0 bottom-0">
@@ -176,6 +417,11 @@ const Hero = () => {
           </div>
         </div>
       </div>
+
+      <HeroDownloadModal
+        opened={isDownloadModalOpen}
+        onClose={() => setIsDownloadModalOpen(false)}
+      />
     </section>
   );
 };

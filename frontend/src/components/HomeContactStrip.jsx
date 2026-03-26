@@ -83,7 +83,10 @@ const HomeContactStrip = () => {
   };
 
   return (
-    <section className="relative z-20 bg-white px-0 pb-0 pt-4 sm:pt-5">
+    <section
+      id="home-contact-form"
+      className="relative z-20 bg-white px-0 pb-0 pt-4 sm:pt-5"
+    >
       <div className="w-full px-0">
         <div className="overflow-hidden border border-[#ead9d4] bg-[#f4ede8]">
           <div className="flex flex-col xl:flex-row xl:items-center">
