@@ -1,26 +1,136 @@
 ﻿import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "react-query";
 import { getBlog } from "../utils/api";
-import { MdArrowBack, MdCalendarToday, MdCategory, MdErrorOutline, MdAccessTime, MdShare, MdClose, MdChevronLeft, MdChevronRight, MdArticle } from "react-icons/md";
+import { MdArrowBack, MdCalendarToday, MdCategory, MdErrorOutline, MdAccessTime, MdShare, MdClose, MdChevronLeft, MdChevronRight } from "react-icons/md";
 import { useState, useMemo, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import HousingSalesChart from "../components/HousingSalesChart";
 import ForeignSalesChart from "../components/ForeignSalesChart";
 import BlogContactForm from "../components/BlogContactForm";
 import SEO from "../components/SEO";
 import useBlogs from "../hooks/useBlogs";
+import useProperties from "../hooks/useProperties";
+import Breadcrumbs from "../components/seo/Breadcrumbs";
+import FaqSection from "../components/seo/FaqSection";
+import RelatedContentSection from "../components/seo/RelatedContentSection";
+import SeoCtaSection from "../components/seo/SeoCtaSection";
 import { aboutTurkeyMenu } from "../constant/aboutTurkeyMenu";
+import { contentHubPages } from "../data/contentHubPages";
+import {
+  buildContentContext,
+  getContentDisplaySummary,
+  getContentDisplayTitle,
+  pickRelatedBlogs,
+  pickRelatedGuides,
+  pickRelatedProjects,
+  pickRelatedProperties,
+  toCategoryPath,
+} from "../utils/contentGraph";
 import { fixMojibake } from "../utils/text";
 import {
   SITE_URL,
   buildLanguageAlternates,
   isObjectId,
   resolveBlogIdentifier,
+  resolveBlogPath,
   resolveBlogSlug,
   stripHtml,
   toAbsoluteUrl,
   truncateText,
 } from "../utils/seo";
+
+const normalizeSuggestionText = (value = "") =>
+  fixMojibake(String(value || ""))
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const resolveManualInternalLinks = ({
+  suggestions = [],
+  blogs = [],
+  guides = [],
+  excludeBlogId = "",
+  language = "en",
+}) => {
+  if (!Array.isArray(suggestions) || suggestions.length === 0) return [];
+
+  const candidates = [
+    ...blogs
+      .filter((item) => item?.id && item.id !== excludeBlogId)
+      .map((item) => ({
+        id: `blog-${item.id}`,
+        path: resolveBlogPath(item, { preferSlug: true }),
+        title: getContentDisplayTitle(item, language),
+        excerpt: getContentDisplaySummary(item, language),
+        badge: "Article",
+        tags: item?.taxonomy?.tags,
+        searchText: [
+          getContentDisplayTitle(item, language),
+          item?.slug,
+          item?.category,
+          item?.category_en,
+        ]
+          .filter(Boolean)
+          .join(" "),
+      })),
+    ...guides.map((item) => ({
+      id: `guide-${item.slug}`,
+      path: item.canonicalPath || `/${item.slug}`,
+      title: getContentDisplayTitle(item, language),
+      excerpt: getContentDisplaySummary(item, language),
+      badge: item?.pageType || "Guide",
+      tags: item?.taxonomy?.tags,
+      searchText: [
+        getContentDisplayTitle(item, language),
+        item?.slug,
+        item?.pageType,
+      ]
+        .filter(Boolean)
+        .join(" "),
+    })),
+  ];
+
+  const seen = new Set();
+  const matches = [];
+
+  suggestions.forEach((suggestion, suggestionIndex) => {
+    const needle = normalizeSuggestionText(suggestion);
+    if (!needle) return;
+
+    const tokens = needle.split(" ").filter((token) => token.length > 2);
+
+    candidates.forEach((candidate) => {
+      const haystack = normalizeSuggestionText(candidate.searchText);
+      if (!haystack) return;
+
+      let score = 0;
+      if (haystack === needle) {
+        score = 100;
+      } else if (haystack.includes(needle) || needle.includes(haystack)) {
+        score = 80;
+      } else {
+        score = tokens.filter((token) => haystack.includes(token)).length;
+      }
+
+      if (score < 2 || seen.has(candidate.id)) return;
+      seen.add(candidate.id);
+      matches.push({
+        ...candidate,
+        id: `${candidate.id}-${suggestionIndex}`,
+        score,
+      });
+    });
+  });
+
+  return matches
+    .sort((left, right) => right.score - left.score)
+    .slice(0, 4)
+    .map(({ score, searchText, ...item }) => item);
+};
 
 const BlogPost = () => {
   const { slug: routeIdentifier } = useParams();
@@ -60,6 +170,7 @@ const BlogPost = () => {
     }
   );
   const { data: blogs, refetch: refetchBlogs } = useBlogs();
+  const { data: properties = [] } = useProperties();
   const resolvedBlogSlug = resolveBlogSlug(blog);
 
   useEffect(() => {
@@ -285,9 +396,57 @@ const BlogPost = () => {
     ) || fallbackDescription;
   const seoImage = blog?.image || blog?.images?.[0] || "/og-image.png";
   const normalizedCategory = getLocalizedContent("category") || "Real Estate";
+  const categoryPath = categoryLabel
+    ? toCategoryPath(blog?.category_en || blog?.category || categoryLabel)
+    : "/blogs";
   const wordCount = stripHtml(getLocalizedContent("content"))
     .split(/\s+/)
     .filter(Boolean).length;
+  const localizedBlogContextSource = {
+    ...blog,
+    title: localizedTitle,
+    summary: getLocalizedContent("summary") || resolvedDescription,
+    description: getLocalizedContent("summary") || resolvedDescription,
+    category: blog?.category_en || blog?.category || normalizedCategory,
+    content: localizedContent,
+  };
+  const blogContext = buildContentContext(localizedBlogContextSource);
+  const relatedProperties = pickRelatedProperties({
+    properties,
+    context: blogContext,
+    limit: 4,
+  });
+  const relatedProjects = pickRelatedProjects({
+    properties,
+    context: blogContext,
+    limit: 3,
+  });
+  const relatedArticles = pickRelatedBlogs({
+    blogs,
+    context: blogContext,
+    excludeId: blog?.id,
+    limit: 3,
+    language,
+  });
+  const relatedGuides = pickRelatedGuides({
+    guides: contentHubPages,
+    context: blogContext,
+    limit: 3,
+    language,
+  });
+  const manualSuggestedLinks = resolveManualInternalLinks({
+    suggestions: blog?.internalLinks,
+    blogs,
+    guides: contentHubPages,
+    excludeBlogId: blog?.id,
+    language,
+  });
+  const breadcrumbItems = [
+    { label: "Home", to: "/" },
+    { label: "Blogs", to: "/blogs" },
+    ...(categoryLabel ? [{ label: categoryLabel, to: categoryPath }] : []),
+    { label: localizedTitle },
+  ];
 
   const blogSchema = {
     "@context": "https://schema.org",
@@ -320,26 +479,15 @@ const BlogPost = () => {
   const breadcrumbSchema = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    itemListElement: [
-      {
-        "@type": "ListItem",
-        position: 1,
-        name: "Home",
-        item: SITE_URL,
-      },
-      {
-        "@type": "ListItem",
-        position: 2,
-        name: "Blogs",
-        item: `${SITE_URL}/blogs`,
-      },
-      {
-        "@type": "ListItem",
-        position: 3,
-        name: localizedTitle,
-        item: toAbsoluteUrl(canonicalPath),
-      },
-    ],
+    itemListElement: breadcrumbItems.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.label,
+      item:
+        index === breadcrumbItems.length - 1
+          ? toAbsoluteUrl(canonicalPath)
+          : toAbsoluteUrl(item.to || "/blogs"),
+    })),
   };
 
   const faqSchema = localizedFaq.length
@@ -356,6 +504,63 @@ const BlogPost = () => {
         })),
       }
     : null;
+  const ctaBlock = blogContext.citizenship
+    ? {
+        title: "Need a citizenship-focused shortlist after this article?",
+        description:
+          "Move from legal reading to live inventory and compare citizenship-eligible properties before due diligence starts.",
+        primaryAction: {
+          label: "Explore eligible properties",
+          to: "/listing?citizenshipEligible=true",
+        },
+        secondaryAction: {
+          label: "Read the citizenship guide",
+          to: "/turkish-citizenship-real-estate-guide",
+        },
+      }
+    : blogContext.installment
+    ? {
+        title: "Compare installment projects with ready properties",
+        description:
+          "Use the article as context, then benchmark payment-plan stock against standard listings and district-level guides.",
+        primaryAction: {
+          label: "See installment listings",
+          to: "/listing?installmentAvailable=true",
+        },
+        secondaryAction: {
+          label: "Open installment guide",
+          to: "/installment-property-in-turkey",
+        },
+      }
+    : String(blogContext.city || "").trim().toLowerCase() === "istanbul"
+    ? {
+        title: "Turn this Istanbul research into a workable shortlist",
+        description:
+          "Compare Istanbul districts, live listings, and step-by-step buying guidance without losing the market context.",
+        primaryAction: {
+          label: "Browse Istanbul listings",
+          to: "/listing?search=Istanbul",
+        },
+        secondaryAction: {
+          label: "Open Istanbul buying guide",
+          to: "/buy-property-in-istanbul",
+        },
+      }
+    : {
+        title: "Need property options that match this topic?",
+        description:
+          "Move from informational research to semantically related listings, projects, and market guides.",
+        primaryAction: {
+          label: "Browse listings",
+          to: blogContext.city
+            ? `/listing?search=${encodeURIComponent(blogContext.city)}`
+            : "/listing",
+        },
+        secondaryAction: {
+          label: "Request investment advice",
+          to: "/consultants",
+        },
+      };
 
   return (
     <>
@@ -495,6 +700,7 @@ const BlogPost = () => {
                 isStatsBlog ? "w-full max-w-4xl" : "order-1 lg:order-2 lg:col-start-2"
               }`}
             >
+              <Breadcrumbs items={breadcrumbItems} className="mb-4" />
               {/* Top Bar */}
               <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
             <button
@@ -652,18 +858,21 @@ const BlogPost = () => {
 
           {/* Content Area */}
           <div className="px-6 sm:px-10 lg:px-12 py-8 sm:py-10">
-            <div className={`flex flex-wrap items-center gap-3 text-xs sm:text-sm ${
-              isStatsTheme ? 'text-slate-400' : 'text-slate-500'
-            }`}>
-              {categoryLabel && (
-                <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wide ${
-                  isStatsTheme
-                    ? 'border-slate-700 bg-slate-800 text-slate-200'
-                    : 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                }`}>
+              <div className={`flex flex-wrap items-center gap-3 text-xs sm:text-sm ${
+                isStatsTheme ? 'text-slate-400' : 'text-slate-500'
+              }`}>
+                {categoryLabel && (
+                <Link
+                  to={categoryPath}
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wide transition ${
+                    isStatsTheme
+                      ? 'border-slate-700 bg-slate-800 text-slate-200 hover:border-emerald-500 hover:text-white'
+                      : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-500 hover:bg-emerald-600 hover:text-white'
+                  }`}
+                >
                   <MdCategory size={14} />
                   {categoryLabel}
-                </span>
+                </Link>
               )}
               <div className="flex items-center gap-1.5">
                 <MdCalendarToday size={14} className={isStatsTheme ? "text-emerald-400" : "text-emerald-600"} />
@@ -745,62 +954,49 @@ const BlogPost = () => {
               </div>
             </div>
 
-            {/* FAQ Section */}
-            {localizedFaq.length > 0 && !isStatsBlog && (
-              <div className="mt-12 rounded-3xl border border-emerald-100/80 bg-white/90 p-6 sm:p-8 shadow-[0_20px_50px_-40px_rgba(15,23,42,0.35)]">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-700">
-                    <span className="text-xl">?</span>
-                  </div>
-                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
-                    {uiText.faq}
-                  </h2>
-                </div>
-                <div className="space-y-3">
-                  {localizedFaq.map((faq, index) => (
-                    <details
-                      key={index}
-                      className="group rounded-2xl border border-emerald-100/80 bg-white/80 overflow-hidden transition hover:border-emerald-300 hover:shadow-md"
-                    >
-                      <summary className="cursor-pointer px-5 py-4 text-sm sm:text-base font-semibold text-slate-800 flex items-center justify-between gap-4 hover:bg-emerald-50/60">
-                        <span className="pr-4">{faq.question}</span>
-                        <span className="flex-shrink-0 w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 group-open:rotate-180 transition-transform">
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </span>
-                      </summary>
-                      <div className="px-5 pb-5 bg-emerald-50/30">
-                        <p className="text-slate-600 leading-relaxed text-sm sm:text-base">
-                          {faq.answer}
-                        </p>
-                      </div>
-                    </details>
-                  ))}
-                </div>
-              </div>
-            )}
+            {!isStatsBlog && (
+              <>
+                <FaqSection title={uiText.faq} items={localizedFaq} />
 
-            {/* Internal Links / Related Articles */}
-            {blog.internalLinks && blog.internalLinks.length > 0 && !isStatsBlog && (
-              <div className="mt-10 rounded-3xl border border-emerald-100/80 bg-white/90 p-6 sm:p-8 shadow-[0_20px_50px_-40px_rgba(15,23,42,0.35)]">
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-700">
-                    <MdArticle size={20} />
-                  </div>
-                  <h3 className="text-lg sm:text-xl font-bold text-slate-900">
-                    {uiText.related}
-                  </h3>
-                </div>
-                <ul className="space-y-3">
-                  {blog.internalLinks.map((link, index) => (
-                    <li key={index} className="flex items-start gap-3 text-sm sm:text-base text-slate-700 hover:text-emerald-700 transition-colors">
-                      <span className="mt-2 h-2 w-2 rounded-full bg-emerald-400"></span>
-                      <span className="leading-relaxed">{fixMojibake(link)}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+                <RelatedContentSection
+                  title="Suggested Next Reads"
+                  description="Editorial suggestions resolved into live internal links."
+                  items={manualSuggestedLinks}
+                />
+
+                <RelatedContentSection
+                  title="Related Properties"
+                  description="Commercial listings connected to this article by market, topic, and buyer intent."
+                  items={relatedProperties}
+                  type="property"
+                />
+
+                <RelatedContentSection
+                  title="Related Projects"
+                  description="Relevant project pages surfaced by city, district, and commercial context."
+                  items={relatedProjects}
+                  type="property"
+                />
+
+                <RelatedContentSection
+                  title={uiText.related}
+                  description="Semantically related articles across the same content cluster."
+                  items={relatedArticles}
+                />
+
+                <RelatedContentSection
+                  title="Related Guides"
+                  description="Pillar, district, tax, and buying-process pages aligned with this topic."
+                  items={relatedGuides}
+                />
+
+                <SeoCtaSection
+                  title={ctaBlock.title}
+                  description={ctaBlock.description}
+                  primaryAction={ctaBlock.primaryAction}
+                  secondaryAction={ctaBlock.secondaryAction}
+                />
+              </>
             )}
 
           </div>
@@ -820,7 +1016,3 @@ const BlogPost = () => {
 };
 
 export default BlogPost;
-
-
-
-

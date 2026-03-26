@@ -1254,9 +1254,9 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
       address: isProject ? (property?.address || "") : values.address,
       propertyType: values.propertyType,
       category: isProject ? (property?.category || "residential") : values.category,
-      image: imageURLs[0] || property?.image,
-      images: imageURLs.length > 0 ? imageURLs : (property?.images || []),
-      videos: videoURLs.length > 0 ? videoURLs : (property?.videos || []),
+      image: imageURLs[0] || "",
+      images: imageURLs,
+      videos: videoURLs,
       facilities: {
         bedrooms: values.bedrooms || 0,
         parkings: values.parkings || 0,

@@ -167,6 +167,182 @@ const getDefaultFiatCurrency = () => {
   return ["USD", "EUR", "GBP", "TRY"].includes(currency) ? currency : "USD";
 };
 
+const stringifyJsonField = (value) => {
+  if (!value) return "";
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch (_error) {
+    return "";
+  }
+};
+
+const parseJsonField = (value, label, expectedType = "object") => {
+  const normalized = String(value || "").trim();
+  if (!normalized) return null;
+
+  let parsed;
+  try {
+    parsed = JSON.parse(normalized);
+  } catch (_error) {
+    throw new Error(`${label} must be valid JSON.`);
+  }
+
+  if (expectedType === "array" && !Array.isArray(parsed)) {
+    throw new Error(`${label} must be a JSON array.`);
+  }
+
+  if (
+    expectedType === "object" &&
+    (!parsed || Array.isArray(parsed) || typeof parsed !== "object")
+  ) {
+    throw new Error(`${label} must be a JSON object.`);
+  }
+
+  return parsed;
+};
+
+const parseLineList = (value = "") =>
+  String(value || "")
+    .split(/\r?\n/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+const buildBlogSeoPayload = (blogForm = {}) => {
+  const faqSectionEn = parseJsonField(
+    blogForm.faqSectionJson_en,
+    "English FAQ",
+    "array"
+  );
+  const faqSectionTr = parseJsonField(
+    blogForm.faqSectionJson_tr,
+    "Turkish FAQ",
+    "array"
+  );
+  const faqSectionRu = parseJsonField(
+    blogForm.faqSectionJson_ru,
+    "Russian FAQ",
+    "array"
+  );
+
+  return {
+    metaDescription:
+      blogForm.metaDescription_en?.trim() ||
+      blogForm.metaDescription_tr?.trim() ||
+      blogForm.metaDescription_ru?.trim() ||
+      "",
+    metaDescription_en: blogForm.metaDescription_en?.trim() || "",
+    metaDescription_tr: blogForm.metaDescription_tr?.trim() || "",
+    metaDescription_ru: blogForm.metaDescription_ru?.trim() || "",
+    faqSection: faqSectionEn || faqSectionTr || faqSectionRu,
+    faqSection_en: faqSectionEn,
+    faqSection_tr: faqSectionTr,
+    faqSection_ru: faqSectionRu,
+    internalLinks: parseLineList(blogForm.internalLinksText),
+    taxonomy: parseJsonField(blogForm.taxonomyJson, "Taxonomy", "object"),
+  };
+};
+
+const BlogSeoFields = ({ blogForm, setBlogForm }) => (
+  <div className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+    <div>
+      <Text size="sm" fw={600}>
+        SEO & Content Graph
+      </Text>
+      <Text size="xs" c="dimmed" className="mt-1">
+        These fields feed metadata, FAQ schema, internal linking, and the related-content engine.
+      </Text>
+    </div>
+
+    <div className="grid gap-3 md:grid-cols-3">
+      <Textarea
+        label="Meta Description (English)"
+        placeholder="Up to ~160 characters"
+        rows={3}
+        value={blogForm.metaDescription_en}
+        onChange={(e) =>
+          setBlogForm({ ...blogForm, metaDescription_en: e.target.value })
+        }
+      />
+      <Textarea
+        label="Meta Description (Turkish)"
+        placeholder="Up to ~160 characters"
+        rows={3}
+        value={blogForm.metaDescription_tr}
+        onChange={(e) =>
+          setBlogForm({ ...blogForm, metaDescription_tr: e.target.value })
+        }
+      />
+      <Textarea
+        label="Meta Description (Russian)"
+        placeholder="Up to ~160 characters"
+        rows={3}
+        value={blogForm.metaDescription_ru}
+        onChange={(e) =>
+          setBlogForm({ ...blogForm, metaDescription_ru: e.target.value })
+        }
+      />
+    </div>
+
+    <div className="grid gap-3 lg:grid-cols-[0.95fr_1.05fr]">
+      <Textarea
+        label="Internal Link Suggestions"
+        description="One suggestion per line. Used as editorial hints for internal-link resolution."
+        placeholder={"Turkish Citizenship Real Estate Guide\nProperty Taxes in Turkey\nBest Areas in Istanbul for Investment"}
+        rows={8}
+        value={blogForm.internalLinksText}
+        onChange={(e) =>
+          setBlogForm({ ...blogForm, internalLinksText: e.target.value })
+        }
+      />
+      <Textarea
+        label="Taxonomy JSON"
+        description="Optional override for contentType, city, district, category, tags, intents, citizenship, installment, etc."
+        placeholder={`{\n  "contentType": "supporting article",\n  "city": "Istanbul",\n  "district": "Kadikoy",\n  "category": "istanbul properties",\n  "subcategory": "buying process",\n  "tags": ["istanbul", "investment"],\n  "intents": ["investment", "family-living"],\n  "citizenship": false,\n  "installment": false\n}`}
+        rows={8}
+        value={blogForm.taxonomyJson}
+        onChange={(e) =>
+          setBlogForm({ ...blogForm, taxonomyJson: e.target.value })
+        }
+      />
+    </div>
+
+    <div className="grid gap-3 md:grid-cols-3">
+      <Textarea
+        label="FAQ JSON (English)"
+        description='Format: [{"question":"...","answer":"..."}]'
+        rows={7}
+        value={blogForm.faqSectionJson_en}
+        onChange={(e) =>
+          setBlogForm({ ...blogForm, faqSectionJson_en: e.target.value })
+        }
+      />
+      <Textarea
+        label="FAQ JSON (Turkish)"
+        description='Format: [{"question":"...","answer":"..."}]'
+        rows={7}
+        value={blogForm.faqSectionJson_tr}
+        onChange={(e) =>
+          setBlogForm({ ...blogForm, faqSectionJson_tr: e.target.value })
+        }
+      />
+      <Textarea
+        label="FAQ JSON (Russian)"
+        description='Format: [{"question":"...","answer":"..."}]'
+        rows={7}
+        value={blogForm.faqSectionJson_ru}
+        onChange={(e) =>
+          setBlogForm({ ...blogForm, faqSectionJson_ru: e.target.value })
+        }
+      />
+    </div>
+  </div>
+);
+
+BlogSeoFields.propTypes = {
+  blogForm: PropTypes.object.isRequired,
+  setBlogForm: PropTypes.func.isRequired,
+};
+
 const AdminPanel = () => {
   const [active, setActive] = useState(0);
   const [activeTab, setActiveTab] = useState("bookings");
@@ -438,6 +614,14 @@ const AdminPanel = () => {
     summary_en: "",
     summary_tr: "",
     summary_ru: "",
+    metaDescription_en: "",
+    metaDescription_tr: "",
+    metaDescription_ru: "",
+    faqSectionJson_en: "",
+    faqSectionJson_tr: "",
+    faqSectionJson_ru: "",
+    internalLinksText: "",
+    taxonomyJson: "",
     image: "",
     video: "",
     images: [], // Multiple images for gallery
@@ -453,6 +637,7 @@ const AdminPanel = () => {
     summary_en: "",
     summary_tr: "",
     image: "",
+    taxonomyJson: "",
   });
 
   const [aiMarketData, setAiMarketData] = useState({
@@ -1155,6 +1340,14 @@ const AdminPanel = () => {
       summary_en: "",
       summary_tr: "",
       summary_ru: "",
+      metaDescription_en: "",
+      metaDescription_tr: "",
+      metaDescription_ru: "",
+      faqSectionJson_en: "",
+      faqSectionJson_tr: "",
+      faqSectionJson_ru: "",
+      internalLinksText: "",
+      taxonomyJson: "",
       image: "",
       video: "",
       images: [],
@@ -1266,6 +1459,7 @@ const AdminPanel = () => {
 
     setBlogLoading(true);
     try {
+      const seoPayload = buildBlogSeoPayload(blogForm);
       const content_en = buildContentWithBlocks(
         blogForm.content_en,
         blogForm.contentBlocks_en
@@ -1280,6 +1474,7 @@ const AdminPanel = () => {
       );
       const payload = {
         ...blogForm,
+        ...seoPayload,
         title: blogForm.title_en || blogForm.title_tr || blogForm.title_ru || blogForm.title,
         summary:
           blogForm.summary_en || blogForm.summary_tr || blogForm.summary_ru || blogForm.summary,
@@ -1295,6 +1490,11 @@ const AdminPanel = () => {
       delete payload.contentBlocks_en;
       delete payload.contentBlocks_tr;
       delete payload.contentBlocks_ru;
+      delete payload.faqSectionJson_en;
+      delete payload.faqSectionJson_tr;
+      delete payload.faqSectionJson_ru;
+      delete payload.internalLinksText;
+      delete payload.taxonomyJson;
       await createBlog(payload, token);
       toast.success(bilingualKey("toast.blogCreatedSuccess"), {
         position: "bottom-right",
@@ -1304,6 +1504,9 @@ const AdminPanel = () => {
       fetchBlogs();
     } catch (error) {
       console.error("Create blog error:", error);
+      toast.error(error?.message || "Could not create blog SEO fields.", {
+        position: "bottom-right",
+      });
     } finally {
       setBlogLoading(false);
     }
@@ -1342,6 +1545,16 @@ const AdminPanel = () => {
       summary_en: blog.summary_en || blog.summary || "",
       summary_tr: blog.summary_tr || "",
       summary_ru: blog.summary_ru || "",
+      metaDescription_en: blog.metaDescription_en || blog.metaDescription || "",
+      metaDescription_tr: blog.metaDescription_tr || "",
+      metaDescription_ru: blog.metaDescription_ru || "",
+      faqSectionJson_en: stringifyJsonField(blog.faqSection_en || blog.faqSection),
+      faqSectionJson_tr: stringifyJsonField(blog.faqSection_tr),
+      faqSectionJson_ru: stringifyJsonField(blog.faqSection_ru),
+      internalLinksText: Array.isArray(blog.internalLinks)
+        ? blog.internalLinks.join("\n")
+        : "",
+      taxonomyJson: stringifyJsonField(blog.taxonomy),
       image: fallbackImage || "",
       video: blog.video || "",
       images: blog.images || [],
@@ -1390,6 +1603,7 @@ const AdminPanel = () => {
 
     setBlogLoading(true);
     try {
+      const seoPayload = buildBlogSeoPayload(blogForm);
       const content_en = buildContentWithBlocks(
         blogForm.content_en,
         blogForm.contentBlocks_en
@@ -1404,6 +1618,7 @@ const AdminPanel = () => {
       );
       const payload = {
         ...blogForm,
+        ...seoPayload,
         title: blogForm.title_en || blogForm.title_tr || blogForm.title_ru || blogForm.title,
         summary:
           blogForm.summary_en || blogForm.summary_tr || blogForm.summary_ru || blogForm.summary,
@@ -1419,6 +1634,11 @@ const AdminPanel = () => {
       delete payload.contentBlocks_en;
       delete payload.contentBlocks_tr;
       delete payload.contentBlocks_ru;
+      delete payload.faqSectionJson_en;
+      delete payload.faqSectionJson_tr;
+      delete payload.faqSectionJson_ru;
+      delete payload.internalLinksText;
+      delete payload.taxonomyJson;
       await updateBlog(selectedBlog.id, payload, token);
       toast.success(bilingualKey("toast.blogUpdatedSuccess"), {
         position: "bottom-right",
@@ -1429,6 +1649,9 @@ const AdminPanel = () => {
       fetchBlogs();
     } catch (error) {
       console.error("Update blog error:", error);
+      toast.error(error?.message || "Could not update blog SEO fields.", {
+        position: "bottom-right",
+      });
     } finally {
       setBlogLoading(false);
     }
@@ -1484,6 +1707,7 @@ const AdminPanel = () => {
       summary_en: "",
       summary_tr: "",
       image: "",
+      taxonomyJson: "",
     });
     setAiBlogImageUploading(false);
   };
@@ -1493,6 +1717,11 @@ const AdminPanel = () => {
     setAiGenerating(true);
     try {
       const marketData = {};
+      const taxonomy = parseJsonField(
+        aiBlogForm.taxonomyJson,
+        "AI blog taxonomy",
+        "object"
+      );
 
       const blogMeta = {
         title_en: aiBlogForm.title_en?.trim(),
@@ -1503,6 +1732,7 @@ const AdminPanel = () => {
         summary_en: aiBlogForm.summary_en?.trim(),
         summary_tr: aiBlogForm.summary_tr?.trim(),
         image: aiBlogForm.image?.trim(),
+        taxonomy,
       };
       const sanitizedBlogMeta = Object.fromEntries(
         Object.entries(blogMeta).filter(([, value]) => value)
@@ -1526,7 +1756,15 @@ const AdminPanel = () => {
       fetchBlogs();
     } catch (error) {
       console.error("AI generation error:", error);
-      // Error toast is handled by the API function
+      if (!error?.response) {
+        toast.error(
+          error?.message ||
+            "Could not generate the AI blog with the provided taxonomy.",
+          {
+            position: "bottom-right",
+          }
+        );
+      }
     } finally {
       setAiGenerating(false);
     }
@@ -4742,6 +4980,8 @@ const AdminPanel = () => {
               />
             </div>
 
+            <BlogSeoFields blogForm={blogForm} setBlogForm={setBlogForm} />
+
             <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
               <div className="space-y-4">
                 <Textarea
@@ -5480,6 +5720,8 @@ const AdminPanel = () => {
                 }
               />
             </div>
+
+            <BlogSeoFields blogForm={blogForm} setBlogForm={setBlogForm} />
 
             <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
               <div className="space-y-4">
@@ -6262,6 +6504,17 @@ const AdminPanel = () => {
                 }
               />
             </div>
+
+            <Textarea
+              label="Taxonomy JSON (Optional)"
+              description="Optional override for contentType, city, district, category, tags, intents, citizenship, installment, etc."
+              placeholder={`{\n  "contentType": "supporting article",\n  "city": "Istanbul",\n  "district": "Kadikoy",\n  "category": "istanbul properties",\n  "subcategory": "buying process",\n  "tags": ["istanbul", "investment"],\n  "intents": ["investment", "family-living"],\n  "citizenship": false,\n  "installment": false\n}`}
+              rows={8}
+              value={aiBlogForm.taxonomyJson}
+              onChange={(e) =>
+                setAiBlogForm({ ...aiBlogForm, taxonomyJson: e.target.value })
+              }
+            />
 
             <Text size="xs" color="dimmed">
               Leave fields blank to let AI generate titles, categories, and summaries.

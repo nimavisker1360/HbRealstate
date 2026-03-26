@@ -1,8 +1,6 @@
-import SeoStaticPageLayout from "../components/SeoStaticPageLayout";
-import { seoStaticPages } from "../data/seoStaticPages";
+import GuidePage from "./GuidePage";
 
-const TurkeyPropertyInvestment = () => {
-  return <SeoStaticPageLayout {...seoStaticPages.turkeyPropertyInvestment} />;
-};
+const TurkeyPropertyInvestment = () => <GuidePage slug="turkey-property-investment" />;
 
 export default TurkeyPropertyInvestment;
+

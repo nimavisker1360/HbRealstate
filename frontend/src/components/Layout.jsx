@@ -12,6 +12,7 @@ import useImageOptimization from "../hooks/useImageOptimization";
 import { trackWhatsAppConversionFromClick } from "../utils/analytics";
 import { captureAttributionParams } from "../utils/attribution";
 import AssistantChatWidget from "./AssistantChatModal";
+import SitewideSchema from "./seo/SitewideSchema";
 
 const Layout = () => {
   useFavourites();
@@ -191,6 +192,7 @@ const Layout = () => {
 
   return (
     <div className="overflow-x-hidden min-h-screen flex flex-col">
+      <SitewideSchema />
       <div className="flex-1">
         <Header />
         <Outlet />

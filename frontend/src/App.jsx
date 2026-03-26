@@ -9,6 +9,7 @@ import Layout from "./components/Layout";
 import RequireAuth from "./components/RequireAuth";
 import ScrollToTop from "./components/ScrollToTop";
 import RouteSeo from "./components/RouteSeo";
+import { contentHubPages } from "./data/contentHubPages";
 import {
   DEFAULT_LANGUAGE_CODE,
   extractLanguageFromPath,
@@ -24,6 +25,7 @@ const Consultants = lazy(() => import("./pages/Consultants"));
 const TodayProperties = lazy(() => import("./pages/TodayProperties"));
 const BlogsPage = lazy(() => import("./pages/Blogs"));
 const CountryBlogs = lazy(() => import("./pages/CountryBlogs"));
+const BlogCategory = lazy(() => import("./pages/BlogCategory"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const Addresses = lazy(() => import("./pages/Addresses"));
 const LocalProjects = lazy(() => import("./pages/LocalProjects"));
@@ -31,10 +33,8 @@ const ProjectDetail = lazy(() => import("./pages/seo/ProjectDetailSeoPage"));
 const TestimonialsTest = lazy(() => import("./pages/TestimonialsTest"));
 const Favourites = lazy(() => import("./pages/Favourites"));
 const Bookings = lazy(() => import("./pages/Bookings"));
-const IstanbulApartments = lazy(() => import("./pages/IstanbulApartments"));
-const KyreniaApartments = lazy(() => import("./pages/KyreniaApartments"));
-const TurkeyPropertyInvestment = lazy(() => import("./pages/TurkeyPropertyInvestment"));
-const TurkishCitizenshipProperty = lazy(() => import("./pages/TurkishCitizenshipProperty"));
+const GuidePage = lazy(() => import("./pages/GuidePage"));
+const InvestmentGuides = lazy(() => import("./pages/InvestmentGuides"));
 const InvestmentOpportunitiesBlogs = lazy(
   () => import("./pages/InvestmentOpportunitiesBlogs")
 );
@@ -139,15 +139,20 @@ export default function App() {
                     <Route path="/today" element={<TodayProperties />} />
                     <Route path="/blogs" element={<BlogsPage />} />
                     <Route path="/blogs/:countrySlug" element={<CountryBlogs />} />
+                    <Route path="/blogs/category/:categorySlug" element={<BlogCategory />} />
                     <Route path="/blog/:slug" element={<BlogPost />} />
                     <Route path="/testimonials-test" element={<TestimonialsTest />} />
                     <Route path="/addresses" element={<Addresses />} />
                     <Route path="/projects" element={<LocalProjects />} />
                     <Route path="/projects/:projectSlugOrId" element={<ProjectDetail />} />
-                    <Route path="/istanbul-apartments" element={<IstanbulApartments />} />
-                    <Route path="/kyrenia-apartments" element={<KyreniaApartments />} />
-                    <Route path="/turkey-property-investment" element={<TurkeyPropertyInvestment />} />
-                    <Route path="/turkish-citizenship-property" element={<TurkishCitizenshipProperty />} />
+                    <Route path="/investment-guides" element={<InvestmentGuides />} />
+                    {contentHubPages.map((guide) => (
+                      <Route
+                        key={guide.slug}
+                        path={`/${guide.slug}`}
+                        element={<GuidePage slug={guide.slug} />}
+                      />
+                    ))}
                     <Route
                       path="/investment-opportunities"
                       element={<InvestmentOpportunitiesBlogs />}

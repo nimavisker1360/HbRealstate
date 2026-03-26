@@ -4,7 +4,20 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import ProjectDetail from "../ProjectDetail";
 import SEO from "../../components/SEO";
 import JsonLd from "../../components/JsonLd";
+import Breadcrumbs from "../../components/seo/Breadcrumbs";
+import RelatedContentSection from "../../components/seo/RelatedContentSection";
+import SeoCtaSection from "../../components/seo/SeoCtaSection";
+import useProperties from "../../hooks/useProperties";
+import useBlogs from "../../hooks/useBlogs";
 import { getProperty } from "../../utils/api";
+import { contentHubPages } from "../../data/contentHubPages";
+import {
+  buildPropertyContext,
+  pickRelatedBlogs,
+  pickRelatedGuides,
+  pickRelatedProjects,
+  pickRelatedProperties,
+} from "../../utils/contentGraph";
 import {
   SITE_URL,
   extractObjectId,
@@ -161,6 +174,8 @@ const ProjectDetailSeoPage = () => {
       enabled: Boolean(projectLookupKey),
     }
   );
+  const { data: allProperties = [] } = useProperties();
+  const { data: blogs = [] } = useBlogs();
   useEffect(() => {
     const routeValue = String(routeProjectSlugOrId || "").trim();
     if (!routeValue || !project) return;
@@ -304,10 +319,8 @@ const ProjectDetailSeoPage = () => {
   }, [areaValue, canonicalUrl, city, district, project, sourceDescription]);
 
   const breadcrumbSchema = useMemo(
-    () => ({
-      "@context": "https://schema.org",
-      "@type": "BreadcrumbList",
-      itemListElement: [
+    () => {
+      const itemListElement = [
         {
           "@type": "ListItem",
           position: 1,
@@ -320,16 +333,148 @@ const ProjectDetailSeoPage = () => {
           name: "Projects",
           item: `${SITE_URL}/projects`,
         },
-        {
+      ];
+
+      if (city) {
+        itemListElement.push({
           "@type": "ListItem",
           position: 3,
-          name: projectTitle,
-          item: canonicalUrl,
-        },
-      ],
-    }),
-    [canonicalUrl, projectTitle]
+          name: city,
+          item: `${SITE_URL}/listing?search=${encodeURIComponent(city)}`,
+        });
+      }
+
+      if (district) {
+        itemListElement.push({
+          "@type": "ListItem",
+          position: city ? 4 : 3,
+          name: district,
+          item: `${SITE_URL}/listing?search=${encodeURIComponent(district)}`,
+        });
+      }
+
+      itemListElement.push({
+        "@type": "ListItem",
+        position: district ? (city ? 5 : 4) : city ? 4 : 3,
+        name: projectTitle,
+        item: canonicalUrl,
+      });
+
+      return {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement,
+      };
+    },
+    [canonicalUrl, city, district, projectTitle]
   );
+
+  const projectContext = useMemo(
+    () => (project ? buildPropertyContext(project) : {}),
+    [project]
+  );
+
+  const relatedProjects = useMemo(
+    () =>
+      project
+        ? pickRelatedProjects({
+            properties: allProperties,
+            context: projectContext,
+            excludeId: project.id,
+            limit: 3,
+          })
+        : [],
+    [allProperties, project, projectContext]
+  );
+
+  const relatedProperties = useMemo(
+    () =>
+      project
+        ? pickRelatedProperties({
+            properties: allProperties,
+            context: projectContext,
+            excludeId: project.id,
+            limit: 4,
+          })
+        : [],
+    [allProperties, project, projectContext]
+  );
+
+  const relatedArticles = useMemo(
+    () =>
+      project
+        ? pickRelatedBlogs({
+            blogs,
+            context: projectContext,
+            limit: 3,
+          })
+        : [],
+    [blogs, project, projectContext]
+  );
+
+  const relatedGuides = useMemo(
+    () =>
+      project
+        ? pickRelatedGuides({
+            guides: contentHubPages,
+            context: projectContext,
+            limit: 3,
+          })
+        : [],
+    [project, projectContext]
+  );
+
+  const breadcrumbItems = [
+    { label: "Home", to: "/" },
+    { label: "Projects", to: "/projects" },
+    ...(city ? [{ label: city, to: `/listing?search=${encodeURIComponent(city)}` }] : []),
+    ...(district
+      ? [{ label: district, to: `/listing?search=${encodeURIComponent(district)}` }]
+      : []),
+    { label: projectTitle },
+  ];
+
+  const ctaBlock = project?.gyo
+    ? {
+        title: "Compare this project with other citizenship-eligible options",
+        description:
+          "Projects should still be compared by district quality, pricing logic, and compliance readiness before you move forward.",
+        primaryAction: {
+          label: "See eligible listings",
+          to: "/listing?citizenshipEligible=true",
+        },
+        secondaryAction: {
+          label: "Read the citizenship guide",
+          to: "/turkish-citizenship-real-estate-guide",
+        },
+      }
+    : projectContext.installment
+    ? {
+        title: "Looking for more installment-based projects?",
+        description:
+          "Use this project as a benchmark and compare payment-plan inventory against ready stock in the same market.",
+        primaryAction: {
+          label: "Explore installment listings",
+          to: "/listing?installmentAvailable=true",
+        },
+        secondaryAction: {
+          label: "See installment guide",
+          to: "/installment-property-in-turkey",
+        },
+      }
+    : {
+        title: "Need a broader project shortlist?",
+        description:
+          "Compare this project against related inventory, investment guides, and district-level context before you schedule the next call.",
+        primaryAction: {
+          label: "Browse all projects",
+          to: "/projects",
+        },
+        secondaryAction: {
+          label: "Request project advice",
+          to: "/consultants",
+        },
+      };
 
   return (
     <>
@@ -342,7 +487,42 @@ const ProjectDetailSeoPage = () => {
       />
       <JsonLd data={projectSchema} />
       <JsonLd data={breadcrumbSchema} />
-      <ProjectDetail />
+      <ProjectDetail topSlot={<Breadcrumbs items={breadcrumbItems} />} />
+
+      <section className="max-padd-container pb-20">
+        <RelatedContentSection
+          title="Related Articles"
+          description="Commercial and informational content aligned with this project's location and buyer intent."
+          items={relatedArticles}
+        />
+
+        <RelatedContentSection
+          title="Related Projects"
+          description="Projects in similar locations, investment contexts, or payment-plan profiles."
+          items={relatedProjects}
+          type="property"
+        />
+
+        <RelatedContentSection
+          title="Related Properties"
+          description="Ready stock and non-project listings that support commercial comparison."
+          items={relatedProperties}
+          type="property"
+        />
+
+        <RelatedContentSection
+          title="Relevant Guides"
+          description="Tax, buying-process, district, and investment pages linked semantically to this project."
+          items={relatedGuides}
+        />
+
+        <SeoCtaSection
+          title={ctaBlock.title}
+          description={ctaBlock.description}
+          primaryAction={ctaBlock.primaryAction}
+          secondaryAction={ctaBlock.secondaryAction}
+        />
+      </section>
     </>
   );
 };

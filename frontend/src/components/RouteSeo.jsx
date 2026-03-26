@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import SEO from "./SEO";
+import { contentHubPages } from "../data/contentHubPages";
 
 const NOINDEX_PREFIXES = [
   "/admin",
@@ -34,14 +35,13 @@ const RouteSeo = () => {
       pathname === "/listing" ||
       pathname.startsWith("/listing/") ||
       pathname.startsWith("/projects/") ||
+      pathname === "/investment-guides" ||
       pathname === "/blogs" ||
+      pathname.startsWith("/blogs/category/") ||
       pathname.startsWith("/blogs/") ||
       pathname.startsWith("/blog/") ||
-      pathname === "/istanbul-apartments" ||
-      pathname === "/kyrenia-apartments" ||
       pathname === "/investment-opportunities" ||
-      pathname === "/turkey-property-investment" ||
-      pathname === "/turkish-citizenship-property";
+      contentHubPages.some((page) => pathname === page.canonicalPath);
 
     if (hasDedicatedSeo) {
       return null;

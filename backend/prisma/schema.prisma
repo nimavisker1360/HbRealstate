@@ -234,6 +234,7 @@ model Blog {
     faqSection_tr Json? // Turkish FAQ
     faqSection_ru Json? // Russian FAQ
     internalLinks String[] // Suggested internal links
+    taxonomy Json? // Flexible SEO taxonomy: contentType, city, district, tags, intents, etc.
     
     // Market data used for generation
     marketData Json? // Stores the input data used to generate the blog

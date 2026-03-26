@@ -253,7 +253,7 @@ const inferDistrictFromProperty = (property) => {
   return "";
 };
 
-const Property = () => {
+const Property = ({ topSlot = null }) => {
   const { t, i18n } = useTranslation();
   const { pathname } = useLocation();
   const navigate = useNavigate();
@@ -439,6 +439,7 @@ const Property = () => {
 
   return (
     <section className="max-padd-container my-[99px] overflow-x-hidden">
+      {topSlot ? <div className="mb-6">{topSlot}</div> : null}
       {/* Image Gallery Grid */}
       <div className="pb-4 relative">
         <div className="flex flex-col md:flex-row gap-2 md:h-[500px] rounded-xl overflow-hidden">

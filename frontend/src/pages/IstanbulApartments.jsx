@@ -1,8 +1,6 @@
-import SeoStaticPageLayout from "../components/SeoStaticPageLayout";
-import { seoStaticPages } from "../data/seoStaticPages";
+import GuidePage from "./GuidePage";
 
-const IstanbulApartments = () => {
-  return <SeoStaticPageLayout {...seoStaticPages.istanbulApartments} />;
-};
+const IstanbulApartments = () => <GuidePage slug="istanbul-apartments" />;
 
 export default IstanbulApartments;
+

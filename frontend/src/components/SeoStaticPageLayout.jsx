@@ -1,51 +1,89 @@
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 import SEO from "./SEO";
+import Breadcrumbs from "./seo/Breadcrumbs";
+import FaqSection, { buildFaqSchema } from "./seo/FaqSection";
+import RelatedContentSection from "./seo/RelatedContentSection";
+import SeoCtaSection from "./seo/SeoCtaSection";
+import useProperties from "../hooks/useProperties";
+import useBlogs from "../hooks/useBlogs";
 import { SITE_URL } from "../utils/seo";
+import {
+  buildContentContext,
+  pickRelatedBlogs,
+  pickRelatedGuides,
+  pickRelatedProjects,
+  pickRelatedProperties,
+} from "../utils/contentGraph";
+import { contentHubPages } from "../data/contentHubPages";
 
 const SeoStaticPageLayout = ({
   title,
   description,
   canonicalPath,
   breadcrumbLabel,
-  introParagraphs,
-  sections,
-  faqs,
+  introParagraphs = [],
+  sections = [],
+  faqs = [],
   relatedLinks = [],
+  highlights = [],
+  taxonomy = {},
+  pageType = "Guide",
+  cta,
 }) => {
+  const { data: properties = [] } = useProperties();
+  const { data: blogs = [] } = useBlogs();
+
+  const context = buildContentContext({
+    title,
+    description,
+    introParagraphs,
+    pageType,
+    taxonomy,
+  });
+
+  const relatedProperties = pickRelatedProperties({
+    properties,
+    context,
+    limit: 4,
+  });
+
+  const relatedProjects = pickRelatedProjects({
+    properties,
+    context,
+    limit: 3,
+  });
+
+  const relatedArticles = pickRelatedBlogs({
+    blogs,
+    context,
+    limit: 4,
+  });
+
+  const relatedGuides = pickRelatedGuides({
+    guides: contentHubPages.filter((page) => page.canonicalPath !== canonicalPath),
+    context,
+    limit: 3,
+  });
+
+  const breadcrumbItems = [
+    { label: "Home", to: "/" },
+    { label: "Investment Guides", to: "/investment-guides" },
+    { label: breadcrumbLabel || title },
+  ];
+
   const breadcrumbSchema = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    itemListElement: [
-      {
-        "@type": "ListItem",
-        position: 1,
-        name: "Home",
-        item: SITE_URL,
-      },
-      {
-        "@type": "ListItem",
-        position: 2,
-        name: breadcrumbLabel,
-        item: `${SITE_URL}${canonicalPath}`,
-      },
-    ],
+    itemListElement: breadcrumbItems.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.label,
+      item: `${SITE_URL}${index === 0 ? "" : item.to || canonicalPath}`,
+    })),
   };
 
-  const faqSchema = faqs?.length
-    ? {
-        "@context": "https://schema.org",
-        "@type": "FAQPage",
-        mainEntity: faqs.map((faq) => ({
-          "@type": "Question",
-          name: faq.question,
-          acceptedAnswer: {
-            "@type": "Answer",
-            text: faq.answer,
-          },
-        })),
-      }
-    : null;
+  const faqSchema = buildFaqSchema(faqs);
 
   return (
     <>
@@ -56,99 +94,135 @@ const SeoStaticPageLayout = ({
         structuredData={[breadcrumbSchema, faqSchema]}
       />
 
-      <main className="max-padd-container py-12 md:py-16">
-        <nav aria-label="Breadcrumb" className="text-sm text-gray-500 mb-6">
-          <Link to="/" className="hover:text-gray-700">
-            Home
-          </Link>
-          <span className="mx-2">/</span>
-          <span className="text-gray-700">{breadcrumbLabel}</span>
-        </nav>
+      <main className="relative overflow-hidden bg-[#f7f3ea] py-24">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute -top-32 -left-20 h-72 w-72 rounded-full bg-emerald-200/30 blur-3xl" />
+          <div className="absolute top-10 right-0 h-80 w-80 rounded-full bg-amber-200/30 blur-3xl" />
+          <div className="absolute bottom-0 left-1/3 h-96 w-96 rounded-full bg-teal-200/20 blur-3xl" />
+        </div>
 
-        <article className="max-w-4xl">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-            {title}
-          </h1>
+        <div className="max-padd-container relative z-10">
+          <div className="mx-auto max-w-6xl">
+            <Breadcrumbs items={breadcrumbItems} />
 
-          <p className="text-base md:text-lg text-gray-700 mb-6">
-            Looking for available options right now? Browse live inventory on{" "}
-            <Link to="/listing" className="text-emerald-700 underline">
-              the property listing page
-            </Link>
-            .
-          </p>
-
-          <div className="space-y-5 text-gray-700 leading-8">
-            {introParagraphs.map((paragraph, index) => (
-              <p key={`intro-${index}`}>{paragraph}</p>
-            ))}
-          </div>
-
-          {relatedLinks.length > 0 && (
-            <section className="mt-10">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-                Popular Listing Paths
-              </h2>
-              <div className="flex flex-wrap gap-3">
-                {relatedLinks.map((item) => (
-                  <Link
-                    key={item.to}
-                    to={item.to}
-                    className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-700 hover:bg-emerald-100"
-                  >
-                    {item.label}
-                  </Link>
-                ))}
+            <article className="rounded-[30px] border border-white/70 bg-white/90 p-6 shadow-[0_28px_70px_-50px_rgba(15,23,42,0.5)] backdrop-blur sm:p-8 lg:p-10">
+              <div className="max-w-4xl">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-emerald-700">
+                  {pageType}
+                </p>
+                <h1 className="mt-3 text-3xl font-bold leading-tight text-slate-900 sm:text-4xl lg:text-5xl">
+                  {title}
+                </h1>
+                <p className="mt-5 text-base leading-8 text-slate-600 sm:text-lg">
+                  {description}
+                </p>
               </div>
-            </section>
-          )}
 
-          {sections.map((section, sectionIndex) => (
-            <section key={section.heading} className="mt-10">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-                {sectionIndex + 1}. {section.heading}
-              </h2>
-              <div className="space-y-5 text-gray-700 leading-8">
-                {section.paragraphs.map((paragraph, paragraphIndex) => (
-                  <p key={`${section.heading}-${paragraphIndex}`}>{paragraph}</p>
-                ))}
+              {highlights.length > 0 && (
+                <section className="mt-10">
+                  <h2 className="text-2xl font-bold text-slate-900">Key Highlights</h2>
+                  <div className="mt-5 grid gap-4 md:grid-cols-3">
+                    {highlights.map((item) => (
+                      <div
+                        key={item}
+                        className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-5"
+                      >
+                        <p className="text-sm font-medium leading-7 text-slate-700">
+                          {item}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              <div className="mt-10 rounded-2xl border border-slate-200/80 bg-slate-50/70 p-5">
+                <p className="text-sm leading-7 text-slate-600 sm:text-base">
+                  Looking for live inventory while you research? Explore{" "}
+                  <Link to="/listing" className="font-semibold text-emerald-700 underline">
+                    current property listings
+                  </Link>{" "}
+                  and compare them against the guidance on this page.
+                </p>
               </div>
-            </section>
-          ))}
 
-          <section className="mt-12">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">FAQ</h2>
-            <div className="space-y-4">
-              {faqs.map((faq) => (
-                <details
-                  key={faq.question}
-                  className="rounded-xl border border-gray-200 bg-white p-4"
-                >
-                  <summary className="cursor-pointer font-semibold text-gray-900">
-                    {faq.question}
-                  </summary>
-                  <p className="mt-3 text-gray-700 leading-7">{faq.answer}</p>
-                </details>
+              {relatedLinks.length > 0 && (
+                <section className="mt-10">
+                  <h2 className="text-2xl font-bold text-slate-900">Explore Next</h2>
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    {relatedLinks.map((item) => (
+                      <Link
+                        key={`${item.to}-${item.label}`}
+                        to={item.to}
+                        className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              <section className="mt-10 space-y-5 text-slate-600">
+                {introParagraphs.map((paragraph, index) => (
+                  <p key={`intro-${index}`} className="text-base leading-8 sm:text-lg">
+                    {paragraph}
+                  </p>
+                ))}
+              </section>
+
+              {sections.map((section) => (
+                <section key={section.heading} className="mt-12">
+                  <h2 className="text-2xl font-bold text-slate-900">{section.heading}</h2>
+                  <div className="mt-4 space-y-4">
+                    {section.paragraphs.map((paragraph, index) => (
+                      <p key={`${section.heading}-${index}`} className="text-base leading-8 text-slate-600">
+                        {paragraph}
+                      </p>
+                    ))}
+                  </div>
+                </section>
               ))}
-            </div>
-          </section>
 
-          <section className="mt-12 rounded-2xl border border-emerald-200 bg-emerald-50 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              Continue Your Search
-            </h2>
-            <p className="text-gray-700 mb-4">
-              Compare current inventory, prices, and availability from verified
-              listings in one place.
-            </p>
-            <Link
-              to="/listing"
-              className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700"
-            >
-              View Listings
-            </Link>
-          </section>
-        </article>
+              {cta ? (
+                <SeoCtaSection
+                  title={cta.title}
+                  description={cta.description}
+                  primaryAction={cta.primaryAction}
+                  secondaryAction={cta.secondaryAction}
+                />
+              ) : null}
+
+              <RelatedContentSection
+                title="Related Properties"
+                description="Commercial inventory connected to this topic."
+                items={relatedProperties}
+                type="property"
+              />
+
+              <RelatedContentSection
+                title="Related Projects"
+                description="Relevant project pages surfaced by city, district, and buyer intent."
+                items={relatedProjects}
+                type="property"
+              />
+
+              <RelatedContentSection
+                title="Related Articles"
+                description="Supporting informational content connected to this page."
+                items={relatedArticles}
+              />
+
+              <RelatedContentSection
+                title="Continue Through The Cluster"
+                description="Next-best guide pages in the same topic graph."
+                items={relatedGuides}
+              />
+
+              <FaqSection title="FAQ" items={faqs} />
+            </article>
+          </div>
+        </div>
       </main>
     </>
   );
@@ -159,25 +233,34 @@ SeoStaticPageLayout.propTypes = {
   description: PropTypes.string.isRequired,
   canonicalPath: PropTypes.string.isRequired,
   breadcrumbLabel: PropTypes.string.isRequired,
-  introParagraphs: PropTypes.arrayOf(PropTypes.string).isRequired,
+  introParagraphs: PropTypes.arrayOf(PropTypes.string),
   sections: PropTypes.arrayOf(
     PropTypes.shape({
       heading: PropTypes.string.isRequired,
       paragraphs: PropTypes.arrayOf(PropTypes.string).isRequired,
     })
-  ).isRequired,
+  ),
   faqs: PropTypes.arrayOf(
     PropTypes.shape({
       question: PropTypes.string.isRequired,
       answer: PropTypes.string.isRequired,
     })
-  ).isRequired,
+  ),
   relatedLinks: PropTypes.arrayOf(
     PropTypes.shape({
       to: PropTypes.string.isRequired,
       label: PropTypes.string.isRequired,
     })
   ),
+  highlights: PropTypes.arrayOf(PropTypes.string),
+  taxonomy: PropTypes.object,
+  pageType: PropTypes.string,
+  cta: PropTypes.shape({
+    title: PropTypes.string,
+    description: PropTypes.string,
+    primaryAction: PropTypes.object,
+    secondaryAction: PropTypes.object,
+  }),
 };
 
 export default SeoStaticPageLayout;

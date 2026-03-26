@@ -1,8 +1,6 @@
-import SeoStaticPageLayout from "../components/SeoStaticPageLayout";
-import { seoStaticPages } from "../data/seoStaticPages";
+import GuidePage from "./GuidePage";
 
-const KyreniaApartments = () => {
-  return <SeoStaticPageLayout {...seoStaticPages.kyreniaApartments} />;
-};
+const KyreniaApartments = () => <GuidePage slug="kyrenia-apartments" />;
 
 export default KyreniaApartments;
+

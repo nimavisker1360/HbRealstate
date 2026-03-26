@@ -2,11 +2,21 @@ import { useEffect, useMemo } from "react";
 import { useQuery } from "react-query";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Property from "../Property";
-import PropertyGridCard from "../../components/PropertyGridCard";
 import SEO from "../../components/SEO";
 import JsonLd from "../../components/JsonLd";
+import Breadcrumbs from "../../components/seo/Breadcrumbs";
+import RelatedContentSection from "../../components/seo/RelatedContentSection";
+import SeoCtaSection from "../../components/seo/SeoCtaSection";
 import useProperties from "../../hooks/useProperties";
+import useBlogs from "../../hooks/useBlogs";
 import { getProperty } from "../../utils/api";
+import { contentHubPages } from "../../data/contentHubPages";
+import {
+  buildPropertyContext,
+  pickRelatedBlogs,
+  pickRelatedGuides,
+  pickRelatedProperties,
+} from "../../utils/contentGraph";
 import {
   SITE_URL,
   extractObjectId,
@@ -130,6 +140,7 @@ const PropertySeoPage = () => {
     }
   );
   const { data: allProperties = [] } = useProperties();
+  const { data: blogs = [] } = useBlogs();
 
   useEffect(() => {
     const routeValue = String(propertyId || "").trim();
@@ -289,62 +300,122 @@ const PropertySeoPage = () => {
   ]);
 
   const breadcrumbSchema = useMemo(() => {
+    const breadcrumbItems = [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: SITE_URL,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: city || "Listing",
+        item: city ? `${SITE_URL}/listing?search=${encodeURIComponent(city)}` : `${SITE_URL}/listing`,
+      },
+    ];
+
+    if (district) {
+      breadcrumbItems.push({
+        "@type": "ListItem",
+        position: 3,
+        name: district,
+        item: `${SITE_URL}/listing?search=${encodeURIComponent(district)}`,
+      });
+    }
+
+    breadcrumbItems.push({
+      "@type": "ListItem",
+      position: district ? 4 : 3,
+      name: pickText(property?.title, property?.name, "Property"),
+      item: canonicalUrl,
+    });
+
     return {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
-      itemListElement: [
-        {
-          "@type": "ListItem",
-          position: 1,
-          name: "Home",
-          item: SITE_URL,
-        },
-        {
-          "@type": "ListItem",
-          position: 2,
-          name: "Listing",
-          item: `${SITE_URL}/listing`,
-        },
-        {
-          "@type": "ListItem",
-          position: 3,
-          name: pickText(property?.title, property?.name, "Property"),
-          item: canonicalUrl,
-        },
-      ],
+      itemListElement: breadcrumbItems,
     };
-  }, [canonicalUrl, property?.name, property?.title]);
+  }, [canonicalUrl, city, district, property?.name, property?.title]);
 
-  const relatedProperties = useMemo(() => {
-    if (!property || !Array.isArray(allProperties)) return [];
-    if (
-      property.propertyType === "local-project" ||
-      property.propertyType === "international-project"
-    ) {
-      return [];
-    }
+  const propertyContext = useMemo(
+    () => (property ? buildPropertyContext(property) : {}),
+    [property]
+  );
 
-    const ranked = allProperties
-      .filter(
-        (item) =>
-          item?.id &&
-          item.id !== property.id &&
-          item.propertyType !== "local-project" &&
-          item.propertyType !== "international-project"
-      )
-      .map((item) => {
-        let score = 0;
-        if (item.city && property.city && item.city === property.city) score += 3;
-        if (item.country && property.country && item.country === property.country)
-          score += 2;
-        if (item.category && property.category && item.category === property.category)
-          score += 2;
-        return { item, score };
-      })
-      .sort((a, b) => b.score - a.score);
+  const relatedProperties = useMemo(
+    () =>
+      property
+        ? pickRelatedProperties({
+            properties: allProperties,
+            context: propertyContext,
+            excludeId: property.id,
+            limit: 4,
+          })
+        : [],
+    [allProperties, property, propertyContext]
+  );
 
-    return ranked.slice(0, 4).map((entry) => entry.item);
-  }, [allProperties, property]);
+  const relatedArticles = useMemo(
+    () =>
+      property
+        ? pickRelatedBlogs({
+            blogs,
+            context: propertyContext,
+            limit: 3,
+          })
+        : [],
+    [blogs, property, propertyContext]
+  );
+
+  const relatedGuides = useMemo(
+    () =>
+      property
+        ? pickRelatedGuides({
+            guides: contentHubPages,
+            context: propertyContext,
+            limit: 3,
+          })
+        : [],
+    [property, propertyContext]
+  );
+
+  const breadcrumbItems = [
+    { label: "Home", to: "/" },
+    { label: city || "Listing", to: city ? `/listing?search=${encodeURIComponent(city)}` : "/listing" },
+    ...(district
+      ? [{ label: district, to: `/listing?search=${encodeURIComponent(district)}` }]
+      : []),
+    { label: pickText(property?.title, property?.name, "Property") },
+  ];
+
+  const ctaBlock = property?.gyo
+    ? {
+        title: "Looking for more citizenship-eligible inventory?",
+        description:
+          "Use this listing as a benchmark and compare other eligible properties in the same market before you move to legal review.",
+        primaryAction: {
+          label: "Explore eligible properties",
+          to: "/listing?citizenshipEligible=true",
+        },
+        secondaryAction: {
+          label: "Read the citizenship guide",
+          to: "/turkish-citizenship-real-estate-guide",
+        },
+      }
+    : {
+        title: "Need a tighter shortlist before booking viewings?",
+        description:
+          "Compare similar inventory, district guides, and cost or tax content so the shortlist stays strategy-led.",
+        primaryAction: {
+          label: "Browse similar listings",
+          to: city ? `/listing?search=${encodeURIComponent(city)}` : "/listing",
+        },
+        secondaryAction: {
+          label: "Request investment advice",
+          to: "/consultants",
+        },
+      };
 
   return (
     <>
@@ -358,23 +429,37 @@ const PropertySeoPage = () => {
       <JsonLd data={realEstateSchema} />
       <JsonLd data={breadcrumbSchema} />
 
-      <Property />
+      <Property
+        topSlot={<Breadcrumbs items={breadcrumbItems} />}
+      />
 
-      {relatedProperties.length > 0 && (
-        <section className="max-padd-container pb-16">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Related properties</h2>
-            <p className="text-sm text-gray-500">
-              Similar options in nearby locations and price ranges.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {relatedProperties.map((item) => (
-              <PropertyGridCard key={item.id} property={item} />
-            ))}
-          </div>
-        </section>
-      )}
+      <section className="max-padd-container pb-20">
+        <RelatedContentSection
+          title="Related Articles"
+          description="Guides and articles connected to this property's market and buyer intent."
+          items={relatedArticles}
+        />
+
+        <RelatedContentSection
+          title="Related Properties"
+          description="Similar options in nearby locations and comparable intent clusters."
+          items={relatedProperties}
+          type="property"
+        />
+
+        <RelatedContentSection
+          title="Buying, Tax And Investment Guides"
+          description="Contextual cross-links between this listing and the informational side of the site."
+          items={relatedGuides}
+        />
+
+        <SeoCtaSection
+          title={ctaBlock.title}
+          description={ctaBlock.description}
+          primaryAction={ctaBlock.primaryAction}
+          secondaryAction={ctaBlock.secondaryAction}
+        />
+      </section>
     </>
   );
 };

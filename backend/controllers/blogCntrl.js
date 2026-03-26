@@ -30,6 +30,282 @@ const resolveBlogSlug = (blog = {}) => {
 const withResolvedSlug = (blog) =>
   blog ? { ...blog, slug: resolveBlogSlug(blog) } : blog;
 
+const CITIZENSHIP_KEYWORDS = [
+  "citizenship",
+  "passport",
+  "vatandaslik",
+  "citizen",
+];
+
+const INSTALLMENT_KEYWORDS = [
+  "installment",
+  "payment plan",
+  "taksit",
+  "down payment",
+];
+
+const INVESTMENT_KEYWORDS = [
+  "investment",
+  "investor",
+  "yield",
+  "roi",
+  "rental income",
+  "yatirim",
+];
+
+const LEGAL_TAX_KEYWORDS = [
+  "tax",
+  "legal",
+  "title deed",
+  "valuation",
+  "closing cost",
+  "tapu",
+  "vergi",
+  "hukuk",
+];
+
+const FAMILY_KEYWORDS = ["family", "school", "hospital", "park", "aile"];
+const RENTAL_KEYWORDS = ["rental", "rent", "lease", "tenant", "kira"];
+const LUXURY_KEYWORDS = ["luxury", "premium", "exclusive", "sea view", "marina"];
+
+const pickText = (...values) => {
+  for (const value of values) {
+    if (value === null || value === undefined) continue;
+    const normalized = String(value).trim();
+    if (normalized) return normalized;
+  }
+  return "";
+};
+
+const normalizeSearchText = (value = "") =>
+  String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const uniqueStrings = (values = []) => {
+  const seen = new Set();
+  return values
+    .map((value) => pickText(value))
+    .filter(Boolean)
+    .filter((value) => {
+      const normalized = normalizeSearchText(value);
+      if (!normalized || seen.has(normalized)) return false;
+      seen.add(normalized);
+      return true;
+    });
+};
+
+const toStringArray = (value) => {
+  if (Array.isArray(value)) {
+    return uniqueStrings(value);
+  }
+  if (typeof value === "string") {
+    return uniqueStrings(value.split(/\r?\n/));
+  }
+  return [];
+};
+
+const parseJsonObject = (value) => {
+  if (!value) return null;
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+        ? parsed
+        : null;
+    } catch (_error) {
+      return null;
+    }
+  }
+  return typeof value === "object" && !Array.isArray(value) ? value : null;
+};
+
+const parseJsonArray = (value) => {
+  if (!value) return null;
+  if (Array.isArray(value)) return value;
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : null;
+    } catch (_error) {
+      return null;
+    }
+  }
+  return null;
+};
+
+const sanitizeFaqSection = (value) => {
+  const parsed = parseJsonArray(value);
+  if (!parsed || parsed.length === 0) return null;
+  const entries = parsed
+    .map((item) => ({
+      question: pickText(item?.question),
+      answer: pickText(item?.answer),
+    }))
+    .filter((item) => item.question && item.answer);
+  return entries.length > 0 ? entries : null;
+};
+
+const includesKeyword = (text, keywords = []) => {
+  const haystack = normalizeSearchText(text);
+  return keywords.some((keyword) =>
+    haystack.includes(normalizeSearchText(keyword))
+  );
+};
+
+const deriveIntentsFromText = (text = "") => {
+  const intents = [];
+  if (includesKeyword(text, CITIZENSHIP_KEYWORDS)) intents.push("citizenship");
+  if (includesKeyword(text, INSTALLMENT_KEYWORDS)) intents.push("installment");
+  if (includesKeyword(text, INVESTMENT_KEYWORDS)) intents.push("investment");
+  if (includesKeyword(text, LEGAL_TAX_KEYWORDS)) intents.push("legal-tax");
+  if (includesKeyword(text, FAMILY_KEYWORDS)) intents.push("family-living");
+  if (includesKeyword(text, RENTAL_KEYWORDS)) intents.push("rental-income");
+  if (includesKeyword(text, LUXURY_KEYWORDS)) intents.push("luxury");
+  return uniqueStrings(intents);
+};
+
+const buildBlogTaxonomy = ({ data = {}, marketData = {} } = {}) => {
+  const providedTaxonomy = parseJsonObject(data.taxonomy) || {};
+  const title = pickText(data.title_en, data.title, data.title_tr, data.title_ru);
+  const summary = pickText(
+    data.summary_en,
+    data.summary,
+    data.summary_tr,
+    data.summary_ru,
+    data.metaDescription_en,
+    data.metaDescription,
+    data.metaDescription_tr,
+    data.metaDescription_ru
+  );
+  const category = pickText(providedTaxonomy.category, data.category);
+  const subcategory = pickText(
+    providedTaxonomy.subcategory,
+    data.subcategory,
+    data.menuKey
+  );
+  const city = pickText(
+    providedTaxonomy.city,
+    data.city,
+    marketData?.city,
+    marketData?.location?.city
+  );
+  const district = pickText(
+    providedTaxonomy.district,
+    data.district,
+    marketData?.district,
+    marketData?.location?.district
+  );
+  const country = pickText(
+    providedTaxonomy.country,
+    data.country,
+    marketData?.country,
+    marketData?.location?.country
+  );
+
+  const searchText = normalizeSearchText(
+    [
+      title,
+      summary,
+      category,
+      subcategory,
+      data.content_en,
+      data.content,
+      data.content_tr,
+      data.content_ru,
+      data.menuKey,
+    ]
+      .filter(Boolean)
+      .join(" ")
+  );
+
+  const intents = uniqueStrings([
+    ...toStringArray(providedTaxonomy.intents),
+    ...deriveIntentsFromText(searchText),
+  ]);
+
+  return {
+    contentType: pickText(providedTaxonomy.contentType, data.contentType, "blog article"),
+    category,
+    subcategory,
+    city,
+    district,
+    country,
+    tags: uniqueStrings([
+      ...toStringArray(providedTaxonomy.tags),
+      category,
+      subcategory,
+      city,
+      district,
+      country,
+      data.menuKey,
+      ...intents,
+    ]),
+    intents,
+    citizenship: Boolean(
+      providedTaxonomy.citizenship || intents.includes("citizenship")
+    ),
+    installment: Boolean(
+      providedTaxonomy.installment || intents.includes("installment")
+    ),
+    luxury: Boolean(providedTaxonomy.luxury || intents.includes("luxury")),
+    familyLiving: Boolean(
+      providedTaxonomy.familyLiving || intents.includes("family-living")
+    ),
+    rentalIncome: Boolean(
+      providedTaxonomy.rentalIncome || intents.includes("rental-income")
+    ),
+  };
+};
+
+const buildBlogPersistenceData = ({ data = {}, marketData = {}, order } = {}) => ({
+  title: data.title,
+  title_en: data.title_en || data.title || "",
+  title_tr: data.title_tr || "",
+  title_ru: data.title_ru || "",
+  slug: data.slug,
+  menuKey: data.menuKey?.trim() || null,
+  category: data.category,
+  category_en: data.category_en || data.category || "",
+  category_tr: data.category_tr || "",
+  category_ru: data.category_ru || "",
+  content: data.content || "",
+  content_en: data.content_en || data.content || "",
+  content_tr: data.content_tr || "",
+  content_ru: data.content_ru || "",
+  summary: data.summary || "",
+  summary_en: data.summary_en || data.summary || "",
+  summary_tr: data.summary_tr || "",
+  summary_ru: data.summary_ru || "",
+  metaDescription:
+    pickText(data.metaDescription, data.metaDescription_en, data.summary_en, data.summary) ||
+    null,
+  metaDescription_en:
+    pickText(data.metaDescription_en, data.metaDescription, data.summary_en, data.summary) ||
+    null,
+  metaDescription_tr:
+    pickText(data.metaDescription_tr, data.summary_tr) || null,
+  metaDescription_ru:
+    pickText(data.metaDescription_ru, data.summary_ru) || null,
+  image: data.image || "",
+  video: data.video || "",
+  images: Array.isArray(data.images) ? data.images : [],
+  country: data.country?.trim() || null,
+  published: data.published !== undefined ? data.published : true,
+  faqSection: sanitizeFaqSection(data.faqSection),
+  faqSection_en: sanitizeFaqSection(data.faqSection_en),
+  faqSection_tr: sanitizeFaqSection(data.faqSection_tr),
+  faqSection_ru: sanitizeFaqSection(data.faqSection_ru),
+  internalLinks: toStringArray(data.internalLinks),
+  taxonomy: buildBlogTaxonomy({ data, marketData }),
+  marketData: marketData && Object.keys(marketData).length > 0 ? marketData : null,
+  ...(typeof order === "number" ? { order } : {}),
+});
+
 // Get all blogs (public)
 export const getAllBlogs = asyncHandler(async (req, res) => {
   try {
@@ -139,34 +415,20 @@ export const createBlog = asyncHandler(async (req, res) => {
 
     const blog = await prisma.blog.create({
       data: {
-        title: data.title,
-        title_en: data.title_en || data.title || "",
-        title_tr: data.title_tr || "",
-        title_ru: data.title_ru || "",
-        menuKey: data.menuKey?.trim() || null,
-        category: data.category,
-        category_en: data.category_en || data.category || "",
-        category_tr: data.category_tr || "",
-        category_ru: data.category_ru || "",
-        content: data.content || "",
-        content_en: data.content_en || data.content || "",
-        content_tr: data.content_tr || "",
-        content_ru: data.content_ru || "",
-        summary: data.summary || "",
-        summary_en: data.summary_en || data.summary || "",
-        summary_tr: data.summary_tr || "",
-        summary_ru: data.summary_ru || "",
-        image: data.image || "",
-        video: data.video || "",
-        images: data.images || [],
-        country: data.country?.trim() || null,
-        slug: slug,
-        published: data.published !== undefined ? data.published : true,
+        ...buildBlogPersistenceData({
+          data: {
+            ...data,
+            slug,
+          },
+          marketData: data.marketData,
+        }),
         order: (maxOrder?.order || 0) + 1,
       },
     });
 
-    res.status(201).send({ message: "Blog created successfully", blog });
+    res
+      .status(201)
+      .send({ message: "Blog created successfully", blog: withResolvedSlug(blog) });
   } catch (err) {
     console.error("Error creating blog:", err);
     res.status(500).send({
@@ -182,35 +444,57 @@ export const updateBlog = asyncHandler(async (req, res) => {
   const { data } = req.body;
 
   try {
+    const existingBlog = await prisma.blog.findUnique({
+      where: { id },
+    });
+
+    if (!existingBlog) {
+      return res.status(404).send({ message: "Blog not found" });
+    }
+
+    const mergedData = {
+      ...existingBlog,
+      ...data,
+      faqSection:
+        data?.faqSection !== undefined ? data.faqSection : existingBlog.faqSection,
+      faqSection_en:
+        data?.faqSection_en !== undefined
+          ? data.faqSection_en
+          : existingBlog.faqSection_en,
+      faqSection_tr:
+        data?.faqSection_tr !== undefined
+          ? data.faqSection_tr
+          : existingBlog.faqSection_tr,
+      faqSection_ru:
+        data?.faqSection_ru !== undefined
+          ? data.faqSection_ru
+          : existingBlog.faqSection_ru,
+      internalLinks:
+        data?.internalLinks !== undefined
+          ? data.internalLinks
+          : existingBlog.internalLinks,
+      taxonomy:
+        data?.taxonomy !== undefined ? data.taxonomy : existingBlog.taxonomy,
+      marketData:
+        data?.marketData !== undefined ? data.marketData : existingBlog.marketData,
+    };
+
     const blog = await prisma.blog.update({
       where: { id },
       data: {
-        title: data.title,
-        title_en: data.title_en,
-        title_tr: data.title_tr,
-        title_ru: data.title_ru,
-        menuKey: data.menuKey?.trim() || null,
-        category: data.category,
-        category_en: data.category_en,
-        category_tr: data.category_tr,
-        category_ru: data.category_ru,
-        content: data.content,
-        content_en: data.content_en,
-        content_tr: data.content_tr,
-        content_ru: data.content_ru,
-        summary: data.summary,
-        summary_en: data.summary_en,
-        summary_tr: data.summary_tr,
-        summary_ru: data.summary_ru,
-        image: data.image,
-        video: data.video,
-        images: data.images,
-        country: data.country?.trim() || null,
-        published: data.published,
+        ...buildBlogPersistenceData({
+          data: {
+            ...mergedData,
+            slug: undefined,
+          },
+          marketData: mergedData.marketData,
+        }),
       },
     });
 
-    res.status(200).send({ message: "Blog updated successfully", blog });
+    res
+      .status(200)
+      .send({ message: "Blog updated successfully", blog: withResolvedSlug(blog) });
   } catch (err) {
     console.error("Error updating blog:", err);
     res.status(500).send({ message: "Error updating blog" });
@@ -352,30 +636,35 @@ export const generateAIBlog = asyncHandler(async (req, res) => {
     // Create blog in database with bilingual content
     const blog = await prisma.blog.create({
       data: {
-        title: resolvedTitle,
-        title_en: resolvedTitleEn,
-        title_tr: resolvedTitleTr,
-        slug: slug,
-        menuKey: overrides.menuKey || null,
-        category: resolvedCategory,
-        category_en: resolvedCategoryEn,
-        category_tr: resolvedCategoryTr,
-        country: overrides.country || null,
-        content: result.data.content,
-        content_en: result.data.content_en,
-        content_tr: result.data.content_tr,
-        summary: resolvedSummary,
-        summary_en: resolvedSummaryEn,
-        summary_tr: resolvedSummaryTr,
-        metaDescription: result.data.metaDescription,
-        metaDescription_en: result.data.metaDescription_en,
-        metaDescription_tr: result.data.metaDescription_tr,
-        image: overrides.image || "",
-        faqSection: result.data.faqSection,
-        faqSection_en: result.data.faqSection_en,
-        faqSection_tr: result.data.faqSection_tr,
-        internalLinks: result.data.internalLinks,
-        marketData: result.data.marketData,
+        ...buildBlogPersistenceData({
+          data: {
+            title: resolvedTitle,
+            title_en: resolvedTitleEn,
+            title_tr: resolvedTitleTr,
+            slug,
+            menuKey: overrides.menuKey || null,
+            category: resolvedCategory,
+            category_en: resolvedCategoryEn,
+            category_tr: resolvedCategoryTr,
+            country: overrides.country || null,
+            content: result.data.content,
+            content_en: result.data.content_en,
+            content_tr: result.data.content_tr,
+            summary: resolvedSummary,
+            summary_en: resolvedSummaryEn,
+            summary_tr: resolvedSummaryTr,
+            metaDescription: result.data.metaDescription,
+            metaDescription_en: result.data.metaDescription_en,
+            metaDescription_tr: result.data.metaDescription_tr,
+            image: overrides.image || "",
+            faqSection: result.data.faqSection,
+            faqSection_en: result.data.faqSection_en,
+            faqSection_tr: result.data.faqSection_tr,
+            internalLinks: result.data.internalLinks,
+            taxonomy: blogMeta.taxonomy,
+          },
+          marketData: result.data.marketData,
+        }),
         published: autoPublish,
         order: (maxOrder?.order || 0) + 1,
       },
@@ -383,7 +672,7 @@ export const generateAIBlog = asyncHandler(async (req, res) => {
 
     res.status(201).send({ 
       message: "AI blog generated and saved successfully", 
-      blog 
+      blog: withResolvedSlug(blog)
     });
   } catch (err) {
     console.error("Error generating AI blog:", err);
@@ -432,33 +721,37 @@ export const generateMultipleAIBlogs = asyncHandler(async (req, res) => {
 
           const blog = await prisma.blog.create({
             data: {
-              title: result.data.title,
-              title_en: result.data.title_en,
-              title_tr: result.data.title_tr,
-              slug: slug,
-              category: result.data.category,
-              category_en: result.data.category_en,
-              category_tr: result.data.category_tr,
-              content: result.data.content,
-              content_en: result.data.content_en,
-              content_tr: result.data.content_tr,
-              summary: result.data.summary,
-              summary_en: result.data.summary_en,
-              summary_tr: result.data.summary_tr,
-              metaDescription: result.data.metaDescription,
-              metaDescription_en: result.data.metaDescription_en,
-              metaDescription_tr: result.data.metaDescription_tr,
-              faqSection: result.data.faqSection,
-              faqSection_en: result.data.faqSection_en,
-              faqSection_tr: result.data.faqSection_tr,
-              internalLinks: result.data.internalLinks,
-              marketData: result.data.marketData,
+              ...buildBlogPersistenceData({
+                data: {
+                  title: result.data.title,
+                  title_en: result.data.title_en,
+                  title_tr: result.data.title_tr,
+                  slug,
+                  category: result.data.category,
+                  category_en: result.data.category_en,
+                  category_tr: result.data.category_tr,
+                  content: result.data.content,
+                  content_en: result.data.content_en,
+                  content_tr: result.data.content_tr,
+                  summary: result.data.summary,
+                  summary_en: result.data.summary_en,
+                  summary_tr: result.data.summary_tr,
+                  metaDescription: result.data.metaDescription,
+                  metaDescription_en: result.data.metaDescription_en,
+                  metaDescription_tr: result.data.metaDescription_tr,
+                  faqSection: result.data.faqSection,
+                  faqSection_en: result.data.faqSection_en,
+                  faqSection_tr: result.data.faqSection_tr,
+                  internalLinks: result.data.internalLinks,
+                },
+                marketData: result.data.marketData,
+              }),
               published: autoPublish,
               order: currentOrder++,
             },
           });
           
-          createdBlogs.push(blog);
+          createdBlogs.push(withResolvedSlug(blog));
         } catch (dbError) {
           errors.push({
             marketData: result.data.marketData,

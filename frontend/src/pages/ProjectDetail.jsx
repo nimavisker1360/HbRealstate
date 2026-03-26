@@ -315,7 +315,7 @@ const inferDistrictFromRawProperty = (propertyData) => {
   return districtCandidate;
 };
 
-const ProjectDetail = () => {
+const ProjectDetail = ({ topSlot = null }) => {
   const { projectSlugOrId: routeProjectSlugOrId = "" } = useParams();
   const projectLookupKey = useMemo(() => {
     const normalized = String(routeProjectSlugOrId || "").trim();
@@ -769,6 +769,7 @@ const ProjectDetail = () => {
       {/* Header */}
       <div className="bg-white border-b">
         <Container size="lg" className="py-4">
+          {topSlot ? <div className="mb-4">{topSlot}</div> : null}
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate(-1)}

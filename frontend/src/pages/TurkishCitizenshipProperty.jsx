@@ -1,8 +1,7 @@
-import SeoStaticPageLayout from "../components/SeoStaticPageLayout";
-import { seoStaticPages } from "../data/seoStaticPages";
+import GuidePage from "./GuidePage";
 
-const TurkishCitizenshipProperty = () => {
-  return <SeoStaticPageLayout {...seoStaticPages.turkishCitizenshipProperty} />;
-};
+const TurkishCitizenshipProperty = () => (
+  <GuidePage slug="turkish-citizenship-property" />
+);
 
 export default TurkishCitizenshipProperty;
