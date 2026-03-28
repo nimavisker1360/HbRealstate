@@ -14,7 +14,9 @@ import iconCyprus from "../assets/icons/cyprus.png";
 import HeroDownloadModal from "./HeroDownloadModal";
 import { getLocalizedAlt } from "../utils/mediaAlt";
 
-const ALL_SLIDE_INTERVAL_MS = 10000;
+const MOBILE_BREAKPOINT_QUERY = "(max-width: 639px)";
+const MOBILE_SLIDE_INTERVAL_MS = 6000;
+const DESKTOP_SLIDE_INTERVAL_MS = 6500;
 const ALL_SLIDE_TRANSITION_MS = 900;
 
 const ALL_HERO_SLIDES = [
@@ -43,11 +45,33 @@ const Hero = () => {
   const [isAllSlidesAnimating, setIsAllSlidesAnimating] = useState(false);
   const [allSlideDirection, setAllSlideDirection] = useState("next");
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
 
   const allHeroSlides = ALL_HERO_SLIDES.map((slide) => ({
     ...slide,
     alt: getLocalizedAlt(i18n.language, slide.altKey),
   }));
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(MOBILE_BREAKPOINT_QUERY);
+    const syncViewport = (event) => {
+      setIsMobileViewport(event.matches);
+    };
+
+    setIsMobileViewport(mediaQuery.matches);
+
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", syncViewport);
+      return () => mediaQuery.removeEventListener("change", syncViewport);
+    }
+
+    mediaQuery.addListener(syncViewport);
+    return () => mediaQuery.removeListener(syncViewport);
+  }, []);
+
+  const allSlideIntervalMs = isMobileViewport
+    ? MOBILE_SLIDE_INTERVAL_MS
+    : DESKTOP_SLIDE_INTERVAL_MS;
 
   useEffect(() => {
     if (
@@ -65,12 +89,13 @@ const Hero = () => {
         (activeAllSlideIndex + 1) % allHeroSlides.length
       );
       setIsAllSlidesAnimating(true);
-    }, ALL_SLIDE_INTERVAL_MS);
+    }, allSlideIntervalMs);
 
     return () => window.clearTimeout(timeoutId);
   }, [
     activeAllSlideIndex,
     activeTab,
+    allSlideIntervalMs,
     allHeroSlides.length,
     isAllSlidesAnimating,
     isDownloadModalOpen,
@@ -254,18 +279,33 @@ const Hero = () => {
   const renderSlideMedia = (slide, className) => {
     if (slide.type === "video") {
       return (
-        <video
+        <div
           key={slide.src}
-          className={className}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="auto"
-          aria-hidden="true"
+          className={`${className} overflow-hidden bg-[radial-gradient(circle_at_center,rgba(165,28,28,0.26)_0%,rgba(40,7,7,0.92)_52%,rgba(9,11,17,1)_100%)]`}
         >
-          <source src={slide.src} type="video/mp4" />
-        </video>
+          <video
+            className="absolute inset-0 h-full w-full object-contain object-center sm:hidden"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            aria-hidden="true"
+          >
+            <source src={slide.src} type="video/mp4" />
+          </video>
+          <video
+            className="hidden h-full w-full object-cover object-center sm:block"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            aria-hidden="true"
+          >
+            <source src={slide.src} type="video/mp4" />
+          </video>
+        </div>
       );
     }
 
@@ -283,7 +323,7 @@ const Hero = () => {
   };
 
   return (
-    <section className="relative h-[520px] sm:h-[600px] md:h-[720px] overflow-hidden">
+    <section className="relative h-[400px] min-[430px]:h-[460px] sm:h-[600px] md:h-[720px] overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0">
         {activeTab === "ALL" ? (

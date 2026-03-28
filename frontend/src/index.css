@@ -566,6 +566,68 @@ body {
   filter: saturate(1.08) contrast(1.05);
 }
 
+@keyframes hero-slide-in-right-mobile {
+  from {
+    opacity: 0;
+    transform: translateX(14%) scale(1.015);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes hero-slide-in-left-mobile {
+  from {
+    opacity: 0;
+    transform: translateX(-14%) scale(1.015);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes hero-slide-out-left-mobile {
+  from {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-14%) scale(0.985);
+  }
+}
+
+@keyframes hero-slide-out-right-mobile {
+  from {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(14%) scale(0.985);
+  }
+}
+
+@media (max-width: 639px) {
+  .animate-hero-slide-in-left {
+    animation: hero-slide-in-left-mobile 0.9s ease-in-out forwards;
+  }
+
+  .animate-hero-slide-in-right {
+    animation: hero-slide-in-right-mobile 0.9s ease-in-out forwards;
+  }
+
+  .animate-hero-slide-out-left {
+    animation: hero-slide-out-left-mobile 0.9s ease-in-out forwards;
+  }
+
+  .animate-hero-slide-out-right {
+    animation: hero-slide-out-right-mobile 0.9s ease-in-out forwards;
+  }
+}
+
 /* About Section Animations */
 @keyframes about-slide-left {
   from {
