@@ -3,7 +3,6 @@ import { useQuery } from "react-query";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import ProjectDetail from "../ProjectDetail";
 import SEO from "../../components/SEO";
-import JsonLd from "../../components/JsonLd";
 import Breadcrumbs from "../../components/seo/Breadcrumbs";
 import RelatedContentSection from "../../components/seo/RelatedContentSection";
 import SeoCtaSection from "../../components/seo/SeoCtaSection";
@@ -484,9 +483,8 @@ const ProjectDetailSeoPage = () => {
         canonical={canonicalUrl}
         ogImage={primaryImage}
         type="product"
+        structuredData={[projectSchema, breadcrumbSchema].filter(Boolean)}
       />
-      <JsonLd data={projectSchema} />
-      <JsonLd data={breadcrumbSchema} />
       <ProjectDetail topSlot={<Breadcrumbs items={breadcrumbItems} />} />
 
       <section className="max-padd-container pb-20">

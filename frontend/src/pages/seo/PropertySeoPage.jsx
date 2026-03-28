@@ -3,7 +3,6 @@ import { useQuery } from "react-query";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Property from "../Property";
 import SEO from "../../components/SEO";
-import JsonLd from "../../components/JsonLd";
 import Breadcrumbs from "../../components/seo/Breadcrumbs";
 import RelatedContentSection from "../../components/seo/RelatedContentSection";
 import SeoCtaSection from "../../components/seo/SeoCtaSection";
@@ -425,9 +424,8 @@ const PropertySeoPage = () => {
         canonical={canonicalUrl}
         ogImage={primaryImage}
         type="product"
+        structuredData={[realEstateSchema, breadcrumbSchema].filter(Boolean)}
       />
-      <JsonLd data={realEstateSchema} />
-      <JsonLd data={breadcrumbSchema} />
 
       <Property
         topSlot={<Breadcrumbs items={breadcrumbItems} />}
