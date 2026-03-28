@@ -438,6 +438,11 @@ import UserDetailContext from "../context/UserDetailContext";
 import CurrencyContext from "../context/CurrencyContext";
 import { updateResidency } from "../utils/api";
 import { validateString } from "../utils/common";
+import {
+  LOCAL_PROJECT_CITY_OPTIONS,
+  LOCAL_PROJECT_DEFAULT_COUNTRY,
+  LOCAL_PROJECT_DISTRICT_OPTIONS,
+} from "../constant/projectLocationOptions";
 
 const FIAT_CURRENCIES = [
   { code: "USD", symbol: "$" },
@@ -445,6 +450,38 @@ const FIAT_CURRENCIES = [
   { code: "GBP", symbol: "\u00A3" },
   { code: "TRY", symbol: "\u20BA" },
 ];
+
+const TURKEY_LOCATION_PROPERTY_TYPES = ["sale", "local-project"];
+
+const normalizeLocationText = (value = "") =>
+  String(value || "")
+    .replace(/İ/g, "I")
+    .replace(/ı/g, "i")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+
+const findMatchingOption = (value, options = []) => {
+  const normalizedValue = normalizeLocationText(value);
+  if (!normalizedValue) return null;
+
+  return (
+    options.find((option) => {
+      const optionValue = typeof option === "string" ? option : option?.value;
+      return normalizeLocationText(optionValue) === normalizedValue;
+    }) || null
+  );
+};
+
+const ensureOptionInData = (options = [], value = "") => {
+  const trimmedValue = String(value || "").trim();
+  if (!trimmedValue || findMatchingOption(trimmedValue, options)) {
+    return options;
+  }
+
+  return [{ value: trimmedValue, label: trimmedValue }, ...options];
+};
 
 const FIAT_CURRENCY_CODES = FIAT_CURRENCIES.map((currency) => currency.code);
 
@@ -680,7 +717,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
       description_ru: "",
       price: 0,
       currency: normalizeFiatCurrency(),
-      country: "",
+      country: LOCAL_PROJECT_DEFAULT_COUNTRY,
       city: "",
       address: "",
       propertyType: "sale",
@@ -699,6 +736,30 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
       // bedrooms and bathrooms are optional
     },
   });
+
+  const isTurkeyLocationType = TURKEY_LOCATION_PROPERTY_TYPES.includes(
+    form.values.propertyType
+  );
+  const matchedCityOption = isTurkeyLocationType
+    ? findMatchingOption(form.values.city, LOCAL_PROJECT_CITY_OPTIONS)
+    : null;
+  const normalizedCityValue = isTurkeyLocationType
+    ? matchedCityOption?.value || String(form.values.city || "").trim()
+    : String(form.values.city || "").trim();
+  const cityOptions = isTurkeyLocationType
+    ? ensureOptionInData(LOCAL_PROJECT_CITY_OPTIONS, form.values.city)
+    : [];
+  const districtOptions = isTurkeyLocationType
+    ? ensureOptionInData(
+        (LOCAL_PROJECT_DISTRICT_OPTIONS[normalizedCityValue] || []).map(
+          (district) => ({
+            value: district,
+            label: district,
+          })
+        ),
+        form.values.address
+      )
+    : [];
 
   const floorPlanBaseCurrency = normalizeFiatCurrency(
     property?.currency || form.values.currency
@@ -757,6 +818,26 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
   // Initialize form when property changes
   useEffect(() => {
     if (property && opened) {
+      const propertyTypeValue = ["sale", "local-project", "international-project"].includes(
+        property.propertyType
+      )
+        ? property.propertyType
+        : "local-project";
+      const usesTurkeyLocation = TURKEY_LOCATION_PROPERTY_TYPES.includes(
+        propertyTypeValue
+      );
+      const initialCity = usesTurkeyLocation
+        ? findMatchingOption(property.city, LOCAL_PROJECT_CITY_OPTIONS)?.value ||
+          property.city ||
+          ""
+        : property.city || "";
+      const initialAddress = usesTurkeyLocation
+        ? findMatchingOption(
+            property.address,
+            LOCAL_PROJECT_DISTRICT_OPTIONS[initialCity] || []
+          ) || property.address || ""
+        : property.address || "";
+
       form.setValues({
         title: property.title || "",
         description: property.description || "",
@@ -765,14 +846,12 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
         description_ru: property.description_ru || "",
         price: property.price || 0,
         currency: normalizeFiatCurrency(property.currency),
-        country: property.country || "",
-        city: property.city || "",
-        address: property.address || "",
-        propertyType: ["sale", "local-project", "international-project"].includes(
-          property.propertyType
-        )
-          ? property.propertyType
-          : "local-project",
+        country: usesTurkeyLocation
+          ? property.country || LOCAL_PROJECT_DEFAULT_COUNTRY
+          : property.country || "",
+        city: initialCity,
+        address: initialAddress,
+        propertyType: propertyTypeValue,
         category: property.category || "residential",
         bedrooms: property.facilities?.bedrooms || 0,
         parkings: property.facilities?.parkings || 0,
@@ -929,6 +1008,54 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
       });
     }
   }, [property, opened]);
+
+  const handlePropertyTypeChange = (nextType) => {
+    form.setFieldValue("propertyType", nextType);
+
+    if (!TURKEY_LOCATION_PROPERTY_TYPES.includes(nextType)) {
+      return;
+    }
+
+    form.setFieldValue("country", LOCAL_PROJECT_DEFAULT_COUNTRY);
+
+    const nextCity = findMatchingOption(
+      form.values.city,
+      LOCAL_PROJECT_CITY_OPTIONS
+    )?.value;
+
+    if (!nextCity) {
+      form.setFieldValue("city", "");
+      form.setFieldValue("address", "");
+      return;
+    }
+
+    form.setFieldValue("city", nextCity);
+
+    const nextAddress =
+      findMatchingOption(
+        form.values.address,
+        LOCAL_PROJECT_DISTRICT_OPTIONS[nextCity] || []
+      ) || "";
+
+    form.setFieldValue("address", nextAddress);
+  };
+
+  const handleCityChange = (value) => {
+    const nextCity = value || "";
+    form.setFieldValue("city", nextCity);
+
+    if (!TURKEY_LOCATION_PROPERTY_TYPES.includes(form.values.propertyType)) {
+      return;
+    }
+
+    const nextAddress =
+      findMatchingOption(
+        form.values.address,
+        LOCAL_PROJECT_DISTRICT_OPTIONS[nextCity] || []
+      ) || "";
+
+    form.setFieldValue("address", nextAddress);
+  };
 
   const handleImageUpload = async () => {
     try {
@@ -1143,6 +1270,22 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
     const isSpecialOfferType = isProjectType && isSpecialOfferEnabled;
     const normalizedCurrency = normalizeFiatCurrency(values.currency);
     const normalizedPrice = Math.round(Number(values.price || 0));
+    const usesTurkeyLocation = TURKEY_LOCATION_PROPERTY_TYPES.includes(
+      values.propertyType
+    );
+    const normalizedLocationCity = usesTurkeyLocation
+      ? findMatchingOption(values.city, LOCAL_PROJECT_CITY_OPTIONS)?.value ||
+        String(values.city || "").trim()
+      : String(values.city || "").trim();
+    const normalizedLocationAddress = usesTurkeyLocation
+      ? findMatchingOption(
+          values.address,
+          LOCAL_PROJECT_DISTRICT_OPTIONS[normalizedLocationCity] || []
+        ) || String(values.address || "").trim()
+      : String(values.address || "").trim();
+    const normalizedLocationCountry = usesTurkeyLocation
+      ? LOCAL_PROJECT_DEFAULT_COUNTRY
+      : String(values.country || "").trim();
     const normalizedSpecialOffers = (specialOffers || [])
       .map((offer) => {
         const downPaymentValue = Number(
@@ -1249,9 +1392,9 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
       currency: isProject
         ? normalizeFiatCurrency(property?.currency || normalizedCurrency)
         : normalizedCurrency,
-      country: isProject ? (property?.country || "Turkey TR") : values.country,
-      city: isProject ? (property?.city || "") : values.city,
-      address: isProject ? (property?.address || "") : values.address,
+      country: normalizedLocationCountry,
+      city: normalizedLocationCity,
+      address: normalizedLocationAddress,
       propertyType: values.propertyType,
       category: isProject ? (property?.category || "residential") : values.category,
       image: imageURLs[0] || "",
@@ -1377,7 +1520,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
             fullWidth
             color={form.values.propertyType === "sale" ? "green" : "blue"}
             value={form.values.propertyType}
-            onChange={(value) => form.setFieldValue("propertyType", value)}
+            onChange={handlePropertyTypeChange}
             data={[
               {
                 label: (
@@ -1408,6 +1551,80 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
               },
             ]}
           />
+        </div>
+
+        <Divider my="lg" label="Konum Bilgileri" labelPosition="center" />
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <Select
+            withAsterisk
+            label="Ülke"
+            clearable={!isTurkeyLocationType}
+            searchable={!isTurkeyLocationType}
+            disabled={isTurkeyLocationType}
+            data={
+              isTurkeyLocationType
+                ? [
+                    {
+                      value: LOCAL_PROJECT_DEFAULT_COUNTRY,
+                      label: LOCAL_PROJECT_DEFAULT_COUNTRY,
+                    },
+                  ]
+                : getAll()
+            }
+            value={
+              isTurkeyLocationType
+                ? form.values.country || LOCAL_PROJECT_DEFAULT_COUNTRY
+                : form.values.country || null
+            }
+            onChange={(value) => form.setFieldValue("country", value || "")}
+            error={form.errors.country}
+          />
+
+          {isTurkeyLocationType ? (
+            <Select
+              withAsterisk
+              label="Şehir"
+              placeholder="Şehir seçin"
+              searchable
+              data={cityOptions}
+              value={normalizedCityValue || null}
+              onChange={handleCityChange}
+              error={form.errors.city}
+              nothingFoundMessage="Şehir bulunamadı"
+            />
+          ) : (
+            <TextInput
+              withAsterisk
+              label="Şehir"
+              placeholder="City"
+              {...form.getInputProps("city")}
+            />
+          )}
+
+          {isTurkeyLocationType ? (
+            <Select
+              withAsterisk
+              label="İlçe"
+              placeholder={
+                normalizedCityValue ? "İlçe seçin" : "Önce şehir seçin"
+              }
+              searchable
+              disabled={!normalizedCityValue}
+              data={districtOptions}
+              value={form.values.address || null}
+              onChange={(value) => form.setFieldValue("address", value || "")}
+              error={form.errors.address}
+              nothingFoundMessage="İlçe bulunamadı"
+            />
+          ) : (
+            <TextInput
+              withAsterisk
+              label="Adres"
+              placeholder="Address"
+              {...form.getInputProps("address")}
+            />
+          )}
         </div>
 
         {/* Show these sections only for SALE properties */}
@@ -1549,30 +1766,6 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
                   />
                 </Tabs.Panel>
               </Tabs>
-            </div>
-
-            {/* Location */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-              <Select
-                withAsterisk
-                label="Ülke"
-                clearable
-                searchable
-                data={getAll()}
-                {...form.getInputProps("country")}
-              />
-              <TextInput
-                withAsterisk
-                label="Şehir"
-                placeholder="City"
-                {...form.getInputProps("city")}
-              />
-              <TextInput
-                withAsterisk
-                label="Adres"
-                placeholder="Address"
-                {...form.getInputProps("address")}
-              />
             </div>
 
             {/* Facilities */}

@@ -5,13 +5,22 @@ import Map from "./Map";
 import { validateString } from "../utils/common";
 import PropTypes from "prop-types";
 import { MdSell, MdBusiness, MdPublic } from "react-icons/md";
+import {
+  LOCAL_PROJECT_CITY_OPTIONS,
+  LOCAL_PROJECT_DEFAULT_COUNTRY,
+  LOCAL_PROJECT_DISTRICT_OPTIONS,
+} from "../constant/projectLocationOptions";
 
 const AddLocation = ({ propertyDetails, setPropertyDetails, nextStep }) => {
   const { getAll } = useCountries();
 
   const form = useForm({
     initialValues: {
-      country: propertyDetails?.country,
+      country:
+        propertyDetails?.country ||
+        (["sale", "local-project"].includes(propertyDetails?.propertyType)
+          ? LOCAL_PROJECT_DEFAULT_COUNTRY
+          : ""),
       city: propertyDetails?.city,
       address: propertyDetails?.address,
       propertyType: propertyDetails?.propertyType || "sale",
@@ -24,6 +33,53 @@ const AddLocation = ({ propertyDetails, setPropertyDetails, nextStep }) => {
   });
 
   const { country, city, address, propertyType } = form.values;
+  const isTurkeyLocationType =
+    propertyType === "sale" || propertyType === "local-project";
+  const districtOptions = isTurkeyLocationType
+    ? (LOCAL_PROJECT_DISTRICT_OPTIONS[city] || []).map((district) => ({
+        value: district,
+        label: district,
+      }))
+    : [];
+
+  const handlePropertyTypeChange = (nextType) => {
+    form.setFieldValue("propertyType", nextType);
+
+    if (!["sale", "local-project"].includes(nextType)) {
+      return;
+    }
+
+    form.setFieldValue("country", LOCAL_PROJECT_DEFAULT_COUNTRY);
+
+    const hasMatchingCity = LOCAL_PROJECT_CITY_OPTIONS.some(
+      (option) => option.value === form.values.city
+    );
+
+    if (!hasMatchingCity || !LOCAL_PROJECT_DISTRICT_OPTIONS[form.values.city]) {
+      form.setFieldValue("city", "");
+      form.setFieldValue("address", "");
+      return;
+    }
+
+    if (!LOCAL_PROJECT_DISTRICT_OPTIONS[form.values.city].includes(form.values.address)) {
+      form.setFieldValue("address", "");
+    }
+  };
+
+  const handleCityChange = (value) => {
+    const nextCity = value || "";
+    form.setFieldValue("city", nextCity);
+
+    if (!isTurkeyLocationType) {
+      return;
+    }
+
+    const nextDistricts = LOCAL_PROJECT_DISTRICT_OPTIONS[nextCity] || [];
+    if (!nextDistricts.includes(form.values.address)) {
+      form.setFieldValue("address", "");
+    }
+  };
+
   const handleSubmit = () => {
     const { hasErrors } = form.validate();
     if (!hasErrors) {
@@ -47,7 +103,7 @@ const AddLocation = ({ propertyDetails, setPropertyDetails, nextStep }) => {
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           <button
             type="button"
-            onClick={() => form.setFieldValue("propertyType", "sale")}
+            onClick={() => handlePropertyTypeChange("sale")}
             className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all ${
               propertyType === "sale"
                 ? "border-green-500 bg-green-50 text-green-700"
@@ -60,7 +116,7 @@ const AddLocation = ({ propertyDetails, setPropertyDetails, nextStep }) => {
           
           <button
             type="button"
-            onClick={() => form.setFieldValue("propertyType", "local-project")}
+            onClick={() => handlePropertyTypeChange("local-project")}
             className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all ${
               propertyType === "local-project"
                 ? "border-blue-500 bg-blue-50 text-blue-700"
@@ -73,7 +129,7 @@ const AddLocation = ({ propertyDetails, setPropertyDetails, nextStep }) => {
           
           <button
             type="button"
-            onClick={() => form.setFieldValue("propertyType", "international-project")}
+            onClick={() => handlePropertyTypeChange("international-project")}
             className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all ${
               propertyType === "international-project"
                 ? "border-blue-500 bg-blue-50 text-blue-700"
@@ -97,23 +153,64 @@ const AddLocation = ({ propertyDetails, setPropertyDetails, nextStep }) => {
               w={"100%"}
               withAsterisk
               label="Country"
-              clearable
-              searchable
-              data={getAll()}
+              clearable={!isTurkeyLocationType}
+              searchable={!isTurkeyLocationType}
+              disabled={isTurkeyLocationType}
+              data={
+                isTurkeyLocationType
+                  ? [
+                      {
+                        value: LOCAL_PROJECT_DEFAULT_COUNTRY,
+                        label: LOCAL_PROJECT_DEFAULT_COUNTRY,
+                      },
+                    ]
+                  : getAll()
+              }
               {...form.getInputProps("country", { type: "input" })}
             />
-            <TextInput
-              w={"100%"}
-              withAsterisk
-              label="City"
-              {...form.getInputProps("city", { type: "input" })}
-            />
-            <TextInput
-              w={"100%"}
-              withAsterisk
-              label="Address"
-              {...form.getInputProps("address", { type: "input" })}
-            />
+            {isTurkeyLocationType ? (
+              <Select
+                w={"100%"}
+                withAsterisk
+                label="City"
+                placeholder="Şehir seçin"
+                searchable
+                data={LOCAL_PROJECT_CITY_OPTIONS}
+                value={city || null}
+                onChange={handleCityChange}
+                error={form.errors.city}
+                nothingFoundMessage="Şehir bulunamadı"
+              />
+            ) : (
+              <TextInput
+                w={"100%"}
+                withAsterisk
+                label="City"
+                {...form.getInputProps("city", { type: "input" })}
+              />
+            )}
+            {isTurkeyLocationType ? (
+              <Select
+                w={"100%"}
+                withAsterisk
+                label="İlçe"
+                placeholder={city ? "İlçe seçin" : "Önce şehir seçin"}
+                searchable
+                disabled={!city}
+                data={districtOptions}
+                value={address || null}
+                onChange={(value) => form.setFieldValue("address", value || "")}
+                error={form.errors.address}
+                nothingFoundMessage="İlçe bulunamadı"
+              />
+            ) : (
+              <TextInput
+                w={"100%"}
+                withAsterisk
+                label="Address"
+                {...form.getInputProps("address", { type: "input" })}
+              />
+            )}
           </div>
         </div>
         {/* right */}
