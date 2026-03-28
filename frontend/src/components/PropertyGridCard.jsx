@@ -46,6 +46,44 @@ const getCategoryLabel = (category, propertyType, lang = "tr") => {
   return currentLabels[category] || category || currentLabels.default;
 };
 
+const pickText = (...values) => {
+  for (const value of values) {
+    if (value === null || value === undefined) continue;
+    const normalized = String(value).trim();
+    if (normalized) return normalized;
+  }
+  return "";
+};
+
+const getDistrictLabel = (property) => {
+  const directDistrict = pickText(
+    property?.addressDetails?.district,
+    property?.district,
+    property?.ilce
+  );
+  if (directDistrict) return directDistrict;
+
+  const address = pickText(property?.address);
+  if (!address) return "";
+  const [firstPart] = address.split(",");
+  return pickText(firstPart);
+};
+
+const joinUniqueParts = (...values) => {
+  const seen = new Set();
+
+  return values
+    .map((value) => String(value || "").trim())
+    .filter((value) => {
+      if (!value) return false;
+      const normalized = value.toLowerCase();
+      if (seen.has(normalized)) return false;
+      seen.add(normalized);
+      return true;
+    })
+    .join(", ");
+};
+
 const PropertyGridCard = ({ property }) => {
   const navigate = useNavigate();
   const { i18n } = useTranslation();
@@ -76,6 +114,38 @@ const PropertyGridCard = ({ property }) => {
     property?.propertyType === "international-project"
       ? resolveProjectPath(property)
       : resolvePropertyPath(property);
+  const isProject =
+    property?.propertyType === "local-project" ||
+    property?.propertyType === "international-project";
+  const districtLabel = getDistrictLabel(property);
+  const cityLabel = pickText(property?.city, property?.addressDetails?.city);
+  const countryLabel = pickText(property?.country, property?.addressDetails?.country);
+  const displayTitle = isProject
+    ? pickText(
+        property?.projectName,
+        property?.title,
+        property?.name,
+        districtLabel,
+        cityLabel,
+        countryLabel,
+        "Project"
+      )
+    : pickText(
+        property?.title,
+        property?.name,
+        property?.projectName,
+        districtLabel,
+        cityLabel,
+        countryLabel,
+        "Property"
+      );
+  const displayLocation = isProject
+    ? joinUniqueParts(districtLabel, cityLabel, countryLabel)
+    : joinUniqueParts(
+        pickText(property?.address, districtLabel),
+        cityLabel,
+        countryLabel
+      );
 
   return (
     <div
@@ -86,7 +156,7 @@ const PropertyGridCard = ({ property }) => {
       <div className="relative overflow-hidden">
         <img
           src={getOptimizedImageUrl(property.image, { width: 520, height: 320 })}
-          alt={property.title}
+          alt={displayTitle}
           loading="lazy"
           decoding="async"
           className="w-full h-[140px] object-cover transition-transform duration-500 group-hover:scale-110"
@@ -104,14 +174,14 @@ const PropertyGridCard = ({ property }) => {
       <div className="p-3">
         {/* Title */}
         <h3 className="text-sm font-semibold text-gray-800 mb-1.5 line-clamp-1 group-hover:text-emerald-600 transition-colors duration-300">
-          {property.title}
+          {displayTitle}
         </h3>
 
         {/* Address */}
         <div className="flex items-start gap-1 mb-2">
           <MdLocationOn className="text-emerald-500 mt-0.5 flex-shrink-0" size={14} />
           <p className="text-xs text-gray-500 line-clamp-1">
-            {property.city}, {property.country}
+            {displayLocation}
           </p>
         </div>
 
@@ -133,13 +203,21 @@ PropertyGridCard.propTypes = {
     id: PropTypes.string,
     image: PropTypes.string,
     title: PropTypes.string,
+    projectName: PropTypes.string,
+    name: PropTypes.string,
     address: PropTypes.string,
+    district: PropTypes.string,
     city: PropTypes.string,
     country: PropTypes.string,
     price: PropTypes.number,
     currency: PropTypes.string,
     propertyType: PropTypes.string,
     category: PropTypes.string,
+    addressDetails: PropTypes.shape({
+      city: PropTypes.string,
+      country: PropTypes.string,
+      district: PropTypes.string,
+    }),
     facilities: PropTypes.shape({
       bedrooms: PropTypes.number,
       bathrooms: PropTypes.number,
