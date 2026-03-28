@@ -284,7 +284,7 @@ const Hero = () => {
           className={`${className} overflow-hidden bg-[radial-gradient(circle_at_center,rgba(165,28,28,0.26)_0%,rgba(40,7,7,0.92)_52%,rgba(9,11,17,1)_100%)]`}
         >
           <video
-            className="absolute inset-0 h-full w-full object-contain object-center sm:hidden"
+            className="absolute inset-0 h-full w-full scale-[1.14] object-contain object-center sm:hidden"
             autoPlay
             muted
             loop
@@ -323,7 +323,7 @@ const Hero = () => {
   };
 
   return (
-    <section className="relative h-[400px] min-[430px]:h-[460px] sm:h-[600px] md:h-[720px] overflow-hidden">
+    <section className="relative h-[360px] min-[430px]:h-[410px] sm:h-[600px] md:h-[720px] overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0">
         {activeTab === "ALL" ? (
