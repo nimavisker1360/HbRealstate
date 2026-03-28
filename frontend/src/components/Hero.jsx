@@ -21,7 +21,7 @@ const ALL_HERO_SLIDES = [
     type: "video",
     src: "/citizen.mp4",
     alt: "HB International featured property film",
-    showContent: false,
+    showContent: true,
     showDownloadButton: true,
   },
   {
@@ -316,7 +316,7 @@ const Hero = () => {
           className="relative max-w-[1100px] mx-auto h-full px-6 sm:px-10 flex flex-col items-center justify-center text-white text-center gap-4 animate-hero-fade"
         >
           <h1 className="text-[36px] sm:text-[48px] md:text-[64px] font-semibold leading-tight italic">
-            {t("hero.title")}
+            {t("hero.h1", { defaultValue: "Property for Sale in Istanbul" })}
           </h1>
           <p className="text-lg sm:text-xl text-white/90 italic">
             {t("hero.subtitle")}

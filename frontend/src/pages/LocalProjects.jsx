@@ -1083,7 +1083,7 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
 
           <div className="w-full lg:w-[40%] h-auto lg:h-[calc(100vh-170px)] bg-white border-l border-slate-200 flex flex-col">
             <div className="p-5 border-b border-slate-200">
-              <h1 className="text-2xl font-bold text-slate-900">{t("footer.hotOffers")}</h1>
+              <h2 className="text-2xl font-bold text-slate-900">{t("footer.hotOffers")}</h2>
               <p className="mt-1 text-sm text-slate-500">
                 {filteredProjects.length} {t("localProjects.projectsFound")}
               </p>

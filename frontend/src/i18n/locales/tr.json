@@ -230,6 +230,7 @@
     "touristFacility": "Turistik Tesis"
   },
   "hero": {
+    "h1": "Istanbul'da Satilik Gayrimenkul",
     "title": "Doğru Lokasyon, Doğru Zaman, Doğru Yatırım",
     "subtitle": "HB International ile premium gayrimenkul fırsatlarını keşfedin",
     "searchPlaceholder": "şehir, adres veya mülk adı ile arayın...",
@@ -521,6 +522,7 @@
     "enterAddress": "Danışmanları incelemek ve karşılaştırmak için adresinizi girin"
   },
   "listing": {
+    "h1": "Istanbul'da Satilik Daireler ve Villalar",
     "propertiesIn": "{{location}} İlanları",
     "allProperties": "Tüm İlanlar",
     "propertiesFound": "{{count}} ilan bulundu",

@@ -1090,9 +1090,9 @@ const Listing = () => {
             <div className="flex items-center justify-between">
               <div>
             <h1 className="text-lg sm:text-xl font-bold text-gray-900">
-              {filter
-                ? t('listing.propertiesIn', { location: filter })
-                : t('listing.allProperties')}
+              {t("listing.h1", {
+                defaultValue: "Apartments and Villas for Sale in Istanbul",
+              })}
             </h1>
             <p className="text-sm text-gray-500">
               {t('listing.propertiesFound', { count: filteredData.length })}

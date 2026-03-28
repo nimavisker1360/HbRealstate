@@ -776,7 +776,7 @@ const Property = ({ topSlot = null }) => {
             </span>
           </div>
           <div className="flexBetween">
-            <h4 className="medium-18">{data?.title}</h4>
+            <h1 className="medium-18">{data?.title}</h1>
             <div className="bold-20">
               {formattedPrice}
             </div>

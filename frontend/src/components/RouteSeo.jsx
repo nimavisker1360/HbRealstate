@@ -30,8 +30,16 @@ const RouteSeo = () => {
       };
     }
 
+    if (pathname === "/") {
+      return {
+        title: "HB International Real Estate | Turkey Property & Investment Opportunities",
+        description:
+          "Explore apartments, villas, and investment-ready projects across Istanbul, Kyrenia, and major Turkish markets with HB International Real Estate.",
+        canonicalPath: "/",
+      };
+    }
+
     const hasDedicatedSeo =
-      pathname === "/" ||
       pathname === "/listing" ||
       pathname.startsWith("/listing/") ||
       pathname.startsWith("/projects/") ||

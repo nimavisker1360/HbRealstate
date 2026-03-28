@@ -779,10 +779,10 @@ const ProjectDetail = ({ topSlot = null }) => {
             </button>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
-                {project.projectName && (
-                  <span className="text-xl font-bold text-gray-900">
-                    {project.projectName}
-                  </span>
+                {(project.projectName || project.name) && (
+                  <h1 className="text-xl font-bold text-gray-900">
+                    {project.projectName || project.name}
+                  </h1>
                 )}
                 {isSpecialOfferProject && (
                   <span className="rounded-md bg-rose-600 px-2 py-0.5 text-xs font-semibold text-white">

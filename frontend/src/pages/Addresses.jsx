@@ -26,9 +26,14 @@ const FlyToLocation = ({ position }) => {
   return null;
 };
 
-const Addresses = () => {
+const Addresses = ({ variant = "addresses" }) => {
   const { t } = useTranslation();
   const [selectedBranch, setSelectedBranch] = useState(null);
+  const isContactPage = variant === "contact";
+  const heroTitle = isContactPage ? t("contact.title") : t("addresses.title");
+  const heroSubtitle = isContactPage
+    ? t("contact.subtitle")
+    : t("addresses.subtitle");
 
   const branches = [
     {
@@ -67,10 +72,10 @@ const Addresses = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">
-              {t("addresses.title")}
+              {heroTitle}
             </h1>
             <p className="text-lg text-white/70 max-w-2xl mx-auto">
-              {t("addresses.subtitle")}
+              {heroSubtitle}
             </p>
           </div>
         </div>

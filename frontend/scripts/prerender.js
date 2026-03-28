@@ -112,16 +112,16 @@ const setSeoHead = (html, meta) => {
     .replace(/<meta[^>]*name=["']twitter:image["'][^>]*>\s*/gi, "");
 
   const seoCoreBlock = [
-    `<title>${htmlEscape(title)}</title>`,
-    `<meta name="description" content="${htmlEscape(description)}" />`,
-    `<link rel="canonical" href="${htmlEscape(canonical)}" />`,
-    `<meta property="og:title" content="${htmlEscape(title)}" />`,
-    `<meta property="og:description" content="${htmlEscape(description)}" />`,
-    `<meta property="og:url" content="${htmlEscape(canonical)}" />`,
-    `<meta property="og:image" content="${htmlEscape(ogImage)}" />`,
-    `<meta name="twitter:title" content="${htmlEscape(title)}" />`,
-    `<meta name="twitter:description" content="${htmlEscape(description)}" />`,
-    `<meta name="twitter:image" content="${htmlEscape(ogImage)}" />`,
+    `<title data-rh="true">${htmlEscape(title)}</title>`,
+    `<meta data-rh="true" name="description" content="${htmlEscape(description)}" />`,
+    `<link data-rh="true" rel="canonical" href="${htmlEscape(canonical)}" />`,
+    `<meta data-rh="true" property="og:title" content="${htmlEscape(title)}" />`,
+    `<meta data-rh="true" property="og:description" content="${htmlEscape(description)}" />`,
+    `<meta data-rh="true" property="og:url" content="${htmlEscape(canonical)}" />`,
+    `<meta data-rh="true" property="og:image" content="${htmlEscape(ogImage)}" />`,
+    `<meta data-rh="true" name="twitter:title" content="${htmlEscape(title)}" />`,
+    `<meta data-rh="true" name="twitter:description" content="${htmlEscape(description)}" />`,
+    `<meta data-rh="true" name="twitter:image" content="${htmlEscape(ogImage)}" />`,
   ].join("\n");
 
   result = result.replace("</head>", `${seoCoreBlock}\n</head>`);
