@@ -18,6 +18,106 @@ const isObjectId = (value = "") =>
 const pickBlogTitle = (blog = {}) =>
   blog?.title_en || blog?.title || blog?.title_tr || blog?.title_ru || "blog";
 
+const normalizeAltLanguage = (language = "en") => {
+  const normalized = String(language || "").toLowerCase();
+  if (normalized.startsWith("tr")) return "tr";
+  if (normalized.startsWith("ru")) return "ru";
+  return "en";
+};
+
+const BLOG_ALT_TEMPLATES = {
+  en: ({ title, index }) => `${title || "Blog article"} article image${index ? ` ${index}` : ""}`,
+  tr: ({ title, index }) => `${title || "Blog yazisi"} icerik gorseli${index ? ` ${index}` : ""}`,
+  ru: ({ title, index }) => `${title || "Статья блога"} изображение в статье${index ? ` ${index}` : ""}`,
+};
+
+const AUTO_GENERATED_ALT_PATTERNS = [
+  /^blog block\b/i,
+  /^block \d+\b/i,
+  /^line \d+\b/i,
+  /^gallery \d+\b/i,
+  /^blog\b/i,
+];
+
+const htmlEscapeAttribute = (value) =>
+  String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
+const shouldReplaceAlt = (value = "") => {
+  const normalized = String(value || "").trim();
+  if (!normalized) return true;
+  return AUTO_GENERATED_ALT_PATTERNS.some((pattern) => pattern.test(normalized));
+};
+
+const getBlogContentImageAlt = (language, title, index) => {
+  const lang = normalizeAltLanguage(language);
+  const template = BLOG_ALT_TEMPLATES[lang] || BLOG_ALT_TEMPLATES.en;
+  return template({ title, index });
+};
+
+const ensureBlogImageAlts = (html, { language = "en", title = "" } = {}) => {
+  if (typeof html !== "string" || !html.includes("<img")) return html || "";
+
+  let imageIndex = 0;
+
+  return html.replace(/<img\b[^>]*>/gi, (tag) => {
+    imageIndex += 1;
+    const nextAlt = htmlEscapeAttribute(
+      getBlogContentImageAlt(language, title, imageIndex)
+    );
+    const altMatch = tag.match(/\balt\s*=\s*(['"])([\s\S]*?)\1/i);
+
+    if (altMatch) {
+      if (!shouldReplaceAlt(altMatch[2])) {
+        return tag;
+      }
+      return tag.replace(altMatch[0], `alt="${nextAlt}"`);
+    }
+
+    return tag.replace(/\s*\/?>$/, (ending) => ` alt="${nextAlt}"${ending}`);
+  });
+};
+
+const resolveDefaultBlogLanguage = (blog = {}) => {
+  if (pickText(blog.content_tr, blog.title_tr) && !pickText(blog.content_en, blog.title_en)) {
+    return "tr";
+  }
+  if (pickText(blog.content_ru, blog.title_ru) && !pickText(blog.content_en, blog.title_en)) {
+    return "ru";
+  }
+  return "en";
+};
+
+const normalizeBlogContentFields = (blog = {}) => {
+  const titleBase = pickText(blog.title, blog.title_en, blog.title_tr, blog.title_ru, "Blog");
+  const titleEn = pickText(blog.title_en, blog.title, blog.title_tr, blog.title_ru, titleBase);
+  const titleTr = pickText(blog.title_tr, blog.title, blog.title_en, blog.title_ru, titleBase);
+  const titleRu = pickText(blog.title_ru, blog.title, blog.title_en, blog.title_tr, titleBase);
+
+  return {
+    ...blog,
+    content: ensureBlogImageAlts(blog.content || "", {
+      language: resolveDefaultBlogLanguage(blog),
+      title: titleBase,
+    }),
+    content_en: ensureBlogImageAlts(blog.content_en || "", {
+      language: "en",
+      title: titleEn,
+    }),
+    content_tr: ensureBlogImageAlts(blog.content_tr || "", {
+      language: "tr",
+      title: titleTr,
+    }),
+    content_ru: ensureBlogImageAlts(blog.content_ru || "", {
+      language: "ru",
+      title: titleRu,
+    }),
+  };
+};
+
 const resolveBlogSlug = (blog = {}) => {
   const existingSlug = String(blog?.slug || "").trim();
   if (existingSlug && !isObjectId(existingSlug)) return existingSlug;
@@ -28,7 +128,7 @@ const resolveBlogSlug = (blog = {}) => {
 };
 
 const withResolvedSlug = (blog) =>
-  blog ? { ...blog, slug: resolveBlogSlug(blog) } : blog;
+  blog ? normalizeBlogContentFields({ ...blog, slug: resolveBlogSlug(blog) }) : blog;
 
 const CITIZENSHIP_KEYWORDS = [
   "citizenship",
@@ -262,49 +362,79 @@ const buildBlogTaxonomy = ({ data = {}, marketData = {} } = {}) => {
   };
 };
 
-const buildBlogPersistenceData = ({ data = {}, marketData = {}, order } = {}) => ({
-  title: data.title,
-  title_en: data.title_en || data.title || "",
-  title_tr: data.title_tr || "",
-  title_ru: data.title_ru || "",
-  slug: data.slug,
-  menuKey: data.menuKey?.trim() || null,
-  category: data.category,
-  category_en: data.category_en || data.category || "",
-  category_tr: data.category_tr || "",
-  category_ru: data.category_ru || "",
-  content: data.content || "",
-  content_en: data.content_en || data.content || "",
-  content_tr: data.content_tr || "",
-  content_ru: data.content_ru || "",
-  summary: data.summary || "",
-  summary_en: data.summary_en || data.summary || "",
-  summary_tr: data.summary_tr || "",
-  summary_ru: data.summary_ru || "",
-  metaDescription:
-    pickText(data.metaDescription, data.metaDescription_en, data.summary_en, data.summary) ||
-    null,
-  metaDescription_en:
-    pickText(data.metaDescription_en, data.metaDescription, data.summary_en, data.summary) ||
-    null,
-  metaDescription_tr:
-    pickText(data.metaDescription_tr, data.summary_tr) || null,
-  metaDescription_ru:
-    pickText(data.metaDescription_ru, data.summary_ru) || null,
-  image: data.image || "",
-  video: data.video || "",
-  images: Array.isArray(data.images) ? data.images : [],
-  country: data.country?.trim() || null,
-  published: data.published !== undefined ? data.published : true,
-  faqSection: sanitizeFaqSection(data.faqSection),
-  faqSection_en: sanitizeFaqSection(data.faqSection_en),
-  faqSection_tr: sanitizeFaqSection(data.faqSection_tr),
-  faqSection_ru: sanitizeFaqSection(data.faqSection_ru),
-  internalLinks: toStringArray(data.internalLinks),
-  taxonomy: buildBlogTaxonomy({ data, marketData }),
-  marketData: marketData && Object.keys(marketData).length > 0 ? marketData : null,
-  ...(typeof order === "number" ? { order } : {}),
-});
+const buildBlogPersistenceData = ({ data = {}, marketData = {}, order } = {}) => {
+  const title = data.title;
+  const titleEn = data.title_en || data.title || "";
+  const titleTr = data.title_tr || "";
+  const titleRu = data.title_ru || "";
+  const defaultLanguage = resolveDefaultBlogLanguage({
+    ...data,
+    title: title || titleEn || titleTr || titleRu,
+    title_en: titleEn,
+    title_tr: titleTr,
+    title_ru: titleRu,
+  });
+  const content = ensureBlogImageAlts(data.content || "", {
+    language: defaultLanguage,
+    title: title || titleEn || titleTr || titleRu || "Blog",
+  });
+  const contentEn = ensureBlogImageAlts(data.content_en || data.content || "", {
+    language: "en",
+    title: titleEn || title || titleTr || titleRu || "Blog",
+  });
+  const contentTr = ensureBlogImageAlts(data.content_tr || "", {
+    language: "tr",
+    title: titleTr || title || titleEn || titleRu || "Blog",
+  });
+  const contentRu = ensureBlogImageAlts(data.content_ru || "", {
+    language: "ru",
+    title: titleRu || title || titleEn || titleTr || "Blog",
+  });
+
+  return {
+    title,
+    title_en: titleEn,
+    title_tr: titleTr,
+    title_ru: titleRu,
+    slug: data.slug,
+    menuKey: data.menuKey?.trim() || null,
+    category: data.category,
+    category_en: data.category_en || data.category || "",
+    category_tr: data.category_tr || "",
+    category_ru: data.category_ru || "",
+    content,
+    content_en: contentEn,
+    content_tr: contentTr,
+    content_ru: contentRu,
+    summary: data.summary || "",
+    summary_en: data.summary_en || data.summary || "",
+    summary_tr: data.summary_tr || "",
+    summary_ru: data.summary_ru || "",
+    metaDescription:
+      pickText(data.metaDescription, data.metaDescription_en, data.summary_en, data.summary) ||
+      null,
+    metaDescription_en:
+      pickText(data.metaDescription_en, data.metaDescription, data.summary_en, data.summary) ||
+      null,
+    metaDescription_tr:
+      pickText(data.metaDescription_tr, data.summary_tr) || null,
+    metaDescription_ru:
+      pickText(data.metaDescription_ru, data.summary_ru) || null,
+    image: data.image || "",
+    video: data.video || "",
+    images: Array.isArray(data.images) ? data.images : [],
+    country: data.country?.trim() || null,
+    published: data.published !== undefined ? data.published : true,
+    faqSection: sanitizeFaqSection(data.faqSection),
+    faqSection_en: sanitizeFaqSection(data.faqSection_en),
+    faqSection_tr: sanitizeFaqSection(data.faqSection_tr),
+    faqSection_ru: sanitizeFaqSection(data.faqSection_ru),
+    internalLinks: toStringArray(data.internalLinks),
+    taxonomy: buildBlogTaxonomy({ data, marketData }),
+    marketData: marketData && Object.keys(marketData).length > 0 ? marketData : null,
+    ...(typeof order === "number" ? { order } : {}),
+  };
+};
 
 // Get all blogs (public)
 export const getAllBlogs = asyncHandler(async (req, res) => {

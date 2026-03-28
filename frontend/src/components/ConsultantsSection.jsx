@@ -9,6 +9,7 @@ import iconAudience from "../assets/p.png";
 import iconProspects from "../assets/p03.png";
 import iconOpportunity from "../assets/p04.png";
 import ContactModal from "./ContactModal";
+import { getLocalizedAlt } from "../utils/mediaAlt";
 
 // Animated element with IntersectionObserver
 const AnimatedElement = ({ children, delay = 0, className = "" }) => {
@@ -165,7 +166,9 @@ const ConsultantsSection = () => {
                           consultant.image ||
                           "https://via.placeholder.com/150?text=Agent"
                         }
-                        alt={consultant.name}
+                        alt={getLocalizedAlt(i18n.language, "consultantPhoto", {
+                          name: consultant.name,
+                        })}
                         className="w-full h-full object-cover"
                       />
                     </div>
@@ -217,7 +220,9 @@ const ConsultantsSection = () => {
                         thirdConsultant?.image ||
                         "https://via.placeholder.com/150?text=Agent"
                       }
-                      alt="More agents"
+                      alt={getLocalizedAlt(i18n.language, "moreAgents", {
+                        count: moreCount,
+                      })}
                       className="w-full h-full object-cover blur-sm"
                     />
                     {/* Overlay */}
@@ -323,7 +328,7 @@ const ConsultantsSection = () => {
             <div className="relative lg:w-[45%] h-[280px] sm:h-[320px] lg:h-auto">
               <img
                 src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&auto=format&fit=crop&q=60"
-                alt="Modern building at night"
+                alt={getLocalizedAlt(i18n.language, "modernBuilding")}
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-l from-transparent via-[#0c1422]/10 to-[#0c1422]/80"></div>

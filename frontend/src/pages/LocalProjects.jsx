@@ -24,6 +24,7 @@ import PropertyCard from "../components/PropertyCard";
 import HeartBtn from "../components/HeartBtn";
 import { getOptimizedImageUrl } from "../utils/media";
 import { resolveProjectPath } from "../utils/seo";
+import { getLocalizedAlt } from "../utils/mediaAlt";
 
 // Turkish cities data
 const TURKISH_CITIES = [
@@ -1116,7 +1117,7 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
           {/* Background Image */}
           <img
             src={activeHeroBg}
-            alt="Konut Projeleri"
+            alt={getLocalizedAlt(i18n.language, "localProjectsHero")}
             className="absolute inset-0 w-full h-full object-cover"
           />
           

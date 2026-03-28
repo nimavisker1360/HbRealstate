@@ -57,6 +57,7 @@ import {
 import { extractObjectId, resolveProjectPath } from "../utils/seo";
 import IstanbulMarketAnalytics from "../components/market/IstanbulMarketAnalytics";
 import InquirySidebarCard from "../components/InquirySidebarCard";
+import { getLocalizedAlt } from "../utils/mediaAlt";
 
 // All possible Bina Özellikleri (Building Features)
 const ALL_BINA_OZELLIKLERI = [
@@ -823,7 +824,9 @@ const ProjectDetail = ({ topSlot = null }) => {
                       {selectedVideoPoster ? (
                         <img
                           src={selectedVideoPoster}
-                          alt={`${project.name} video preview`}
+                          alt={getLocalizedAlt(i18n.language, "projectVideoPreview", {
+                            title: project.name,
+                          })}
                           className="w-full h-[300px] md:h-[400px] object-cover rounded-lg"
                           loading="eager"
                           fetchPriority="high"
@@ -875,7 +878,10 @@ const ProjectDetail = ({ topSlot = null }) => {
                           getMainImageUrl(selectedGalleryItem?.url || project.images[0]) ||
                           project.images[0]
                         }
-                        alt={project.name}
+                        alt={getLocalizedAlt(i18n.language, "projectImage", {
+                          title: project.name,
+                          index: selectedImage + 1,
+                        })}
                         className="w-full h-[300px] md:h-[400px] object-cover rounded-lg"
                         loading="eager"
                         fetchPriority="high"
@@ -928,7 +934,10 @@ const ProjectDetail = ({ topSlot = null }) => {
                           {getThumbnailVideoPosterUrl(item.url) ? (
                             <img
                               src={getThumbnailVideoPosterUrl(item.url)}
-                              alt={`${project.name} video ${index + 1}`}
+                              alt={getLocalizedAlt(i18n.language, "projectVideo", {
+                                title: project.name,
+                                index: index + 1,
+                              })}
                               className="w-full h-full object-cover absolute inset-0"
                               loading="lazy"
                               decoding="async"
@@ -949,7 +958,10 @@ const ProjectDetail = ({ topSlot = null }) => {
                       ) : (
                         <img
                           src={getThumbnailImageUrl(item.url)}
-                          alt={`${project.name} ${index + 1}`}
+                          alt={getLocalizedAlt(i18n.language, "projectImage", {
+                            title: project.name,
+                            index: index + 1,
+                          })}
                           className="w-full h-full object-cover absolute inset-0"
                           loading="lazy"
                           decoding="async"
@@ -1475,7 +1487,9 @@ const ProjectDetail = ({ topSlot = null }) => {
                       crop: "limit",
                     })}
                     onError={withOriginalSrcFallback(project.vaziyetPlani)}
-                    alt={t("projectDetail.sitePlan")}
+                    alt={getLocalizedAlt(i18n.language, "projectSitePlan", {
+                      title: project.name,
+                    })}
                     className="w-full h-auto max-h-[500px] object-contain rounded-lg border bg-gray-50"
                     loading="lazy"
                     decoding="async"
@@ -1501,7 +1515,9 @@ const ProjectDetail = ({ topSlot = null }) => {
                       width: 1400,
                       height: 900,
                     })}
-                    alt={`${project.name} - ${t("projectDetail.location")}`}
+                    alt={getLocalizedAlt(i18n.language, "projectLocationMap", {
+                      title: project.name,
+                    })}
                     className="w-full h-[350px] object-cover rounded-lg border"
                     loading="lazy"
                     decoding="async"
@@ -1809,7 +1825,9 @@ const ProjectDetail = ({ topSlot = null }) => {
                     <div className="flex items-center gap-4 mb-4">
                       <Avatar
                         src={projectConsultant.image}
-                        alt={projectConsultant.name}
+                        alt={getLocalizedAlt(i18n.language, "consultantPhoto", {
+                          name: projectConsultant.name,
+                        })}
                         size="lg"
                         radius="xl"
                       />
@@ -1913,7 +1931,10 @@ const ProjectDetail = ({ topSlot = null }) => {
                 getLightboxImageUrl(selectedGalleryItem?.url || project.images[0]) ||
                 project.images[0]
               }
-              alt={project.name}
+              alt={getLocalizedAlt(i18n.language, "projectImage", {
+                title: project.name,
+                index: selectedImage + 1,
+              })}
               className={`w-full h-auto cursor-pointer select-none transition-opacity duration-200 ${
                 isLightboxMediaLoaded ? "opacity-100" : "opacity-0"
               }`}
@@ -1967,7 +1988,10 @@ const ProjectDetail = ({ topSlot = null }) => {
                   {getThumbnailVideoPosterUrl(item.url) ? (
                     <img
                       src={getThumbnailVideoPosterUrl(item.url)}
-                      alt={`${project.name} video ${index + 1}`}
+                      alt={getLocalizedAlt(i18n.language, "projectVideo", {
+                        title: project.name,
+                        index: index + 1,
+                      })}
                       className="w-full h-full object-cover"
                       loading="lazy"
                       decoding="async"
@@ -1988,7 +2012,10 @@ const ProjectDetail = ({ topSlot = null }) => {
               ) : (
                 <img
                   src={getThumbnailImageUrl(item.url)}
-                  alt={`${project.name} thumbnail ${index + 1}`}
+                  alt={getLocalizedAlt(i18n.language, "projectThumbnail", {
+                    title: project.name,
+                    index: index + 1,
+                  })}
                   className="w-full h-full object-cover"
                   loading="lazy"
                   decoding="async"
@@ -2019,7 +2046,10 @@ const ProjectDetail = ({ topSlot = null }) => {
             {floorPlanModal.plan.image ? (
               <img
                 src={floorPlanModal.plan.image}
-                alt={`${floorPlanModal.plan.tip} - ${floorPlanModal.plan.varyant}`}
+                alt={getLocalizedAlt(i18n.language, "floorPlan", {
+                  title: floorPlanModal.plan.tip,
+                  variant: floorPlanModal.plan.varyant,
+                })}
                 className="w-full h-auto rounded-lg"
               />
             ) : (
@@ -2088,7 +2118,9 @@ const ProjectDetail = ({ topSlot = null }) => {
               crop: "limit",
             })}
             onError={withOriginalSrcFallback(project.vaziyetPlani)}
-            alt={t("projectDetail.sitePlan")}
+            alt={getLocalizedAlt(i18n.language, "projectSitePlan", {
+              title: project.name,
+            })}
             className="w-full h-auto rounded-lg"
             loading="lazy"
             decoding="async"

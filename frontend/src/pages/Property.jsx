@@ -174,6 +174,7 @@ import { CgRuler } from "react-icons/cg";
 import { resolveProjectPath } from "../utils/seo";
 import IstanbulMarketAnalytics from "../components/market/IstanbulMarketAnalytics";
 import InquirySidebarCard from "../components/InquirySidebarCard";
+import { getLocalizedAlt } from "../utils/mediaAlt";
 
 // Format date helper function
 const formatDate = (dateString, showFullDate = false, locale = "en") => {
@@ -479,7 +480,10 @@ const Property = ({ topSlot = null }) => {
                   galleryItems[currentImageIndex]?.url ||
                   "https://via.placeholder.com/800x600"
                 }
-                alt={data?.title}
+                alt={getLocalizedAlt(i18n.language, "propertyImage", {
+                  title: data?.title,
+                  index: currentImageIndex + 1,
+                })}
                 className="w-full h-full object-cover"
               />
             )}
@@ -528,7 +532,10 @@ const Property = ({ topSlot = null }) => {
                   ) : (
                     <img
                       src={item.url}
-                      alt={`${data?.title} - ${index + 2}`}
+                      alt={getLocalizedAlt(i18n.language, "propertyImage", {
+                        title: data?.title,
+                        index: index + 2,
+                      })}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   )}
@@ -647,7 +654,10 @@ const Property = ({ topSlot = null }) => {
           ) : (
             <img
               src={galleryItems[currentImageIndex]?.url}
-              alt={`${data?.title} - ${currentImageIndex + 1}`}
+              alt={getLocalizedAlt(i18n.language, "propertyImage", {
+                title: data?.title,
+                index: currentImageIndex + 1,
+              })}
               className="max-h-[85vh] max-w-[90vw] object-contain"
             />
           )}
@@ -696,7 +706,10 @@ const Property = ({ topSlot = null }) => {
                   ) : (
                     <img
                       src={item.url}
-                      alt={`${data?.title || "Property image"} thumbnail ${index + 2}`}
+                      alt={getLocalizedAlt(i18n.language, "propertyThumbnail", {
+                        title: data?.title,
+                        index: index + 1,
+                      })}
                       className="h-full w-full object-cover"
                     />
                   )}
@@ -1362,7 +1375,9 @@ const Property = ({ topSlot = null }) => {
               <div className="flex items-center gap-4 mb-5 rounded-2xl border border-white/10 bg-white/5 p-4">
                 <Avatar
                   src={data.consultant.image}
-                  alt={data.consultant.name}
+                  alt={getLocalizedAlt(i18n.language, "consultantPhoto", {
+                    name: data.consultant.name,
+                  })}
                   size="lg"
                   radius="xl"
                   className="border-2 border-secondary"

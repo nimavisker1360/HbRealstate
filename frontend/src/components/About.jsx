@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import photoTest from "../assets/phototst.jpg";
+import { getLocalizedAlt } from "../utils/mediaAlt";
 
 const StepCountUp = ({
   end,
@@ -54,7 +55,7 @@ const StepCountUp = ({
 };
 
 const About = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const missionText = t("about.missionText");
 
   // Define the statistics with translations
@@ -90,9 +91,23 @@ const About = () => {
   const lastPointerTypeRef = useRef("mouse");
 
   const cardData = [
-    { src: "/Arnatakoy.gif", alt: "Arnavutköy", href: "https://www.hbrealstate.com/en/blog/why-invest-in-arnavutky", animated: true },
-    { src: "/banner.gif", alt: "Salamis Holiday Home", href: "https://www.hbrealstate.com/en/projects/salamis-holiday-home-apartments-hb-real-estate-69be44337d9987ae6278ad9c", animated: true },
-    { src: photoTest, alt: "Property", href: null },
+    {
+      src: "/Arnatakoy.gif",
+      alt: getLocalizedAlt(i18n.language, "aboutArnavutkoyCard"),
+      href: "https://www.hbrealstate.com/en/blog/why-invest-in-arnavutky",
+      animated: true,
+    },
+    {
+      src: "/banner.gif",
+      alt: getLocalizedAlt(i18n.language, "aboutSalamisCard"),
+      href: "https://www.hbrealstate.com/en/projects/salamis-holiday-home-apartments-hb-real-estate-69be44337d9987ae6278ad9c",
+      animated: true,
+    },
+    {
+      src: photoTest,
+      alt: getLocalizedAlt(i18n.language, "aboutFeaturedPropertyCard"),
+      href: null,
+    },
   ];
 
   const activeCard = isFanned ? hoveredCard : 0;

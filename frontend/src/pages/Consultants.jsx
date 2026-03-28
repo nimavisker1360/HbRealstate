@@ -15,6 +15,7 @@ import useConsultants from "../hooks/useConsultants";
 import ContactModal from "../components/ContactModal";
 import { normalizeWhatsAppNumber } from "../utils/common";
 import PhoneLink from "../components/PhoneLink";
+import { getLocalizedAlt } from "../utils/mediaAlt";
 
 // Helper function to get localized field
 const getLocalizedField = (consultant, field, language) => {
@@ -77,7 +78,7 @@ const Consultants = () => {
       <div className="mb-10 sm:mb-14">
         <img
           src="/banner.jpg"
-          alt="Consultants banner"
+          alt={getLocalizedAlt(i18n.language, "consultantsBanner")}
           className="block w-full h-auto"
         />
       </div>
@@ -160,7 +161,9 @@ const Consultants = () => {
                 <div className="relative h-72 overflow-hidden">
                   <img
                     src={consultant.image || "https://via.placeholder.com/400x400?text=No+Image"}
-                    alt={consultant.name}
+                    alt={getLocalizedAlt(i18n.language, "consultantPhoto", {
+                      name: consultant.name,
+                    })}
                     className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
@@ -356,7 +359,9 @@ const Consultants = () => {
                 <div className="absolute inset-0 bg-secondary/30 rounded-full blur-xl scale-110"></div>
                 <img
                   src={selectedConsultant.image || "https://via.placeholder.com/150?text=No+Image"}
-                  alt={selectedConsultant.name}
+                  alt={getLocalizedAlt(i18n.language, "consultantPhoto", {
+                    name: selectedConsultant.name,
+                  })}
                   className="relative w-28 h-28 rounded-full object-cover border-4 border-secondary/50 shadow-xl"
                 />
                 <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-secondary rounded-full flexCenter shadow-lg">

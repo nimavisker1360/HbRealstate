@@ -10,6 +10,7 @@ import blog4 from "../assets/blog4.jpg";
 import { fixMojibake } from "../utils/text";
 import SEO from "../components/SEO";
 import { SITE_URL, buildLanguageAlternates, resolveCountrySlug } from "../utils/seo";
+import { getLocalizedAlt } from "../utils/mediaAlt";
 
 const placeholderImages = [blog1, blog2, blog3, blog4];
 
@@ -209,7 +210,9 @@ const BlogsPage = () => {
                   <div className="relative h-24 w-24 sm:h-28 sm:w-28 lg:h-32 lg:w-32 rounded-full overflow-hidden border-[6px] border-white/80 bg-white shadow-[0_18px_45px_-25px_rgba(15,23,42,0.45)]">
                     <img
                       src={getBlogImage(coverBlog, coverIndex)}
-                      alt={country}
+                      alt={getLocalizedAlt(language, "countryArticles", {
+                        country,
+                      })}
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   </div>

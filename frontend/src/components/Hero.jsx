@@ -12,6 +12,7 @@ import iconDubai from "../assets/icons/dubai.png";
 import iconGeorgia from "../assets/icons/boat.png";
 import iconCyprus from "../assets/icons/cyprus.png";
 import HeroDownloadModal from "./HeroDownloadModal";
+import { getLocalizedAlt } from "../utils/mediaAlt";
 
 const ALL_SLIDE_INTERVAL_MS = 10000;
 const ALL_SLIDE_TRANSITION_MS = 900;
@@ -20,14 +21,14 @@ const ALL_HERO_SLIDES = [
   {
     type: "video",
     src: "/citizen.mp4",
-    alt: "HB International featured property film",
+    altKey: "featuredPropertyFilm",
     showContent: false,
     showDownloadButton: true,
   },
   {
     type: "image",
     src: heroBg,
-    alt: "HB International featured residence",
+    altKey: "featuredResidence",
     showContent: true,
     showDownloadButton: false,
   },
@@ -35,7 +36,7 @@ const ALL_HERO_SLIDES = [
 ];
 
 const Hero = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState("ALL");
   const [activeAllSlideIndex, setActiveAllSlideIndex] = useState(0);
   const [nextAllSlideIndex, setNextAllSlideIndex] = useState(null);
@@ -43,10 +44,15 @@ const Hero = () => {
   const [allSlideDirection, setAllSlideDirection] = useState("next");
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
 
+  const allHeroSlides = ALL_HERO_SLIDES.map((slide) => ({
+    ...slide,
+    alt: getLocalizedAlt(i18n.language, slide.altKey),
+  }));
+
   useEffect(() => {
     if (
       activeTab !== "ALL" ||
-      ALL_HERO_SLIDES.length <= 1 ||
+      allHeroSlides.length <= 1 ||
       isAllSlidesAnimating ||
       isDownloadModalOpen
     ) {
@@ -56,13 +62,19 @@ const Hero = () => {
     const timeoutId = window.setTimeout(() => {
       setAllSlideDirection("next");
       setNextAllSlideIndex(
-        (activeAllSlideIndex + 1) % ALL_HERO_SLIDES.length
+        (activeAllSlideIndex + 1) % allHeroSlides.length
       );
       setIsAllSlidesAnimating(true);
     }, ALL_SLIDE_INTERVAL_MS);
 
     return () => window.clearTimeout(timeoutId);
-  }, [activeAllSlideIndex, activeTab, isAllSlidesAnimating, isDownloadModalOpen]);
+  }, [
+    activeAllSlideIndex,
+    activeTab,
+    allHeroSlides.length,
+    isAllSlidesAnimating,
+    isDownloadModalOpen,
+  ]);
 
   useEffect(() => {
     if (!isAllSlidesAnimating || nextAllSlideIndex === null) {
@@ -89,10 +101,12 @@ const Hero = () => {
     nextAllSlideIndex !== null ? nextAllSlideIndex : activeAllSlideIndex;
   const activeHeroMedia =
     activeTab === "ALL"
-      ? ALL_HERO_SLIDES[visibleAllSlideIndex]
+      ? allHeroSlides[visibleAllSlideIndex]
       : {
           src: heroImages[activeTab] || heroBg,
-          alt: `${activeTab} hero background`,
+          alt: getLocalizedAlt(i18n.language, "locationHero", {
+            location: activeTab,
+          }),
           showContent: true,
           showDownloadButton: false,
         };
@@ -201,7 +215,7 @@ const Hero = () => {
   const handlePreviousSlide = () => {
     if (
       activeTab !== "ALL" ||
-      ALL_HERO_SLIDES.length <= 1 ||
+      allHeroSlides.length <= 1 ||
       isAllSlidesAnimating ||
       isDownloadModalOpen
     ) {
@@ -210,8 +224,8 @@ const Hero = () => {
 
     setAllSlideDirection("prev");
     setNextAllSlideIndex(
-      (activeAllSlideIndex - 1 + ALL_HERO_SLIDES.length) %
-        ALL_HERO_SLIDES.length
+      (activeAllSlideIndex - 1 + allHeroSlides.length) %
+        allHeroSlides.length
     );
     setIsAllSlidesAnimating(true);
   };
@@ -219,7 +233,7 @@ const Hero = () => {
   const handleNextSlide = () => {
     if (
       activeTab !== "ALL" ||
-      ALL_HERO_SLIDES.length <= 1 ||
+      allHeroSlides.length <= 1 ||
       isAllSlidesAnimating ||
       isDownloadModalOpen
     ) {
@@ -228,7 +242,7 @@ const Hero = () => {
 
     setAllSlideDirection("next");
     setNextAllSlideIndex(
-      (activeAllSlideIndex + 1) % ALL_HERO_SLIDES.length
+      (activeAllSlideIndex + 1) % allHeroSlides.length
     );
     setIsAllSlidesAnimating(true);
   };
@@ -275,7 +289,7 @@ const Hero = () => {
         {activeTab === "ALL" ? (
           <>
             {renderSlideMedia(
-              ALL_HERO_SLIDES[activeAllSlideIndex],
+              allHeroSlides[activeAllSlideIndex],
               `absolute inset-0 h-full w-full object-cover object-center hero-bg ${
                 isAllSlidesAnimating
                   ? allSlideDirection === "next"
@@ -286,7 +300,7 @@ const Hero = () => {
             )}
             {nextAllSlideIndex !== null && (
               renderSlideMedia(
-                ALL_HERO_SLIDES[nextAllSlideIndex],
+                allHeroSlides[nextAllSlideIndex],
                 `absolute inset-0 h-full w-full object-cover object-center hero-bg ${
                   allSlideDirection === "next"
                     ? "animate-hero-slide-in-right"
@@ -336,7 +350,7 @@ const Hero = () => {
         </div>
       )}
 
-      {activeTab === "ALL" && ALL_HERO_SLIDES.length > 1 && (
+      {activeTab === "ALL" && allHeroSlides.length > 1 && (
         <div className="pointer-events-none absolute inset-x-0 top-1/2 z-10 flex -translate-y-1/2 items-center justify-between px-4 sm:px-8">
           <button
             type="button"

@@ -39,6 +39,7 @@ import {
   toAbsoluteUrl,
   truncateText,
 } from "../utils/seo";
+import { ensureHtmlImageAlts, getLocalizedAlt } from "../utils/mediaAlt";
 
 const normalizeSuggestionText = (value = "") =>
   fixMojibake(String(value || ""))
@@ -348,6 +349,15 @@ const BlogPost = () => {
   }
 
   const localizedContent = getLocalizedContent("content");
+  const localizedTitle = getLocalizedContent("title") || "Blog Post";
+  const localizedContentWithImageAlts = useMemo(
+    () =>
+      ensureHtmlImageAlts(localizedContent, {
+        language,
+        title: localizedTitle,
+      }),
+    [language, localizedContent, localizedTitle]
+  );
   const blogContentCandidates = [
     localizedContent,
     blog.content,
@@ -381,7 +391,6 @@ const BlogPost = () => {
   };
   const categoryLabel = getLocalizedCategoryLabel(getLocalizedContent("category"));
   const localizedFaq = getLocalizedFaq();
-  const localizedTitle = getLocalizedContent("title") || "Blog Post";
   const canonicalPath = resolvedBlogSlug
     ? `/blog/${encodeURIComponent(resolvedBlogSlug)}`
     : `/blog/${routeIdentifier || ""}`;
@@ -768,7 +777,10 @@ const BlogPost = () => {
             
             <img 
               src={selectedImage} 
-              alt={`${getLocalizedContent("title") || "Blog image"} image ${currentImageIndex + 1}`}
+              alt={getLocalizedAlt(language, "blogImage", {
+                title: localizedTitle,
+                index: currentImageIndex + 1,
+              })}
               className="max-w-full max-h-[90vh] object-contain rounded-lg"
               onClick={(e) => e.stopPropagation()}
             />
@@ -814,7 +826,9 @@ const BlogPost = () => {
                 <div className="relative h-24 w-24 sm:h-28 sm:w-28 md:h-32 md:w-32 rounded-full overflow-hidden border-[6px] border-white/80 shadow-[0_18px_45px_-25px_rgba(15,23,42,0.35)] bg-white">
                   <img
                     src={blog.image}
-                    alt={getLocalizedContent("title")}
+                    alt={getLocalizedAlt(language, "blogImage", {
+                      title: localizedTitle,
+                    })}
                     className="h-full w-full object-cover transition-transform duration-700 hover:scale-105 cursor-pointer"
                     onClick={() => {
                       setSelectedImage(blog.image);
@@ -847,7 +861,10 @@ const BlogPost = () => {
                   >
                     <img 
                       src={img} 
-                      alt={`${getLocalizedContent("title") || "Blog image"} thumbnail ${index + 1}`}
+                      alt={getLocalizedAlt(language, "blogThumbnail", {
+                        title: localizedTitle,
+                        index: index + 1,
+                      })}
                       className="w-full h-full object-cover"
                     />
                   </button>
@@ -948,7 +965,7 @@ const BlogPost = () => {
                     [&_div.not-prose]:rounded-2xl [&_div.not-prose]:border [&_div.not-prose]:border-emerald-100 [&_div.not-prose]:bg-emerald-50/40 [&_div.not-prose]:p-6 [&_div.not-prose]:shadow-sm
                     [&_div.not-prose_img]:rounded-2xl [&_div.not-prose_img]:shadow-md
                     `}
-                    dangerouslySetInnerHTML={{ __html: localizedContent }}
+                    dangerouslySetInnerHTML={{ __html: localizedContentWithImageAlts }}
                   />
                 )}
               </div>

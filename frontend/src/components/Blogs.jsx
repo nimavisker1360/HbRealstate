@@ -8,6 +8,7 @@ import blog1 from "../assets/blog1.jpg";
 import blog2 from "../assets/blog2.jpg";
 import blog3 from "../assets/blog3.jpg";
 import blog4 from "../assets/blog4.jpg";
+import { getLocalizedAlt } from "../utils/mediaAlt";
 
 // Default placeholder image for blogs without images
 const placeholderImages = [blog1, blog2, blog3, blog4];
@@ -169,7 +170,9 @@ const Blogs = ({ limit = null, showMore = false }) => {
                     <div className="w-full h-full rounded-full overflow-hidden bg-slate-100">
                       <img
                         src={getBlogImage(coverBlog, coverIndex)}
-                        alt={country}
+                        alt={getLocalizedAlt(currentLang, "countryArticles", {
+                          country,
+                        })}
                         loading="lazy"
                         decoding="async"
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -214,4 +217,3 @@ const Blogs = ({ limit = null, showMore = false }) => {
 };
 
 export default Blogs;
-
