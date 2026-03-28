@@ -21,7 +21,7 @@ const ALL_HERO_SLIDES = [
     type: "video",
     src: "/citizen.mp4",
     alt: "HB International featured property film",
-    showContent: true,
+    showContent: false,
     showDownloadButton: true,
   },
   {
