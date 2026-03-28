@@ -19,6 +19,7 @@ import { contentHubPages } from "../data/contentHubPages";
 
 const SeoStaticPageLayout = ({
   title,
+  seoTitle,
   description,
   canonicalPath,
   breadcrumbLabel,
@@ -88,7 +89,7 @@ const SeoStaticPageLayout = ({
   return (
     <>
       <SEO
-        title={title}
+        title={seoTitle || title}
         description={description}
         canonicalPath={canonicalPath}
         structuredData={[breadcrumbSchema, faqSchema]}
@@ -230,6 +231,7 @@ const SeoStaticPageLayout = ({
 
 SeoStaticPageLayout.propTypes = {
   title: PropTypes.string.isRequired,
+  seoTitle: PropTypes.string,
   description: PropTypes.string.isRequired,
   canonicalPath: PropTypes.string.isRequired,
   breadcrumbLabel: PropTypes.string.isRequired,

@@ -37,6 +37,7 @@ const marketPack = (lead, city) => ({
 const page = ({
   slug,
   title,
+  seoTitle,
   description,
   breadcrumbLabel,
   pageType,
@@ -50,6 +51,7 @@ const page = ({
 }) => ({
   slug,
   title,
+  seoTitle: seoTitle || title,
   description,
   canonicalPath: `/${slug}`,
   breadcrumbLabel,
@@ -159,8 +161,9 @@ export const contentHubPages = [
   }),
   page({
     slug: "buy-property-in-istanbul",
-    title: "Buy Property in Istanbul: Step-by-Step Guide for Foreign Buyers",
-    description: "Follow a cleaner process for buying property in Istanbul with district selection, valuation checks, title review, costs, and offer strategy.",
+    title: "Buy Property in Istanbul",
+    seoTitle: "Buy Property in Istanbul | Foreign Buyer Guide",
+    description: "Buy property in Istanbul with a clear guide to districts, title checks, valuation, closing costs, and smarter investment decisions.",
     breadcrumbLabel: "Buy Property in Istanbul",
     pageType: "pillar page",
     taxonomy: { contentType: "pillar page", category: "istanbul properties", subcategory: "buying process", city: "Istanbul", country: "Turkey", tags: ["buy property", "step by step"], intents: ["investment", "family-living", "legal-tax"] },
