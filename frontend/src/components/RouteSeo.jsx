@@ -32,7 +32,7 @@ const RouteSeo = () => {
 
     if (pathname === "/") {
       return {
-        title: "HB International Real Estate | Turkey Property & Investment Opportunities",
+        title: "Turkey Real Estate & Investment | HB International",
         description:
           "Explore apartments, villas, and investment-ready projects across Istanbul, Kyrenia, and major Turkish markets with HB International Real Estate.",
         canonicalPath: "/",

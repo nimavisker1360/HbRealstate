@@ -15,7 +15,7 @@ const BASE_HTML_PATH = path.join(DIST_DIR, "index.html");
 const STATIC_PAGE_META = {
   "/": {
     title:
-      "HB International Real Estate | Turkey Property & Investment Opportunities",
+      "Turkey Real Estate & Investment | HB International",
     description:
       "Explore apartments, villas, and investment-ready projects across Istanbul, Kyrenia, and major Turkish markets with HB International Real Estate.",
     canonical: `${SITE_URL}/`,
