@@ -1,13 +1,22 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { Button, Paper, TextInput, Textarea } from "@mantine/core";
 import { toast } from "react-toastify";
 import { bilingualKey } from "../utils/bilingualToast";
 import { sendEmail } from "../utils/api";
+import useAuthCheck from "../hooks/useAuthCheck";
+import { useAuth0 } from "@auth0/auth0-react";
+import {
+  buildCurrentReturnTo,
+  consumePostLoginResume,
+  savePostLoginResume,
+} from "../utils/postLoginResume";
 
 const BlogContactForm = ({ contextTitle, className, fullWidth }) => {
   const { t, i18n } = useTranslation();
+  const { validateLogin } = useAuthCheck();
+  const { isAuthenticated } = useAuth0();
   const isTurkish = i18n.language?.toLowerCase().startsWith("tr");
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -30,8 +39,37 @@ const BlogContactForm = ({ contextTitle, className, fullWidth }) => {
     return t("projectDetail.contactDescription");
   }, [contextTitle, isTurkish, t]);
 
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const resumeState = consumePostLoginResume(
+      (entry) =>
+        entry?.type === "blog-contact-form" &&
+        entry?.resumeKey === (contextTitle || "default") &&
+        entry?.returnTo === buildCurrentReturnTo()
+    );
+
+    if (!resumeState?.formData) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      ...resumeState.formData,
+    }));
+  }, [contextTitle, isAuthenticated]);
+
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    if (!isAuthenticated) {
+      savePostLoginResume({
+        type: "blog-contact-form",
+        resumeKey: contextTitle || "default",
+        formData,
+        returnTo: buildCurrentReturnTo(),
+      });
+      validateLogin({ openModal: true });
+      return;
+    }
 
     if (!formData.name.trim()) {
       toast.error(bilingualKey("projectDetail.errorName"));

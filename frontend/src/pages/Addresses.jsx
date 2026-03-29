@@ -6,7 +6,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import icon from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
-import { buildEmailHref } from "../utils/common";
+import EmailLink from "../components/EmailLink";
 import PhoneLink from "../components/PhoneLink";
 import { PRIMARY_CONTACT_PHONE } from "../constant/data";
 
@@ -137,8 +137,8 @@ const Addresses = ({ variant = "addresses" }) => {
                 </div>
               </PhoneLink>
 
-              <a
-                href={buildEmailHref(contactInfo.email)}
+              <EmailLink
+                email={contactInfo.email}
                 target="_blank"
                 rel="noreferrer"
                 className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/10 transition-colors"
@@ -148,7 +148,7 @@ const Addresses = ({ variant = "addresses" }) => {
                   <p className="text-xs text-white/50">{t("contact.emailAddress")}</p>
                   <p className="text-sm font-medium text-white">{contactInfo.email}</p>
                 </div>
-              </a>
+              </EmailLink>
             </div>
           </div>
 

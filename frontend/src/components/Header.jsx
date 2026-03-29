@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Navbar from "./Navbar";
 import { MdArrowBack, MdClose, MdMenu, MdSearch } from "react-icons/md";
@@ -16,6 +16,7 @@ import { normalizeWhatsAppNumber } from "../utils/common";
 import { PRIMARY_CONTACT_PHONE } from "../constant/data";
 import logo from "../assets/logo.png";
 import CurrencyContext from "../context/CurrencyContext";
+import { LOGIN_MODAL_REQUEST_EVENT } from "../utils/loginPrompt";
 
 const Header = () => {
   const { t } = useTranslation();
@@ -30,14 +31,8 @@ const Header = () => {
     useContext(CurrencyContext);
   const location = useLocation();
   const navigate = useNavigate();
-  const autoLoginTriggeredRef = useRef(false);
-  const loginPromptTimerRef = useRef(null);
-  const authStateRef = useRef(false);
-  const authLoadingRef = useRef(true);
-  const authRedirectInProgressRef = useRef(false);
   const toggleMenu = () => setMenuOpened(!menuOpened);
   const { isAuthenticated, user, logout, isLoading } = useAuth0();
-  const prevAuthRef = useRef(isAuthenticated);
 
   const handleLoginClick = () => {
     setLoginModalOpen(true);
@@ -70,59 +65,11 @@ const Header = () => {
     };
   }, [menuOpened]);
 
-  authStateRef.current = isAuthenticated;
-  authLoadingRef.current = isLoading;
   const searchParams = new URLSearchParams(location.search || "");
   const isAuthRedirectInProgress =
     (searchParams.has("code") && searchParams.has("state")) ||
     searchParams.has("error") ||
     searchParams.has("error_description");
-  authRedirectInProgressRef.current = isAuthRedirectInProgress;
-
-  const scheduleLoginPrompt = useCallback((delayMs = 180) => {
-    if (loginPromptTimerRef.current) return;
-    loginPromptTimerRef.current = setTimeout(() => {
-      loginPromptTimerRef.current = null;
-      if (authRedirectInProgressRef.current) return;
-      if (authLoadingRef.current || authStateRef.current) return;
-      const suppressedUntil = Number(
-        window.sessionStorage.getItem("suppress_auto_login_prompt_until") || 0
-      );
-      if (Number.isFinite(suppressedUntil) && suppressedUntil > Date.now()) {
-        return;
-      }
-      autoLoginTriggeredRef.current = true;
-      setLoginModalOpen(true);
-    }, delayMs);
-  }, []);
-
-  useEffect(() => {
-    if (autoLoginTriggeredRef.current) return;
-    if (isLoading) return;
-    if (isAuthRedirectInProgress) return;
-    if (!isAuthenticated) {
-      scheduleLoginPrompt();
-      return;
-    }
-    autoLoginTriggeredRef.current = true;
-  }, [isAuthenticated, isLoading, isAuthRedirectInProgress, scheduleLoginPrompt]);
-
-  useEffect(() => {
-    if (isLoading) return;
-    const wasAuthenticated = prevAuthRef.current;
-    if (wasAuthenticated && !isAuthenticated) {
-      scheduleLoginPrompt(60 * 1000);
-    }
-    prevAuthRef.current = isAuthenticated;
-  }, [isAuthenticated, isLoading, scheduleLoginPrompt]);
-
-  useEffect(() => {
-    if (!isAuthRedirectInProgress) return;
-    if (loginPromptTimerRef.current) {
-      clearTimeout(loginPromptTimerRef.current);
-      loginPromptTimerRef.current = null;
-    }
-  }, [isAuthRedirectInProgress]);
 
   useEffect(() => {
     if (isLoading || !isAuthRedirectInProgress) return;
@@ -156,24 +103,30 @@ const Header = () => {
   ]);
 
   useEffect(() => {
-    if (!isAuthenticated) return;
-    if (loginPromptTimerRef.current) {
-      clearTimeout(loginPromptTimerRef.current);
-      loginPromptTimerRef.current = null;
-    }
-    if (loginModalOpen) {
+    if (isAuthenticated && loginModalOpen) {
       setLoginModalOpen(false);
     }
   }, [isAuthenticated, loginModalOpen]);
 
   useEffect(() => {
-    return () => {
-      if (loginPromptTimerRef.current) {
-        clearTimeout(loginPromptTimerRef.current);
-        loginPromptTimerRef.current = null;
+    const handleLoginModalRequest = () => {
+      if (!isAuthenticated) {
+        setLoginModalOpen(true);
       }
     };
-  }, []);
+
+    window.addEventListener(
+      LOGIN_MODAL_REQUEST_EVENT,
+      handleLoginModalRequest
+    );
+
+    return () => {
+      window.removeEventListener(
+        LOGIN_MODAL_REQUEST_EVENT,
+        handleLoginModalRequest
+      );
+    };
+  }, [isAuthenticated]);
 
   useEffect(() => {
     const headerEl = headerRef.current;
@@ -399,5 +352,4 @@ const Header = () => {
 };
 
 export default Header;
-
 

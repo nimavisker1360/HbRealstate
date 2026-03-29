@@ -11,6 +11,10 @@ import { FcGoogle } from "react-icons/fc";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import logo from "../assets/logo.png";
+import {
+  buildCurrentReturnTo,
+  getPostLoginResume,
+} from "../utils/postLoginResume";
 
 const LoginModal = ({ isOpen, onClose }) => {
   const { loginWithRedirect } = useAuth0();
@@ -23,6 +27,7 @@ const LoginModal = ({ isOpen, onClose }) => {
   } = {}) => {
     setIsLoading(true);
     try {
+      const resumeState = getPostLoginResume();
       const authorizationParams = {};
       if (connection) {
         authorizationParams.connection = connection;
@@ -31,6 +36,9 @@ const LoginModal = ({ isOpen, onClose }) => {
         authorizationParams.screen_hint = screenHint;
       }
       await loginWithRedirect({
+        appState: {
+          returnTo: resumeState?.returnTo || buildCurrentReturnTo(),
+        },
         authorizationParams,
       });
     } catch (error) {

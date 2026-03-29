@@ -15,8 +15,20 @@ import {
   resolvePreferredLanguage,
 } from "./utils/languageRouting";
 import { captureAttributionParams } from "./utils/attribution";
+import { buildCurrentReturnTo } from "./utils/postLoginResume";
 
 captureAttributionParams();
+
+const handleAuthRedirect = (appState) => {
+  const nextPath =
+    typeof appState?.returnTo === "string" && appState.returnTo.trim()
+      ? appState.returnTo
+      : buildCurrentReturnTo();
+
+  window.history.replaceState(window.history.state, "", nextPath);
+  window.dispatchEvent(new Event("app:language-path-change"));
+  window.dispatchEvent(new PopStateEvent("popstate"));
+};
 
 const currentPathLanguage = extractLanguageFromPath(window.location.pathname);
 
@@ -46,6 +58,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         redirect_uri: window.location.origin,
         scope: "openid profile email",
       }}
+      onRedirectCallback={handleAuthRedirect}
       cacheLocation="localstorage"
       useRefreshTokens={true}
     >

@@ -3,6 +3,13 @@ import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import { bilingualKey } from "../utils/bilingualToast";
 import { sendEmail } from "../utils/api";
+import useAuthCheck from "../hooks/useAuthCheck";
+import { useAuth0 } from "@auth0/auth0-react";
+import {
+  buildCurrentReturnTo,
+  consumePostLoginResume,
+  savePostLoginResume,
+} from "../utils/postLoginResume";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -35,6 +42,8 @@ const buildGuideMessage = ({ firstName, lastName, phone, email }) => {
 
 const HeroDownloadModal = ({ opened, onClose }) => {
   const { t } = useTranslation();
+  const { validateLogin } = useAuthCheck();
+  const { isAuthenticated } = useAuth0();
   const [formData, setFormData] = useState(INITIAL_FORM);
   const [loading, setLoading] = useState(false);
 
@@ -58,6 +67,23 @@ const HeroDownloadModal = ({ opened, onClose }) => {
     };
   }, [loading, onClose, opened]);
 
+  useEffect(() => {
+    if (!opened || !isAuthenticated) return;
+
+    const resumeState = consumePostLoginResume(
+      (entry) =>
+        entry?.type === "hero-download" &&
+        entry?.returnTo === buildCurrentReturnTo()
+    );
+
+    if (!resumeState?.formData) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      ...resumeState.formData,
+    }));
+  }, [isAuthenticated, opened]);
+
   const handleChange = (field) => (event) => {
     const value = event?.target?.value ?? "";
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -65,6 +91,16 @@ const HeroDownloadModal = ({ opened, onClose }) => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    if (!isAuthenticated) {
+      savePostLoginResume({
+        type: "hero-download",
+        formData,
+        returnTo: buildCurrentReturnTo(),
+      });
+      validateLogin({ openModal: true });
+      return;
+    }
 
     if (!formData.firstName.trim() || !formData.lastName.trim()) {
       toast.error(bilingualKey("contactModal.errorName"));

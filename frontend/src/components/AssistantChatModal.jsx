@@ -6,9 +6,11 @@ import { useAuth0 } from "@auth0/auth0-react";
 import UserDetailContext from "../context/UserDetailContext";
 import aiRobotAvatar from "../assets/ai-robot-avatar.svg";
 import { chatWithRealEstateAssistant, getUserProfile, sendAssistantResultsEmail } from "../utils/api";
-import { buildEmailHref, normalizeWhatsAppNumber } from "../utils/common";
+import { normalizeWhatsAppNumber } from "../utils/common";
 import { resolveBlogPath, resolvePropertyPath } from "../utils/seo";
 import { toast } from "react-toastify";
+import EmailLink from "./EmailLink";
+import useAuthCheck from "../hooks/useAuthCheck";
 
 const UI_TEXT = {
   en: {
@@ -202,6 +204,7 @@ const AssistantChatWidget = () => {
   const [resultsSent, setResultsSent] = useState(false);
   const [resultsEmailError, setResultsEmailError] = useState(false);
   const endRef = useRef(null);
+  const { validateLogin } = useAuthCheck();
 
   const uiLang = detectUiLang(i18n.language);
   const labels = useMemo(() => UI_TEXT[uiLang] || UI_TEXT.en, [uiLang]);
@@ -310,6 +313,7 @@ const AssistantChatWidget = () => {
   const showContactForm = allResults.length > 0 && !resultsSent;
 
   const handleSendResults = async () => {
+    if (!validateLogin({ openModal: true })) return;
     if (!contactForm.firstName.trim() || !contactForm.email.trim()) return;
     setSendingResults(true);
     setResultsEmailError(false);
@@ -637,14 +641,14 @@ const AssistantChatWidget = () => {
                                             </a>
                                           ) : null}
                                           {consultant.email ? (
-                                            <a
-                                              href={buildEmailHref(consultant.email)}
+                                            <EmailLink
+                                              email={consultant.email}
                                               target="_blank"
                                               rel="noreferrer"
                                               className="inline-flex rounded-lg border border-emerald-200 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50"
                                             >
                                               {labels.consultantEmail}
-                                            </a>
+                                            </EmailLink>
                                           ) : null}
                                           {profileUrl ? (
                                             <a

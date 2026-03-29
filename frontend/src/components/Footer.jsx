@@ -6,9 +6,9 @@ import logo from "../assets/logo.png";
 import { MdLocationOn, MdPhone, MdEmail } from "react-icons/md";
 import { FaWhatsapp } from "react-icons/fa";
 import {
-  buildEmailHref,
   normalizeWhatsAppNumber,
 } from "../utils/common";
+import EmailLink from "./EmailLink";
 import PhoneLink from "./PhoneLink";
 
 const Footer = () => {
@@ -216,18 +216,15 @@ const Footer = () => {
                             {content}
                           </PhoneLink>
                         ) : (() => {
-                          const emailHref = buildEmailHref(link.value);
-                          return emailHref ? (
-                            <a
-                              href={emailHref}
+                          return (
+                            <EmailLink
+                              email={link.value}
                               target="_blank"
                               rel="noreferrer"
                               className="flex gap-3 items-start transition-colors hover:text-[#06a84e]"
                             >
                               {content}
-                            </a>
-                          ) : (
-                            <div className="flex gap-3 items-start">{content}</div>
+                            </EmailLink>
                           );
                         })()}
 

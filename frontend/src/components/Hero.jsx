@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useAuth0 } from "@auth0/auth0-react";
 import heroBg from "../assets/img1.png";
 import heroCyprus from "../assets/hero/Cyprus.jpg";
 import heroDubai from "../assets/hero/Dubai.jpg";
@@ -13,6 +14,10 @@ import iconGeorgia from "../assets/icons/boat.png";
 import iconCyprus from "../assets/icons/cyprus.png";
 import HeroDownloadModal from "./HeroDownloadModal";
 import { getLocalizedAlt } from "../utils/mediaAlt";
+import {
+  buildCurrentReturnTo,
+  getPostLoginResume,
+} from "../utils/postLoginResume";
 
 const MOBILE_BREAKPOINT_QUERY = "(max-width: 639px)";
 const MOBILE_SLIDE_INTERVAL_MS = 6000;
@@ -46,6 +51,7 @@ const Hero = () => {
   const [allSlideDirection, setAllSlideDirection] = useState("next");
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const { isAuthenticated } = useAuth0();
 
   const allHeroSlides = ALL_HERO_SLIDES.map((slide) => ({
     ...slide,
@@ -275,6 +281,18 @@ const Hero = () => {
   const handleDownloadClick = () => {
     setIsDownloadModalOpen(true);
   };
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const resumeState = getPostLoginResume();
+    if (
+      resumeState?.type === "hero-download" &&
+      resumeState?.returnTo === buildCurrentReturnTo()
+    ) {
+      setIsDownloadModalOpen(true);
+    }
+  }, [isAuthenticated]);
 
   const renderSlideMedia = (slide, className) => {
     if (slide.type === "video") {

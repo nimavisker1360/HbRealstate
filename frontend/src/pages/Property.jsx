@@ -175,6 +175,11 @@ import { resolveProjectPath } from "../utils/seo";
 import IstanbulMarketAnalytics from "../components/market/IstanbulMarketAnalytics";
 import InquirySidebarCard from "../components/InquirySidebarCard";
 import { getLocalizedAlt } from "../utils/mediaAlt";
+import {
+  buildCurrentReturnTo,
+  consumePostLoginResume,
+  savePostLoginResume,
+} from "../utils/postLoginResume";
 
 // Format date helper function
 const formatDate = (dateString, showFullDate = false, locale = "en") => {
@@ -285,7 +290,23 @@ const Property = ({ topSlot = null }) => {
   const locationSectionRef = useRef(null);
   const marketSectionRef = useRef(null);
   const { validateLogin } = useAuthCheck();
-  const { user } = useAuth0();
+  const openBookingModal = () => {
+    if (!isAuthenticated) {
+      savePostLoginResume({
+        type: "property-booking",
+        propertyId: id,
+        returnTo: buildCurrentReturnTo(),
+      });
+      validateLogin({ openModal: true });
+      return;
+    }
+    setModalOpened(true);
+  };
+  const openContactModal = () => {
+    if (!validateLogin({ openModal: true })) return;
+    setContactModalOpen(true);
+  };
+  const { user, isAuthenticated } = useAuth0();
   const whatsappNumber = normalizeWhatsAppNumber(data?.consultant?.whatsapp);
   const { selectedCurrency, baseCurrency, rates, convertAmount, formatMoney } =
     useContext(CurrencyContext);
@@ -375,6 +396,21 @@ const Property = ({ topSlot = null }) => {
     userDetails: { token, bookings },
     setUserDetails,
   } = useContext(UserDetailContext);
+
+  useEffect(() => {
+    if (!isAuthenticated || !id) return;
+
+    const resumeState = consumePostLoginResume(
+      (entry) =>
+        entry?.type === "property-booking" &&
+        entry?.propertyId === id &&
+        entry?.returnTo === buildCurrentReturnTo()
+    );
+
+    if (resumeState) {
+      setModalOpened(true);
+    }
+  }, [id, isAuthenticated]);
 
   const { mutate: cancelBooking, isLoading: cancelling } = useMutation({
     mutationFn: () => removeBooking(id, user?.email, token),
@@ -1017,7 +1053,7 @@ const Property = ({ topSlot = null }) => {
                     {t('propertyDetails.cancelBooking')}
                   </Button>
                   <Button
-                    onClick={() => setContactModalOpen(true)}
+                    onClick={openContactModal}
                     className="flex-1 bg-secondary hover:bg-secondary/90"
                     leftSection={<FaEnvelope />}
                   >
@@ -1033,9 +1069,7 @@ const Property = ({ topSlot = null }) => {
             ) : (
               <>
                 <button
-                  onClick={() => {
-                    validateLogin() && setModalOpened(true);
-                  }}
+                  onClick={openBookingModal}
                   className="btn-secondary rounded-xl !px-5 !py-[7px] shadow-sm w-full"
                 >
                   {t('propertyDetails.bookVisit')}
@@ -1360,6 +1394,7 @@ const Property = ({ topSlot = null }) => {
             }
             consultantId={data?.consultant?.id || data?.consultantId || ""}
             subjectPrefix="Property Inquiry"
+            resumeKey={`property-inquiry-${id}`}
           />
 
           {/* Consultant Contact Section */}
@@ -1431,7 +1466,7 @@ const Property = ({ topSlot = null }) => {
                 </a>
                   <button
                     type="button"
-                    onClick={() => setContactModalOpen(true)}
+                    onClick={openContactModal}
                     className="flexCenter gap-2 rounded-2xl bg-white py-3 text-sm font-medium text-tertiary transition-colors hover:bg-gray-100 w-full"
                   >
                     <FaEnvelope className="text-secondary" />

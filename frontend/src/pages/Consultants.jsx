@@ -16,6 +16,7 @@ import ContactModal from "../components/ContactModal";
 import { normalizeWhatsAppNumber } from "../utils/common";
 import PhoneLink from "../components/PhoneLink";
 import { getLocalizedAlt } from "../utils/mediaAlt";
+import useAuthCheck from "../hooks/useAuthCheck";
 
 // Helper function to get localized field
 const getLocalizedField = (consultant, field, language) => {
@@ -39,6 +40,11 @@ const Consultants = () => {
   const [selectedConsultant, setSelectedConsultant] = useState(null);
   const [contactModalOpen, setContactModalOpen] = useState(false);
   const { data: consultants, isLoading, isError } = useConsultants();
+  const { validateLogin } = useAuthCheck();
+  const openContactModal = () => {
+    if (!validateLogin({ openModal: true })) return;
+    setContactModalOpen(true);
+  };
 
   // Calculate stats
   const averageRating = consultants?.length 
@@ -288,7 +294,7 @@ const Consultants = () => {
             </p>
             <div className="flex flex-wrap gap-4">
               <button
-                onClick={() => setContactModalOpen(true)}
+                onClick={openContactModal}
                 className="btn-secondary !bg-secondary !ring-secondary"
               >
                 {currentLang === "tr" ? "Geri Arama İste" : "Request Callback"}
@@ -321,7 +327,7 @@ const Consultants = () => {
                 <span dir="ltr">{consultants?.[0]?.phone}</span>
               </PhoneLink>
               <button 
-                onClick={() => setContactModalOpen(true)}
+                onClick={openContactModal}
                 className="flex items-center gap-3 text-white/70 hover:text-white transition-colors cursor-pointer w-full text-left"
               >
                 <div className="w-10 h-10 bg-white/10 rounded-lg flexCenter">
@@ -460,7 +466,7 @@ const Consultants = () => {
               <button
                 onClick={() => {
                   setSelectedConsultant(null);
-                  setContactModalOpen(true);
+                  openContactModal();
                 }}
                 className="flex items-center justify-center gap-2 bg-gradient-to-r from-secondary/80 to-secondary text-white py-4 rounded-2xl hover:from-secondary hover:to-secondary/80 transition-all font-semibold shadow-lg w-full cursor-pointer"
               >

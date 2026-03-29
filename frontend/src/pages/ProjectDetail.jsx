@@ -58,6 +58,11 @@ import { extractObjectId, resolveProjectPath } from "../utils/seo";
 import IstanbulMarketAnalytics from "../components/market/IstanbulMarketAnalytics";
 import InquirySidebarCard from "../components/InquirySidebarCard";
 import { getLocalizedAlt } from "../utils/mediaAlt";
+import {
+  buildCurrentReturnTo,
+  consumePostLoginResume,
+  savePostLoginResume,
+} from "../utils/postLoginResume";
 
 // All possible Bina Özellikleri (Building Features)
 const ALL_BINA_OZELLIKLERI = [
@@ -327,7 +332,7 @@ const ProjectDetail = ({ topSlot = null }) => {
   const location = useLocation();
   const { t, i18n } = useTranslation();
   const { validateLogin } = useAuthCheck();
-  const { user } = useAuth0();
+  const { user, isAuthenticated } = useAuth0();
   const {
     currencies,
     selectedCurrency,
@@ -377,6 +382,18 @@ const ProjectDetail = ({ topSlot = null }) => {
   const [bookingModalOpened, setBookingModalOpened] = useState(false);
   const [inquiryModalOpen, setInquiryModalOpen] = useState(false);
   const [activeOverviewTab, setActiveOverviewTab] = useState("description");
+  const openBookingModal = () => {
+    if (!isAuthenticated || !project?.id) {
+      savePostLoginResume({
+        type: "project-booking",
+        propertyId: project?.id || "",
+        returnTo: buildCurrentReturnTo(),
+      });
+      validateLogin({ openModal: true });
+      return;
+    }
+    setBookingModalOpened(true);
+  };
   const mainVideoPreviewRef = useRef(null);
   const mainGalleryTouchStartXRef = useRef(null);
   const lightboxTouchStartXRef = useRef(null);
@@ -477,6 +494,21 @@ const ProjectDetail = ({ topSlot = null }) => {
     Boolean(project?.createdAt) ||
     Boolean(project?.updatedAt && project?.updatedAt !== project?.createdAt);
   const bookedProjectVisit = bookings?.find((booking) => booking?.id === project?.id);
+
+  useEffect(() => {
+    if (!isAuthenticated || !project?.id) return;
+
+    const resumeState = consumePostLoginResume(
+      (entry) =>
+        entry?.type === "project-booking" &&
+        entry?.propertyId === project.id &&
+        entry?.returnTo === buildCurrentReturnTo()
+    );
+
+    if (resumeState) {
+      setBookingModalOpened(true);
+    }
+  }, [isAuthenticated, project?.id]);
 
   const { mutate: cancelBooking, isLoading: cancelling } = useMutation({
     mutationFn: () => removeBooking(project?.id, user?.email, token),
@@ -1128,9 +1160,7 @@ const ProjectDetail = ({ topSlot = null }) => {
                   ) : (
                     <button
                       type="button"
-                      onClick={() => {
-                        validateLogin() && setBookingModalOpened(true);
-                      }}
+                      onClick={openBookingModal}
                       className="btn-secondary w-full rounded-xl !px-5 !py-[7px] shadow-sm"
                     >
                       {t("propertyDetails.bookVisit")}
@@ -1793,6 +1823,7 @@ const ProjectDetail = ({ topSlot = null }) => {
                 locationLabel={[project.city, project.district].filter(Boolean).join(" / ")}
                 consultantId={project.consultantId || projectConsultant?.id || ""}
                 subjectPrefix="Project Inquiry"
+                resumeKey={`project-inquiry-sidebar-${project.id}`}
               />
             </div>
 
@@ -1902,6 +1933,7 @@ const ProjectDetail = ({ topSlot = null }) => {
             subjectPrefix="Project Inquiry"
             className="border-0 shadow-none"
             onSuccess={() => setInquiryModalOpen(false)}
+            resumeKey={`project-inquiry-modal-${project?.id || "unknown"}`}
           />
         </div>
       </Modal>

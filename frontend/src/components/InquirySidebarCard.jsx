@@ -1,9 +1,16 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import { MdInfoOutline } from "react-icons/md";
 import { bilingualKey } from "../utils/bilingualToast";
 import { sendEmail } from "../utils/api";
+import useAuthCheck from "../hooks/useAuthCheck";
+import { useAuth0 } from "@auth0/auth0-react";
+import {
+  buildCurrentReturnTo,
+  consumePostLoginResume,
+  savePostLoginResume,
+} from "../utils/postLoginResume";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -27,15 +34,43 @@ const InquirySidebarCard = ({
   subjectPrefix = "Property Inquiry",
   className = "",
   onSuccess,
+  resumeKey = "",
 }) => {
   const { t } = useTranslation();
+  const { validateLogin } = useAuthCheck();
+  const { isAuthenticated } = useAuth0();
   const [loading, setLoading] = useState(false);
+  const cardRef = useRef(null);
   const [contactForm, setContactForm] = useState({
     name: "",
     email: "",
     phone: "",
     message: "",
   });
+  const resolvedResumeKey =
+    resumeKey || `${subjectPrefix}:${propertyId || listingNo || "default"}`;
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const resumeState = consumePostLoginResume(
+      (entry) =>
+        entry?.type === "inquiry-sidebar" &&
+        entry?.resumeKey === resolvedResumeKey &&
+        entry?.returnTo === buildCurrentReturnTo()
+    );
+
+    if (!resumeState?.formData) return;
+
+    setContactForm((prev) => ({
+      ...prev,
+      ...resumeState.formData,
+    }));
+
+    requestAnimationFrame(() => {
+      cardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  }, [isAuthenticated, resolvedResumeKey]);
 
   const handleFieldChange = (field) => (event) => {
     const value = event?.target?.value ?? "";
@@ -44,6 +79,17 @@ const InquirySidebarCard = ({
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    if (!isAuthenticated) {
+      savePostLoginResume({
+        type: "inquiry-sidebar",
+        resumeKey: resolvedResumeKey,
+        formData: contactForm,
+        returnTo: buildCurrentReturnTo(),
+      });
+      validateLogin({ openModal: true });
+      return;
+    }
 
     if (!contactForm.name.trim()) {
       toast.error(bilingualKey("projectDetail.errorName"));
@@ -95,6 +141,7 @@ const InquirySidebarCard = ({
 
   return (
     <div
+      ref={cardRef}
       className={`overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_22px_70px_-48px_rgba(15,23,42,0.48)] ${className}`}
     >
       <div className="border-b border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(255,122,26,0.16),_transparent_40%),linear-gradient(180deg,_#ffffff_0%,_#fff7f1_100%)] p-6">

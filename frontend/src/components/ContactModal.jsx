@@ -8,6 +8,7 @@ import PropTypes from "prop-types";
 import UserDetailContext from "../context/UserDetailContext";
 import { useTranslation } from "react-i18next";
 import useConsultants from "../hooks/useConsultants";
+import useAuthCheck from "../hooks/useAuthCheck";
 
 const ContactModal = ({
   opened,
@@ -22,6 +23,7 @@ const ContactModal = ({
   overlayOpacity = 0.55,
 }) => {
   const { t, i18n } = useTranslation();
+  const { validateLogin } = useAuthCheck();
   const currentLang = i18n.language === "tr" ? "tr" : "en";
   const { data: consultants = [], isLoading: consultantsLoading } =
     useConsultants();
@@ -88,6 +90,10 @@ const ContactModal = ({
   }, [consultantId, opened]);
 
   const handleSubmit = async () => {
+    if (!validateLogin({ openModal: true })) {
+      return;
+    }
+
     // Validation
     if (!formData.name.trim()) {
       toast.error(bilingualKey("contactModal.errorName"));
@@ -142,6 +148,10 @@ const ContactModal = ({
   };
 
   const handleReviewSubmit = async () => {
+    if (!validateLogin({ openModal: true })) {
+      return;
+    }
+
     if (!reviewData.name.trim()) {
       toast.error(bilingualKey("contactModal.errorName"));
       return;

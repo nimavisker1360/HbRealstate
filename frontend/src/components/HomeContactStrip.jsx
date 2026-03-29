@@ -1,8 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import { bilingualKey } from "../utils/bilingualToast";
 import { sendEmail } from "../utils/api";
+import useAuthCheck from "../hooks/useAuthCheck";
+import { useAuth0 } from "@auth0/auth0-react";
+import {
+  buildCurrentReturnTo,
+  consumePostLoginResume,
+  savePostLoginResume,
+} from "../utils/postLoginResume";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -34,8 +41,33 @@ const buildHomepageMessage = ({ firstName, lastName, phone }) => {
 
 const HomeContactStrip = () => {
   const { t } = useTranslation();
+  const { validateLogin } = useAuthCheck();
+  const { isAuthenticated } = useAuth0();
   const [formData, setFormData] = useState(INITIAL_FORM);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const resumeState = consumePostLoginResume(
+      (entry) =>
+        entry?.type === "home-contact-strip" &&
+        entry?.returnTo === buildCurrentReturnTo()
+    );
+
+    if (!resumeState?.formData) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      ...resumeState.formData,
+    }));
+
+    requestAnimationFrame(() => {
+      document
+        .getElementById("home-contact-form")
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  }, [isAuthenticated]);
 
   const handleChange = (field) => (event) => {
     const value = event?.target?.value ?? "";
@@ -44,6 +76,16 @@ const HomeContactStrip = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    if (!isAuthenticated) {
+      savePostLoginResume({
+        type: "home-contact-strip",
+        formData,
+        returnTo: buildCurrentReturnTo(),
+      });
+      validateLogin({ openModal: true });
+      return;
+    }
 
     if (!formData.firstName.trim() || !formData.lastName.trim()) {
       toast.error(bilingualKey("contactModal.errorName"));

@@ -23,10 +23,6 @@ const LanguageSwitcher = ({ className = '' }) => {
     const sanitizedSearch = searchParams.toString();
 
     window.localStorage.setItem("i18nextLng", normalizedTargetLanguage);
-    window.sessionStorage.setItem(
-      "suppress_auto_login_prompt_until",
-      String(Date.now() + 12 * 1000)
-    );
     void i18n.changeLanguage(normalizedTargetLanguage);
 
     const targetPath = buildLocalizedPath({
