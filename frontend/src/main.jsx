@@ -15,7 +15,10 @@ import {
   resolvePreferredLanguage,
 } from "./utils/languageRouting";
 import { captureAttributionParams } from "./utils/attribution";
-import { buildCurrentReturnTo } from "./utils/postLoginResume";
+import {
+  buildCurrentReturnTo,
+  POST_LOGIN_AUTH_COMPLETE_EVENT,
+} from "./utils/postLoginResume";
 
 captureAttributionParams();
 
@@ -26,6 +29,11 @@ const handleAuthRedirect = (appState) => {
       : buildCurrentReturnTo();
 
   window.history.replaceState(window.history.state, "", nextPath);
+  window.dispatchEvent(
+    new CustomEvent(POST_LOGIN_AUTH_COMPLETE_EVENT, {
+      detail: { returnTo: nextPath },
+    })
+  );
   window.dispatchEvent(new Event("app:language-path-change"));
   window.dispatchEvent(new PopStateEvent("popstate"));
 };

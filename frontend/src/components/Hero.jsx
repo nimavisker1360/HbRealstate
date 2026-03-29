@@ -13,10 +13,13 @@ import iconDubai from "../assets/icons/dubai.png";
 import iconGeorgia from "../assets/icons/boat.png";
 import iconCyprus from "../assets/icons/cyprus.png";
 import HeroDownloadModal from "./HeroDownloadModal";
+import useAuthCheck from "../hooks/useAuthCheck";
 import { getLocalizedAlt } from "../utils/mediaAlt";
 import {
   buildCurrentReturnTo,
   getPostLoginResume,
+  POST_LOGIN_AUTH_COMPLETE_EVENT,
+  savePostLoginResume,
 } from "../utils/postLoginResume";
 
 const MOBILE_BREAKPOINT_QUERY = "(max-width: 639px)";
@@ -51,7 +54,8 @@ const Hero = () => {
   const [allSlideDirection, setAllSlideDirection] = useState("next");
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
-  const { isAuthenticated } = useAuth0();
+  const { isAuthenticated, isLoading } = useAuth0();
+  const { validateLogin } = useAuthCheck();
 
   const allHeroSlides = ALL_HERO_SLIDES.map((slide) => ({
     ...slide,
@@ -279,18 +283,48 @@ const Hero = () => {
   };
 
   const handleDownloadClick = () => {
+    if (isLoading || !isAuthenticated) {
+      setIsDownloadModalOpen(false);
+      savePostLoginResume({
+        type: "hero-download",
+        returnTo: buildCurrentReturnTo(),
+      });
+      validateLogin({ openModal: true });
+      return;
+    }
+
     setIsDownloadModalOpen(true);
   };
 
   useEffect(() => {
-    if (!isAuthenticated) return;
+    const handlePostLoginComplete = () => {
+      if (isLoading || !isAuthenticated) return;
 
-    const resumeState = getPostLoginResume();
-    if (
-      resumeState?.type === "hero-download" &&
-      resumeState?.returnTo === buildCurrentReturnTo()
-    ) {
-      setIsDownloadModalOpen(true);
+      const resumeState = getPostLoginResume();
+      if (
+        resumeState?.type === "hero-download" &&
+        resumeState?.returnTo === buildCurrentReturnTo()
+      ) {
+        setIsDownloadModalOpen(true);
+      }
+    };
+
+    window.addEventListener(
+      POST_LOGIN_AUTH_COMPLETE_EVENT,
+      handlePostLoginComplete
+    );
+
+    return () => {
+      window.removeEventListener(
+        POST_LOGIN_AUTH_COMPLETE_EVENT,
+        handlePostLoginComplete
+      );
+    };
+  }, [isAuthenticated, isLoading]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setIsDownloadModalOpen(false);
     }
   }, [isAuthenticated]);
 

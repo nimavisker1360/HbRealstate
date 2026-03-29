@@ -1,5 +1,6 @@
 const POST_LOGIN_RESUME_KEY = "hb:post-login-resume";
 const MAX_RESUME_AGE_MS = 30 * 60 * 1000;
+export const POST_LOGIN_AUTH_COMPLETE_EVENT = "hb:post-login-auth-complete";
 
 export const buildCurrentReturnTo = () => {
   if (typeof window === "undefined") return "/";

@@ -43,12 +43,12 @@ const buildGuideMessage = ({ firstName, lastName, phone, email }) => {
 const HeroDownloadModal = ({ opened, onClose }) => {
   const { t } = useTranslation();
   const { validateLogin } = useAuthCheck();
-  const { isAuthenticated } = useAuth0();
+  const { isAuthenticated, isLoading } = useAuth0();
   const [formData, setFormData] = useState(INITIAL_FORM);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!opened) return undefined;
+    if (!opened || isLoading || !isAuthenticated) return undefined;
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -65,10 +65,10 @@ const HeroDownloadModal = ({ opened, onClose }) => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [loading, onClose, opened]);
+  }, [isAuthenticated, isLoading, loading, onClose, opened]);
 
   useEffect(() => {
-    if (!opened || !isAuthenticated) return;
+    if (!opened || isLoading || !isAuthenticated) return;
 
     const resumeState = consumePostLoginResume(
       (entry) =>
@@ -82,7 +82,7 @@ const HeroDownloadModal = ({ opened, onClose }) => {
       ...prev,
       ...resumeState.formData,
     }));
-  }, [isAuthenticated, opened]);
+  }, [isAuthenticated, isLoading, opened]);
 
   const handleChange = (field) => (event) => {
     const value = event?.target?.value ?? "";
@@ -140,7 +140,7 @@ const HeroDownloadModal = ({ opened, onClose }) => {
     }
   };
 
-  if (!opened) {
+  if (!opened || isLoading || !isAuthenticated) {
     return null;
   }
 
