@@ -312,6 +312,17 @@ const BlogPost = () => {
     }
   };
 
+  const localizedContent = getLocalizedContent("content");
+  const localizedTitle = getLocalizedContent("title") || "Blog Post";
+  const localizedContentWithImageAlts = useMemo(
+    () =>
+      ensureHtmlImageAlts(localizedContent, {
+        language,
+        title: localizedTitle,
+      }),
+    [language, localizedContent, localizedTitle]
+  );
+
   if (isLoading) {
     return (
       <div className="min-h-screen flexCenter bg-[#f7f3ea] pt-24">
@@ -347,17 +358,6 @@ const BlogPost = () => {
       </div>
     );
   }
-
-  const localizedContent = getLocalizedContent("content");
-  const localizedTitle = getLocalizedContent("title") || "Blog Post";
-  const localizedContentWithImageAlts = useMemo(
-    () =>
-      ensureHtmlImageAlts(localizedContent, {
-        language,
-        title: localizedTitle,
-      }),
-    [language, localizedContent, localizedTitle]
-  );
   const blogContentCandidates = [
     localizedContent,
     blog.content,
