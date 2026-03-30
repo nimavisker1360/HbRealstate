@@ -120,24 +120,118 @@ export const contentHubPages = [
   page({
     slug: "turkey-property-investment",
     title: "Turkey Property Investment: Strategy, Risk, And Return Framework",
+    title_tr: "Türkiye'de Gayrimenkul Yatırımı: Strateji, Risk ve Getiri Çerçevesi",
+    title_ru: "Инвестиции в недвижимость Турции: стратегия, риск и модель доходности",
     description: "Build a stronger Turkey property investment strategy with practical guidance on market selection, due diligence, financing, and long-term portfolio management.",
+    description_tr:
+      "Pazar seçimi, durum tespiti, finansman ve uzun vadeli portföy yönetimi konusunda pratik yönlendirmelerle Türkiye gayrimenkul yatırım stratejinizi güçlendirin.",
+    description_ru:
+      "Усильте свою стратегию инвестиций в недвижимость Турции с помощью практических рекомендаций по выбору рынка, due diligence, финансированию и долгосрочному управлению портфелем.",
     breadcrumbLabel: "Turkey Property Investment",
+    breadcrumbLabel_tr: "Türkiye'de Gayrimenkul Yatırımı",
+    breadcrumbLabel_ru: "Инвестиции в недвижимость Турции",
     pageType: "pillar page",
     taxonomy: { contentType: "pillar page", category: "turkey investment guides", country: "Turkey", tags: ["investment", "portfolio"], intents: ["investment", "rental-income", "legal-tax"] },
     highlights: ["Choose submarkets before choosing listings.", "Model net return, not brochure yield.", "Build every purchase with an exit thesis."],
+    highlights_tr: [
+      "İlan seçmeden önce alt pazarları belirleyin.",
+      "Broşür getirisine değil, net getiriye odaklanın.",
+      "Her alımı bir çıkış senaryosuyla planlayın.",
+    ],
+    highlights_ru: [
+      "Выбирайте субрынки до выбора конкретных объектов.",
+      "Считайте чистую доходность, а не цифры из брошюр.",
+      "Покупку нужно строить с понятным сценарием выхода.",
+    ],
     relatedLinks: [
       { to: "/property-investment-in-antalya", label: "Antalya Guide" },
       { to: "/best-areas-in-istanbul-for-investment", label: "Best Istanbul Areas" },
       { to: "/listing", label: "All Listings" },
     ],
+    relatedLinks_tr: [
+      { to: "/property-investment-in-antalya", label: "Antalya Rehberi" },
+      { to: "/best-areas-in-istanbul-for-investment", label: "İstanbul'daki En İyi Bölgeler" },
+      { to: "/listing", label: "Tüm İlanlar" },
+    ],
+    relatedLinks_ru: [
+      { to: "/property-investment-in-antalya", label: "Гид по Анталье" },
+      { to: "/best-areas-in-istanbul-for-investment", label: "Лучшие районы Стамбула" },
+      { to: "/listing", label: "Все объявления" },
+    ],
     introParagraphs: turkeyPack.introParagraphs,
+    introParagraphs_tr: [
+      "Türkiye'de gayrimenkul yatırımı, çoğu ilan odaklı sitenin sunduğundan daha güçlü bir alt pazar karşılaştırması gerektirir. Alıcılar genellikle broşür özelliklerinden önce ilçeleri, işletme maliyetlerini ve çıkış likiditesini karşılaştırdıklarında daha sağlıklı sonuçlar alır.",
+      "Türkiye'de arz baskısı, ulaşım erişimi ve kiracı derinliği, genel vaatlerden daha belirleyicidir. Doğru rehber; stratejiyi, durum tespitini ve kısa liste mantığını aynı çerçevede toplamalıdır.",
+    ],
+    introParagraphs_ru: [
+      "Инвестиции в недвижимость Турции требуют более глубокого сравнения субрынков, чем обычно предлагают сайты, сфокусированные только на листингах. Покупатели обычно получают лучший результат, когда сравнивают районы, операционные расходы и ликвидность выхода ещё до того, как сравнивают рекламные обещания объектов.",
+      "В Турции давление предложения, транспортная доступность и глубина арендного спроса важнее общих обещаний. Правильный гид должен связывать стратегию, due diligence и логику составления shortlist в единую картину.",
+    ],
     sections: turkeyPack.sections,
+    sections_tr: [
+      {
+        heading: "Türkiye Pazarını Nasıl Değerlendirmeli",
+        paragraphs: [
+          "İşe hedefiniz, bütçe bandınız ve planlanan elde tutma sürenizle başlayın. Bu yaklaşım, geniş ilan aramalarına kıyasla ilçe ve mülk tipi seçimini çok daha hızlı daraltır.",
+          "Talep derinliğini yeni arzla birlikte karşılaştırın. Güçlü pazarlar bile benzer stok çok hızlı artıyorsa zayıf performans gösterebilir.",
+        ],
+      },
+      {
+        heading: "Nasıl Güvenli İlerlenir",
+        paragraphs: [
+          "Kısa listeler; hukuki inceleme, değerleme mantığı ve düzenli sahip olma maliyeti satın alma kararının bir parçası olarak ele alındığında güçlenir, son aşama idari işlem gibi görüldüğünde değil.",
+          "En iyi fırsatlar genellikle kira potansiyeli, yaşanabilirlik, dokümantasyon ve gelecekteki yeniden satış gücü aynı anda tutarlı kalan varlıklardır.",
+        ],
+      },
+    ],
+    sections_ru: [
+      {
+        heading: "Как оценивать рынок Турции",
+        paragraphs: [
+          "Начинайте с цели покупки, бюджета и предполагаемого срока владения. Такой подход обычно быстрее сужает выбор по району и типу недвижимости, чем широкий поиск по листингам.",
+          "Сравнивайте глубину спроса с объёмом нового предложения. Даже сильные рынки могут показывать слабый результат, если похожих объектов становится слишком много.",
+        ],
+      },
+      {
+        heading: "Как действовать безопасно",
+        paragraphs: [
+          "Shortlist становится сильнее, когда юридическая проверка, логика оценки и регулярные расходы владения рассматриваются как часть инвестиционного решения, а не как финальная административная формальность.",
+          "Лучшие возможности обычно дают те активы, у которых одновременно совпадают арендный потенциал, пригодность для жизни, качество документов и будущая ликвидность при перепродаже.",
+        ],
+      },
+    ],
     faqs: faq([
       ["Is Turkey suitable for long-term property investors?", "Yes, when acquisitions are based on district-level fundamentals, disciplined underwriting, and clean execution."],
       ["What should investors compare first across cities?", "Demand depth, supply pressure, liquidity, and real ownership cost."],
       ["Should one city be chosen immediately?", "Usually no. Comparing two or three relevant submarkets improves pricing discipline."],
     ]),
+    faqs_tr: faq([
+      ["Türkiye uzun vadeli gayrimenkul yatırımcıları için uygun mu?", "Evet, eğer alımlar ilçe bazlı temellere, disiplinli fiyat analizine ve temiz icraya dayanıyorsa."],
+      ["Yatırımcılar şehirler arasında ilk olarak neyi karşılaştırmalı?", "Talep derinliğini, arz baskısını, likiditeyi ve gerçek sahip olma maliyetini."],
+      ["Tek bir şehir hemen seçilmeli mi?", "Genellikle hayır. İki ya da üç ilgili alt pazarı karşılaştırmak fiyat disiplinini güçlendirir."],
+    ]),
+    faqs_ru: faq([
+      ["Подходит ли Турция для долгосрочных инвесторов в недвижимость?", "Да, если покупка строится на фундаментальных показателях района, дисциплинированной оценке сделки и чистом исполнении."],
+      ["Что инвестору нужно сравнивать в первую очередь между городами?", "Глубину спроса, давление предложения, ликвидность и реальную стоимость владения."],
+      ["Стоит ли сразу выбирать только один город?", "Обычно нет. Сравнение двух или трёх подходящих субрынков улучшает ценовую дисциплину."],
+    ]),
     ctaSection: cta("Build a shortlist around strategy, not random inventory", "Start with intent, city, citizenship needs, and payment-plan preference before you compare individual listings.", "Explore listings", "/listing", "Request investment advice", "/consultants"),
+    cta_tr: cta(
+      "Rastgele portföy yerine strateji etrafında bir kısa liste oluşturun",
+      "Tek tek ilanları karşılaştırmadan önce niyetinizi, şehri, vatandaşlık ihtiyacını ve ödeme planı tercihinizi netleştirin.",
+      "İlanları keşfet",
+      "/listing",
+      "Yatırım danışmanlığı iste",
+      "/consultants"
+    ),
+    cta_ru: cta(
+      "Соберите shortlist вокруг стратегии, а не случайного предложения",
+      "Сначала определите цель, город, потребность в гражданстве и предпочтения по рассрочке, а уже потом сравнивайте отдельные объекты.",
+      "Смотреть объявления",
+      "/listing",
+      "Запросить инвестиционную консультацию",
+      "/consultants"
+    ),
   }),
   page({
     slug: "turkish-citizenship-property",

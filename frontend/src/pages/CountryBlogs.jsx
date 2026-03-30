@@ -17,6 +17,22 @@ import {
 } from "../utils/seo";
 
 const placeholderImages = [blog1, blog2, blog3, blog4];
+const COUNTRY_LABELS = {
+  tr: {
+    turkey: "Türkiye",
+    cyprus: "Kıbrıs",
+    dubai: "Dubai",
+    georgia: "Gürcistan",
+    greece: "Yunanistan",
+  },
+  ru: {
+    turkey: "Турция",
+    cyprus: "Кипр",
+    dubai: "Дубай",
+    georgia: "Грузия",
+    greece: "Греция",
+  },
+};
 
 const CountryBlogs = () => {
   const { t, i18n } = useTranslation();
@@ -98,6 +114,13 @@ const CountryBlogs = () => {
     return resolveCountrySlug(country);
   };
 
+  const getLocalizedCountryLabel = (country) => {
+    const raw = fixMojibake(country || "");
+    if (!raw) return "";
+    const key = raw.toLowerCase().trim();
+    return COUNTRY_LABELS[language]?.[key] || raw;
+  };
+
   const getSummaryItems = (text) => {
     if (!text || typeof text !== "string") return [];
     const items = text
@@ -118,13 +141,27 @@ const CountryBlogs = () => {
   const countryName = countryBlogs.length
     ? getCountryFromBlog(countryBlogs[0].blog)
     : decodeURIComponent(normalizedSlug || "").replace(/-/g, " ");
+  const displayCountryName =
+    getLocalizedCountryLabel(countryName) || t("blogs.countryFallbackName", "Country");
   const canonicalPath = normalizedSlug ? `/blogs/${normalizedSlug}` : "/blogs";
-  const description = `Read curated real estate insights for ${countryName || "this country"} with ${countryBlogs.length} available posts.`;
+  const seoTitle = t("blogs.countrySeoTitle", {
+    country: displayCountryName,
+    defaultValue: "{{country}} Real Estate Articles | HB International Real Estate",
+  });
+  const description = t("blogs.countrySeoDescription", {
+    country: displayCountryName,
+    count: countryBlogs.length,
+    defaultValue:
+      "Read curated real estate insights for {{country}} with {{count}} available posts.",
+  });
   const structuredData = [
     {
       "@context": "https://schema.org",
       "@type": "CollectionPage",
-      name: `${countryName || "Country"} Real Estate Articles`,
+      name: t("blogs.countrySchemaName", {
+        country: displayCountryName,
+        defaultValue: "{{country}} Real Estate Articles",
+      }),
       description,
       url: `${SITE_URL}${canonicalPath}`,
     },
@@ -135,19 +172,19 @@ const CountryBlogs = () => {
         {
           "@type": "ListItem",
           position: 1,
-          name: "Home",
+          name: t("guidePage.home", "Home"),
           item: SITE_URL,
         },
         {
           "@type": "ListItem",
           position: 2,
-          name: "Blogs",
+          name: t("blogs.breadcrumb", "Blogs"),
           item: `${SITE_URL}/blogs`,
         },
         {
           "@type": "ListItem",
           position: 3,
-          name: countryName || "Country",
+          name: displayCountryName,
           item: `${SITE_URL}${canonicalPath}`,
         },
       ],
@@ -157,7 +194,7 @@ const CountryBlogs = () => {
   return (
     <>
       <SEO
-        title={`${countryName || "Country"} Real Estate Articles | HB International Real Estate`}
+        title={seoTitle}
         description={description}
         canonicalPath={canonicalPath}
         languageAlternates={buildLanguageAlternates(canonicalPath)}
@@ -184,7 +221,7 @@ const CountryBlogs = () => {
 
         <div className="mt-6 flex flex-col gap-4">
           <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">
-            {countryName || t("blogs.title", "Our Expert Blogs")}
+            {displayCountryName}
           </h1>
           <p className="text-slate-600">
             {t("blogs.countryIntro", "Articles related to this country.")}

@@ -143,21 +143,21 @@ const BlogPost = () => {
   const language = isTurkish ? "tr" : isRussian ? "ru" : "en";
   const dateLocale = isTurkish ? "tr-TR" : isRussian ? "ru-RU" : "en-US";
   const uiText = {
-    linkCopied: isTurkish ? "Link kopyalandı!" : isRussian ? "Ссылка скопирована!" : "Link copied!",
-    loadingArticle: isTurkish ? "Makale yükleniyor..." : isRussian ? "Загрузка статьи..." : "Loading article...",
-    notFoundTitle: isTurkish ? "Blog yazısı bulunamadı" : isRussian ? "Публикация не найдена" : "Blog post not found",
-    notFoundDesc: isTurkish
-      ? "Aradığınız blog yazısı bulunamadı veya kaldırılmış olabilir."
-      : isRussian
-      ? "Публикация, которую вы ищете, не существует или была удалена."
-      : "The blog post you're looking for doesn't exist or has been removed.",
-    back: isTurkish ? "Geri" : isRussian ? "Назад" : "Back",
-    share: isTurkish ? "Paylaş" : isRussian ? "Поделиться" : "Share",
-    categories: isTurkish ? "Kategoriler" : isRussian ? "Категории" : "Categories",
-    minRead: isTurkish ? "dk okuma" : isRussian ? "мин чтения" : "min read",
-    faq: isTurkish ? "Sık Sorulan Sorular" : isRussian ? "Часто задаваемые вопросы" : "Frequently Asked Questions",
-    related: isTurkish ? "İlgili Makaleler" : isRussian ? "Похожие статьи" : "Related Articles",
-    video: isTurkish ? "Video" : isRussian ? "Видео" : "Video",
+    linkCopied: t("blogs.postLinkCopied", "Link copied!"),
+    loadingArticle: t("blogs.postLoading", "Loading article..."),
+    notFoundTitle: t("blogs.postNotFoundTitle", "Blog post not found"),
+    notFoundDesc: t(
+      "blogs.postNotFoundDesc",
+      "The blog post you're looking for doesn't exist or has been removed."
+    ),
+    back: t("blogs.postBack", "Back"),
+    share: t("blogs.postShare", "Share"),
+    categories: t("blogs.postCategories", "Categories"),
+    minRead: t("blogs.postMinRead", "min read"),
+    faq: t("blogs.postFaq", "Frequently Asked Questions"),
+    related: t("relatedContent.blogPost.relatedArticlesTitle", "Related Articles"),
+    video: t("blogs.postVideo", "Video"),
+    turkeyFlag: t("blogs.postTurkeyFlag", "Turkey flag"),
   };
   const [selectedImage, setSelectedImage] = useState(null); // For lightbox
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -313,7 +313,8 @@ const BlogPost = () => {
   };
 
   const localizedContent = getLocalizedContent("content");
-  const localizedTitle = getLocalizedContent("title") || "Blog Post";
+  const localizedTitle =
+    getLocalizedContent("title") || t("blogs.postFallbackTitle", "Blog Post");
   const localizedContentWithImageAlts = useMemo(
     () =>
       ensureHtmlImageAlts(localizedContent, {
@@ -376,26 +377,39 @@ const BlogPost = () => {
   const readingTime = calculateReadingTime(localizedContent);
   const getLocalizedCategoryLabel = (value) => {
     const raw = fixMojibake(value || "");
-    if (!raw || !isRussian) return raw;
+    if (!raw) return raw;
     const normalized = raw.toLowerCase().trim();
     const categoryMap = {
-      investment: "Инвестиции",
-      investments: "Инвестиции",
-      "market analysis": "Аналитика рынка",
-      guide: "Гид",
-      lifestyle: "Образ жизни",
-      news: "Новости",
-      citizenship: "Гражданство",
+      tr: {
+        investment: "Yatırım",
+        investments: "Yatırım",
+        "market analysis": "Pazar Analizi",
+        guide: "Rehber",
+        lifestyle: "Yaşam Tarzı",
+        news: "Haberler",
+        citizenship: "Vatandaşlık",
+      },
+      ru: {
+        investment: "Инвестиции",
+        investments: "Инвестиции",
+        "market analysis": "Аналитика рынка",
+        guide: "Гид",
+        lifestyle: "Образ жизни",
+        news: "Новости",
+        citizenship: "Гражданство",
+      },
     };
-    return categoryMap[normalized] || raw;
+    return categoryMap[language]?.[normalized] || raw;
   };
   const categoryLabel = getLocalizedCategoryLabel(getLocalizedContent("category"));
   const localizedFaq = getLocalizedFaq();
   const canonicalPath = resolvedBlogSlug
     ? `/blog/${encodeURIComponent(resolvedBlogSlug)}`
     : `/blog/${routeIdentifier || ""}`;
-  const fallbackDescription =
-    "Read practical real estate insights and market updates from HB Real Estate.";
+  const fallbackDescription = t(
+    "blogs.postFallbackDescription",
+    "Read practical real estate insights and market updates from HB Real Estate."
+  );
   const resolvedDescription =
     truncateText(
       getLocalizedContent("summary") ||
@@ -451,8 +465,8 @@ const BlogPost = () => {
     language,
   });
   const breadcrumbItems = [
-    { label: "Home", to: "/" },
-    { label: "Blogs", to: "/blogs" },
+    { label: t("guidePage.home", "Home"), to: "/" },
+    { label: t("blogs.breadcrumb", "Blogs"), to: "/blogs" },
     ...(categoryLabel ? [{ label: categoryLabel, to: categoryPath }] : []),
     { label: localizedTitle },
   ];
@@ -515,58 +529,78 @@ const BlogPost = () => {
     : null;
   const ctaBlock = blogContext.citizenship
     ? {
-        title: "Need a citizenship-focused shortlist after this article?",
-        description:
-          "Move from legal reading to live inventory and compare citizenship-eligible properties before due diligence starts.",
+        title: t(
+          "blogs.postCtaCitizenshipTitle",
+          "Need a citizenship-focused shortlist after this article?"
+        ),
+        description: t(
+          "blogs.postCtaCitizenshipDescription",
+          "Move from legal reading to live inventory and compare citizenship-eligible properties before due diligence starts."
+        ),
         primaryAction: {
-          label: "Explore eligible properties",
+          label: t("blogs.postCtaCitizenshipPrimary", "Explore eligible properties"),
           to: "/listing?citizenshipEligible=true",
         },
         secondaryAction: {
-          label: "Read the citizenship guide",
+          label: t("blogs.postCtaCitizenshipSecondary", "Read the citizenship guide"),
           to: "/turkish-citizenship-real-estate-guide",
         },
       }
     : blogContext.installment
     ? {
-        title: "Compare installment projects with ready properties",
-        description:
-          "Use the article as context, then benchmark payment-plan stock against standard listings and district-level guides.",
+        title: t(
+          "blogs.postCtaInstallmentTitle",
+          "Compare installment projects with ready properties"
+        ),
+        description: t(
+          "blogs.postCtaInstallmentDescription",
+          "Use the article as context, then benchmark payment-plan stock against standard listings and district-level guides."
+        ),
         primaryAction: {
-          label: "See installment listings",
+          label: t("blogs.postCtaInstallmentPrimary", "See installment listings"),
           to: "/listing?installmentAvailable=true",
         },
         secondaryAction: {
-          label: "Open installment guide",
+          label: t("blogs.postCtaInstallmentSecondary", "Open installment guide"),
           to: "/installment-property-in-turkey",
         },
       }
     : String(blogContext.city || "").trim().toLowerCase() === "istanbul"
     ? {
-        title: "Turn this Istanbul research into a workable shortlist",
-        description:
-          "Compare Istanbul districts, live listings, and step-by-step buying guidance without losing the market context.",
+        title: t(
+          "blogs.postCtaIstanbulTitle",
+          "Turn this Istanbul research into a workable shortlist"
+        ),
+        description: t(
+          "blogs.postCtaIstanbulDescription",
+          "Compare Istanbul districts, live listings, and step-by-step buying guidance without losing the market context."
+        ),
         primaryAction: {
-          label: "Browse Istanbul listings",
+          label: t("blogs.postCtaIstanbulPrimary", "Browse Istanbul listings"),
           to: "/listing?search=Istanbul",
         },
         secondaryAction: {
-          label: "Open Istanbul buying guide",
+          label: t("blogs.postCtaIstanbulSecondary", "Open Istanbul buying guide"),
           to: "/buy-property-in-istanbul",
         },
       }
     : {
-        title: "Need property options that match this topic?",
-        description:
-          "Move from informational research to semantically related listings, projects, and market guides.",
+        title: t(
+          "blogs.postCtaGenericTitle",
+          "Need property options that match this topic?"
+        ),
+        description: t(
+          "blogs.postCtaGenericDescription",
+          "Move from informational research to semantically related listings, projects, and market guides."
+        ),
         primaryAction: {
-          label: "Browse listings",
+          label: t("blogs.postCtaGenericPrimary", "Browse listings"),
           to: blogContext.city
             ? `/listing?search=${encodeURIComponent(blogContext.city)}`
             : "/listing",
         },
         secondaryAction: {
-          label: "Request investment advice",
+          label: t("blogs.postCtaGenericSecondary", "Request investment advice"),
           to: "/consultants",
         },
       };
@@ -803,11 +837,11 @@ const BlogPost = () => {
           {/* Hero Image / Flag Badge */}
           {isStatsBlog ? (
             <div className="flex justify-center px-6 sm:px-10 pt-8 pb-2">
-              <div
-                className="h-24 w-24 sm:h-28 sm:w-28 md:h-32 md:w-32 rounded-full overflow-hidden border-[6px] border-white/80 shadow-[0_18px_45px_-25px_rgba(0,0,0,0.65)] bg-[#e11d2e]"
-                role="img"
-                aria-label="Turkey flag"
-              >
+                <div
+                  className="h-24 w-24 sm:h-28 sm:w-28 md:h-32 md:w-32 rounded-full overflow-hidden border-[6px] border-white/80 shadow-[0_18px_45px_-25px_rgba(0,0,0,0.65)] bg-[#e11d2e]"
+                  role="img"
+                  aria-label={uiText.turkeyFlag}
+                >
                 <svg viewBox="0 0 200 200" className="h-full w-full">
                   <rect width="200" height="200" fill="#e11d2e" />
                   <circle cx="85" cy="100" r="55" fill="#ffffff" />

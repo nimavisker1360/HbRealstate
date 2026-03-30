@@ -13,6 +13,22 @@ import { SITE_URL, buildLanguageAlternates, resolveCountrySlug } from "../utils/
 import { getLocalizedAlt } from "../utils/mediaAlt";
 
 const placeholderImages = [blog1, blog2, blog3, blog4];
+const COUNTRY_LABELS = {
+  tr: {
+    turkey: "Türkiye",
+    cyprus: "Kıbrıs",
+    dubai: "Dubai",
+    georgia: "Gürcistan",
+    greece: "Yunanistan",
+  },
+  ru: {
+    turkey: "Турция",
+    cyprus: "Кипр",
+    dubai: "Дубай",
+    georgia: "Грузия",
+    greece: "Греция",
+  },
+};
 
 const BlogsPage = () => {
   const { t, i18n } = useTranslation();
@@ -75,6 +91,13 @@ const BlogsPage = () => {
     return resolveCountrySlug(country);
   };
 
+  const getLocalizedCountryLabel = (country) => {
+    const raw = fixMojibake(country || "");
+    if (!raw) return "";
+    const key = raw.toLowerCase().trim();
+    return COUNTRY_LABELS[language]?.[key] || raw;
+  };
+
   const normalizeCountry = (value = "") =>
     value
       .toString()
@@ -118,15 +141,24 @@ const BlogsPage = () => {
     a.country.localeCompare(b.country)
   );
   const canonicalPath = "/blogs";
-  const description = `Explore country-based real estate articles and market updates. ${countryCards.length} countries and ${displayBlogs.length} published posts.`;
+  const seoTitle = t(
+    "blogs.seoTitle",
+    "Real Estate Blog Countries | HB International Real Estate"
+  );
+  const description = t("blogs.seoDescription", {
+    countries: countryCards.length,
+    posts: displayBlogs.length,
+    defaultValue:
+      "Explore country-based real estate articles and market updates. {{countries}} countries and {{posts}} published posts.",
+  });
   const structuredData = [
     {
       "@context": "https://schema.org",
       "@type": "CollectionPage",
-      name: "Real Estate Blog Countries",
+      name: t("blogs.schemaName", "Real Estate Blog Countries"),
       description,
       url: `${SITE_URL}${canonicalPath}`,
-      about: "Real estate market insights by country",
+      about: t("blogs.schemaAbout", "Real estate market insights by country"),
     },
     {
       "@context": "https://schema.org",
@@ -135,13 +167,13 @@ const BlogsPage = () => {
         {
           "@type": "ListItem",
           position: 1,
-          name: "Home",
+          name: t("guidePage.home", "Home"),
           item: SITE_URL,
         },
         {
           "@type": "ListItem",
           position: 2,
-          name: "Blogs",
+          name: t("blogs.breadcrumb", "Blogs"),
           item: `${SITE_URL}${canonicalPath}`,
         },
       ],
@@ -151,7 +183,7 @@ const BlogsPage = () => {
   return (
     <>
       <SEO
-        title="Real Estate Blog Countries | HB International Real Estate"
+        title={seoTitle}
         description={description}
         canonicalPath={canonicalPath}
         languageAlternates={buildLanguageAlternates(canonicalPath)}
@@ -220,7 +252,7 @@ const BlogsPage = () => {
                 <div className="px-5 pb-6 flex flex-col items-center text-center gap-3">
                   <div>
                     <h3 className="text-lg sm:text-xl font-semibold text-slate-900">
-                      {country}
+                      {getLocalizedCountryLabel(country)}
                     </h3>
                     <p className="text-xs text-slate-500 mt-1">
                       {count} {t("blogs.posts", "posts")}

@@ -63,12 +63,20 @@ const InvestmentOpportunitiesBlogs = () => {
   };
 
   const canonicalPath = "/investment-opportunities";
-  const description = `Explore curated investment opportunity blogs with ${investmentBlogs.length} published posts.`;
+  const seoTitle = t(
+    "blogs.investmentSeoTitle",
+    "Investment Opportunities Blogs | HB International Real Estate"
+  );
+  const description = t("blogs.investmentSeoDescription", {
+    count: investmentBlogs.length,
+    defaultValue:
+      "Explore curated investment opportunity blogs with {{count}} published posts.",
+  });
   const structuredData = [
     {
       "@context": "https://schema.org",
       "@type": "CollectionPage",
-      name: "Investment Opportunities Blogs",
+      name: t("blogs.investmentSchemaName", "Investment Opportunities Blogs"),
       description,
       url: `${SITE_URL}${canonicalPath}`,
     },
@@ -77,7 +85,7 @@ const InvestmentOpportunitiesBlogs = () => {
   return (
     <>
       <SEO
-        title="Investment Opportunities Blogs | HB International Real Estate"
+        title={seoTitle}
         description={description}
         canonicalPath={canonicalPath}
         languageAlternates={buildLanguageAlternates(canonicalPath)}
