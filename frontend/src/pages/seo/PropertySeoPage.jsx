@@ -434,21 +434,29 @@ const PropertySeoPage = () => {
       <section className="max-padd-container pb-20">
         <RelatedContentSection
           title="Related Articles"
+          titleKey="relatedContent.propertyPage.relatedArticlesTitle"
           description="Guides and articles connected to this property's market and buyer intent."
+          descriptionKey="relatedContent.propertyPage.relatedArticlesDescription"
           items={relatedArticles}
+          contentLayout="horizontal"
         />
 
         <RelatedContentSection
           title="Related Properties"
+          titleKey="relatedContent.propertyPage.relatedPropertiesTitle"
           description="Similar options in nearby locations and comparable intent clusters."
+          descriptionKey="relatedContent.propertyPage.relatedPropertiesDescription"
           items={relatedProperties}
           type="property"
         />
 
         <RelatedContentSection
           title="Buying, Tax And Investment Guides"
+          titleKey="relatedContent.propertyPage.relatedGuidesTitle"
           description="Contextual cross-links between this listing and the informational side of the site."
+          descriptionKey="relatedContent.propertyPage.relatedGuidesDescription"
           items={relatedGuides}
+          contentLayout="horizontal"
         />
 
         <SeoCtaSection

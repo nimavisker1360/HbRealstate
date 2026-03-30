@@ -48,7 +48,9 @@ const page = ({
   sections,
   faqs,
   ctaSection,
+  ...rest
 }) => ({
+  ...rest,
   slug,
   title,
   seoTitle: seoTitle || title,
@@ -140,24 +142,118 @@ export const contentHubPages = [
   page({
     slug: "turkish-citizenship-property",
     title: "Turkish Citizenship By Property: A Clear Investor Playbook",
+    title_tr: "Gayrimenkul ile Türk Vatandaşlığı: Yatırımcı İçin Net Bir Yol Haritası",
+    title_ru: "Турецкое гражданство через недвижимость: чёткий путеводитель для инвестора",
     description: "Understand how to approach Turkish citizenship by property with a practical framework for eligibility, due diligence, and long-term asset performance.",
+    description_tr:
+      "Gayrimenkul yoluyla Türk vatandaşlığına, uygunluk, durum tespiti ve varlığın uzun vadeli performansını kapsayan pratik bir çerçeveyle nasıl yaklaşmanız gerektiğini anlayın.",
+    description_ru:
+      "Поймите, как подходить к получению турецкого гражданства через недвижимость с практичной схемой оценки соответствия требованиям, due diligence и долгосрочного качества актива.",
     breadcrumbLabel: "Turkish Citizenship Property",
+    breadcrumbLabel_tr: "Gayrimenkul ile Türk Vatandaşlığı",
+    breadcrumbLabel_ru: "Гражданство через недвижимость",
     pageType: "pillar page",
     taxonomy: { contentType: "pillar page", category: "turkish citizenship", country: "Turkey", tags: ["citizenship", "compliance"], intents: ["citizenship", "investment", "legal-tax"], citizenship: true },
     highlights: ["Compliance quality matters more than claims.", "Citizenship-led deals should still be good investments.", "Valuation and payment traceability are core controls."],
+    highlights_tr: [
+      "Uyumluluk kalitesi, satış söylemlerinden daha önemlidir.",
+      "Vatandaşlık odaklı alımlar yine de iyi yatırım olmalıdır.",
+      "Değerleme ve ödeme izlenebilirliği temel kontrol noktalarıdır.",
+    ],
+    highlights_ru: [
+      "Качество соответствия требованиям важнее маркетинговых заявлений.",
+      "Сделки ради гражданства всё равно должны оставаться качественными инвестициями.",
+      "Оценка и прозрачность платежей являются базовыми контрольными точками.",
+    ],
     relatedLinks: [
       { to: "/listing?citizenshipEligible=true", label: "Eligible Listings" },
       { to: "/turkish-citizenship-real-estate-guide", label: "Full Citizenship Guide" },
       { to: "/title-deed-and-valuation-process-in-turkey", label: "Valuation And Tapu" },
     ],
+    relatedLinks_tr: [
+      { to: "/listing?citizenshipEligible=true", label: "Uygun İlanlar" },
+      { to: "/turkish-citizenship-real-estate-guide", label: "Tam Vatandaşlık Rehberi" },
+      { to: "/title-deed-and-valuation-process-in-turkey", label: "Değerleme ve Tapu" },
+    ],
+    relatedLinks_ru: [
+      { to: "/listing?citizenshipEligible=true", label: "Подходящие объекты" },
+      { to: "/turkish-citizenship-real-estate-guide", label: "Полный гид по гражданству" },
+      { to: "/title-deed-and-valuation-process-in-turkey", label: "Оценка и тапу" },
+    ],
     introParagraphs: citizenshipPack.introParagraphs,
+    introParagraphs_tr: [
+      "Gayrimenkul yoluyla vatandaşlık alımlarında başarı, sadece uygun bir fiyat bulmaktan değil, süreci baştan sona uyumluluk disiplinine göre yönetmekten gelir. Alıcılar genellikle ilçe kalitesi, belge düzeni ve çıkış esnekliğini birlikte değerlendirdiğinde daha sağlıklı sonuçlar alır.",
+      "Türkiye'de vatandaşlık için uygun görünen iki fırsat, değerleme yapısı, ödeme izi ve yeniden satış gücü açısından çok farklı sonuçlar doğurabilir. Doğru yaklaşım, hukuki uygunluğu yatırım mantığından ayırmadan ilerlemektir.",
+    ],
+    introParagraphs_ru: [
+      "В покупках ради гражданства успех зависит не только от подходящей цены, но и от того, насколько дисциплинированно вы ведёте процесс с точки зрения соответствия правилам. Покупатели обычно получают лучший результат, когда сравнивают качество района, документацию и будущую ликвидность вместе.",
+      "Два объекта, которые на первый взгляд подходят под программу гражданства в Турции, могут сильно отличаться по логике оценки, прозрачности платежей и силе повторной продажи. Правильный подход не отделяет юридическую чистоту от инвестиционного качества.",
+    ],
     sections: citizenshipPack.sections,
+    sections_tr: [
+      {
+        heading: "Vatandaşlık Odaklı Pazarı Nasıl Değerlendirmeli",
+        paragraphs: [
+          "Hedefinizi sadece vatandaşlığa uygunluk olarak değil, aynı zamanda varlığın gelecekte nasıl performans göstereceği olarak tanımlayın. Bu, ilçe seçimi, mülk tipi ve bütçe bandını daha sağlıklı şekilde daraltır.",
+          "Talep derinliğini yeni arz ve yeniden satış esnekliğiyle birlikte karşılaştırın. Bugün uygun olan her varlık, gelecekte likit kalacak anlamına gelmez.",
+        ],
+      },
+      {
+        heading: "Süreci Güvenli Şekilde Nasıl Yürütmeli",
+        paragraphs: [
+          "Hukuki inceleme, değerleme mantığı ve ödeme izi, sürecin sonunda değil daha karar aşamasında kontrol edilmelidir. Bu disiplin zayıf dosyaları erken safhada ayıklar.",
+          "En sağlam sonuç genellikle belge kalitesi, yatırım mantığı ve gelecekteki çıkış imkanı aynı anda tutarlı olan varlıklarda ortaya çıkar.",
+        ],
+      },
+    ],
+    sections_ru: [
+      {
+        heading: "Как оценивать рынок, если покупка связана с гражданством",
+        paragraphs: [
+          "Определите цель не только как получение гражданства, но и как покупку актива, который должен сохранить качество в будущем. Это быстрее сузит выбор по району, типу объекта и бюджету.",
+          "Сравнивайте глубину спроса с новым предложением и гибкостью выхода из инвестиции. Не каждый объект, который соответствует правилам сегодня, будет ликвидным завтра.",
+        ],
+      },
+      {
+        heading: "Как безопасно провести сделку",
+        paragraphs: [
+          "Юридическая проверка, логика оценки и прозрачность платежа должны контролироваться ещё до финального решения, а не в самом конце процесса. Такая дисциплина помогает рано отсеивать слабые варианты.",
+          "Лучший результат обычно дают те активы, у которых документы, инвестиционная логика и будущая ликвидность совместимы одновременно.",
+        ],
+      },
+    ],
     faqs: faq([
       ["Can any property be used for citizenship?", "No. Eligibility depends on current regulation, documentation quality, and transaction structure."],
       ["Should citizenship buyers ignore rental yield?", "No. Asset quality and compliance should be evaluated together."],
       ["What creates the highest risk?", "Weak documentation, unclear payment trails, and over-reliance on marketing promises."],
     ]),
+    faqs_tr: faq([
+      ["Her gayrimenkul vatandaşlık için kullanılabilir mi?", "Hayır. Uygunluk, güncel mevzuat, belge kalitesi ve işlem yapısına bağlıdır."],
+      ["Vatandaşlık alıcıları kira getirisini göz ardı etmeli mi?", "Hayır. Varlık kalitesi ile uyumluluk birlikte değerlendirilmelidir."],
+      ["En yüksek risk nereden doğar?", "Zayıf dokümantasyon, belirsiz ödeme izi ve pazarlama söylemlerine fazla güvenmek en büyük riski yaratır."],
+    ]),
+    faqs_ru: faq([
+      ["Можно ли использовать для гражданства любой объект?", "Нет. Соответствие зависит от актуальных правил, качества документов и структуры сделки."],
+      ["Должны ли покупатели ради гражданства игнорировать арендную доходность?", "Нет. Качество актива и соответствие правилам нужно оценивать вместе."],
+      ["Что создаёт наибольший риск?", "Слабая документация, непрозрачные платежи и чрезмерная опора на маркетинговые обещания создают максимальный риск."],
+    ]),
     ctaSection: cta("Surface eligible properties before legal review starts", "Filter current inventory for eligibility and compare it against city, district, and payment-plan priorities.", "Explore eligible properties", "/listing?citizenshipEligible=true", "Read the full guide", "/turkish-citizenship-real-estate-guide"),
+    cta_tr: cta(
+      "Hukuki inceleme başlamadan önce uygun gayrimenkulleri görün",
+      "Mevcut portföyü uygunluk için filtreleyin ve şehir, ilçe ve ödeme planı önceliklerinizle birlikte karşılaştırın.",
+      "Uygun gayrimenkulleri keşfet",
+      "/listing?citizenshipEligible=true",
+      "Tam rehberi oku",
+      "/turkish-citizenship-real-estate-guide"
+    ),
+    cta_ru: cta(
+      "Подберите подходящие объекты ещё до начала юрпроверки",
+      "Отфильтруйте актуальное предложение по критериям соответствия и сравните его с приоритетами по городу, району и рассрочке.",
+      "Посмотреть подходящие объекты",
+      "/listing?citizenshipEligible=true",
+      "Читать полный гид",
+      "/turkish-citizenship-real-estate-guide"
+    ),
   }),
   page({
     slug: "buy-property-in-istanbul",
@@ -423,5 +519,34 @@ export const contentHubPagesBySlug = contentHubPages.reduce((acc, item) => {
   return acc;
 }, {});
 
-export const getGuidePageBySlug = (slug = "") =>
-  contentHubPagesBySlug[String(slug || "").trim()] || null;
+const resolveLocalizedGuidePage = (page, language = "en") => {
+  if (!page) return null;
+
+  const normalizedLanguage = String(language || "en").trim().toLowerCase();
+  const suffix =
+    normalizedLanguage.startsWith("tr")
+      ? "tr"
+      : normalizedLanguage.startsWith("ru")
+      ? "ru"
+      : "en";
+
+  const pickLocalizedValue = (field) => page?.[`${field}_${suffix}`] ?? page?.[field];
+  const localizedTitle = pickLocalizedValue("title");
+
+  return {
+    ...page,
+    title: localizedTitle,
+    seoTitle: page?.[`seoTitle_${suffix}`] ?? localizedTitle,
+    description: pickLocalizedValue("description"),
+    breadcrumbLabel: pickLocalizedValue("breadcrumbLabel"),
+    highlights: pickLocalizedValue("highlights"),
+    relatedLinks: pickLocalizedValue("relatedLinks"),
+    introParagraphs: pickLocalizedValue("introParagraphs"),
+    sections: pickLocalizedValue("sections"),
+    faqs: pickLocalizedValue("faqs"),
+    cta: pickLocalizedValue("cta"),
+  };
+};
+
+export const getGuidePageBySlug = (slug = "", language = "en") =>
+  resolveLocalizedGuidePage(contentHubPagesBySlug[String(slug || "").trim()] || null, language);

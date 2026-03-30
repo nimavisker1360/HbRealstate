@@ -489,6 +489,73 @@
     "pageIntro": "Изучайте рыночную аналитику, инвестиционные стратегии и обзоры районов от наших экспертов.",
     "pageNote": "Свежая аналитика уже доступна."
   },
+  "relatedContent": {
+    "readMore": "Читать далее",
+    "internalPage": "Внутренняя страница",
+    "internalPageHint": "Связанная внутренняя страница из того же кластера контента.",
+    "badges": {
+      "article": "Статья",
+      "guide": "Гид",
+      "blog": "Блог",
+      "blogs": "Блоги",
+      "cityPage": "Страница города",
+      "pillarPage": "Опорная страница",
+      "districtPage": "Страница района",
+      "supportingArticle": "Дополнительная статья"
+    },
+    "blogPost": {
+      "suggestedNextReadsTitle": "Что почитать дальше",
+      "suggestedNextReadsDescription": "Редакционные рекомендации, преобразованные во внутренние ссылки.",
+      "relatedPropertiesTitle": "Похожие объекты",
+      "relatedPropertiesDescription": "Коммерческие объекты, связанные с этой статьёй по рынку, теме и намерению покупателя.",
+      "relatedProjectsTitle": "Похожие проекты",
+      "relatedProjectsDescription": "Актуальные страницы проектов, подобранные по городу, району и коммерческому контексту.",
+      "relatedArticlesTitle": "Похожие статьи",
+      "relatedArticlesDescription": "Семантически связанные статьи из того же кластера контента.",
+      "relatedGuidesTitle": "Похожие гиды",
+      "relatedGuidesDescription": "Базовые, районные, налоговые и процессуальные страницы, связанные с этой темой."
+    },
+    "staticPage": {
+      "relatedPropertiesTitle": "Похожие объекты",
+      "relatedPropertiesDescription": "Коммерческое предложение, связанное с этой темой.",
+      "relatedProjectsTitle": "Похожие проекты",
+      "relatedProjectsDescription": "Страницы проектов, подобранные по городу, району и намерению покупателя.",
+      "relatedArticlesTitle": "Похожие статьи",
+      "relatedArticlesDescription": "Дополняющий информационный контент, связанный с этой страницей.",
+      "relatedGuidesTitle": "Продолжить по кластеру",
+      "relatedGuidesDescription": "Следующие наиболее подходящие страницы-гиды в том же тематическом графе."
+    },
+    "projectPage": {
+      "relatedArticlesTitle": "Похожие статьи",
+      "relatedArticlesDescription": "Коммерческий и информационный контент, соответствующий локации этого проекта и намерению покупателя.",
+      "relatedProjectsTitle": "Похожие проекты",
+      "relatedProjectsDescription": "Проекты в схожих локациях, инвестиционных контекстах или с похожими условиями рассрочки.",
+      "relatedPropertiesTitle": "Похожие объекты",
+      "relatedPropertiesDescription": "Готовые объекты и внепроектные предложения для коммерческого сравнения.",
+      "relatedGuidesTitle": "Подходящие гиды",
+      "relatedGuidesDescription": "Налоговые, процессуальные, районные и инвестиционные страницы, семантически связанные с этим проектом."
+    },
+    "propertyPage": {
+      "relatedArticlesTitle": "Похожие статьи",
+      "relatedArticlesDescription": "Гиды и статьи, связанные с рынком этого объекта и намерением покупателя.",
+      "relatedPropertiesTitle": "Похожие объекты",
+      "relatedPropertiesDescription": "Похожие варианты в ближайших локациях и сопоставимых кластерах намерений.",
+      "relatedGuidesTitle": "Гиды по покупке, налогам и инвестициям",
+      "relatedGuidesDescription": "Контекстные переходы между этим объектом и информационными страницами сайта."
+    }
+  },
+  "guidePage": {
+    "home": "Главная",
+    "investmentGuides": "Инвестиционные гиды",
+    "keyHighlights": "Ключевые моменты",
+    "liveInventoryPrefix": "Ищете актуальные предложения, пока изучаете рынок?",
+    "liveInventoryLink": "текущие объявления о недвижимости",
+    "liveInventorySuffix": "и сравните их с рекомендациями на этой странице.",
+    "exploreNext": "Что посмотреть дальше",
+    "faq": "FAQ",
+    "notFoundTitle": "Гид не найден",
+    "notFoundText": "Этот гид пока недоступен."
+  },
   "testimonials": {
     "subtitle": "Реальные впечатления",
     "title": "Что говорят о нас посетители",

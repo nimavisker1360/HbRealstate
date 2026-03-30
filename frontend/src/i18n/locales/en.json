@@ -489,6 +489,73 @@
     "pageIntro": "Explore market intelligence, investment strategies, and neighborhood deep dives curated by our experts.",
     "pageNote": "Latest insights ready to explore."
   },
+  "relatedContent": {
+    "readMore": "Read more",
+    "internalPage": "Internal page",
+    "internalPageHint": "Related internal page from the same content cluster.",
+    "badges": {
+      "article": "Article",
+      "guide": "Guide",
+      "blog": "Blog",
+      "blogs": "Blogs",
+      "cityPage": "City page",
+      "pillarPage": "Pillar page",
+      "districtPage": "District page",
+      "supportingArticle": "Supporting article"
+    },
+    "blogPost": {
+      "suggestedNextReadsTitle": "Suggested Next Reads",
+      "suggestedNextReadsDescription": "Editorial suggestions resolved into live internal links.",
+      "relatedPropertiesTitle": "Related Properties",
+      "relatedPropertiesDescription": "Commercial listings connected to this article by market, topic, and buyer intent.",
+      "relatedProjectsTitle": "Related Projects",
+      "relatedProjectsDescription": "Relevant project pages surfaced by city, district, and commercial context.",
+      "relatedArticlesTitle": "Related Articles",
+      "relatedArticlesDescription": "Semantically related articles across the same content cluster.",
+      "relatedGuidesTitle": "Related Guides",
+      "relatedGuidesDescription": "Pillar, district, tax, and buying-process pages aligned with this topic."
+    },
+    "staticPage": {
+      "relatedPropertiesTitle": "Related Properties",
+      "relatedPropertiesDescription": "Commercial inventory connected to this topic.",
+      "relatedProjectsTitle": "Related Projects",
+      "relatedProjectsDescription": "Relevant project pages surfaced by city, district, and buyer intent.",
+      "relatedArticlesTitle": "Related Articles",
+      "relatedArticlesDescription": "Supporting informational content connected to this page.",
+      "relatedGuidesTitle": "Continue Through The Cluster",
+      "relatedGuidesDescription": "Next-best guide pages in the same topic graph."
+    },
+    "projectPage": {
+      "relatedArticlesTitle": "Related Articles",
+      "relatedArticlesDescription": "Commercial and informational content aligned with this project's location and buyer intent.",
+      "relatedProjectsTitle": "Related Projects",
+      "relatedProjectsDescription": "Projects in similar locations, investment contexts, or payment-plan profiles.",
+      "relatedPropertiesTitle": "Related Properties",
+      "relatedPropertiesDescription": "Ready stock and non-project listings that support commercial comparison.",
+      "relatedGuidesTitle": "Relevant Guides",
+      "relatedGuidesDescription": "Tax, buying-process, district, and investment pages linked semantically to this project."
+    },
+    "propertyPage": {
+      "relatedArticlesTitle": "Related Articles",
+      "relatedArticlesDescription": "Guides and articles connected to this property's market and buyer intent.",
+      "relatedPropertiesTitle": "Related Properties",
+      "relatedPropertiesDescription": "Similar options in nearby locations and comparable intent clusters.",
+      "relatedGuidesTitle": "Buying, Tax And Investment Guides",
+      "relatedGuidesDescription": "Contextual cross-links between this listing and the informational side of the site."
+    }
+  },
+  "guidePage": {
+    "home": "Home",
+    "investmentGuides": "Investment Guides",
+    "keyHighlights": "Key Highlights",
+    "liveInventoryPrefix": "Looking for live inventory while you research? Explore",
+    "liveInventoryLink": "current property listings",
+    "liveInventorySuffix": "and compare them against the guidance on this page.",
+    "exploreNext": "Explore Next",
+    "faq": "FAQ",
+    "notFoundTitle": "Guide not found",
+    "notFoundText": "This guide is not available yet."
+  },
   "testimonials": {
     "subtitle": "Real Experiences",
     "title": "What Visitors Say About Us",

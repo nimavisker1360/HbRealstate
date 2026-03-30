@@ -977,34 +977,46 @@ const BlogPost = () => {
 
                 <RelatedContentSection
                   title="Suggested Next Reads"
+                  titleKey="relatedContent.blogPost.suggestedNextReadsTitle"
                   description="Editorial suggestions resolved into live internal links."
+                  descriptionKey="relatedContent.blogPost.suggestedNextReadsDescription"
                   items={manualSuggestedLinks}
                 />
 
                 <RelatedContentSection
                   title="Related Properties"
+                  titleKey="relatedContent.blogPost.relatedPropertiesTitle"
                   description="Commercial listings connected to this article by market, topic, and buyer intent."
+                  descriptionKey="relatedContent.blogPost.relatedPropertiesDescription"
                   items={relatedProperties}
                   type="property"
                 />
 
                 <RelatedContentSection
                   title="Related Projects"
+                  titleKey="relatedContent.blogPost.relatedProjectsTitle"
                   description="Relevant project pages surfaced by city, district, and commercial context."
+                  descriptionKey="relatedContent.blogPost.relatedProjectsDescription"
                   items={relatedProjects}
                   type="property"
                 />
 
                 <RelatedContentSection
                   title={uiText.related}
+                  titleKey="relatedContent.blogPost.relatedArticlesTitle"
                   description="Semantically related articles across the same content cluster."
+                  descriptionKey="relatedContent.blogPost.relatedArticlesDescription"
                   items={relatedArticles}
+                  contentLayout="horizontal"
                 />
 
                 <RelatedContentSection
                   title="Related Guides"
+                  titleKey="relatedContent.blogPost.relatedGuidesTitle"
                   description="Pillar, district, tax, and buying-process pages aligned with this topic."
+                  descriptionKey="relatedContent.blogPost.relatedGuidesDescription"
                   items={relatedGuides}
+                  contentLayout="horizontal"
                 />
 
                 <SeoCtaSection

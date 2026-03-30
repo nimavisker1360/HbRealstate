@@ -490,28 +490,38 @@ const ProjectDetailSeoPage = () => {
       <section className="max-padd-container pb-20">
         <RelatedContentSection
           title="Related Articles"
+          titleKey="relatedContent.projectPage.relatedArticlesTitle"
           description="Commercial and informational content aligned with this project's location and buyer intent."
+          descriptionKey="relatedContent.projectPage.relatedArticlesDescription"
           items={relatedArticles}
+          contentLayout="horizontal"
         />
 
         <RelatedContentSection
           title="Related Projects"
+          titleKey="relatedContent.projectPage.relatedProjectsTitle"
           description="Projects in similar locations, investment contexts, or payment-plan profiles."
+          descriptionKey="relatedContent.projectPage.relatedProjectsDescription"
           items={relatedProjects}
           type="property"
         />
 
         <RelatedContentSection
           title="Related Properties"
+          titleKey="relatedContent.projectPage.relatedPropertiesTitle"
           description="Ready stock and non-project listings that support commercial comparison."
+          descriptionKey="relatedContent.projectPage.relatedPropertiesDescription"
           items={relatedProperties}
           type="property"
         />
 
         <RelatedContentSection
           title="Relevant Guides"
+          titleKey="relatedContent.projectPage.relatedGuidesTitle"
           description="Tax, buying-process, district, and investment pages linked semantically to this project."
+          descriptionKey="relatedContent.projectPage.relatedGuidesDescription"
           items={relatedGuides}
+          contentLayout="horizontal"
         />
 
         <SeoCtaSection

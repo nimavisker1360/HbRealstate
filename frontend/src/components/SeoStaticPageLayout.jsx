@@ -1,5 +1,6 @@
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import SEO from "./SEO";
 import Breadcrumbs from "./seo/Breadcrumbs";
 import FaqSection, { buildFaqSchema } from "./seo/FaqSection";
@@ -16,6 +17,23 @@ import {
   pickRelatedProperties,
 } from "../utils/contentGraph";
 import { contentHubPages } from "../data/contentHubPages";
+import { normalizeLanguageCode } from "../utils/languageRouting";
+
+const PAGE_TYPE_TRANSLATION_KEYS = {
+  "city page": "relatedContent.badges.cityPage",
+  "pillar page": "relatedContent.badges.pillarPage",
+  "district page": "relatedContent.badges.districtPage",
+  "supporting article": "relatedContent.badges.supportingArticle",
+  article: "relatedContent.badges.article",
+  guide: "relatedContent.badges.guide",
+};
+
+const translatePageType = (pageType, t) => {
+  const rawValue = String(pageType || "").trim();
+  if (!rawValue) return "";
+  const key = PAGE_TYPE_TRANSLATION_KEYS[rawValue.toLowerCase()];
+  return key ? t(key, rawValue) : rawValue;
+};
 
 const SeoStaticPageLayout = ({
   title,
@@ -32,6 +50,8 @@ const SeoStaticPageLayout = ({
   pageType = "Guide",
   cta,
 }) => {
+  const { t, i18n } = useTranslation();
+  const language = normalizeLanguageCode(i18n.language);
   const { data: properties = [] } = useProperties();
   const { data: blogs = [] } = useBlogs();
 
@@ -59,17 +79,19 @@ const SeoStaticPageLayout = ({
     blogs,
     context,
     limit: 4,
+    language,
   });
 
   const relatedGuides = pickRelatedGuides({
     guides: contentHubPages.filter((page) => page.canonicalPath !== canonicalPath),
     context,
     limit: 3,
+    language,
   });
 
   const breadcrumbItems = [
-    { label: "Home", to: "/" },
-    { label: "Investment Guides", to: "/investment-guides" },
+    { label: t("guidePage.home", "Home"), to: "/" },
+    { label: t("guidePage.investmentGuides", "Investment Guides"), to: "/investment-guides" },
     { label: breadcrumbLabel || title },
   ];
 
@@ -109,7 +131,7 @@ const SeoStaticPageLayout = ({
             <article className="rounded-[30px] border border-white/70 bg-white/90 p-6 shadow-[0_28px_70px_-50px_rgba(15,23,42,0.5)] backdrop-blur sm:p-8 lg:p-10">
               <div className="max-w-4xl">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-emerald-700">
-                  {pageType}
+                  {translatePageType(pageType, t)}
                 </p>
                 <h1 className="mt-3 text-3xl font-bold leading-tight text-slate-900 sm:text-4xl lg:text-5xl">
                   {title}
@@ -121,7 +143,9 @@ const SeoStaticPageLayout = ({
 
               {highlights.length > 0 && (
                 <section className="mt-10">
-                  <h2 className="text-2xl font-bold text-slate-900">Key Highlights</h2>
+                  <h2 className="text-2xl font-bold text-slate-900">
+                    {t("guidePage.keyHighlights", "Key Highlights")}
+                  </h2>
                   <div className="mt-5 grid gap-4 md:grid-cols-3">
                     {highlights.map((item) => (
                       <div
@@ -139,17 +163,22 @@ const SeoStaticPageLayout = ({
 
               <div className="mt-10 rounded-2xl border border-slate-200/80 bg-slate-50/70 p-5">
                 <p className="text-sm leading-7 text-slate-600 sm:text-base">
-                  Looking for live inventory while you research? Explore{" "}
+                  {t("guidePage.liveInventoryPrefix", "Looking for live inventory while you research? Explore")}{" "}
                   <Link to="/listing" className="font-semibold text-emerald-700 underline">
-                    current property listings
+                    {t("guidePage.liveInventoryLink", "current property listings")}
                   </Link>{" "}
-                  and compare them against the guidance on this page.
+                  {t(
+                    "guidePage.liveInventorySuffix",
+                    "and compare them against the guidance on this page."
+                  )}
                 </p>
               </div>
 
               {relatedLinks.length > 0 && (
                 <section className="mt-10">
-                  <h2 className="text-2xl font-bold text-slate-900">Explore Next</h2>
+                  <h2 className="text-2xl font-bold text-slate-900">
+                    {t("guidePage.exploreNext", "Explore Next")}
+                  </h2>
                   <div className="mt-4 flex flex-wrap gap-3">
                     {relatedLinks.map((item) => (
                       <Link
@@ -196,31 +225,41 @@ const SeoStaticPageLayout = ({
 
               <RelatedContentSection
                 title="Related Properties"
+                titleKey="relatedContent.staticPage.relatedPropertiesTitle"
                 description="Commercial inventory connected to this topic."
+                descriptionKey="relatedContent.staticPage.relatedPropertiesDescription"
                 items={relatedProperties}
                 type="property"
               />
 
               <RelatedContentSection
                 title="Related Projects"
+                titleKey="relatedContent.staticPage.relatedProjectsTitle"
                 description="Relevant project pages surfaced by city, district, and buyer intent."
+                descriptionKey="relatedContent.staticPage.relatedProjectsDescription"
                 items={relatedProjects}
                 type="property"
               />
 
               <RelatedContentSection
                 title="Related Articles"
+                titleKey="relatedContent.staticPage.relatedArticlesTitle"
                 description="Supporting informational content connected to this page."
+                descriptionKey="relatedContent.staticPage.relatedArticlesDescription"
                 items={relatedArticles}
+                contentLayout="horizontal"
               />
 
               <RelatedContentSection
                 title="Continue Through The Cluster"
+                titleKey="relatedContent.staticPage.relatedGuidesTitle"
                 description="Next-best guide pages in the same topic graph."
+                descriptionKey="relatedContent.staticPage.relatedGuidesDescription"
                 items={relatedGuides}
+                contentLayout="horizontal"
               />
 
-              <FaqSection title="FAQ" items={faqs} />
+              <FaqSection title={t("guidePage.faq", "FAQ")} items={faqs} />
             </article>
           </div>
         </div>

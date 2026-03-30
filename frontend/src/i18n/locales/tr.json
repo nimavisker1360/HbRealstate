@@ -489,6 +489,73 @@
     "pageIntro": "Piyasa icgoruleri, yatirim stratejileri ve bolge analizlerini uzman ekibimizle kesfedin.",
     "pageNote": "Yeni icerikler sizi bekliyor."
   },
+  "relatedContent": {
+    "readMore": "Devamını oku",
+    "internalPage": "İç sayfa",
+    "internalPageHint": "Aynı içerik kümesindeki ilgili iç sayfa.",
+    "badges": {
+      "article": "Makale",
+      "guide": "Rehber",
+      "blog": "Blog",
+      "blogs": "Bloglar",
+      "cityPage": "Şehir sayfası",
+      "pillarPage": "Ana rehber",
+      "districtPage": "İlçe sayfası",
+      "supportingArticle": "Destekleyici makale"
+    },
+    "blogPost": {
+      "suggestedNextReadsTitle": "Sonraki Okumalar",
+      "suggestedNextReadsDescription": "Canlı iç bağlantılara dönüştürülen editöryel öneriler.",
+      "relatedPropertiesTitle": "İlgili Gayrimenkuller",
+      "relatedPropertiesDescription": "Pazar, konu ve alıcı niyetine göre bu makaleyle bağlantılı ticari ilanlar.",
+      "relatedProjectsTitle": "İlgili Projeler",
+      "relatedProjectsDescription": "Şehir, ilçe ve ticari bağlama göre öne çıkan ilgili proje sayfaları.",
+      "relatedArticlesTitle": "İlgili Makaleler",
+      "relatedArticlesDescription": "Aynı içerik kümesindeki anlamsal olarak ilişkili makaleler.",
+      "relatedGuidesTitle": "İlgili Rehberler",
+      "relatedGuidesDescription": "Bu konuyla uyumlu ana, ilçe, vergi ve satın alma süreci sayfaları."
+    },
+    "staticPage": {
+      "relatedPropertiesTitle": "İlgili Gayrimenkuller",
+      "relatedPropertiesDescription": "Bu konuyla bağlantılı ticari portföy.",
+      "relatedProjectsTitle": "İlgili Projeler",
+      "relatedProjectsDescription": "Şehir, ilçe ve alıcı niyetine göre öne çıkan ilgili proje sayfaları.",
+      "relatedArticlesTitle": "İlgili Makaleler",
+      "relatedArticlesDescription": "Bu sayfayla bağlantılı destekleyici bilgilendirici içerikler.",
+      "relatedGuidesTitle": "İçerik Kümesinde Devam Et",
+      "relatedGuidesDescription": "Aynı konu grafiğindeki bir sonraki en uygun rehber sayfaları."
+    },
+    "projectPage": {
+      "relatedArticlesTitle": "İlgili Makaleler",
+      "relatedArticlesDescription": "Bu projenin konumu ve alıcı niyetiyle uyumlu ticari ve bilgilendirici içerikler.",
+      "relatedProjectsTitle": "İlgili Projeler",
+      "relatedProjectsDescription": "Benzer lokasyon, yatırım bağlamı veya ödeme planı profiline sahip projeler.",
+      "relatedPropertiesTitle": "İlgili Gayrimenkuller",
+      "relatedPropertiesDescription": "Ticari karşılaştırmayı destekleyen hazır stok ve proje dışı ilanlar.",
+      "relatedGuidesTitle": "İlgili Rehberler",
+      "relatedGuidesDescription": "Bu projeyle anlamsal olarak bağlantılı vergi, satın alma süreci, bölge ve yatırım sayfaları."
+    },
+    "propertyPage": {
+      "relatedArticlesTitle": "İlgili Makaleler",
+      "relatedArticlesDescription": "Bu ilanın pazarı ve alıcı niyetiyle bağlantılı rehberler ve makaleler.",
+      "relatedPropertiesTitle": "İlgili Gayrimenkuller",
+      "relatedPropertiesDescription": "Yakın lokasyonlarda ve benzer niyet kümelerinde yer alan benzer seçenekler.",
+      "relatedGuidesTitle": "Satın Alma, Vergi ve Yatırım Rehberleri",
+      "relatedGuidesDescription": "Bu ilan ile sitenin bilgilendirici tarafı arasındaki bağlamsal geçişler."
+    }
+  },
+  "guidePage": {
+    "home": "Ana Sayfa",
+    "investmentGuides": "Yatırım Rehberleri",
+    "keyHighlights": "Temel Noktalar",
+    "liveInventoryPrefix": "Araştırma yaparken canlı portföy mü arıyorsunuz?",
+    "liveInventoryLink": "güncel gayrimenkul ilanlarını",
+    "liveInventorySuffix": "inceleyin ve bu sayfadaki yönlendirmelerle karşılaştırın.",
+    "exploreNext": "Sonraki Adımlar",
+    "faq": "SSS",
+    "notFoundTitle": "Rehber bulunamadı",
+    "notFoundText": "Bu rehber henüz mevcut değil."
+  },
   "testimonials": {
     "subtitle": "Gerçek Deneyimler",
     "title": "Ziyaretçilerimiz Ne Diyor?",
