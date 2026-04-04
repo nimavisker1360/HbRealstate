@@ -48,6 +48,13 @@ const getConfiguredDatabaseUrl = () => {
   };
 };
 
+const getMongoProtocol = (databaseUrl) => {
+  const normalized = normalizeString(databaseUrl).toLowerCase();
+  if (normalized.startsWith(`${SRV_PROTOCOL}//`)) return SRV_PROTOCOL;
+  if (normalized.startsWith(`${DIRECT_PROTOCOL}//`)) return DIRECT_PROTOCOL;
+  return "";
+};
+
 const parseTxtOptions = (txtRecords = []) => {
   const searchParams = new URLSearchParams();
 
@@ -164,16 +171,24 @@ const resolveAtlasDnsRecords = async (hostname) => {
 };
 
 const getDatabaseNameFromUrl = (databaseUrl) => {
-  const parsedUrl = new URL(databaseUrl);
-  const pathname = normalizeString(parsedUrl.pathname).replace(/^\/+/, "");
-  return pathname || "test";
+  try {
+    const parsedUrl = new URL(databaseUrl);
+    const pathname = normalizeString(parsedUrl.pathname).replace(/^\/+/, "");
+    return pathname || "test";
+  } catch {
+    const normalized = normalizeString(databaseUrl);
+    const match = normalized.match(
+      /^[a-z0-9+.-]+:\/\/(?:[^@/]+@)?[^/?]+\/([^?]+)/i
+    );
+    return normalizeString(match?.[1]) || "test";
+  }
 };
 
 export const resolveMongoDatabaseConfig = async () => {
   const configuredUrl = getConfiguredDatabaseUrl();
-  const parsedUrl = new URL(configuredUrl.url);
+  const protocol = getMongoProtocol(configuredUrl.url);
 
-  if (parsedUrl.protocol !== SRV_PROTOCOL) {
+  if (protocol !== SRV_PROTOCOL) {
     return {
       url: configuredUrl.url,
       databaseName: getDatabaseNameFromUrl(configuredUrl.url),
@@ -183,6 +198,8 @@ export const resolveMongoDatabaseConfig = async () => {
       dnsServers: [],
     };
   }
+
+  const parsedUrl = new URL(configuredUrl.url);
 
   const dnsResolution = await resolveAtlasDnsRecords(parsedUrl.hostname);
   if (dnsResolution.srvRecords.length === 0) {

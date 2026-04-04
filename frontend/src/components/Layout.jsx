@@ -31,13 +31,25 @@ const Layout = () => {
   const tokenRefreshIntervalRef = useRef(null);
   const hasRegisteredRef = useRef(false);
 
-  // Hide footer on listing, admin, addresses, projects, and blog pages
+  const pathname = location.pathname || "/";
+  const pathSegments = pathname.split("/").filter(Boolean);
+  const underServicesHub =
+    pathSegments[0] === "services" &&
+    (pathSegments.length === 1 ||
+      pathSegments[1] === "property-inspection" ||
+      pathSegments[1] === "home-staging");
+
+  // Hide footer on listing, services hub (/listing + inspection/staging), admin,
+  // private request panel, addresses, projects, and blog pages
   const hideFooter =
-    location.pathname === "/listing" ||
-    location.pathname === "/admin" ||
-    location.pathname === "/addresses" ||
-    location.pathname.startsWith("/projects") ||
-    location.pathname.startsWith("/blog");
+    pathname === "/listing" ||
+    pathname === "/browse" ||
+    underServicesHub ||
+    pathname === "/admin" ||
+    pathname === "/my-staging-requests" ||
+    pathname === "/addresses" ||
+    pathname.startsWith("/projects") ||
+    pathname.startsWith("/blog");
 
   const { mutate } = useMutation({
     mutationKey: [user?.email],

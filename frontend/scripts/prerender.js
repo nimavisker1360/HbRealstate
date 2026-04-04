@@ -26,6 +26,12 @@ const STATIC_PAGE_META = {
       "Browse verified apartments, villas, and investment opportunities across Turkey. Compare prices, features, and locations with HB International Real Estate.",
     canonical: `${SITE_URL}/listing`,
   },
+  "/services": {
+    title: "HB Real Estate Services | Inspection & Staging",
+    description:
+      "Professional property inspections, home staging, renovation support, and premium listing content for Turkey real estate.",
+    canonical: `${SITE_URL}/services`,
+  },
   "/projects": {
     title: "Real Estate Projects | HB International Real Estate",
     description:
@@ -481,7 +487,7 @@ const buildPropertyMeta = (property, route) => {
       {
         "@type": "ListItem",
         position: 2,
-        name: "Listing",
+        name: "Listings",
         item: `${SITE_URL}/listing`,
       },
       {

@@ -42,6 +42,9 @@ const RouteSeo = () => {
     const hasDedicatedSeo =
       pathname === "/listing" ||
       pathname.startsWith("/listing/") ||
+      pathname === "/services" ||
+      pathname.startsWith("/services/") ||
+      pathname === "/browse" ||
       pathname.startsWith("/projects/") ||
       pathname === "/investment-guides" ||
       pathname === "/blogs" ||

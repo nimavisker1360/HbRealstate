@@ -310,7 +310,9 @@ const PropertySeoPage = () => {
         "@type": "ListItem",
         position: 2,
         name: city || "Listing",
-        item: city ? `${SITE_URL}/listing?search=${encodeURIComponent(city)}` : `${SITE_URL}/listing`,
+        item: city
+          ? `${SITE_URL}/listing?search=${encodeURIComponent(city)}`
+          : `${SITE_URL}/listing`,
       },
     ];
 
@@ -381,7 +383,10 @@ const PropertySeoPage = () => {
 
   const breadcrumbItems = [
     { label: "Home", to: "/" },
-    { label: city || "Listing", to: city ? `/listing?search=${encodeURIComponent(city)}` : "/listing" },
+    {
+      label: city || "Listing",
+      to: city ? `/listing?search=${encodeURIComponent(city)}` : "/listing",
+    },
     ...(district
       ? [{ label: district, to: `/listing?search=${encodeURIComponent(district)}` }]
       : []),

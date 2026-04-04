@@ -75,6 +75,15 @@ const staticPages: SitemapUrl[] = [
   { path: "/investment-opportunities", changefreq: "weekly", priority: "0.8" },
   { path: "/turkey-property-investment", changefreq: "weekly", priority: "0.8" },
   { path: "/turkish-citizenship-property", changefreq: "weekly", priority: "0.8" },
+  { path: "/services", changefreq: "weekly", priority: "0.8" },
+  { path: "/services/property-inspection", changefreq: "weekly", priority: "0.75" },
+  { path: "/services/property-inspection/request", changefreq: "monthly", priority: "0.65" },
+  { path: "/services/property-inspection/sample-report", changefreq: "monthly", priority: "0.55" },
+  { path: "/services/property-inspection/faq", changefreq: "monthly", priority: "0.55" },
+  { path: "/services/home-staging", changefreq: "weekly", priority: "0.75" },
+  { path: "/services/home-staging/request", changefreq: "monthly", priority: "0.65" },
+  { path: "/services/home-staging/projects", changefreq: "weekly", priority: "0.7" },
+  { path: "/services/home-staging/faq", changefreq: "monthly", priority: "0.55" },
 ];
 
 const toIsoDate = (value?: string) => {

@@ -26,6 +26,7 @@ const MOBILE_BREAKPOINT_QUERY = "(max-width: 639px)";
 const MOBILE_SLIDE_INTERVAL_MS = 6000;
 const DESKTOP_SLIDE_INTERVAL_MS = 6500;
 const ALL_SLIDE_TRANSITION_MS = 900;
+const HERO_VIDEO_POSTER = heroBg;
 
 const ALL_HERO_SLIDES = [
   {
@@ -45,6 +46,55 @@ const ALL_HERO_SLIDES = [
   // Add new slides here, for example: { src: "/new-slide.jpg", alt: "New slide" },
 ];
 
+const HERO_LOCATION_IMAGES = {
+  ISTANBUL: heroIstanbul,
+  GREECE: heroGreece,
+  DUBAI: heroDubai,
+  GEORGIA: heroGeorgia,
+  CYPRUS: heroCyprus,
+};
+
+const HERO_PRELOAD_IMAGE_SOURCES = [
+  heroBg,
+  ...Object.values(HERO_LOCATION_IMAGES),
+];
+
+const preloadHeroImage = (src, fetchPriority = "auto") => {
+  const image = new Image();
+  image.loading = "eager";
+  image.decoding = fetchPriority === "high" ? "sync" : "async";
+
+  if ("fetchPriority" in image) {
+    image.fetchPriority = fetchPriority;
+  }
+
+  image.src = src;
+  return image;
+};
+
+const appendPreloadLink = ({ href, as, type, fetchPriority = "auto" }) => {
+  const link = document.createElement("link");
+  link.rel = "preload";
+  link.as = as;
+  link.href = href;
+
+  if (type) {
+    link.type = type;
+  }
+
+  if ("fetchPriority" in link) {
+    link.fetchPriority = fetchPriority;
+  }
+
+  document.head.appendChild(link);
+
+  return () => {
+    if (link.parentNode) {
+      link.parentNode.removeChild(link);
+    }
+  };
+};
+
 const Hero = () => {
   const { t, i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState("ALL");
@@ -54,6 +104,7 @@ const Hero = () => {
   const [allSlideDirection, setAllSlideDirection] = useState("next");
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const [readyVideoSources, setReadyVideoSources] = useState(() => new Set());
   const { isAuthenticated, isLoading } = useAuth0();
   const { validateLogin } = useAuthCheck();
 
@@ -61,6 +112,23 @@ const Hero = () => {
     ...slide,
     alt: getLocalizedAlt(i18n.language, slide.altKey),
   }));
+
+  useEffect(() => {
+    const preloadedImages = HERO_PRELOAD_IMAGE_SOURCES.map((src, index) =>
+      preloadHeroImage(src, index === 0 ? "high" : "auto")
+    );
+    const cleanupVideoPreload = appendPreloadLink({
+      href: "/citizen.mp4",
+      as: "video",
+      type: "video/mp4",
+      fetchPriority: "high",
+    });
+
+    return () => {
+      preloadedImages.length = 0;
+      cleanupVideoPreload();
+    };
+  }, []);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia(MOBILE_BREAKPOINT_QUERY);
@@ -125,20 +193,25 @@ const Hero = () => {
     return () => window.clearTimeout(timeoutId);
   }, [isAllSlidesAnimating, nextAllSlideIndex]);
 
-  const heroImages = {
-    ISTANBUL: heroIstanbul,
-    GREECE: heroGreece,
-    DUBAI: heroDubai,
-    GEORGIA: heroGeorgia,
-    CYPRUS: heroCyprus,
+  const markVideoReady = (src) => {
+    setReadyVideoSources((currentSources) => {
+      if (currentSources.has(src)) {
+        return currentSources;
+      }
+
+      const nextSources = new Set(currentSources);
+      nextSources.add(src);
+      return nextSources;
+    });
   };
+
   const visibleAllSlideIndex =
     nextAllSlideIndex !== null ? nextAllSlideIndex : activeAllSlideIndex;
   const activeHeroMedia =
     activeTab === "ALL"
       ? allHeroSlides[visibleAllSlideIndex]
       : {
-          src: heroImages[activeTab] || heroBg,
+          src: HERO_LOCATION_IMAGES[activeTab] || heroBg,
           alt: getLocalizedAlt(i18n.language, "locationHero", {
             location: activeTab,
           }),
@@ -330,29 +403,36 @@ const Hero = () => {
 
   const renderSlideMedia = (slide, className) => {
     if (slide.type === "video") {
+      const isVideoReady = readyVideoSources.has(slide.src);
+
       return (
         <div
           key={slide.src}
           className={`${className} overflow-hidden bg-[radial-gradient(circle_at_center,rgba(165,28,28,0.26)_0%,rgba(40,7,7,0.92)_52%,rgba(9,11,17,1)_100%)]`}
         >
+          {!isVideoReady && (
+            <img
+              src={HERO_VIDEO_POSTER}
+              alt=""
+              aria-hidden="true"
+              loading="eager"
+              decoding="sync"
+              fetchPriority="high"
+              className="absolute inset-0 h-full w-full object-cover object-center hero-bg"
+            />
+          )}
           <video
-            className="absolute inset-0 h-full w-full scale-[1.14] object-contain object-center sm:hidden"
+            className={`absolute inset-0 h-full w-full scale-[1.14] object-contain object-center transition-opacity duration-300 sm:scale-100 sm:object-cover ${
+              isVideoReady ? "opacity-100" : "opacity-0"
+            }`}
             autoPlay
             muted
             loop
             playsInline
             preload="auto"
-            aria-hidden="true"
-          >
-            <source src={slide.src} type="video/mp4" />
-          </video>
-          <video
-            className="hidden h-full w-full object-cover object-center sm:block"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="auto"
+            poster={HERO_VIDEO_POSTER}
+            onLoadedData={() => markVideoReady(slide.src)}
+            onCanPlay={() => markVideoReady(slide.src)}
             aria-hidden="true"
           >
             <source src={slide.src} type="video/mp4" />
@@ -367,8 +447,8 @@ const Hero = () => {
         src={slide.src}
         alt={slide.alt}
         loading="eager"
-        decoding="async"
-        fetchpriority="high"
+        decoding="sync"
+        fetchPriority="high"
         className={className}
       />
     );
@@ -407,8 +487,8 @@ const Hero = () => {
             src={activeHeroMedia.src}
             alt={activeHeroMedia.alt}
             loading="eager"
-            decoding="async"
-            fetchpriority="high"
+            decoding="sync"
+            fetchPriority="high"
             className="h-full w-full object-cover object-center hero-bg"
           />
         )}

@@ -1,7 +1,7 @@
 import asyncHandler from "express-async-handler";
 import { prisma } from "../config/prismaConfig.js";
 
-const getAuthenticatedEmail = (req) => {
+export const getAuthenticatedEmail = (req) => {
   const payload = req?.auth?.payload;
   if (!payload || typeof payload !== "object") return "";
 

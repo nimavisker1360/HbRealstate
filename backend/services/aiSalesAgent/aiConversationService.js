@@ -67,13 +67,23 @@ const normalizeTranscript = (transcript = []) =>
       timestamp: safeText(item.timestamp) || new Date().toISOString(),
     }));
 
+const isServicesPath = (pathname) => {
+  const p = safeText(pathname);
+  if (p === "/services") return true;
+  return (
+    p.startsWith("/services/property-inspection") ||
+    p.startsWith("/services/home-staging")
+  );
+};
+
 const inferPageType = (pageContext = {}) => {
   const explicitType = safeText(pageContext.pageType);
   if (explicitType) return explicitType;
 
   const pathname = safeText(pageContext.pathname);
   if (pathname === "/") return "home";
-  if (pathname === "/listing") return "listing";
+  if (pathname === "/listing" || pathname === "/browse") return "listing";
+  if (isServicesPath(pathname)) return "services";
   if (pathname.startsWith("/listing/")) return "property_detail";
   if (pathname.startsWith("/projects/")) return "project_detail";
   if (pathname === "/contact") return "contact";

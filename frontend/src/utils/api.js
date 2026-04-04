@@ -305,7 +305,9 @@ export const getAllConsultants = async () => {
     return response.data;
   } catch (error) {
     console.error("Error fetching consultants:", error);
-    toast.error(bilingualKey("toast.consultantsLoadError"));
+    toast.error(bilingualKey("toast.consultantsLoadError"), {
+      toastId: "consultants-load-error",
+    });
     throw error;
   }
 };
@@ -780,7 +782,9 @@ export const getAllBlogs = async () => {
     return response.data;
   } catch (error) {
     console.error("Error fetching blogs:", error);
-    toast.error(bilingualKey("toast.blogsLoadError"));
+    toast.error(bilingualKey("toast.blogsLoadError"), {
+      toastId: "blogs-load-error",
+    });
     throw error;
   }
 };
@@ -1193,6 +1197,333 @@ export const getIstanbulMarketAnalytics = async (params = {}) => {
     return response.data;
   } catch (error) {
     console.error("Error fetching Istanbul market analytics:", error);
+    throw error;
+  }
+};
+
+// ============ HB REALSTATE SERVICES — INSPECTION API ============
+
+export const createInspectionRequest = async (data) => {
+  try {
+    const response = await api.post("/inspection/request", {
+      ...data,
+      ...buildLeadAttributionPayload({ lead_source: "inspection_form" }),
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error creating inspection request:", error);
+    throw error;
+  }
+};
+
+export const getAllInspectionRequests = async (token, params = {}) => {
+  try {
+    const response = await api.get("/inspection/all", {
+      params,
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching inspection requests:", error);
+    return { total: 0, data: [] };
+  }
+};
+
+export const getInspectionRequest = async (id, token) => {
+  try {
+    const response = await api.get(`/inspection/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching inspection request:", error);
+    throw error;
+  }
+};
+
+export const updateInspectionRequest = async (id, data, token) => {
+  try {
+    const response = await api.put(`/inspection/${id}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error updating inspection request:", error);
+    throw error;
+  }
+};
+
+export const updateInspectionStatus = async (id, status, token) => {
+  try {
+    const response = await api.put(
+      `/inspection/${id}/status`,
+      { status },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating inspection status:", error);
+    throw error;
+  }
+};
+
+export const deleteInspectionRequestApi = async (id, token) => {
+  try {
+    const response = await api.delete(`/inspection/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting inspection request:", error);
+    throw error;
+  }
+};
+
+export const saveInspectionChecklist = async (id, data, token) => {
+  try {
+    const response = await api.put(`/inspection/${id}/checklist`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error saving inspection checklist:", error);
+    throw error;
+  }
+};
+
+export const saveInspectionReport = async (id, data, token) => {
+  try {
+    const response = await api.put(`/inspection/${id}/report`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error saving inspection report:", error);
+    throw error;
+  }
+};
+
+// ============ HB REALSTATE SERVICES — STAGING / RENOVATION API ============
+
+export const createStagingRequestApi = async (data) => {
+  try {
+    const response = await api.post("/staging/request", {
+      ...data,
+      ...buildLeadAttributionPayload({ lead_source: "staging_form" }),
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error creating staging request:", error);
+    throw error;
+  }
+};
+
+export const getMyStagingRequestsApi = async (token) => {
+  try {
+    const response = await api.get("/staging/mine", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching current user staging requests:", error);
+    throw error;
+  }
+};
+
+export const getMyInspectionRequestsApi = async (token) => {
+  try {
+    const response = await api.get("/inspection/mine", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching current user inspection requests:", error);
+    throw error;
+  }
+};
+
+export const getAllStagingRequests = async (token, params = {}) => {
+  try {
+    const response = await api.get("/staging/all", {
+      params,
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching staging requests:", error);
+    return { total: 0, data: [] };
+  }
+};
+
+export const getStagingRequestApi = async (id, token) => {
+  try {
+    const response = await api.get(`/staging/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching staging request:", error);
+    throw error;
+  }
+};
+
+export const updateStagingRequestApi = async (id, data, token) => {
+  try {
+    const response = await api.put(`/staging/${id}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error updating staging request:", error);
+    throw error;
+  }
+};
+
+export const updateStagingStatus = async (id, status, token) => {
+  try {
+    const response = await api.put(
+      `/staging/${id}/status`,
+      { status },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating staging status:", error);
+    throw error;
+  }
+};
+
+export const deleteStagingRequestApi = async (id, token) => {
+  try {
+    const response = await api.delete(`/staging/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting staging request:", error);
+    throw error;
+  }
+};
+
+export const upsertStagingProject = async (requestId, data, token) => {
+  try {
+    const response = await api.put(`/staging/${requestId}/project`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error saving staging project:", error);
+    throw error;
+  }
+};
+
+export const getStagingProject = async (projectId, token) => {
+  try {
+    const response = await api.get(`/staging/project/${projectId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching staging project:", error);
+    throw error;
+  }
+};
+
+export const updateStagingProjectStatus = async (projectId, status, token) => {
+  try {
+    const response = await api.put(
+      `/staging/project/${projectId}/status`,
+      { status },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating project status:", error);
+    throw error;
+  }
+};
+
+export const getPublicServicePackages = async () => {
+  try {
+    const response = await api.get("/staging/packages/public", {
+      timeout: 10 * 1000,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching service packages:", error);
+    throw error;
+  }
+};
+
+export const getPublicStagingProjects = async () => {
+  try {
+    const response = await api.get("/staging/projects/public", {
+      timeout: 15 * 1000,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching public staging projects:", error);
+    throw error;
+  }
+};
+
+export const getPublicStagingProjectDetail = async (projectIdOrSlug) => {
+  try {
+    const response = await api.get(
+      `/staging/projects/public/${encodeURIComponent(projectIdOrSlug)}`,
+      { timeout: 15 * 1000 }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching staging project:", error);
+    throw error;
+  }
+};
+
+export const getAllServicePackages = async (token) => {
+  try {
+    const response = await api.get("/staging/packages", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching service packages:", error);
+    return { data: [] };
+  }
+};
+
+export const createServicePackage = async (data, token) => {
+  try {
+    const response = await api.post("/staging/packages", data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error creating service package:", error);
+    throw error;
+  }
+};
+
+export const updateServicePackage = async (packageId, data, token) => {
+  try {
+    const response = await api.put(`/staging/packages/${packageId}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error updating service package:", error);
+    throw error;
+  }
+};
+
+export const deleteServicePackage = async (packageId, token) => {
+  try {
+    const response = await api.delete(`/staging/packages/${packageId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting service package:", error);
     throw error;
   }
 };

@@ -86,10 +86,12 @@ import {
   MdBlock,
   MdCheckCircle,
   MdRateReview,
+  MdBuild,
 } from "react-icons/md";
 import { FaStar } from "react-icons/fa6";
 import { pickAndUploadImages, pickAndUploadVideos } from "../utils/blobUpload";
 import UploadProgressBar from "../components/UploadProgressBar";
+import StagingManagement from "../components/admin/StagingManagement";
 
 // DnD Kit imports
 import {
@@ -2391,6 +2393,28 @@ const AdminPanel = () => {
               </div>
             </Group>
           </Paper>
+
+          <Paper
+            shadow="sm"
+            p="lg"
+            radius="md"
+            className={`cursor-pointer hover:shadow-md transition-shadow ${
+              activeTab === "staging" ? "border-2 border-amber-500" : ""
+            }`}
+            onClick={() => setActiveTab("staging")}
+          >
+            <Group>
+              <div className="bg-amber-100 text-amber-600 p-3 rounded-full">
+                <MdBuild size={24} />
+              </div>
+              <div>
+                <Text fw={600}>Staging & Renovation</Text>
+                <Text size="sm" color="dimmed">
+                  Renovation, staging and inspection requests
+                </Text>
+              </div>
+            </Group>
+          </Paper>
         </div>
 
         {/* Property List Section */}
@@ -3512,6 +3536,13 @@ const AdminPanel = () => {
                 </div>
               </div>
             )}
+          </Paper>
+        )}
+
+        {/* Staging & Renovation Management */}
+        {activeTab === "staging" && (
+          <Paper shadow="sm" p="xl" radius="md" className="mb-6">
+            <StagingManagement />
           </Paper>
         )}
 

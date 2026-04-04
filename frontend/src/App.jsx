@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "react-query"
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css"
@@ -9,19 +9,21 @@ import Layout from "./components/Layout";
 import RequireAuth from "./components/RequireAuth";
 import ScrollToTop from "./components/ScrollToTop";
 import RouteSeo from "./components/RouteSeo";
+import Home from "./pages/seo/HomeSeoPage";
 import { contentHubPages } from "./data/contentHubPages";
 import {
   DEFAULT_LANGUAGE_CODE,
   extractLanguageFromPath,
 } from "./utils/languageRouting";
+import LegacyServicesRedirect from "./components/LegacyServicesRedirect";
 
-const Home = lazy(() => import("./pages/seo/HomeSeoPage"));
 const Listing = lazy(() => import("./pages/seo/ListingSeoPage"));
 const Property = lazy(() => import("./pages/seo/PropertySeoPage"));
 const AddProperty = lazy(() => import("./pages/AddProperty"));
 const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 const Consultants = lazy(() => import("./pages/Consultants"));
 const TodayProperties = lazy(() => import("./pages/TodayProperties"));
+const MyStagingRequests = lazy(() => import("./pages/MyStagingRequests"));
 const BlogsPage = lazy(() => import("./pages/Blogs"));
 const CountryBlogs = lazy(() => import("./pages/CountryBlogs"));
 const BlogCategory = lazy(() => import("./pages/BlogCategory"));
@@ -37,7 +39,30 @@ const InvestmentGuides = lazy(() => import("./pages/InvestmentGuides"));
 const InvestmentOpportunitiesBlogs = lazy(
   () => import("./pages/InvestmentOpportunitiesBlogs")
 );
-
+const ServicesHubPage = lazy(() => import("./pages/services/ServicesHubPage"));
+const PropertyInspectionLanding = lazy(
+  () => import("./pages/services/PropertyInspectionLanding")
+);
+const PropertyInspectionRequestPage = lazy(
+  () => import("./pages/services/PropertyInspectionRequestPage")
+);
+const PropertyInspectionSampleReportPage = lazy(
+  () => import("./pages/services/PropertyInspectionSampleReportPage")
+);
+const PropertyInspectionFaqPage = lazy(
+  () => import("./pages/services/PropertyInspectionFaqPage")
+);
+const HomeStagingLanding = lazy(() => import("./pages/services/HomeStagingLanding"));
+const HomeStagingRequestPage = lazy(
+  () => import("./pages/services/HomeStagingRequestPage")
+);
+const HomeStagingProjectsPage = lazy(
+  () => import("./pages/services/HomeStagingProjectsPage")
+);
+const HomeStagingProjectDetailPage = lazy(
+  () => import("./pages/services/HomeStagingProjectDetailPage")
+);
+const HomeStagingFaqPage = lazy(() => import("./pages/services/HomeStagingFaqPage"));
 const ReactQueryDevtools = import.meta.env.DEV
   ? lazy(() =>
       import("react-query/devtools").then((module) => ({
@@ -45,6 +70,11 @@ const ReactQueryDevtools = import.meta.env.DEV
       }))
     )
   : () => null;
+
+const LegacyBrowseRedirect = () => {
+  const { search, hash } = useLocation();
+  return <Navigate to={`/listing${search}${hash}`} replace />;
+};
 
 export default function App() {
   const getPathLanguage = () =>
@@ -98,8 +128,52 @@ export default function App() {
                   <Route element={<Layout />}>
                     <Route path="/" element={<Home />} />
                     <Route path="/contact" element={<Addresses variant="contact" />} />
-                    <Route path="/listing" >
+                    <Route path="/browse" element={<LegacyBrowseRedirect />} />
+                    <Route path="/services">
+                      <Route index element={<ServicesHubPage />} />
+                      <Route
+                        path="property-inspection"
+                        element={<PropertyInspectionLanding />}
+                      />
+                      <Route
+                        path="property-inspection/request"
+                        element={<PropertyInspectionRequestPage />}
+                      />
+                      <Route
+                        path="property-inspection/sample-report"
+                        element={<PropertyInspectionSampleReportPage />}
+                      />
+                      <Route
+                        path="property-inspection/faq"
+                        element={<PropertyInspectionFaqPage />}
+                      />
+                      <Route
+                        path="home-staging"
+                        element={<HomeStagingLanding />}
+                      />
+                      <Route
+                        path="home-staging/request"
+                        element={<HomeStagingRequestPage />}
+                      />
+                      <Route
+                        path="home-staging/projects"
+                        element={<HomeStagingProjectsPage />}
+                      />
+                      <Route
+                        path="home-staging/projects/:projectId"
+                        element={<HomeStagingProjectDetailPage />}
+                      />
+                      <Route
+                        path="home-staging/faq"
+                        element={<HomeStagingFaqPage />}
+                      />
+                    </Route>
+                    <Route path="/listing">
                       <Route index element={<Listing />} />
+                      <Route path="property-inspection" element={<LegacyServicesRedirect />} />
+                      <Route path="property-inspection/*" element={<LegacyServicesRedirect />} />
+                      <Route path="home-staging" element={<LegacyServicesRedirect />} />
+                      <Route path="home-staging/*" element={<LegacyServicesRedirect />} />
                       <Route path=":propertyId" element={<Property />} />
                     </Route>
                     <Route
@@ -131,6 +205,14 @@ export default function App() {
                       element={
                         <RequireAuth>
                           <Favourites />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/my-staging-requests"
+                      element={
+                        <RequireAuth>
+                          <MyStagingRequests />
                         </RequireAuth>
                       }
                     />

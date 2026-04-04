@@ -12,6 +12,8 @@ import { assistantRoute } from "./routes/assistantRoute.js";
 import { marketRoute } from "./routes/marketRoute.js";
 import { aiSalesAgentRoute } from "./routes/aiSalesAgentRoute.js";
 import { uploadRoute } from "./routes/uploadRoute.js";
+import { inspectionRoute } from "./routes/inspectionRoute.js";
+import { stagingRoute } from "./routes/stagingRoute.js";
 import { getSitemapXml } from "./controllers/sitemapCntrl.js";
 import { loadBackendEnv } from "./config/loadEnv.js";
 
@@ -39,5 +41,7 @@ app.use("/api/assistant", assistantRoute);
 app.use("/api/ai-agent", aiSalesAgentRoute);
 app.use("/api/market", marketRoute);
 app.use("/api/upload", uploadRoute);
+app.use("/api/inspection", inspectionRoute);
+app.use("/api/staging", stagingRoute);
 
 export default app;

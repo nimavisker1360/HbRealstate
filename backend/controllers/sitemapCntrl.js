@@ -14,6 +14,15 @@ const STATIC_PATHS = [
   "/kyrenia-apartments",
   "/turkey-property-investment",
   "/turkish-citizenship-property",
+  "/services",
+  "/services/property-inspection",
+  "/services/property-inspection/request",
+  "/services/property-inspection/sample-report",
+  "/services/property-inspection/faq",
+  "/services/home-staging",
+  "/services/home-staging/request",
+  "/services/home-staging/projects",
+  "/services/home-staging/faq",
 ];
 
 const normalizeOrigin = (value) => {
@@ -268,6 +277,30 @@ export const getSitemapXml = asyncHandler(async (_req, res) => {
     console.error("[sitemap] failed to fetch blog URLs:", error.message);
   }
 
+  let stagingShowcaseUrls = [];
+  try {
+    const showcaseProjects = await prisma.stagingProject.findMany({
+      where: { published: true },
+      select: { id: true, updatedAt: true, createdAt: true },
+    });
+    stagingShowcaseUrls = showcaseProjects
+      .map((p) => {
+        const id = normalizeIdentifier(p?.id);
+        if (!id) return null;
+        return {
+          loc: `${origin}/services/home-staging/projects/${encodePathSegment(id)}`,
+          lastModified: resolveLastModified(
+            p?.updatedAt,
+            p?.createdAt,
+            generatedAt
+          ),
+        };
+      })
+      .filter(Boolean);
+  } catch (error) {
+    console.error("[sitemap] failed to fetch staging showcase URLs:", error.message);
+  }
+
   const uniqueByLoc = new Map();
   for (const item of [
     ...staticUrls,
@@ -275,6 +308,7 @@ export const getSitemapXml = asyncHandler(async (_req, res) => {
     ...projectUrls,
     ...blogUrls,
     ...countryUrls,
+    ...stagingShowcaseUrls,
   ]) {
     if (!item?.loc) continue;
     if (!uniqueByLoc.has(item.loc)) uniqueByLoc.set(item.loc, item);

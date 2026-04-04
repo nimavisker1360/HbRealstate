@@ -647,6 +647,87 @@ body {
   }
 }
 
+.hb-services-glow {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: 4px;
+  border: 1.5px solid rgba(255, 200, 200, 0.5);
+  padding: 4px 10px;
+  background-color: #dc2626 !important;
+  color: #fff !important;
+  animation: hb-glow-pulse 2.2s ease-in-out infinite;
+}
+
+/* Improve contrast for secondary copy across dark HB service pages. */
+.hb-services-theme .text-white\/42,
+.hb-services-theme .text-white\/45,
+.hb-services-theme .text-white\/46,
+.hb-services-theme .text-white\/48,
+.hb-services-theme .text-white\/50 {
+  color: rgb(255 255 255 / 0.72);
+}
+
+.hb-services-theme .text-white\/52,
+.hb-services-theme .text-white\/55 {
+  color: rgb(255 255 255 / 0.78);
+}
+
+.hb-services-theme .text-white\/60,
+.hb-services-theme .text-white\/62,
+.hb-services-theme .text-white\/65,
+.hb-services-theme .text-white\/66,
+.hb-services-theme .text-white\/68 {
+  color: rgb(255 255 255 / 0.84);
+}
+
+.hb-services-theme .text-white\/70,
+.hb-services-theme .text-white\/72,
+.hb-services-theme .text-white\/74,
+.hb-services-theme .text-white\/75 {
+  color: rgb(255 255 255 / 0.9);
+}
+
+.hb-services-glow span,
+.hb-services-glow svg {
+  color: #fff !important;
+}
+
+.hb-services-glow::after {
+  content: "";
+  position: absolute;
+  top: -10%;
+  left: 0;
+  width: 38%;
+  height: 120%;
+  pointer-events: none;
+  background: linear-gradient(
+    110deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.72) 48%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: translateX(-180%) skewX(-18deg);
+  animation: investment-pill-sweep 2.4s ease-in-out infinite;
+  z-index: 0;
+}
+
+@keyframes hb-glow-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 5px rgba(220, 38, 38, 0.4),
+      0 0 12px rgba(220, 38, 38, 0.2);
+    border-color: rgba(255, 200, 200, 0.5);
+  }
+  50% {
+    box-shadow:
+      0 0 8px rgba(220, 38, 38, 0.6),
+      0 0 20px rgba(220, 38, 38, 0.35),
+      0 0 35px rgba(220, 38, 38, 0.15);
+    border-color: rgba(255, 255, 255, 0.85);
+  }
+}
+
 .investment-opportunities-pill {
   isolation: isolate;
 }
@@ -882,6 +963,16 @@ body {
   }
 
   .investment-opportunities-pill::after {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+
+  .hb-services-glow {
+    animation: none !important;
+    box-shadow: none !important;
+  }
+
+  .hb-services-glow::after {
     animation: none !important;
     opacity: 0 !important;
   }

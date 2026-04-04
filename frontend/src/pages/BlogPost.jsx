@@ -1,4 +1,4 @@
-﻿import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "react-query";
 import { getBlog } from "../utils/api";
 import { MdArrowBack, MdCalendarToday, MdCategory, MdErrorOutline, MdAccessTime, MdShare, MdClose, MdChevronLeft, MdChevronRight } from "react-icons/md";

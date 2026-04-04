@@ -5,7 +5,7 @@ import PropTypes from "prop-types";
 import useAdmin from "../hooks/useAdmin";
 import UserDetailContext from "../context/UserDetailContext";
 import { getUserProfile } from "../utils/api";
-import { MdDashboard, MdPerson } from "react-icons/md";
+import { MdBuild, MdDashboard, MdPerson } from "react-icons/md";
 import ProfileModal from "./ProfileModal";
 import { useAuth0 } from "@auth0/auth0-react";
 import { useTranslation } from "react-i18next";
@@ -91,6 +91,9 @@ const ProfileMenu = ({ user, logout }) => {
             onClick={() => navigate("./favourites", { replace: true })}
           >
             {t("profile.favourites")}
+          </Menu.Item>
+          <Menu.Item onClick={() => navigate("/my-staging-requests", { replace: true })} leftSection={<MdBuild size={16} />}>
+            {t("profile.stagingRequests", { defaultValue: "Renovation Requests" })}
           </Menu.Item>
           <Menu.Item onClick={() => navigate("./bookings", { replace: true })}>
             {t("profile.bookings")}

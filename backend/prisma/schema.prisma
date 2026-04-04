@@ -281,3 +281,283 @@ model HousingSales {
     @@index([province])
     @@index([district])
 }
+
+// ============================================================
+// HB RealstateServices — Phase 2: Technical Property Inspection
+// ============================================================
+
+model InspectionRequest {
+    id                String   @id @default(auto()) @map("_id") @db.ObjectId
+
+    // Client info
+    fullName          String
+    phone             String
+    email             String
+    whatsapp          String?
+    requesterType     String   @default("owner") // owner, buyer, agent, investor, tenant, other
+    preferredLanguage String?  @default("en")
+
+    // Property info
+    propertyType      String?  // residential, commercial, land, villa, etc.
+    city              String?
+    district          String?
+    address           String?
+    propertyUrl       String?
+    referenceCode     String?
+    grossArea         Float?
+    netArea           Float?
+    buildingAge       Int?
+    floorNumber       Int?
+    totalFloors       Int?
+    occupancyStatus   String?  // occupied, vacant, under-construction, unknown
+
+    // Request detail
+    requestType       String   @default("standard") // standard, premium, pre-purchase, investment
+    urgency           String   @default("normal")   // urgent, normal, flexible
+    notes             String?
+    uploadedImages    String[] // Vercel Blob URLs
+
+    // Consent
+    consentContact    Boolean  @default(false)
+    consentDataUse    Boolean  @default(false)
+
+    // Workflow & assignment
+    status            String   @default("new") // see INSPECTION_STATUSES constant
+    internalNotes     String?
+    assignedInspector String?
+    assignedPartner   String?
+    scheduledDate     DateTime?
+    completedDate     DateTime?
+
+    // Attribution (mirrors existing lead pattern)
+    utmSource         String?  @map("utm_source")
+    utmMedium         String?  @map("utm_medium")
+    utmCampaign       String?  @map("utm_campaign")
+    leadSource        String?  @default("inspection_form") @map("lead_source")
+    sourcePage        String?  @map("source_page")
+
+    // Relations
+    checklist         InspectionChecklist?
+    report            InspectionReport?
+
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+
+    @@index([status])
+    @@index([email])
+    @@index([city])
+}
+
+model InspectionChecklist {
+    id                String   @id @default(auto()) @map("_id") @db.ObjectId
+
+    requestId         String   @unique @db.ObjectId
+    request           InspectionRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+    // Each section is a JSON array of checklist items:
+    // [{ key, label, status, note, severity, repairCostEstimate, photoRefs }]
+    structuralSafety  Json?
+    legalCompliance   Json?
+    utilitiesPlumbing Json?
+    electricalSafety  Json?
+    comfortInsulation Json?
+    overallRecommendation Json?
+
+    // Computed scores (written by scoring engine)
+    sectionScores     Json?    // { structuralSafety: 82, legalCompliance: 90, ... }
+    totalScore        Float?   // 1–100
+    riskLabel         String?  // strong, good, needs_attention, high_risk
+
+    completedBy       String?
+    completedAt       DateTime?
+
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+}
+
+model InspectionReport {
+    id                String   @id @default(auto()) @map("_id") @db.ObjectId
+
+    requestId         String   @unique @db.ObjectId
+    request           InspectionRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+    summary           String?
+    totalScore        Float?
+    sectionScores     Json?
+    riskLabel         String?
+    keyFindings       Json?    // [{ section, finding, severity, recommendation }]
+    repairEstimates   Json?    // [{ item, estimatedCost, currency, priority }]
+    recommendation    String?
+    disclaimer        String?
+
+    reportFiles       String[] // PDF / asset URLs (Vercel Blob)
+    reportPhotos      String[]
+
+    status            String   @default("draft") // draft, review, final, delivered
+    generatedAt       DateTime?
+    deliveredAt       DateTime?
+
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+}
+
+// ============================================================
+// HB RealstateServices — Phase 3: Renovation / Staging / Premium
+// ============================================================
+
+model StagingRequest {
+    id                  String   @id @default(auto()) @map("_id") @db.ObjectId
+
+    // Client info
+    fullName            String
+    phone               String
+    email               String
+    whatsapp            String?
+    ownerType           String   @default("owner") // owner, agent, investor, developer
+    preferredLanguage   String?  @default("en")
+
+    // Property info
+    propertyType        String?
+    city                String?
+    district            String?
+    address             String?
+    currentCondition    String?  // new, excellent, good, needs-minor, needs-major, renovation-required
+    furnishedState      String?  // furnished, semi-furnished, unfurnished
+    propertySize        Float?
+    roomCount           String?
+
+    // Service request details
+    targetGoal          String?  // sell-faster, increase-value, rental-income, portfolio-upgrade
+    budgetRange         String?  // under-5k, 5k-15k, 15k-30k, 30k-50k, 50k-plus, flexible
+    budgetCurrency      String?  @default("USD")
+    desiredTimeline     String?  // 1-month, 3-months, 6-months, flexible
+    requestedServices   String[] // renovation, staging, photography, video, drone, virtual-tour, floor-plan
+    propertyUrl         String?
+    notes               String?
+    uploadedImages      String[]
+
+    // Consent
+    consentContact      Boolean  @default(false)
+    consentDataUse      Boolean  @default(false)
+
+    // Workflow
+    status              String   @default("new") // see STAGING_STATUSES constant
+    internalNotes       String?
+    assignedConsultantId String? @db.ObjectId
+
+    // Attribution
+    utmSource           String?  @map("utm_source")
+    utmMedium           String?  @map("utm_medium")
+    utmCampaign         String?  @map("utm_campaign")
+    leadSource          String?  @default("staging_form") @map("lead_source")
+    sourcePage          String?  @map("source_page")
+
+    // Relation
+    project             StagingProject?
+
+    createdAt           DateTime @default(now())
+    updatedAt           DateTime @updatedAt
+
+    @@index([status])
+    @@index([email])
+    @@index([city])
+}
+
+model StagingProject {
+    id                    String   @id @default(auto()) @map("_id") @db.ObjectId
+
+    requestId             String   @unique @db.ObjectId
+    request               StagingRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+    title                 String?
+    title_en              String?
+    title_tr              String?
+    title_ru              String?
+    slug                  String?
+
+    // Location (denormalized for listing/filtering)
+    city                  String?
+    district              String?
+    propertyType          String?
+
+    // Classification
+    projectCategory       String?  // visual-refresh, sale-ready, premium-boost, custom
+    packageId             String?  @db.ObjectId
+    package               ServicePackage? @relation(fields: [packageId], references: [id])
+
+    // Team & workflow
+    assignedPartners      Json?    // [{ name, role, phone, email }]
+    budgetEstimate        Float?
+    budgetCurrency        String?  @default("USD")
+    timelineEstimate      String?
+    timelineEstimate_en   String?
+    timelineEstimate_tr   String?
+    timelineEstimate_ru   String?
+    actualStartDate       DateTime?
+    actualEndDate         DateTime?
+    servicesIncluded      String[]
+
+    // Media
+    beforePhotos          String[]
+    beforeVideos          String[]
+    afterPhotos           String[]
+    afterVideos           String[]
+    floorPlanUrl          String?
+    virtualTourUrl        String?
+    droneFootageUrl       String?
+
+    // Value projection
+    expectedValueUplift   Float?   // percentage
+    expectedRentalUplift  Float?   // percentage
+    expectedSaleSpeedDays Int?     // days improvement
+
+    // Case study / publication
+    caseStudyContent      Json?    // { title, summary, beforeAfterPairs, testimonial }
+    caseStudyContent_en   Json?
+    caseStudyContent_tr   Json?
+    caseStudyContent_ru   Json?
+    published             Boolean  @default(false)
+
+    status                String   @default("planning") // see STAGING_PROJECT_STATUSES
+    notes                 String?
+
+    createdAt             DateTime @default(now())
+    updatedAt             DateTime @updatedAt
+
+    @@index([status])
+    @@index([published])
+}
+
+model ServicePackage {
+    id                String   @id @default(auto()) @map("_id") @db.ObjectId
+
+    name              String   // e.g. "Visual Refresh", "Sale Ready", "Premium Listing Boost"
+    name_en           String?
+    name_tr           String?
+    name_ru           String?
+    slug              String   @unique
+    description       String?
+    description_en    String?
+    description_tr    String?
+    description_ru    String?
+
+    category          String   // visual-refresh, sale-ready, premium-boost
+    servicesIncluded  String[] // renovation, staging, photography, video, drone, virtual-tour, floor-plan
+    priceFrom         Float?
+    priceTo           Float?
+    priceCurrency     String   @default("USD")
+    estimatedDays     Int?
+
+    features          Json?    // [{ key, label, included: boolean }]
+    features_en       Json?
+    features_tr       Json?
+    features_ru       Json?
+
+    published         Boolean  @default(true)
+    order             Int      @default(0)
+
+    projects          StagingProject[]
+
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+}

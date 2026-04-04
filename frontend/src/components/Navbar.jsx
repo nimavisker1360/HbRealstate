@@ -14,6 +14,7 @@ import {
   MdLogout,
   MdFavorite,
   MdBookmarks,
+  MdBuild,
   MdPerson,
 } from "react-icons/md";
 import { RiCheckboxMultipleBlankFill } from "react-icons/ri";
@@ -399,6 +400,17 @@ const Navbar = ({
                   {t("profile.favourites")}
                 </span>
               </NavLink>
+
+              <NavLink
+                to="/my-staging-requests"
+                onClick={() => closeMenu && closeMenu()}
+                className="flex items-center gap-3 w-full px-3 py-2.5 hover:bg-gray-50/50 rounded-lg transition-colors"
+              >
+                <MdBuild size={18} className="text-gray-400" />
+                <span className="text-sm text-gray-700">
+                  {t("profile.stagingRequests", { defaultValue: "Renovation Requests" })}
+                </span>
+              </NavLink>
               
               <NavLink
                 to="/bookings"
@@ -472,11 +484,13 @@ const Navbar = ({
 
       {/* Listing */}
       <NavLink
-        to={"/listing"}
+        to={"/services"}
         onClick={() => closeMenu && closeMenu()}
-        className={({ isActive }) => linkClass(isActive && !currentFilter)}
+        className={({ isActive }) =>
+          `hb-services-glow ${linkClass(isActive && !currentFilter)}`
+        }
       >
-        <div className="flex items-center gap-3">
+        <div className="relative z-[1] flex items-center gap-3">
           <RiCheckboxMultipleBlankFill
             size={20}
             className={isMobile ? "" : "lg:hidden"}

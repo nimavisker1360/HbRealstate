@@ -1,7 +1,17 @@
+const isServicesPath = (pathname) => {
+  const p = String(pathname || "").trim();
+  if (p === "/services") return true;
+  return (
+    p.startsWith("/services/property-inspection") ||
+    p.startsWith("/services/home-staging")
+  );
+};
+
 export const inferAiSalesAgentPageType = (pathname = "") => {
   const normalized = String(pathname || "").trim();
   if (normalized === "/") return "home";
-  if (normalized === "/listing") return "listing";
+  if (normalized === "/listing" || normalized === "/browse") return "listing";
+  if (isServicesPath(normalized)) return "services";
   if (normalized.startsWith("/listing/")) return "property_detail";
   if (normalized.startsWith("/projects/")) return "project_detail";
   if (normalized === "/contact") return "contact";
@@ -12,10 +22,16 @@ export const inferAiSalesAgentPageType = (pathname = "") => {
 
 export const extractAiSalesAgentDetailKey = (pathname = "") => {
   const normalized = String(pathname || "").trim();
-  if (!normalized.startsWith("/listing/") && !normalized.startsWith("/projects/")) {
+  if (normalized.startsWith("/projects/")) {
+    const segments = normalized.split("/").filter(Boolean);
+    return segments[segments.length - 1] || "";
+  }
+  if (
+    !normalized.startsWith("/listing/") ||
+    isServicesPath(normalized)
+  ) {
     return "";
   }
-
   const segments = normalized.split("/").filter(Boolean);
   return segments[segments.length - 1] || "";
 };
