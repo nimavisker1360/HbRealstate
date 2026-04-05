@@ -231,6 +231,13 @@
   },
   "hero": {
     "h1": "Property for Sale in Istanbul",
+    "locationTitles": {
+      "ISTANBUL": "Property for Sale in Istanbul",
+      "GREECE": "Property for Sale in Greece",
+      "DUBAI": "Property for Sale in Dubai",
+      "GEORGIA": "Property for Sale in Georgia",
+      "CYPRUS": "Property for Sale in Cyprus"
+    },
     "title": "Right Location, Right Time, Right Investment",
     "subtitle": "Discover premium real estate opportunities with HB International",
     "searchPlaceholder": "Search by city, address or property name...",

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth0 } from "@auth0/auth0-react";
 import heroBg from "../assets/img1.png";
@@ -26,15 +27,31 @@ const MOBILE_BREAKPOINT_QUERY = "(max-width: 639px)";
 const MOBILE_SLIDE_INTERVAL_MS = 6000;
 const DESKTOP_SLIDE_INTERVAL_MS = 6500;
 const ALL_SLIDE_TRANSITION_MS = 900;
+const HERO_GUIDE_VIDEO_SOURCE = "/citizen.mp4";
+const HERO_SERVICES_VIDEO_SOURCE = "/final.mp4";
+const HERO_VIDEO_SOURCES = [
+  HERO_GUIDE_VIDEO_SOURCE,
+  HERO_SERVICES_VIDEO_SOURCE,
+];
 const HERO_VIDEO_POSTER = heroBg;
+const HERO_SERVICES_CTA_LABEL = "HB RealstateServices";
 
 const ALL_HERO_SLIDES = [
   {
     type: "video",
-    src: "/citizen.mp4",
+    src: HERO_GUIDE_VIDEO_SOURCE,
     altKey: "featuredPropertyFilm",
     showContent: false,
     showDownloadButton: true,
+    showServicesButton: false,
+  },
+  {
+    type: "video",
+    src: HERO_SERVICES_VIDEO_SOURCE,
+    altKey: "featuredPropertyFilm",
+    showContent: false,
+    showDownloadButton: false,
+    showServicesButton: true,
   },
   {
     type: "image",
@@ -42,6 +59,7 @@ const ALL_HERO_SLIDES = [
     altKey: "featuredResidence",
     showContent: true,
     showDownloadButton: false,
+    showServicesButton: false,
   },
   // Add new slides here, for example: { src: "/new-slide.jpg", alt: "New slide" },
 ];
@@ -117,16 +135,18 @@ const Hero = () => {
     const preloadedImages = HERO_PRELOAD_IMAGE_SOURCES.map((src, index) =>
       preloadHeroImage(src, index === 0 ? "high" : "auto")
     );
-    const cleanupVideoPreload = appendPreloadLink({
-      href: "/citizen.mp4",
-      as: "video",
-      type: "video/mp4",
-      fetchPriority: "high",
-    });
+    const cleanupVideoPreloads = HERO_VIDEO_SOURCES.map((href, index) =>
+      appendPreloadLink({
+        href,
+        as: "video",
+        type: "video/mp4",
+        fetchPriority: index === 0 ? "high" : "auto",
+      })
+    );
 
     return () => {
       preloadedImages.length = 0;
-      cleanupVideoPreload();
+      cleanupVideoPreloads.forEach((cleanup) => cleanup());
     };
   }, []);
 
@@ -217,6 +237,7 @@ const Hero = () => {
           }),
           showContent: true,
           showDownloadButton: false,
+          showServicesButton: false,
         };
   const shouldShowHeroContent =
     activeTab === "ALL"
@@ -226,6 +247,16 @@ const Hero = () => {
     activeTab === "ALL" &&
     !isAllSlidesAnimating &&
     activeHeroMedia.showDownloadButton;
+  const shouldShowServicesButton =
+    activeTab === "ALL" &&
+    !isAllSlidesAnimating &&
+    activeHeroMedia.showServicesButton;
+  const activeHeroLocationKey = activeTab === "ALL" ? "ISTANBUL" : activeTab;
+  const heroHeading = t(`hero.locationTitles.${activeHeroLocationKey}`, {
+    defaultValue: t("hero.h1", {
+      defaultValue: "Property for Sale in Istanbul",
+    }),
+  });
   const locationTabs = [
     {
       label: "ALL",
@@ -499,10 +530,10 @@ const Hero = () => {
       {shouldShowHeroContent && (
         <div
           key={activeTab === "ALL" ? `content-${activeAllSlideIndex}` : `content-${activeTab}`}
-          className="relative max-w-[1100px] mx-auto h-full px-6 sm:px-10 flex flex-col items-center justify-center text-white text-center gap-4 animate-hero-fade"
+          className="relative w-full max-w-[1400px] mx-auto h-full px-6 sm:px-10 flex flex-col items-center justify-center text-white text-center gap-4 animate-hero-fade"
         >
-          <h1 className="text-[36px] sm:text-[48px] md:text-[64px] font-semibold leading-tight italic">
-            {t("hero.h1", { defaultValue: "Property for Sale in Istanbul" })}
+          <h1 className="text-[clamp(1.2rem,4.6vw,4rem)] font-semibold leading-none italic whitespace-nowrap tracking-[-0.03em]">
+            {heroHeading}
           </h1>
           <p className="text-lg sm:text-xl text-white/90 italic">
             {t("hero.subtitle")}
@@ -519,6 +550,20 @@ const Hero = () => {
           >
             {t("hero.downloadNow", { defaultValue: "Download Now" })}
           </button>
+        </div>
+      )}
+
+      {shouldShowServicesButton && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-[92px] z-10 flex justify-center px-6 sm:bottom-[112px]">
+          <Link
+            to="/services"
+            aria-label="Open services page"
+            className="hero-services-button pointer-events-auto inline-flex min-h-[56px] items-center justify-center rounded-[10px] px-6 py-3 text-[15px] font-extrabold text-white transition duration-300 hover:-translate-y-0.5 hover:brightness-110 sm:min-h-[60px] sm:px-8 sm:text-[18px]"
+          >
+            <span className="hero-services-button__label">
+              {HERO_SERVICES_CTA_LABEL}
+            </span>
+          </Link>
         </div>
       )}
 

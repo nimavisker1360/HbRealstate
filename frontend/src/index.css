@@ -214,6 +214,57 @@ body {
   animation: hero-pill-shine 3s ease-in-out infinite;
 }
 
+.hero-services-button {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: linear-gradient(180deg, #ff5757 0%, #dc2626 42%, #b91c1c 100%);
+  border: 1.5px solid rgba(255, 228, 228, 0.6);
+  box-shadow:
+    0 18px 40px rgba(77, 8, 8, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24);
+  animation: hb-glow-pulse 2.2s ease-in-out infinite;
+}
+
+.hero-services-button::before {
+  content: "";
+  position: absolute;
+  inset: -18px;
+  z-index: -1;
+  border-radius: 18px;
+  background: radial-gradient(
+    circle,
+    rgba(220, 38, 38, 0.48) 0%,
+    rgba(220, 38, 38, 0.22) 42%,
+    rgba(220, 38, 38, 0) 74%
+  );
+  animation: hero-download-halo 2.6s ease-in-out infinite;
+}
+
+.hero-services-button::after {
+  content: "";
+  position: absolute;
+  inset: -35%;
+  background: linear-gradient(
+    110deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 36%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 255, 255, 0.08) 64%,
+    transparent 100%
+  );
+  animation: hero-pill-shine 3s ease-in-out infinite;
+}
+
+.hero-services-button__label {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.14);
+}
+
 @keyframes hero-download-halo {
   0%,
   100% {
@@ -231,7 +282,10 @@ body {
   .hero-project-pill::after,
   .hero-download-button,
   .hero-download-button::before,
-  .hero-download-button::after {
+  .hero-download-button::after,
+  .hero-services-button,
+  .hero-services-button::before,
+  .hero-services-button::after {
     animation: none;
   }
 }

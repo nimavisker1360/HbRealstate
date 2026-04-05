@@ -232,6 +232,13 @@
   },
   "hero": {
     "h1": "Istanbul'da Satilik Gayrimenkul",
+    "locationTitles": {
+      "ISTANBUL": "Istanbul'da Satilik Gayrimenkul",
+      "GREECE": "Yunanistan'da Satilik Gayrimenkul",
+      "DUBAI": "Dubai'de Satilik Gayrimenkul",
+      "GEORGIA": "Gurcistan'da Satilik Gayrimenkul",
+      "CYPRUS": "Kibris'ta Satilik Gayrimenkul"
+    },
     "title": "Doğru Lokasyon, Doğru Zaman, Doğru Yatırım",
     "subtitle": "HB International ile premium gayrimenkul fırsatlarını keşfedin",
     "searchPlaceholder": "şehir, adres veya mülk adı ile arayın...",
