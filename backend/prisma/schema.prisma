@@ -327,6 +327,8 @@ model InspectionRequest {
     assignedInspector String?
     assignedPartner   String?
     scheduledDate     DateTime?
+    visitScheduledAt  DateTime? @map("visit_scheduled_at")
+    visitScheduleNotes String?  @map("visit_schedule_notes")
     completedDate     DateTime?
 
     // Attribution (mirrors existing lead pattern)
@@ -444,6 +446,8 @@ model StagingRequest {
     status              String   @default("new") // see STAGING_STATUSES constant
     internalNotes       String?
     assignedConsultantId String? @db.ObjectId
+    visitScheduledAt    DateTime? @map("visit_scheduled_at")
+    visitScheduleNotes  String?   @map("visit_schedule_notes")
 
     // Attribution
     utmSource           String?  @map("utm_source")

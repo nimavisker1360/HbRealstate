@@ -274,6 +274,8 @@ const userFacingRequestPayload = {
   propertyUrl: true,
   notes: true,
   status: true,
+  visitScheduledAt: true,
+  visitScheduleNotes: true,
   createdAt: true,
   updatedAt: true,
   project: {

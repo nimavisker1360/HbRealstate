@@ -105,6 +105,8 @@ const userFacingInspectionRequestPayload = {
   notes: true,
   status: true,
   scheduledDate: true,
+  visitScheduledAt: true,
+  visitScheduleNotes: true,
   completedDate: true,
   createdAt: true,
   updatedAt: true,

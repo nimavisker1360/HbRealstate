@@ -1,0 +1,46 @@
+Error fetching all bookings: PrismaClientKnownRequestError: 
+Invalid `prisma.residency.findMany()` invocation:
+
+
+Inconsistent column data: Malformed ObjectID: invalid character 'r' was found at index 1 in the provided hex string: "armutlu-bay-r-mah-1805m2-arsa-icinde-sat-l-k-mukemmel-4-2-villa-698489cb59a610b50bcf46a0".
+    at ei.handleRequestError (C:\Users\NIMA\Desktop\real-estate-demo\node_modules\@prisma\client\runtime\library.js:121:7268)
+    at ei.handleAndLogRequestError (C:\Users\NIMA\Desktop\real-estate-demo\node_modules\@prisma\client\runtime\library.js:121:6593)
+    at ei.request (C:\Users\NIMA\Desktop\real-estate-demo\node_modules\@prisma\client\runtime\library.js:121:6300)
+    at async a (C:\Users\NIMA\Desktop\real-estate-demo\node_modules\@prisma\client\runtime\library.js:130:9551)
+    at async file:///C:/Users/NIMA/Desktop/real-estate-demo/backend/controllers/userCntrl.js:364:25 {
+  code: 'P2023',
+  meta: {
+    modelName: 'Residency',
+    message: `Malformed ObjectID: invalid character 'r' was found at index 1 in the provided hex string: "armutlu-bay-r-mah-1805m2-arsa-icinde-sat-l-k-mukemmel-4-2-villa-698489cb59a610b50bcf46a0".`
+  },
+  clientVersion: '6.19.2'
+}
+Error: 
+Invalid `prisma.residency.findMany()` invocation:
+
+
+Inconsistent column data: Malformed ObjectID: invalid character 'r' was found at index 1 in the provided hex string: "armutlu-bay-r-mah-1805m2-arsa-icinde-sat-l-k-mukemmel-4-2-villa-698489cb59a610b50bcf46a0".
+    at file:///C:/Users/NIMA/Desktop/real-estate-demo/backend/controllers/userCntrl.js:419:11
+Error fetching all bookings: PrismaClientKnownRequestError: 
+Invalid `prisma.residency.findMany()` invocation:
+
+
+Inconsistent column data: Malformed ObjectID: invalid character 'r' was found at index 1 in the provided hex string: "armutlu-bay-r-mah-1805m2-arsa-icinde-sat-l-k-mukemmel-4-2-villa-698489cb59a610b50bcf46a0".
+    at ei.handleRequestError (C:\Users\NIMA\Desktop\real-estate-demo\node_modules\@prisma\client\runtime\library.js:121:7268)
+    at ei.handleAndLogRequestError (C:\Users\NIMA\Desktop\real-estate-demo\node_modules\@prisma\client\runtime\library.js:121:6593)
+    at ei.request (C:\Users\NIMA\Desktop\real-estate-demo\node_modules\@prisma\client\runtime\library.js:121:6300)
+    at async a (C:\Users\NIMA\Desktop\real-estate-demo\node_modules\@prisma\client\runtime\library.js:130:9551)
+    at async file:///C:/Users/NIMA/Desktop/real-estate-demo/backend/controllers/userCntrl.js:364:25 {
+  code: 'P2023',
+  meta: {
+    modelName: 'Residency',
+    message: `Malformed ObjectID: invalid character 'r' was found at index 1 in the provided hex string: "armutlu-bay-r-mah-1805m2-arsa-icinde-sat-l-k-mukemmel-4-2-villa-698489cb59a610b50bcf46a0".`
+  },
+  clientVersion: '6.19.2'
+}
+Error: 
+Invalid `prisma.residency.findMany()` invocation:
+
+
+Inconsistent column data: Malformed ObjectID: invalid character 'r' was found at index 1 in the provided hex string: "armutlu-bay-r-mah-1805m2-arsa-icinde-sat-l-k-mukemmel-4-2-villa-698489cb59a610b50bcf46a0".
+    at file:///C:/Users/NIMA/Desktop/real-estate-demo/backend/controllers/userCntrl.js:419:11

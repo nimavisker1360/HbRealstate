@@ -1,1 +1,27 @@
-debug static server listening on http://127.0.0.1:4173
+Server is running on port 8000
+Email API available at /api/email
+MongoDB connection strategy: env:direct
+🚀 Request received at /api/user/register
+📦 Body: {
+  email: 'f4rz4mkaram@gmail.com',
+  name: 'Nima Bagheri Tonkaboni',
+  image: 'https://lh3.googleusercontent.com/a/ACg8ocLSzmcM39lv9C2-NRu4tm0qCl63l9PszFzFps0FNU4au87J2BE=s96-c'
+}
+🚀 Request received at /api/user/register
+📦 Body: {
+  email: 'f4rz4mkaram@gmail.com',
+  name: 'Nima Bagheri Tonkaboni',
+  image: 'https://lh3.googleusercontent.com/a/ACg8ocLSzmcM39lv9C2-NRu4tm0qCl63l9PszFzFps0FNU4au87J2BE=s96-c'
+}
+🚀 Request received at /api/user/register
+📦 Body: {
+  email: 'f4rz4mkaram@gmail.com',
+  name: 'Nima Bagheri Tonkaboni',
+  image: 'https://lh3.googleusercontent.com/a/ACg8ocLSzmcM39lv9C2-NRu4tm0qCl63l9PszFzFps0FNU4au87J2BE=s96-c'
+}
+🚀 Request received at /api/user/register
+📦 Body: {
+  email: 'nima123@gmail.com',
+  name: 'nima123@gmail.com',
+  image: 'https://s.gravatar.com/avatar/f28ef56cfeddd0ad3b1da4777958a627?s=480&r=pg&d=https%3A%2F%2Fcdn.auth0.com%2Favatars%2Fni.png'
+}

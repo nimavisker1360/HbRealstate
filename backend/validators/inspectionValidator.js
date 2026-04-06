@@ -118,6 +118,15 @@ export const validateInspectionUpdate = (body = {}) => {
     const d = new Date(body.scheduledDate);
     data.scheduledDate = Number.isNaN(d.getTime()) ? null : d;
   }
+  if (body.visitScheduleNotes !== undefined) data.visitScheduleNotes = safeString(body.visitScheduleNotes, 2000);
+  if (body.visitScheduledAt !== undefined) {
+    if (body.visitScheduledAt === null || body.visitScheduledAt === "") {
+      data.visitScheduledAt = null;
+    } else {
+      const d = new Date(body.visitScheduledAt);
+      data.visitScheduledAt = Number.isNaN(d.getTime()) ? null : d;
+    }
+  }
 
   return { data };
 };

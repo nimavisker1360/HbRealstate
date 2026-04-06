@@ -118,6 +118,15 @@ export const validateStagingUpdate = (body = {}) => {
   if (body.uploadedImages !== undefined) data.uploadedImages = safeArray(body.uploadedImages);
   if (body.internalNotes !== undefined) data.internalNotes = safeString(body.internalNotes, 5000);
   if (body.assignedConsultantId !== undefined) data.assignedConsultantId = safeString(body.assignedConsultantId, 80);
+  if (body.visitScheduleNotes !== undefined) data.visitScheduleNotes = safeString(body.visitScheduleNotes, 2000);
+  if (body.visitScheduledAt !== undefined) {
+    if (body.visitScheduledAt === null || body.visitScheduledAt === "") {
+      data.visitScheduledAt = null;
+    } else {
+      const d = new Date(body.visitScheduledAt);
+      data.visitScheduledAt = Number.isNaN(d.getTime()) ? null : d;
+    }
+  }
 
   return { data };
 };

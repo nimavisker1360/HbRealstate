@@ -5,7 +5,7 @@ import {
 } from "@mantine/core";
 import {
   MdAdd, MdArrowBack, MdCheckCircle, MdDelete, MdEdit, MdRefresh,
-  MdCloudUpload, MdPhotoLibrary, MdSave, MdSearch, MdVisibility,
+  MdCloudUpload, MdEventAvailable, MdPhotoLibrary, MdSave, MdSchedule, MdSearch, MdVisibility,
 } from "react-icons/md";
 import { pickAndUploadImages } from "../../utils/blobUpload";
 import { toast } from "react-toastify";
@@ -152,6 +152,28 @@ const formatDate = (value) => {
   if (!value) return "-";
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? "-" : date.toLocaleDateString();
+};
+
+const formatDateTime = (value) => {
+  if (!value) return "-";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? "-"
+    : date.toLocaleString([], {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+};
+
+const toDateTimeLocalValue = (value) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const offsetMs = date.getTimezoneOffset() * 60 * 1000;
+  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
 };
 
 const getNumericValue = (value) => {
@@ -479,6 +501,25 @@ const InspectionManagement = () => {
     setSaving(false);
   };
 
+  const handleSaveVisitSchedule = async () => {
+    if (!detail) return;
+    setSaving(true);
+    try {
+      const visitDateValue = detail.visitScheduledAt || detail.scheduledDate || null;
+      await updateInspectionRequest(detail.id, {
+        scheduledDate: visitDateValue ? new Date(visitDateValue).toISOString() : null,
+        visitScheduledAt: visitDateValue ? new Date(visitDateValue).toISOString() : null,
+        visitScheduleNotes: detail.visitScheduleNotes || "",
+      }, token);
+      toast.success("Visit schedule saved");
+      await openDetail(detail.id);
+      fetchRequests();
+    } catch {
+      toast.error("Visit schedule save failed");
+    }
+    setSaving(false);
+  };
+
   const handleSaveChecklist = async (markComplete = false) => {
     if (!detail) return;
     setSaving(true);
@@ -687,7 +728,11 @@ const InspectionManagement = () => {
         <SummaryMetricCard
           label="Request Status"
           value={STATUS_LABELS[detail.status] || formatLabel(detail.status)}
-          hint={detail.scheduledDate ? `Scheduled ${formatDate(detail.scheduledDate)}` : "Scheduling not set"}
+          hint={
+            detail.visitScheduledAt || detail.scheduledDate
+              ? `Scheduled ${formatDateTime(detail.visitScheduledAt || detail.scheduledDate)}`
+              : "Scheduling not set"
+          }
         >
           <Group gap={8}>
             <Badge variant="light" color={detail.urgency === "urgent" ? "red" : "gray"}>
@@ -770,7 +815,8 @@ const InspectionManagement = () => {
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <Text c="dimmed">Type:</Text><Badge variant="light">{detail.requestType}</Badge>
                 <Text c="dimmed">Urgency:</Text><Badge variant="light" color={detail.urgency === "urgent" ? "red" : "gray"}>{detail.urgency}</Badge>
-                <Text c="dimmed">Scheduled:</Text><Text>{detail.scheduledDate ? formatDate(detail.scheduledDate) : "-"}</Text>
+                <Text c="dimmed">Scheduled:</Text>
+                <Text>{detail.visitScheduledAt || detail.scheduledDate ? formatDateTime(detail.visitScheduledAt || detail.scheduledDate) : "-"}</Text>
               </div>
               {detail.notes ? <Text size="sm" mt="sm">{detail.notes}</Text> : null}
             </Paper>
@@ -814,6 +860,100 @@ const InspectionManagement = () => {
         <Tabs.Panel value="checklist" pt="md">
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
             <div className="space-y-4">
+              <Paper
+                shadow="xs"
+                p="md"
+                radius="xl"
+                className="overflow-hidden border border-sky-100 bg-[radial-gradient(circle_at_top_left,_rgba(186,230,253,0.45),_rgba(255,255,255,0.98)_48%,_rgba(220,252,231,0.92)_100%)]"
+              >
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="flex items-start gap-3">
+                    <div className="rounded-2xl bg-sky-500 p-3 text-white shadow-lg shadow-sky-200">
+                      <MdEventAvailable size={24} />
+                    </div>
+                    <div>
+                      <Text fw={700} size="lg">Visit Checklist</Text>
+                      <Text size="sm" c="dimmed">
+                        Set the customer-facing property visit time and checklist note from this inspection panel.
+                      </Text>
+                    </div>
+                  </div>
+                  <Badge
+                    size="lg"
+                    color={detail.visitScheduledAt || detail.scheduledDate ? "teal" : "gray"}
+                    variant={detail.visitScheduledAt || detail.scheduledDate ? "light" : "outline"}
+                  >
+                    {detail.visitScheduledAt || detail.scheduledDate ? "Customer Visible" : "Not Scheduled"}
+                  </Badge>
+                </div>
+
+                <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)]">
+                  <div className="space-y-3">
+                    <TextInput
+                      label="Visit Date & Time"
+                      type="datetime-local"
+                      value={toDateTimeLocalValue(detail.visitScheduledAt || detail.scheduledDate)}
+                      onChange={(e) =>
+                        setDetail({
+                          ...detail,
+                          visitScheduledAt: e.target.value || null,
+                        })
+                      }
+                    />
+                    <Textarea
+                      label="Customer Checklist Note"
+                      description="Optional note shown in the customer panel."
+                      rows={3}
+                      value={detail.visitScheduleNotes || ""}
+                      onChange={(e) => setDetail({ ...detail, visitScheduleNotes: e.target.value })}
+                    />
+                    <Group gap="sm">
+                      <Button size="sm" leftSection={<MdSave size={14} />} onClick={handleSaveVisitSchedule} loading={saving}>
+                        Save Visit Schedule
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="default"
+                        onClick={() =>
+                          setDetail({
+                            ...detail,
+                            scheduledDate: null,
+                            visitScheduledAt: null,
+                            visitScheduleNotes: "",
+                          })
+                        }
+                      >
+                        Clear Form
+                      </Button>
+                    </Group>
+                  </div>
+
+                  <div className="rounded-[1.35rem] border border-white/80 bg-white/85 p-4 shadow-[0_18px_35px_rgba(14,116,144,0.08)] backdrop-blur">
+                    <Group gap={8} mb="xs">
+                      <MdSchedule className="text-sky-600" size={18} />
+                      <Text fw={600}>Customer Preview</Text>
+                    </Group>
+                    <Text size="xs" c="dimmed" tt="uppercase" fw={700}>
+                      Visit Time
+                    </Text>
+                    <Text fw={700} size="lg" mt={4}>
+                      {detail.visitScheduledAt || detail.scheduledDate
+                        ? formatDateTime(detail.visitScheduledAt || detail.scheduledDate)
+                        : "No property visit scheduled yet"}
+                    </Text>
+                    <Text size="sm" c="dimmed" mt="sm">
+                      {detail.visitScheduleNotes ||
+                        "Add access instructions, meeting point, or a short checklist note for the client."}
+                    </Text>
+                    <Group gap={8} mt="md">
+                      {detail.city ? <Badge variant="light" color="indigo">{detail.city}</Badge> : null}
+                      {detail.district ? <Badge variant="light" color="cyan">{detail.district}</Badge> : null}
+                      {detail.propertyType ? <Badge variant="light" color="gray">{detail.propertyType}</Badge> : null}
+                    </Group>
+                  </div>
+                </div>
+              </Paper>
+
               <Paper shadow="xs" p="md" radius="md">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div>

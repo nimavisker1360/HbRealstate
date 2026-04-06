@@ -7,7 +7,7 @@ import {
 import {
   MdRefresh, MdSearch, MdEdit, MdDelete, MdArrowBack, MdSave,
   MdVisibility, MdAdd, MdPublish, MdUnpublished, MdBuild,
-  MdPhotoLibrary, MdCategory, MdCloudUpload,
+  MdPhotoLibrary, MdCategory, MdCloudUpload, MdEventAvailable, MdSchedule,
 } from "react-icons/md";
 import { pickAndUploadImages, pickAndUploadVideos } from "../../utils/blobUpload";
 import { toast } from "react-toastify";
@@ -62,6 +62,25 @@ const PACKAGE_CATEGORIES = ["visual_refresh", "sale_ready", "premium_listing_boo
 
 const mergeUniqueUrls = (...groups) =>
   Array.from(new Set(groups.flat().filter((url) => typeof url === "string" && url.trim())));
+
+const formatDateTime = (value) => {
+  const date = new Date(value || "");
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+};
+
+const toDateTimeLocalValue = (value) => {
+  const date = new Date(value || "");
+  if (Number.isNaN(date.getTime())) return "";
+  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return localDate.toISOString().slice(0, 16);
+};
 
 const StagingManagement = () => {
   const { userDetails: { token } } = useContext(UserDetailContext);
@@ -194,8 +213,14 @@ const StagingManagement = () => {
       await updateStagingRequestApi(detail.id, {
         internalNotes: detail.internalNotes,
         assignedConsultantId: detail.assignedConsultantId,
+        visitScheduledAt: detail.visitScheduledAt
+          ? new Date(detail.visitScheduledAt).toISOString()
+          : null,
+        visitScheduleNotes: detail.visitScheduleNotes || "",
       }, token);
-      toast.success("Saved");
+      toast.success("Request details saved");
+      await openDetail(detail.id);
+      fetchRequests();
     } catch { toast.error("Save failed"); }
     setSaving(false);
   };
@@ -628,6 +653,92 @@ const StagingManagement = () => {
                 </div>
               )}
               {detail.notes && <><Divider my="xs" /><Text size="sm">{detail.notes}</Text></>}
+            </Paper>
+            <Paper
+              shadow="xs"
+              p="md"
+              radius="xl"
+              className="overflow-hidden border border-sky-100 bg-[radial-gradient(circle_at_top_left,_rgba(186,230,253,0.45),_rgba(255,255,255,0.98)_48%,_rgba(220,252,231,0.92)_100%)] lg:col-span-2"
+            >
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-2xl bg-sky-500 p-3 text-white shadow-lg shadow-sky-200">
+                    <MdEventAvailable size={24} />
+                  </div>
+                  <div>
+                    <Text fw={700} size="lg">Visit Checklist</Text>
+                    <Text size="sm" c="dimmed">
+                      Set the property visit time and a short note that becomes visible in the customer panel.
+                    </Text>
+                  </div>
+                </div>
+                <Badge
+                  size="lg"
+                  color={detail.visitScheduledAt ? "teal" : "gray"}
+                  variant={detail.visitScheduledAt ? "light" : "outline"}
+                >
+                  {detail.visitScheduledAt ? "Customer Visible" : "Not Scheduled"}
+                </Badge>
+              </div>
+
+              <div className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)]">
+                <div className="space-y-3">
+                  <TextInput
+                    label="Visit Date & Time"
+                    type="datetime-local"
+                    value={toDateTimeLocalValue(detail.visitScheduledAt)}
+                    onChange={(e) => setDetail({ ...detail, visitScheduledAt: e.target.value || null })}
+                  />
+                  <Textarea
+                    label="Customer Checklist Note"
+                    description="Optional note shown in the customer panel."
+                    rows={3}
+                    value={detail.visitScheduleNotes || ""}
+                    onChange={(e) => setDetail({ ...detail, visitScheduleNotes: e.target.value })}
+                  />
+                  <Group gap="sm">
+                    <Button size="sm" leftSection={<MdSave size={14} />} onClick={handleSaveNotes} loading={saving}>
+                      Save Visit Schedule
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="default"
+                      onClick={() =>
+                        setDetail({
+                          ...detail,
+                          visitScheduledAt: null,
+                          visitScheduleNotes: "",
+                        })
+                      }
+                    >
+                      Clear Form
+                    </Button>
+                  </Group>
+                </div>
+
+                <div className="rounded-[1.35rem] border border-white/80 bg-white/85 p-4 shadow-[0_18px_35px_rgba(14,116,144,0.08)] backdrop-blur">
+                  <Group gap={8} mb="xs">
+                    <MdSchedule className="text-sky-600" size={18} />
+                    <Text fw={600}>Customer Preview</Text>
+                  </Group>
+                  <Text size="xs" c="dimmed" tt="uppercase" fw={700}>
+                    Visit Time
+                  </Text>
+                  <Text fw={700} size="lg" mt={4}>
+                    {detail.visitScheduledAt ? formatDateTime(detail.visitScheduledAt) : "No property visit scheduled yet"}
+                  </Text>
+                  <Text size="sm" c="dimmed" mt="sm">
+                    {detail.visitScheduleNotes ||
+                      "Add access instructions, meeting point, or a short checklist note for the client."}
+                  </Text>
+                  <Divider my="sm" />
+                  <Group gap={8}>
+                    {detail.city ? <Badge variant="light" color="indigo">{detail.city}</Badge> : null}
+                    {detail.district ? <Badge variant="light" color="cyan">{detail.district}</Badge> : null}
+                    {detail.propertyType ? <Badge variant="light" color="gray">{detail.propertyType}</Badge> : null}
+                  </Group>
+                </div>
+              </div>
             </Paper>
             <Paper shadow="xs" p="md" radius="md">
               <Text fw={600} mb="xs">Internal</Text>

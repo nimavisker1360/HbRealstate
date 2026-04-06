@@ -2,7 +2,15 @@ import { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth0 } from "@auth0/auth0-react";
-import { MdArrowOutward, MdBuild, MdRefresh, MdVisibility } from "react-icons/md";
+import {
+  MdArrowOutward,
+  MdBuild,
+  MdEventAvailable,
+  MdPlace,
+  MdRefresh,
+  MdSchedule,
+  MdVisibility,
+} from "react-icons/md";
 import UserDetailContext from "../context/UserDetailContext";
 import { getMyInspectionRequestsApi, getMyStagingRequestsApi } from "../utils/api";
 import { buildLocalizedPath } from "../utils/languageRouting";
@@ -160,6 +168,18 @@ const formatDate = (value, locale = "en") => {
     day: "numeric",
     month: "short",
     year: "numeric",
+  }).format(date);
+};
+
+const formatDateTime = (value, locale = "en") => {
+  const date = new Date(value || "");
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat(locale, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   }).format(date);
 };
 
@@ -462,6 +482,9 @@ const MyStagingRequests = () => {
     const requestBudget = request.budgetRange
       ? `${translateStagingBudget(request.budgetRange)} ${request.budgetCurrency || "USD"}`
       : "";
+    const requestPropertyLabel = [translatePropertyType(request.propertyType), request.city, request.district]
+      .filter(Boolean)
+      .join(" | ");
     const projectBudget =
       project?.budgetEstimate != null
         ? formatCurrencyValue(project.budgetEstimate, project.budgetCurrency || "USD", locale)
@@ -493,6 +516,7 @@ const MyStagingRequests = () => {
           }
         : null,
     ].filter(Boolean);
+    const hasVisitSchedule = Boolean(request.visitScheduledAt);
 
     return (
       <article
@@ -551,9 +575,7 @@ const MyStagingRequests = () => {
               </p>
               <p>
                 <strong>{tx("services.privatePanel.property", "Property")}:</strong>{" "}
-                {[translatePropertyType(request.propertyType), request.city, request.district]
-                  .filter(Boolean)
-                  .join(" | ") || "-"}
+                {requestPropertyLabel || "-"}
               </p>
               <p>
                 <strong>{tx("services.privatePanel.requestedServices", "Requested services")}:</strong>{" "}
@@ -578,6 +600,65 @@ const MyStagingRequests = () => {
                 <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
                   {tx("services.privatePanel.companyUpdate", "Company update")}
                 </p>
+
+                {hasVisitSchedule && (
+                  <div className="mt-4 overflow-hidden rounded-[1.5rem] border border-sky-200/80 bg-[radial-gradient(circle_at_top_left,_rgba(224,242,254,0.95),_rgba(255,255,255,0.98)_55%,_rgba(236,253,245,0.96)_100%)] p-5 shadow-[0_20px_40px_rgba(8,145,178,0.08)]">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="flex items-start gap-3">
+                        <div className="rounded-2xl bg-sky-500 p-3 text-white shadow-lg shadow-sky-200/60">
+                          <MdEventAvailable className="text-2xl" />
+                        </div>
+                        <div>
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-sky-700">
+                            {tx("services.privatePanel.visitChecklist", "Visit checklist")}
+                          </p>
+                          <h3 className="mt-2 text-xl font-bold text-slate-900">
+                            {tx("services.privatePanel.visitScheduled", "Property visit booked")}
+                          </h3>
+                          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">
+                            {tx(
+                              "services.privatePanel.visitScheduledBody",
+                              "The company has shared your property visit time. Review the schedule and note below."
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="inline-flex items-center rounded-full border border-sky-300/70 bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-700">
+                        {translatePanelStatus(request.status)}
+                      </span>
+                    </div>
+
+                    <div className="mt-4 grid gap-3 md:grid-cols-2">
+                      <div className="rounded-2xl border border-white/80 bg-white/85 p-4">
+                        <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                          <MdSchedule className="text-sky-600" />
+                          {tx("services.privatePanel.visitDateTime", "Visit time")}
+                        </div>
+                        <div className="mt-3 text-lg font-bold text-slate-900">
+                          {formatDateTime(request.visitScheduledAt, locale)}
+                        </div>
+                      </div>
+                      <div className="rounded-2xl border border-white/80 bg-white/85 p-4">
+                        <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                          <MdPlace className="text-emerald-600" />
+                          {tx("services.privatePanel.visitLocation", "Location")}
+                        </div>
+                        <div className="mt-3 text-sm font-semibold text-slate-900">
+                          {requestPropertyLabel || tx("services.privatePanel.property", "Property")}
+                        </div>
+                      </div>
+                    </div>
+
+                    {request.visitScheduleNotes && (
+                      <div className="mt-4 rounded-2xl border border-sky-100 bg-white/80 p-4 text-sm leading-relaxed text-slate-700">
+                        <span className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                          {tx("services.privatePanel.visitNote", "Checklist note")}
+                        </span>
+                        <p className="mt-2">{request.visitScheduleNotes}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {project ? (
                   <>
@@ -635,12 +716,14 @@ const MyStagingRequests = () => {
                     </div>
                   </>
                 ) : (
-                  <p className="mt-3 text-sm leading-relaxed text-slate-600">
-                    {tx(
-                      "services.privatePanel.pendingCompanyUpdate",
-                      "The company has not added a formal project update yet."
-                    )}
-                  </p>
+                  !hasVisitSchedule && (
+                    <p className="mt-3 text-sm leading-relaxed text-slate-600">
+                      {tx(
+                        "services.privatePanel.pendingCompanyUpdate",
+                        "The company has not added a formal project update yet."
+                      )}
+                    </p>
+                  )
                 )}
               </div>
             </div>
@@ -653,6 +736,8 @@ const MyStagingRequests = () => {
   const renderInspectionRequestCard = (request) => {
     const checklist = request.checklist || null;
     const report = request.report || null;
+    const visitDateValue = request.visitScheduledAt || request.scheduledDate || null;
+    const hasVisitSchedule = Boolean(visitDateValue);
     const reportFiles = Array.isArray(report?.reportFiles) ? report.reportFiles.filter(Boolean) : [];
     const previewPhotos = getInspectionPreviewPhotos(report?.reportPhotos, request.uploadedImages);
     const beforePreviewPhotos = previewPhotos.before;
@@ -696,6 +781,11 @@ const MyStagingRequests = () => {
     const headline =
       headlineParts.join(" - ") ||
       tx("services.privatePanel.inspectionFallbackTitle", "Property inspection request");
+    const requestPropertyLabel =
+      [translatePropertyType(request.propertyType), request.city, request.district]
+        .filter(Boolean)
+        .join(" | ") || tx("services.privatePanel.property", "Property");
+    const hasCompanyInspectionUpdate = Boolean(checklist || report || hasVisitSchedule);
 
     return (
       <article
@@ -754,9 +844,7 @@ const MyStagingRequests = () => {
               </p>
               <p>
                 <strong>{tx("services.privatePanel.property", "Property")}:</strong>{" "}
-                {[translatePropertyType(request.propertyType), request.city, request.district]
-                  .filter(Boolean)
-                  .join(" | ") || "-"}
+                {requestPropertyLabel || "-"}
               </p>
               <p>
                 <strong>{tx("services.privatePanel.referenceCode", "Reference")}:</strong>{" "}
@@ -764,7 +852,7 @@ const MyStagingRequests = () => {
               </p>
               <p>
                 <strong>{tx("services.privatePanel.scheduleLabel", "Schedule")}:</strong>{" "}
-                {request.scheduledDate ? formatDate(request.scheduledDate, locale) : "-"}
+                {visitDateValue ? formatDateTime(visitDateValue, locale) : "-"}
               </p>
               {request.notes && (
                 <p>
@@ -784,8 +872,68 @@ const MyStagingRequests = () => {
                   {tx("services.privatePanel.companyUpdate", "Company update")}
                 </p>
 
-                {checklist || report ? (
+                {hasCompanyInspectionUpdate ? (
                   <>
+                    {hasVisitSchedule && (
+                      <div className="mt-4 overflow-hidden rounded-[1.5rem] border border-sky-200/80 bg-[radial-gradient(circle_at_top_left,_rgba(224,242,254,0.95),_rgba(255,255,255,0.98)_55%,_rgba(236,253,245,0.96)_100%)] p-5 shadow-[0_20px_40px_rgba(8,145,178,0.08)]">
+                        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                          <div className="flex items-start gap-3">
+                            <div className="rounded-2xl bg-sky-500 p-3 text-white shadow-lg shadow-sky-200/60">
+                              <MdEventAvailable className="text-2xl" />
+                            </div>
+                            <div>
+                              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-sky-700">
+                                {tx("services.privatePanel.visitChecklist", "Visit checklist")}
+                              </p>
+                              <h3 className="mt-2 text-xl font-bold text-slate-900">
+                                {tx("services.privatePanel.visitScheduled", "Property visit booked")}
+                              </h3>
+                              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">
+                                {tx(
+                                  "services.privatePanel.visitScheduledBody",
+                                  "The company has shared your property visit time. Review the schedule and note below."
+                                )}
+                              </p>
+                            </div>
+                          </div>
+                          <span className="inline-flex items-center rounded-full border border-sky-300/70 bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-700">
+                            {translatePanelStatus(request.status)}
+                          </span>
+                        </div>
+
+                        <div className="mt-4 grid gap-3 md:grid-cols-2">
+                          <div className="rounded-2xl border border-white/80 bg-white/85 p-4">
+                            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                              <MdSchedule className="text-sky-600" />
+                              {tx("services.privatePanel.visitDateTime", "Visit time")}
+                            </div>
+                            <div className="mt-3 text-lg font-bold text-slate-900">
+                              {formatDateTime(visitDateValue, locale)}
+                            </div>
+                          </div>
+                          <div className="rounded-2xl border border-white/80 bg-white/85 p-4">
+                            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                              <MdPlace className="text-emerald-600" />
+                              {tx("services.privatePanel.visitLocation", "Location")}
+                            </div>
+                            <div className="mt-3 text-sm font-semibold text-slate-900">
+                              {requestPropertyLabel}
+                            </div>
+                          </div>
+                        </div>
+
+                        {request.visitScheduleNotes && (
+                          <div className="mt-4 rounded-2xl border border-sky-100 bg-white/80 p-4 text-sm leading-relaxed text-slate-700">
+                            <span className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                              {tx("services.privatePanel.visitNote", "Checklist note")}
+                            </span>
+                            <p className="mt-2">{request.visitScheduleNotes}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {(checklist || report) && (
                     <div className="mt-4 grid gap-3 text-sm text-slate-700 sm:grid-cols-2">
                       <div className={`rounded-2xl border p-4 ${scoreTone.panel}`}>
                         <strong>{tx("services.privatePanel.inspectionScore", "Inspection score")}:</strong>
@@ -831,6 +979,7 @@ const MyStagingRequests = () => {
                         <div className="mt-2">{formatDate(lastUpdate, locale) || "-"}</div>
                       </div>
                     </div>
+                    )}
 
                     {sectionScores.length > 0 && (
                       <div className="mt-4">
