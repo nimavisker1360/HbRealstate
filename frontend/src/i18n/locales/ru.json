@@ -277,7 +277,7 @@
     "area": "Площадь",
     "sqm": "кв.м",
     "price": "Цена",
-    "location": "Локация",
+    "location": "Расположение",
     "description": "Описание",
     "facilities": "Удобства",
     "propertyDetails": "Детали объекта",
@@ -980,7 +980,21 @@
     "consultant": "Project Consultant",
     "consultantDescription": "Your dedicated advisor for this project",
     "consultantUnavailable": "No consultant assigned to this project.",
-    "location": "Location"
+    "location": "Локация",
+    "clickToEnlarge": "Нажмите, чтобы увеличить",
+    "factCitizenship": "Подходит для гражданства",
+    "factInstallment": "Рассрочка доступна",
+    "ctaRequestPriceList": "Запросить прайс-лист",
+    "ctaWhatsAppNow": "Написать в WhatsApp",
+    "ctaCallAdvisor": "Позвонить консультанту",
+    "ctaBookViewing": "Записаться на просмотр",
+    "offerLayout": "Планировка",
+    "offerDownPayment": "Первоначальный взнос",
+    "offerMonths": "месяцев",
+    "floorPlanCtaPriced": "Посмотреть детали плана",
+    "floorPlanCtaRequest": "Запросить эту планировку",
+    "floorPlanSupportPriced": "Планировка с ценой — просмотрите детали или запросите полный список.",
+    "floorPlanSupportRequest": "Цена ещё не опубликована — запросите актуальную информацию у нашей команды."
   },
   "services": {
     "breadcrumb": {

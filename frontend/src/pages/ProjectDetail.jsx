@@ -63,6 +63,15 @@ import {
   consumePostLoginResume,
   savePostLoginResume,
 } from "../utils/postLoginResume";
+import {
+  getProjectBadges,
+  getProjectPricePresentation,
+  getProjectBenefitLine,
+  getProjectQuickFacts,
+  getProjectDetailCTAs,
+  getFloorPlanCTA,
+  buildProjectWhatsAppMessage,
+} from "../utils/projectDetailPresentation";
 
 // All possible Bina Özellikleri (Building Features)
 const ALL_BINA_OZELLIKLERI = [
@@ -384,9 +393,6 @@ const ProjectDetail = ({ topSlot = null }) => {
           defaultValue: "STARTING FROM",
         }),
         value: formatMoney(convertedAmount, displayCurrency, priceLocale),
-        hint: t("projectDetail.floorPlanPriceHint", {
-          defaultValue: "Indicative entry price for this layout.",
-        }),
         actionLabel: t("projectDetail.viewPlan", {
           defaultValue: "View Plan",
         }),
@@ -398,9 +404,6 @@ const ProjectDetail = ({ topSlot = null }) => {
       label: t("projectDetail.price", { defaultValue: "Price" }),
       value: t("projectDetail.contactForDetails", {
         defaultValue: "Contact for Details",
-      }),
-      hint: t("projectDetail.floorPlanPriceOnRequest", {
-        defaultValue: "Request the latest unit list and availability.",
       }),
       actionLabel: t("projectDetail.contactForDetails", {
         defaultValue: "Contact for Details",
@@ -414,7 +417,6 @@ const ProjectDetail = ({ topSlot = null }) => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [floorPlanModal, setFloorPlanModal] = useState({ open: false, plan: null });
-  const [sitePlanModalOpen, setSitePlanModalOpen] = useState(false);
   const [videoModalOpen, setVideoModalOpen] = useState(false);
   const [showYouTube, setShowYouTube] = useState(false);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
@@ -435,6 +437,14 @@ const ProjectDetail = ({ topSlot = null }) => {
       return;
     }
     setBookingModalOpened(true);
+  };
+  const scrollToInquirySidebar = () => {
+    const inquirySection = document.querySelector("[data-inquiry-sidebar]");
+    if (inquirySection) {
+      inquirySection.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    setInquiryModalOpen(true);
   };
   const mainVideoPreviewRef = useRef(null);
   const mainGalleryTouchStartXRef = useRef(null);
@@ -513,7 +523,6 @@ const ProjectDetail = ({ topSlot = null }) => {
       galleryItems, // Combined gallery
       projeHakkinda: propertyData.projeHakkinda,
       dairePlanlari: propertyData.dairePlanlari || [],
-      vaziyetPlani: propertyData.vaziyetPlani,
       brochureUrl: propertyData.brochureUrl || "",
       ozellikler,
       kampanya: propertyData.kampanya,
@@ -700,7 +709,8 @@ const ProjectDetail = ({ topSlot = null }) => {
   const specialOffersData = (project.specialOffers || []).filter((offer) =>
     hasSpecialOfferData(offer)
   );
-  const isSpecialOfferProject = specialOffersData.length > 0;
+  const primarySpecialOffer = specialOffersData[0] || null;
+  const isSpecialOfferProject = Boolean(primarySpecialOffer);
   const showMarketAnalytics = project.propertyType !== "international-project";
 
   const goToPrevGalleryItem = () => {
@@ -837,38 +847,113 @@ const ProjectDetail = ({ topSlot = null }) => {
     }
   };
 
+  const detailBadges = getProjectBadges(propertyData, {
+    convertAmount,
+    defaultCurrency: baseCurrency,
+    maxBadges: 2,
+  });
+
+  const detailPricePresentation = getProjectPricePresentation(propertyData, {
+    t,
+    language: i18n.language,
+    convertAmount,
+    formatMoney,
+    displayCurrency,
+    defaultCurrency: baseCurrency,
+  });
+
+  const detailBenefitLine = getProjectBenefitLine(propertyData, {
+    t,
+    language: i18n.language,
+    convertAmount,
+    defaultCurrency: baseCurrency,
+  });
+
+  const detailQuickFacts = getProjectQuickFacts(propertyData, {
+    t,
+    convertAmount,
+    defaultCurrency: baseCurrency,
+  });
+
+  const detailCTAs = getProjectDetailCTAs(propertyData, {
+    t,
+    consultantWhatsApp,
+    consultantPhone: projectConsultant?.phone,
+    isBookable: isBookableProject,
+  });
+
+  const galleryItemCount = project.galleryItems?.length || 0;
+  const hasGalleryNav = galleryItemCount > 1;
+  const hasYouTubeVideo = Boolean(getYouTubeEmbedUrl(project.brochureUrl));
+  const secondaryCtas = detailCTAs.filter((cta) => cta.variant !== "primary");
+
+  const BADGE_TONE_CLASSES = {
+    rose: "bg-rose-50 text-rose-700 ring-rose-200",
+    emerald: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+    slate: "bg-slate-100 text-slate-700 ring-slate-200",
+    sky: "bg-sky-50 text-sky-700 ring-sky-200",
+    amber: "bg-amber-50 text-amber-700 ring-amber-200",
+    stone: "bg-stone-50 text-stone-600 ring-stone-200",
+  };
+
   return (
     <div className="min-h-screen pt-20 bg-white">
       {/* Header */}
-      <div className="bg-white border-b">
-        <Container size="lg" className="py-4">
+      <div className="border-b border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#fbfaf6_100%)]">
+        <Container size="lg" className="py-4 sm:py-6">
           {topSlot ? <div className="mb-4">{topSlot}</div> : null}
-          <div className="flex items-center gap-4">
+          <div className="flex items-start gap-3 sm:gap-5">
             <button
               onClick={() => navigate(-1)}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-800 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 sm:h-11 sm:w-11"
             >
-              <MdArrowBack size={24} />
+              <MdArrowBack size={22} />
             </button>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                {(project.projectName || project.name) && (
-                  <h1 className="text-xl font-bold text-gray-900">
-                    {project.projectName || project.name}
-                  </h1>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-col gap-3 sm:gap-4">
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-start sm:gap-3">
+                  {(project.projectName || project.name) && (
+                    <h1 className="max-w-4xl text-[1.9rem] font-semibold leading-[1.08] tracking-[-0.035em] text-slate-900 sm:text-[2rem] lg:text-[2.2rem]">
+                      {project.projectName || project.name}
+                    </h1>
+                  )}
+                  {project.ilanNo && (
+                    <span className="inline-flex w-fit items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold tracking-[0.14em] text-slate-500 shadow-sm sm:mt-1">
+                      {project.ilanNo}
+                    </span>
+                  )}
+                </div>
+
+                {detailBadges.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    {detailBadges.map((badge) => (
+                      <span
+                        key={badge.key}
+                        className={`inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold ring-1 ring-inset ${
+                          BADGE_TONE_CLASSES[badge.tone] || BADGE_TONE_CLASSES.slate
+                        }`}
+                      >
+                        {t(`localProjects.badges.${badge.key}`, {
+                          defaultValue: badge.key,
+                        })}
+                      </span>
+                    ))}
+                  </div>
                 )}
-                {isSpecialOfferProject && (
-                  <span className="rounded-md bg-rose-600 px-2 py-0.5 text-xs font-semibold text-white">
-                    SPECIAL OFFER
+
+                <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 shadow-sm">
+                    <MdLocationOn className="text-[#b16b2d]" />
+                    <span>{[project.city, project.district].filter(Boolean).join(" / ")}</span>
                   </span>
+                </div>
+
+                {detailBenefitLine && (
+                  <div className="max-w-4xl rounded-2xl border border-amber-200/70 bg-[linear-gradient(180deg,rgba(255,251,235,0.92)_0%,rgba(255,247,237,0.92)_100%)] px-4 py-3 text-sm leading-6 text-slate-700 shadow-[0_12px_28px_-22px_rgba(15,23,42,0.38)]">
+                    <span className="mr-2 text-base">✨</span>
+                    <span>{detailBenefitLine}</span>
+                  </div>
                 )}
-                {project.ilanNo && (
-                  <span className="text-sm font-medium text-gray-500">{project.ilanNo}</span>
-                )}
-              </div>
-              <div className="flex items-center gap-1 text-gray-600 text-sm">
-                <MdLocationOn className="text-gray-400" />
-                <span>{project.city} / {project.district}</span>
               </div>
             </div>
           </div>
@@ -876,15 +961,15 @@ const ProjectDetail = ({ topSlot = null }) => {
       </div>
 
       <Container size="lg" className="py-6">
-        <Grid gutter="xl">
+        <Grid gutter="xl" align="flex-start">
           {/* Left Column - Main Content */}
           <Grid.Col span={{ base: 12, md: 8 }}>
             {/* Image Gallery */}
-            <div className="mb-6">
-              <div className="flex flex-col md:flex-row gap-2">
+            <div className="mb-6 rounded-[28px] border border-slate-200 bg-white p-3 shadow-[0_22px_70px_-48px_rgba(15,23,42,0.32)] sm:p-4">
+              <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_132px] md:items-stretch">
                 {/* Main Image/Video */}
-                <div 
-                  className="flex-1 relative cursor-pointer group"
+                <div
+                  className="group relative cursor-pointer overflow-hidden rounded-[22px] bg-slate-100"
                   onMouseEnter={startMainVideoPreview}
                   onMouseLeave={stopMainVideoPreview}
                   onTouchStart={handleMainGalleryTouchStart}
@@ -899,7 +984,7 @@ const ProjectDetail = ({ topSlot = null }) => {
                           alt={getLocalizedAlt(i18n.language, "projectVideoPreview", {
                             title: project.name,
                           })}
-                          className="w-full h-[300px] md:h-[400px] object-cover rounded-lg"
+                          className="h-[280px] w-full object-cover sm:h-[360px] md:h-[460px]"
                           loading="eager"
                           fetchPriority="high"
                           decoding="async"
@@ -907,7 +992,7 @@ const ProjectDetail = ({ topSlot = null }) => {
                       ) : (
                         <video
                           src={getOptimizedProjectVideoUrl(selectedGalleryItem?.url)}
-                          className="w-full h-[300px] md:h-[400px] object-cover rounded-lg"
+                          className="h-[280px] w-full object-cover sm:h-[360px] md:h-[460px]"
                           muted
                           preload="metadata"
                           playsInline
@@ -917,7 +1002,7 @@ const ProjectDetail = ({ topSlot = null }) => {
                         <video
                           ref={mainVideoPreviewRef}
                           src={getOptimizedProjectVideoUrl(selectedGalleryItem.url)}
-                          className={`absolute inset-0 w-full h-[300px] md:h-[400px] object-cover rounded-lg transition-opacity duration-150 ${
+                          className={`absolute inset-0 h-[280px] w-full object-cover transition-opacity duration-150 sm:h-[360px] md:h-[460px] ${
                             isMainVideoPreviewReady ? "opacity-100" : "opacity-0"
                           }`}
                           muted
@@ -938,7 +1023,7 @@ const ProjectDetail = ({ topSlot = null }) => {
                       )}
                       {/* Video Play Button Overlay */}
                       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div className="bg-black/50 rounded-full p-4 group-hover:bg-black/70 transition-colors">
+                        <div className="rounded-full bg-black/50 p-4 transition-colors group-hover:bg-black/65">
                           <MdPlayCircle className="text-white" size={64} />
                         </div>
                       </div>
@@ -954,16 +1039,26 @@ const ProjectDetail = ({ topSlot = null }) => {
                           title: project.name,
                           index: selectedImage + 1,
                         })}
-                        className="w-full h-[300px] md:h-[400px] object-cover rounded-lg"
+                        className="h-[280px] w-full object-cover sm:h-[360px] md:h-[460px]"
                         loading="eager"
                         fetchPriority="high"
                         decoding="async"
                       />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors rounded-lg" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/20 via-transparent to-transparent opacity-80 transition-opacity group-hover:opacity-100" />
                     </>
                   )}
 
-                  {project.galleryItems.length > 1 && (
+                  <div className="pointer-events-none absolute inset-x-3 bottom-3 flex items-center justify-between gap-2">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/92 px-3 py-1.5 text-[11px] font-semibold text-slate-700 shadow-sm backdrop-blur">
+                      <MdZoomIn size={15} />
+                      <span className="hidden sm:inline">{t("projectDetail.clickToEnlarge")}</span>
+                    </span>
+                    <span className="inline-flex items-center rounded-full bg-slate-950/70 px-3 py-1.5 text-[11px] font-semibold text-white backdrop-blur">
+                      {selectedImage + 1} / {galleryItemCount}
+                    </span>
+                  </div>
+
+                  {hasGalleryNav && (
                     <>
                       <button
                         type="button"
@@ -971,7 +1066,7 @@ const ProjectDetail = ({ topSlot = null }) => {
                           event.stopPropagation();
                           goToPrevGalleryItem();
                         }}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-black/45 text-white hover:bg-black/65 transition-colors flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                        className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-white transition-colors hover:bg-black/65 md:opacity-0 md:group-hover:opacity-100"
                         aria-label="Previous image"
                       >
                         <MdChevronLeft size={24} />
@@ -982,7 +1077,7 @@ const ProjectDetail = ({ topSlot = null }) => {
                           event.stopPropagation();
                           goToNextGalleryItem();
                         }}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-black/45 text-white hover:bg-black/65 transition-colors flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                        className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-white transition-colors hover:bg-black/65 md:opacity-0 md:group-hover:opacity-100"
                         aria-label="Next image"
                       >
                         <MdChevronRight size={24} />
@@ -992,12 +1087,14 @@ const ProjectDetail = ({ topSlot = null }) => {
                 </div>
                 
                 {/* Thumbnails */}
-                <div className="flex md:flex-col gap-2 md:w-[120px] h-auto md:h-[400px]">
+                <div className="grid grid-cols-4 gap-2 sm:grid-cols-5 md:flex md:h-[460px] md:flex-col md:gap-3">
                   {project.galleryItems.slice(0, 5).map((item, index) => (
                     <div
                       key={index}
-                      className={`relative cursor-pointer rounded-lg overflow-hidden flex-1 min-h-[60px] ${
-                        selectedImage === index ? "ring-2 ring-blue-500" : ""
+                      className={`relative aspect-[4/3] cursor-pointer overflow-hidden rounded-[16px] border bg-slate-100 md:flex-1 ${
+                        selectedImage === index
+                          ? "border-blue-500 ring-2 ring-blue-500/20"
+                          : "border-slate-200"
                       }`}
                       onClick={() => setSelectedImage(index)}
                     >
@@ -1010,14 +1107,14 @@ const ProjectDetail = ({ topSlot = null }) => {
                                 title: project.name,
                                 index: index + 1,
                               })}
-                              className="w-full h-full object-cover absolute inset-0"
+                              className="absolute inset-0 h-full w-full object-cover"
                               loading="lazy"
                               decoding="async"
                             />
                           ) : (
                             <video
                               src={getOptimizedProjectVideoUrl(item.url)}
-                              className="w-full h-full object-cover absolute inset-0"
+                              className="absolute inset-0 h-full w-full object-cover"
                               muted
                               preload="metadata"
                               playsInline
@@ -1034,7 +1131,7 @@ const ProjectDetail = ({ topSlot = null }) => {
                             title: project.name,
                             index: index + 1,
                           })}
-                          className="w-full h-full object-cover absolute inset-0"
+                          className="absolute inset-0 h-full w-full object-cover"
                           loading="lazy"
                           decoding="async"
                         />
@@ -1051,84 +1148,135 @@ const ProjectDetail = ({ topSlot = null }) => {
                 </div>
               </div>
 
-              {/* Gallery/Video/Brochure + Price + Delivery Row */}
-              <div className="flex flex-col md:flex-row items-start md:items-center justify-between mt-4 border-t border-b py-4 gap-4">
-                {/* Left: Gallery/Video/Brochure Tabs */}
-                <div className="flex items-center gap-4 md:gap-6">
-                  <button 
-                    onClick={() => setLightboxOpen(true)}
-                    className="flex items-center gap-2 text-blue-600 hover:text-blue-700"
-                  >
-                    <MdImage size={18} />
-                    <span className="text-sm">{t("projectDetail.gallery")}</span>
-                    <span className="text-xs text-gray-500">
-                      ({project.images.length}{project.videos.length > 0 ? ` + ${project.videos.length} video` : ''})
+              {/* Quick Facts Strip */}
+              {detailQuickFacts.length > 0 && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {detailQuickFacts.map((fact) => (
+                    <span
+                      key={fact.key}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700"
+                    >
+                      {fact.key === "citizenship" && <BsShieldCheck className="text-emerald-600" size={12} />}
+                      {fact.key === "installment" && <FaRegClock className="text-sky-600" size={11} />}
+                      {fact.key === "delivery" && <FaKey className="text-amber-600" size={11} />}
+                      {fact.key === "deed" && <MdDescription className="text-slate-500" size={13} />}
+                      {fact.key === "location" && <MdLocationOn className="text-slate-400" size={13} />}
+                      {fact.label}
                     </span>
-                  </button>
-                  <span className="text-gray-300">|</span>
-                  {getYouTubeEmbedUrl(project.brochureUrl) ? (
-                    <button
-                      type="button"
-                      onClick={() => setShowYouTube((prev) => !prev)}
-                      className="flex items-center gap-2 text-red-600 hover:text-red-700"
-                    >
-                      <MdPlayCircle size={18} />
-                      <span className="text-sm">YouTube</span>
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (project.brochureUrl) {
-                          window.open(project.brochureUrl, "_blank", "noopener,noreferrer");
-                        }
-                      }}
-                      disabled={!project.brochureUrl}
-                      className="flex items-center gap-2 text-gray-600 hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <MdDescription size={18} />
-                      <span className="text-sm">{t("projectDetail.brochure")}</span>
-                    </button>
-                  )}
+                  ))}
                 </div>
+              )}
 
-                {/* Right: Price and Delivery */}
-                <div className="flex items-center gap-6 md:gap-10">
-                  {project.gyo && (
+              {/* Price + Gallery Links + CTA Row */}
+              <div className="mt-4 flex flex-col gap-4 rounded-[24px] border border-slate-200 bg-slate-50/80 p-4">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  {/* Gallery/Video/Brochure — right on large screens */}
+                  <div className="flex flex-wrap gap-2 lg:order-2">
                     <button
-                      type="button"
-                      className="min-w-[120px] rounded-md bg-emerald-600 px-8 py-2.5 text-center text-base font-semibold text-white"
+                      onClick={() => setLightboxOpen(true)}
+                      className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
                     >
-                      GYO
+                      <MdImage size={18} className="text-blue-600" />
+                      <span>{t("projectDetail.gallery")}</span>
+                      <span className="text-xs text-slate-500">
+                        ({galleryItemCount})
+                      </span>
                     </button>
-                  )}
+                    {hasYouTubeVideo ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowYouTube((prev) => !prev)}
+                        className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+                      >
+                        <MdPlayCircle size={18} className="text-rose-500" />
+                        <span>YouTube</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (project.brochureUrl) {
+                            window.open(project.brochureUrl, "_blank", "noopener,noreferrer");
+                          }
+                        }}
+                        disabled={!project.brochureUrl}
+                        className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <MdDescription size={18} className="text-slate-500" />
+                        <span>{t("projectDetail.brochure")}</span>
+                      </button>
+                    )}
+                  </div>
 
-                  {/* Price - Only show if greater than 0 */}
-                  {project.price > 0 && (
-                    <div className="text-right">
-                      <div className="text-xl md:text-2xl font-bold text-blue-600">
-                        {formatMoney(
-                          convertAmount(
-                            project.price,
-                            project.currency || baseCurrency,
-                            displayCurrency
-                          ),
-                          displayCurrency,
-                          i18n.language === "tr" ? "tr-TR" : "en-US"
-                        )}
+                  {/* Price — left on large screens */}
+                  <div className="flex w-full min-w-0 flex-col gap-4 rounded-2xl border border-slate-200/90 bg-white p-5 text-left shadow-sm ring-1 ring-slate-950/[0.03] lg:order-1 lg:max-w-[min(100%,22.5rem)]">
+                    {project.gyo && (
+                      <span className="inline-flex w-fit max-w-full items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold leading-snug text-emerald-800 ring-1 ring-inset ring-emerald-200/80">
+                        {t("projectDetail.factCitizenship", { defaultValue: "Citizenship Eligible" })}
+                      </span>
+                    )}
+                    <div className="flex min-w-0 flex-col gap-3">
+                      <div className="flex min-w-0 flex-col gap-1.5">
+                        <p className="text-[11px] font-semibold uppercase leading-normal tracking-[0.12em] text-slate-400">
+                          {detailPricePresentation.eyebrow}
+                        </p>
+                        <p
+                          className={`text-xl font-bold leading-snug tracking-tight text-balance sm:text-2xl ${detailPricePresentation.hasVisiblePrice ? "text-blue-600" : "text-slate-900"}`}
+                        >
+                          {detailPricePresentation.value}
+                        </p>
                       </div>
-                      <div className="text-xs text-gray-500">{t("projectDetail.startingFrom")}</div>
-                    </div>
-                  )}
-
-                  {/* Delivery Date */}
-                  <div className="flex items-center gap-2">
-                    <FaKey className="text-gray-400" size={18} />
-                    <div>
-                      <div className="text-xs text-gray-500">{t("projectDetail.deliveryDate")}</div>
-                      <div className="font-semibold text-sm">{project.deliveryDate}</div>
+                      <p className="text-sm font-normal leading-relaxed text-slate-600">
+                        {detailPricePresentation.caption}
+                      </p>
                     </div>
                   </div>
+                </div>
+
+                {/* CTA Bar */}
+                <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap">
+                  {detailCTAs.map((cta) => {
+                    if (cta.variant === "whatsapp") {
+                      return (
+                        <a
+                          key={cta.key}
+                          href={cta.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex min-h-[46px] w-full items-center justify-center gap-2 rounded-2xl bg-[#25D366] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#20bd5a] sm:w-auto"
+                        >
+                          <FaWhatsapp size={16} />
+                          {cta.label}
+                        </a>
+                      );
+                    }
+                        if (cta.action === "call") {
+                          return (
+                            <a
+                              key={cta.key}
+                              href={cta.href}
+                              className="inline-flex min-h-[46px] w-full items-center justify-center gap-2 rounded-2xl border border-[#cbd5e1] bg-[#0f172a] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#111c33] sm:w-auto"
+                            >
+                              <FaPhone size={14} />
+                              {cta.label}
+                            </a>
+                          );
+                    }
+                        if (cta.action === "booking") {
+                          return (
+                            <button
+                              key={cta.key}
+                              type="button"
+                              onClick={openBookingModal}
+                              className="inline-flex min-h-[46px] w-full items-center justify-center gap-2 rounded-2xl border border-sky-200 bg-sky-50 px-5 py-3 text-sm font-semibold text-sky-800 shadow-sm transition hover:border-sky-300 hover:bg-sky-100 sm:w-auto"
+                            >
+                              <FaCalendarPlus size={14} />
+                              {cta.label}
+                            </button>
+                          );
+                    }
+                    return null;
+                  })}
                 </div>
               </div>
             </div>
@@ -1282,111 +1430,179 @@ const ProjectDetail = ({ topSlot = null }) => {
 
               {/* Campaign Banner */}
               {project.kampanya && (
-                <div className="bg-gray-600 rounded p-4 mb-6 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <MdCampaign className="text-yellow-400 text-xl" />
-                    <span className="text-sm text-white">{project.kampanya}</span>
-                  </div>
-                  <button className="text-blue-400 text-sm hover:underline">{t("projectDetail.details")}</button>
+                <div className="bg-gray-600 rounded p-4 mb-6 flex items-center gap-3">
+                  <MdCampaign className="text-yellow-400 text-xl shrink-0" />
+                  <span className="text-sm text-white">{project.kampanya}</span>
                 </div>
               )}
 
-              {isSpecialOfferProject && (
-                <div className="mb-6 space-y-3">
-                  {specialOffersData.map((offer, offerIndex) => {
-                    const specialOfferDownPaymentAmount = Number(
-                      offer.downPaymentAmount ?? offer.downPaymentPercent ?? 0
-                    );
-                    const specialOfferLocationText =
-                      offer.locationLabel || offer.locationMinutes
-                        ? `${offer.locationLabel || ""} ${
-                            Number(offer.locationMinutes || 0) > 0
-                              ? `${offer.locationMinutes} min`
-                              : ""
-                          }`.trim()
-                        : "";
+              {isSpecialOfferProject && primarySpecialOffer && (() => {
+                const offer = primarySpecialOffer;
+                const specialOfferPriceAmount = Number(
+                  offer.priceGBP || offer.priceUSD || offer.priceEUR || project.price || 0
+                );
+                const specialOfferPriceCurrency = Number(offer.priceGBP || 0) > 0
+                  ? "GBP"
+                  : Number(offer.priceUSD || 0) > 0
+                  ? "USD"
+                  : Number(offer.priceEUR || 0) > 0
+                  ? "EUR"
+                  : project.currency || baseCurrency;
+                const locale = i18n.language === "tr" ? "tr-TR" : "en-US";
+                const locationMinutesLabel = i18n.language?.startsWith("tr")
+                  ? "dk"
+                  : i18n.language?.startsWith("ru")
+                  ? "мин"
+                  : "min";
+                const specialOfferDownPaymentAmount = Number(offer.downPaymentAmount || 0);
+                const specialOfferDownPaymentPercent = Number(offer.downPaymentPercent || 0);
+                const specialOfferDownPaymentValue =
+                  specialOfferDownPaymentPercent > 0 &&
+                  specialOfferDownPaymentPercent <= 100 &&
+                  (specialOfferDownPaymentAmount <= 0 ||
+                    specialOfferDownPaymentAmount === specialOfferDownPaymentPercent)
+                    ? `${specialOfferDownPaymentPercent}%`
+                    : specialOfferDownPaymentAmount > 0
+                    ? formatMoney(
+                        Math.floor(
+                          convertAmount(
+                            specialOfferDownPaymentAmount,
+                            specialOfferPriceCurrency,
+                            displayCurrency
+                          )
+                        ),
+                        displayCurrency,
+                        locale
+                      )
+                    : "";
+                const specialOfferLocationText =
+                  offer.locationLabel || offer.locationMinutes
+                    ? `${offer.locationLabel || ""} ${
+                        Number(offer.locationMinutes || 0) > 0
+                          ? `${offer.locationMinutes} ${locationMinutesLabel}`
+                          : ""
+                      }`.trim()
+                    : "";
 
-                    return (
-                      <div
-                        key={offer.id || offerIndex}
-                        className="rounded-xl border border-rose-200 bg-gradient-to-r from-rose-50 via-white to-rose-50 p-4"
-                      >
-                        <div className="mb-3 flex items-center justify-between gap-3">
-                          <h3 className="text-lg font-bold text-rose-700">
+                return (
+                  <div className="mb-6">
+                    <div className="rounded-2xl border border-[#e7dece] bg-[linear-gradient(180deg,#ffffff_0%,#fcfaf6_100%)] p-5 text-red-600 shadow-[0_16px_44px_-36px_rgba(15,23,42,0.35)]">
+                      <div className="mb-4 flex items-start justify-between gap-3">
+                        <div>
+                          <span className="inline-flex items-center rounded-full bg-rose-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-red-600 ring-1 ring-inset ring-rose-200">
+                            {t("localProjects.badges.specialOffer", { defaultValue: "Special Offer" })}
+                          </span>
+                          <h3 className="mt-2 text-lg font-semibold text-red-600">
                             {offer.title || project.projectName || project.name}
                           </h3>
-                          <div className="rounded-md bg-rose-600 px-2.5 py-1 text-xs font-semibold text-white">
-                            OFF
-                          </div>
                         </div>
-
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3 text-sm">
-                          <div className="rounded-md border border-slate-200 bg-white px-2.5 py-2">
-                            {offer.roomType || "-"}
-                          </div>
-                          <div className="rounded-md border border-slate-200 bg-white px-2.5 py-2">
-                            {Number(offer.areaM2 || 0) > 0
-                              ? `${Math.floor(Number(offer.areaM2 || 0))} m2`
-                              : "-"}
-                          </div>
-                          <div className="rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-amber-700">
-                            {specialOfferDownPaymentAmount > 0
-                              ? `${formatMoney(
-                                  convertAmount(
-                                    specialOfferDownPaymentAmount,
-                                    "GBP",
-                                    displayCurrency
-                                  ),
-                                  displayCurrency,
-                                  i18n.language === "tr" ? "tr-TR" : "en-US"
-                                )} down payment`
-                              : "-"}
-                          </div>
-                          <div className="rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-amber-700">
-                            {Number(offer.installmentMonths || 0) > 0
-                              ? `${offer.installmentMonths} months`
-                              : "-"}
-                          </div>
-                        </div>
-
-                        <div className="border-t border-rose-100 pt-3">
-                          <div className="flex flex-wrap items-end justify-between gap-3">
-                            <div>
-                              <div className="text-xs text-slate-500">{t("projectDetail.startingFrom")}</div>
-                              <div className="text-2xl font-extrabold text-rose-700">
-                                {formatMoney(
-                                  Number(offer.priceGBP || offer.priceUSD || project.price || 0),
-                                  "GBP",
-                                  i18n.language === "tr" ? "tr-TR" : "en-US"
-                                )}
-                              </div>
+                        {specialOfferPriceAmount > 0 && (
+                          <div className="shrink-0 text-right">
+                            <div className="text-[10px] font-semibold uppercase tracking-wider text-red-600">
+                              {t("projectDetail.startingFromEyebrow", {
+                                defaultValue: "STARTING FROM",
+                              })}
                             </div>
-                            {specialOfferLocationText && (
-                              <div className="text-sm font-medium text-slate-700">
-                                {specialOfferLocationText}
-                              </div>
-                            )}
+                            <div className="text-xl font-bold text-red-600">
+                              {formatMoney(
+                                Math.floor(
+                                  convertAmount(
+                                    specialOfferPriceAmount,
+                                    specialOfferPriceCurrency,
+                                    displayCurrency
+                                  )
+                                ),
+                                displayCurrency,
+                                locale
+                              )}
+                            </div>
                           </div>
-                          {(() => {
-                            const gbpPrice = Number(offer.priceGBP || offer.priceUSD || project.price || 0);
-                            if (gbpPrice <= 0) return null;
-                            const locale = i18n.language === "tr" ? "tr-TR" : "en-US";
-                            return (
-                              <div className="mt-2 flex flex-wrap gap-3 text-sm text-slate-600">
-                                <span>{formatMoney(convertAmount(gbpPrice, "GBP", "TRY"), "TRY", locale)}</span>
-                                <span className="text-slate-300">|</span>
-                                <span>{formatMoney(convertAmount(gbpPrice, "GBP", "USD"), "USD", locale)}</span>
-                                <span className="text-slate-300">|</span>
-                                <span>{formatMoney(convertAmount(gbpPrice, "GBP", "EUR"), "EUR", locale)}</span>
-                              </div>
-                            );
-                          })()}
-                        </div>
+                        )}
                       </div>
-                    );
-                  })}
-                </div>
-              )}
+
+                      <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-red-600">
+                        {offer.roomType && (
+                          <div>
+                            <span className="text-red-600">{t("projectDetail.offerLayout", { defaultValue: "Layout" })}:</span>{" "}
+                            <span className="font-medium text-red-600">{offer.roomType}</span>
+                          </div>
+                        )}
+                        {Number(offer.areaM2 || 0) > 0 && (
+                          <div>
+                            <span className="text-red-600">{t("projectDetail.area")}:</span>{" "}
+                            <span className="font-medium text-red-600">{Math.floor(Number(offer.areaM2))} m2</span>
+                          </div>
+                        )}
+                        {specialOfferDownPaymentAmount > 0 && (
+                          <div>
+                            <span className="text-red-600">{t("projectDetail.offerDownPayment", { defaultValue: "Down payment" })}:</span>{" "}
+                            <span className="font-medium text-red-600">
+                              {specialOfferDownPaymentValue}
+                            </span>
+                          </div>
+                        )}
+                        {Number(offer.installmentMonths || 0) > 0 && (
+                          <div>
+                            <span className="text-red-600">{t("projectDetail.supportInstallments", { defaultValue: "Installments" })}:</span>{" "}
+                            <span className="font-medium text-red-600">
+                              {t("projectDetail.supportInstallmentsValue", {
+                                count: offer.installmentMonths,
+                                defaultValue: "{{count}} months",
+                              })}
+                            </span>
+                          </div>
+                        )}
+                        {specialOfferLocationText && (
+                          <div>
+                            <span className="text-red-600">{t("projectDetail.location")}:</span>{" "}
+                            <span className="font-medium text-red-600">{specialOfferLocationText}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {specialOfferPriceAmount > 0 && (
+                        <div className="mt-3 flex flex-wrap gap-3 border-t border-slate-100 pt-3 text-xs text-red-600">
+                          <span className="text-red-600">
+                            {formatMoney(
+                              convertAmount(
+                                specialOfferPriceAmount,
+                                specialOfferPriceCurrency,
+                                "TRY"
+                              ),
+                              "TRY",
+                              locale
+                            )}
+                          </span>
+                          <span className="text-red-600">|</span>
+                          <span className="text-red-600">
+                            {formatMoney(
+                              convertAmount(
+                                specialOfferPriceAmount,
+                                specialOfferPriceCurrency,
+                                "USD"
+                              ),
+                              "USD",
+                              locale
+                            )}
+                          </span>
+                          <span className="text-red-600">|</span>
+                          <span className="text-red-600">
+                            {formatMoney(
+                              convertAmount(
+                                specialOfferPriceAmount,
+                                specialOfferPriceCurrency,
+                                "EUR"
+                              ),
+                              "EUR",
+                              locale
+                            )}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Description - Bilingual */}
               {(() => {
@@ -1724,11 +1940,12 @@ const ProjectDetail = ({ topSlot = null }) => {
                   ))}
                 </div>
 
-                {/* Floor Plan Cards — horizontal bar layout (grid columns avoid flex shrink overlap) */}
+                {/* Floor Plan Cards */}
                 <div className="grid grid-cols-1 gap-4 min-[1200px]:grid-cols-2">
                   {filteredPlans.map((plan) => {
                     const floorPlanPrice = getFloorPlanPriceSummary(plan);
                     const floorArea = Math.floor(Number(plan.metrekare || 0));
+                    const planCtaLabel = getFloorPlanCTA(plan, { t });
                     return (
                       <div
                         key={plan.id}
@@ -1745,9 +1962,13 @@ const ProjectDetail = ({ topSlot = null }) => {
                                   {plan.tip} - {plan.varyant}
                                 </h3>
                                 <p className="mt-1.5 line-clamp-2 text-xs leading-5 text-slate-600 sm:text-sm sm:leading-6">
-                                  {t("projectDetail.floorPlanPriceHint", {
-                                    defaultValue: "Indicative entry price for this layout.",
-                                  })}
+                                  {floorPlanPrice.isAvailable
+                                    ? t("projectDetail.floorPlanSupportPriced", {
+                                        defaultValue: "Priced layout available — view details or request the full unit list.",
+                                      })
+                                    : t("projectDetail.floorPlanSupportRequest", {
+                                        defaultValue: "Pricing not yet published — request the latest availability from our team.",
+                                      })}
                                 </p>
                               </div>
                               <div className="flex shrink-0 flex-col items-end gap-1">
@@ -1762,7 +1983,11 @@ const ProjectDetail = ({ topSlot = null }) => {
                           </div>
 
                           <div className="flex min-w-0 flex-col rounded-xl border border-[#ecdfcb] bg-[linear-gradient(180deg,#fffaf2_0%,#fdf7ee_100%)] px-3 py-2.5 sm:self-center">
-                            <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                            <div
+                              className={`text-[10px] font-semibold uppercase tracking-[0.14em] ${
+                                floorPlanPrice.isAvailable ? "text-red-600" : "text-slate-500"
+                              }`}
+                            >
                               {floorPlanPrice.label}
                             </div>
                             <div
@@ -1779,15 +2004,12 @@ const ProjectDetail = ({ topSlot = null }) => {
                                 })}
                               </span>
                             ) : null}
-                            <p className="mt-1.5 line-clamp-2 text-[10px] leading-relaxed text-slate-500 sm:text-[11px]">
-                              {floorPlanPrice.hint}
-                            </p>
                             <button
                               type="button"
                               className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-[#0f172a] px-3 py-2 text-xs font-semibold text-white shadow-[0_12px_24px_-16px_rgba(15,23,42,0.75)] transition hover:-translate-y-0.5 hover:bg-slate-800 sm:text-sm"
                               onClick={() => setFloorPlanModal({ open: true, plan })}
                             >
-                              {floorPlanPrice.actionLabel}
+                              {planCtaLabel}
                             </button>
                           </div>
                         </div>
@@ -1797,44 +2019,12 @@ const ProjectDetail = ({ topSlot = null }) => {
                 </div>
               </section>
             )}
-            {/* Site Plan */}
-            {project.vaziyetPlani && (
-              <section className="mb-8">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">{t("projectDetail.sitePlan")}</h2>
-                <div 
-                  className="relative cursor-pointer group"
-                  onClick={() => setSitePlanModalOpen(true)}
-                >
-                  <img
-                    src={getOptimizedImageUrl(project.vaziyetPlani, {
-                      width: 1400,
-                      height: 1000,
-                      crop: "limit",
-                    })}
-                    onError={withOriginalSrcFallback(project.vaziyetPlani)}
-                    alt={getLocalizedAlt(i18n.language, "projectSitePlan", {
-                      title: project.name,
-                    })}
-                    className="w-full h-auto max-h-[500px] object-contain rounded-lg border bg-gray-50"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                  {/* Zoom overlay on hover */}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-lg flex items-center justify-center">
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 px-4 py-2 rounded-lg flex items-center gap-2 shadow-lg">
-                      <MdZoomIn size={20} className="text-purple-600" />
-                      <span className="text-sm font-medium text-gray-700">{t("projectDetail.clickToEnlarge") || "Büyütmek için tıklayın"}</span>
-                    </div>
-                  </div>
-                </div>
-              </section>
-            )}
 
           </Grid.Col>
 
           {/* Right Column - Contact Form */}
           <Grid.Col span={{ base: 12, md: 4 }}>
-            <div className="sticky top-24">
+            <div className="sticky top-24" data-inquiry-sidebar>
               <InquirySidebarCard
                 propertyId={project.id}
                 propertyTitle={project.name}
@@ -2155,33 +2345,6 @@ const ProjectDetail = ({ topSlot = null }) => {
               </div>
             </div>
           </div>
-        )}
-      </Modal>
-
-      {/* Site Plan Modal */}
-      <Modal
-        opened={sitePlanModalOpen}
-        onClose={() => setSitePlanModalOpen(false)}
-        size="xl"
-        centered
-        withCloseButton
-        title={<span className="font-bold text-lg">{t("projectDetail.sitePlan")}</span>}
-      >
-        {project?.vaziyetPlani && (
-          <img
-            src={getOptimizedImageUrl(project.vaziyetPlani, {
-              width: 1800,
-              height: 1400,
-              crop: "limit",
-            })}
-            onError={withOriginalSrcFallback(project.vaziyetPlani)}
-            alt={getLocalizedAlt(i18n.language, "projectSitePlan", {
-              title: project.name,
-            })}
-            className="w-full h-auto rounded-lg"
-            loading="lazy"
-            decoding="async"
-          />
         )}
       </Modal>
 

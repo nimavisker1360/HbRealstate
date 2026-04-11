@@ -257,6 +257,33 @@ const PROJECT_STATUS = [
 const GBP_SYMBOL = "\u00A3";
 const USD_SYMBOL = "$";
 
+const normalizeLocationToken = (value) =>
+  String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\u0131/g, "i")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+
+const TURKISH_LOCATION_ALIASES = Array.from(
+  new Set(
+    TURKISH_CITIES.flatMap(({ value }) => {
+      if (!value) return [];
+      const baseValue = value.replace(/-(tumu|avrupa|anadolu)$/g, "");
+      return [value, baseValue];
+    }).concat(["turkey", "turkiye"])
+  )
+).map(normalizeLocationToken);
+
+const INTERNATIONAL_LOCATION_ALIASES = Array.from(
+  new Set(
+    INTERNATIONAL_COUNTRIES.flatMap(({ value, aliases = [] }) =>
+      [value, ...aliases].filter(Boolean)
+    )
+  )
+).map(normalizeLocationToken);
+
 const hasSpecialOfferData = (specialOffer) =>
   Boolean(
     specialOffer &&
@@ -302,6 +329,59 @@ const hasProjectListingSignals = (project) =>
       project?.projeHakkinda ||
       (Array.isArray(project?.dairePlanlari) && project.dairePlanlari.length > 0)
   );
+
+const inferProjectLocationType = (project) => {
+  const searchableLocation = normalizeLocationToken(
+    [
+      project?.country,
+      project?.city,
+      getPropertyDistrict(project),
+      project?.address,
+    ]
+      .filter(Boolean)
+      .join(" ")
+  );
+
+  if (!searchableLocation) return null;
+
+  if (
+    INTERNATIONAL_LOCATION_ALIASES.some(
+      (alias) => alias && searchableLocation.includes(alias)
+    )
+  ) {
+    return "international-project";
+  }
+
+  if (
+    TURKISH_LOCATION_ALIASES.some(
+      (alias) => alias && searchableLocation.includes(alias)
+    )
+  ) {
+    return "local-project";
+  }
+
+  return null;
+};
+
+const resolveProjectLocationType = (project) => {
+  const explicitProjectType = normalizeProjectTypeValue(
+    project?.propertyType || project?.projectType || project?.category
+  );
+
+  if (
+    explicitProjectType === "local-project" ||
+    explicitProjectType === "international-project"
+  ) {
+    return explicitProjectType;
+  }
+
+  const inferredProjectType = inferProjectLocationType(project);
+  if (inferredProjectType) {
+    return inferredProjectType;
+  }
+
+  return hasProjectListingSignals(project) ? "local-project" : null;
+};
 
 const normalizeProjectType = (value) => {
   const normalized = String(value || "")
@@ -352,32 +432,37 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
 
     // In Hot Offers mode include local + international projects
     const filtered = allProperties.filter((p) => {
-      const projectTypeValue = normalizeProjectTypeValue(p.propertyType || p.projectType || p.category);
-      const hasProjectSignals = hasProjectListingSignals(p);
+      const explicitProjectType = normalizeProjectTypeValue(
+        p.propertyType || p.projectType || p.category
+      );
+      const locationProjectType = resolveProjectLocationType(p);
 
       if (isHotOffersMode) {
         return (
-          projectTypeValue === "local-project" ||
-          projectTypeValue === "international-project" ||
-          projectTypeValue === "special-offer" ||
-          hasProjectSignals
+          locationProjectType === "local-project" ||
+          locationProjectType === "international-project" ||
+          explicitProjectType === "special-offer"
         );
       }
       if (resolvedProjectType === "special-offer") {
         return (
-          projectTypeValue === "local-project" ||
-          projectTypeValue === "international-project" ||
-          projectTypeValue === "special-offer" ||
-          hasProjectSignals
+          locationProjectType === "local-project" ||
+          locationProjectType === "international-project" ||
+          explicitProjectType === "special-offer"
         );
       }
-      return (
-        projectTypeValue === resolvedProjectType ||
-        (resolvedProjectType === "local-project" && hasProjectSignals)
-      );
+      return locationProjectType === resolvedProjectType;
     });
 
     return filtered.map((p) => {
+      const explicitProjectType = normalizeProjectTypeValue(
+        p.propertyType || p.projectType || p.category
+      );
+      const locationProjectType = resolveProjectLocationType(p);
+      const displayProjectType =
+        explicitProjectType === "special-offer"
+          ? "special-offer"
+          : locationProjectType || explicitProjectType || p.propertyType;
       const specialOffers = Array.isArray(p.projeHakkinda?.specialOffers)
         ? p.projeHakkinda.specialOffers.filter((offer) => hasSpecialOfferData(offer))
         : [];
@@ -437,7 +522,9 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
         title: p.projectName || p.title || activeSpecialOffer.title || "",
         name: p.projectName || p.title || activeSpecialOffer.title || "",
         city: p.city || "",
-        country: p.country || (p.propertyType === "international-project" ? "" : "Turkey"),
+        country:
+          p.country ||
+          (locationProjectType === "international-project" ? "" : "Turkey"),
         district: getPropertyDistrict(p) || p.address || "",
         address: p.address || "",
         rooms: roomTypes,
@@ -455,7 +542,7 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
         projectStatus: p.projectStatus || "",
         listingStatus: p.listingStatus || "",
         image: p.images?.[0] || "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400&h=300&fit=crop",
-        propertyType: p.propertyType,
+        propertyType: displayProjectType,
         shortDescription:
           p.shortDescription ||
           p.description_en ||

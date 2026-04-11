@@ -29,12 +29,12 @@ import HeartBtn from "./HeartBtn";
 import PhoneLink from "./PhoneLink";
 
 const BADGE_TONE_CLASSES = {
-  emerald: "border-emerald-200/80 bg-white/95 text-emerald-700",
-  amber: "border-amber-200/80 bg-white/95 text-amber-700",
-  sky: "border-sky-200/80 bg-white/95 text-sky-700",
-  slate: "border-slate-200/80 bg-white/95 text-slate-700",
-  stone: "border-stone-200/80 bg-white/95 text-stone-700",
-  rose: "border-rose-200/80 bg-white/95 text-rose-700",
+  emerald: "border-emerald-200/60 bg-white/90 text-emerald-700",
+  amber: "border-amber-200/60 bg-white/90 text-amber-700",
+  sky: "border-sky-200/60 bg-white/90 text-sky-700",
+  slate: "border-slate-200/60 bg-white/90 text-slate-700",
+  stone: "border-stone-200/60 bg-white/90 text-stone-700",
+  rose: "border-rose-200/60 bg-white/90 text-rose-700",
 };
 
 const SUPPORT_ICON_MAP = {
@@ -97,17 +97,19 @@ const ProjectListingCard = ({ project, compact = false }) => {
         buildProjectWhatsAppMessage(project, { t })
       )}`
     : "";
+
   const priceBoxClasses = pricePresentation.hasVisiblePrice
-    ? "border-[#ecdfcb] bg-[linear-gradient(180deg,#fffaf2_0%,#fdf7ee_100%)]"
-    : "border-[#dbe6e1] bg-[linear-gradient(180deg,#f8fbfa_0%,#f2f7f5_100%)]";
+    ? "border-[#ecdfcb]/80 bg-[linear-gradient(180deg,#fffaf2_0%,#fdf7ee_100%)]"
+    : "border-[#dbe6e1]/80 bg-[linear-gradient(180deg,#f8fbfa_0%,#f2f7f5_100%)]";
   const priceValueClasses = pricePresentation.hasVisiblePrice
-    ? "text-[1.7rem] text-slate-900 sm:text-[1.82rem]"
-    : "text-[1.12rem] text-slate-900 sm:text-[1.2rem]";
+    ? "text-[1.55rem] text-slate-900 sm:text-[1.65rem]"
+    : "text-[1.05rem] text-slate-900 sm:text-[1.12rem]";
 
   return (
     <article
-      className="group flex h-full flex-col overflow-hidden rounded-[30px] border border-[#e8decd] bg-[linear-gradient(180deg,#ffffff_0%,#fbf8f2_100%)] shadow-[0_20px_54px_-38px_rgba(15,23,42,0.42)] transition duration-300 hover:-translate-y-1 hover:border-[#dac9ad] hover:shadow-[0_26px_70px_-34px_rgba(15,23,42,0.4)]"
+      className="group flex h-full flex-col overflow-hidden rounded-[28px] border border-[#e8decd]/90 bg-[linear-gradient(180deg,#ffffff_0%,#fbf8f2_100%)] shadow-[0_16px_48px_-32px_rgba(15,23,42,0.35)] transition duration-300 hover:-translate-y-0.5 hover:border-[#dac9ad] hover:shadow-[0_22px_60px_-28px_rgba(15,23,42,0.38)]"
     >
+      {/* ── Image ── */}
       <div className="relative overflow-hidden">
         <Link
           to={projectPath}
@@ -124,42 +126,49 @@ const ProjectListingCard = ({ project, compact = false }) => {
             alt={projectTitle}
             loading="lazy"
             decoding="async"
-            className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.025]"
+            className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.02]"
           />
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,23,42,0.04)_0%,rgba(15,23,42,0.14)_42%,rgba(15,23,42,0.54)_100%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,23,42,0.02)_0%,rgba(15,23,42,0.10)_40%,rgba(15,23,42,0.48)_100%)]" />
         </Link>
 
-        <div className="absolute left-4 top-4 z-10 flex max-w-[76%] flex-wrap gap-2">
-          {badges.map((badge) => (
-            <span
-              key={badge.key}
-              className={`inline-flex items-center rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] backdrop-blur ${
-                BADGE_TONE_CLASSES[badge.tone] || BADGE_TONE_CLASSES.slate
-              }`}
-            >
-              {t(`localProjects.badges.${badge.key}`)}
-            </span>
-          ))}
-        </div>
+        {/* ── Badges (max 2, top-left) ── */}
+        {badges.length > 0 && (
+          <div className="absolute left-3.5 top-3.5 z-10 flex max-w-[78%] flex-wrap gap-1.5">
+            {badges.map((badge) => (
+              <span
+                key={badge.key}
+                className={`inline-flex items-center rounded-full border px-2.5 py-[3px] text-[9.5px] font-semibold uppercase tracking-[0.12em] backdrop-blur-sm ${
+                  BADGE_TONE_CLASSES[badge.tone] || BADGE_TONE_CLASSES.slate
+                }`}
+              >
+                {t(`localProjects.badges.${badge.key}`)}
+              </span>
+            ))}
+          </div>
+        )}
 
-        <div className="absolute bottom-4 right-4 z-20">
+        {/* ── Favorite (subdued, top-right) ── */}
+        <div className="absolute right-3 top-3 z-20">
           <HeartBtn
             id={String(project.id)}
-            size={15}
-            className="rounded-full border border-white/65 bg-white/82 p-1.5 shadow-[0_12px_24px_-18px_rgba(15,23,42,0.55)] backdrop-blur"
+            size={13}
+            className="rounded-full border border-white/50 bg-white/70 p-1 shadow-sm backdrop-blur-sm transition-opacity opacity-70 group-hover:opacity-100"
           />
         </div>
       </div>
 
-      <div className={`flex flex-1 flex-col ${compact ? "p-4" : "p-5"}`}>
+      {/* ── Body ── */}
+      <div className={`flex flex-1 flex-col ${compact ? "px-4 pt-3.5 pb-4" : "px-5 pt-4 pb-5"}`}>
+        {/* Location */}
         {locationLabel ? (
-          <div className="inline-flex min-w-0 items-center gap-1.5 text-sm text-slate-600">
-            <MdLocationOn className="h-4 w-4 shrink-0 text-[#b16b2d]" />
+          <div className="inline-flex min-w-0 items-center gap-1.5 text-[0.8rem] text-slate-500">
+            <MdLocationOn className="h-3.5 w-3.5 shrink-0 text-[#b16b2d]/80" />
             <span className="line-clamp-1">{locationLabel}</span>
           </div>
         ) : null}
 
-        <h3 className="mt-3 line-clamp-2 text-[1.35rem] font-semibold leading-[1.18] tracking-[-0.03em] text-slate-900">
+        {/* Title */}
+        <h3 className="mt-2 line-clamp-2 text-[1.25rem] font-semibold leading-[1.22] tracking-[-0.025em] text-slate-900">
           <Link
             to={projectPath}
             className="transition group-hover:text-[#8f5a24]"
@@ -170,7 +179,8 @@ const ProjectListingCard = ({ project, compact = false }) => {
           </Link>
         </h3>
 
-        <p className="mt-3 line-clamp-2 text-[0.95rem] leading-6 text-slate-600">
+        {/* Benefit line */}
+        <p className="mt-2 line-clamp-2 text-[0.85rem] leading-[1.55] text-slate-500">
           {getProjectBenefitLine(project, {
             t,
             language: i18n.language,
@@ -179,52 +189,55 @@ const ProjectListingCard = ({ project, compact = false }) => {
           })}
         </p>
 
+        {/* Room/area chips */}
         {(roomMixLabel || areaLabel) && (
-          <div className="mt-4 flex flex-wrap gap-2.5 text-xs text-slate-600">
+          <div className="mt-3 flex flex-wrap gap-2 text-[0.7rem] text-slate-500">
             {roomMixLabel ? (
-              <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5">
-                <MdOutlineApartment className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-2.5 py-1">
+                <MdOutlineApartment className="h-3 w-3 shrink-0 text-slate-400" />
                 <span className="font-medium">{roomMixLabel}</span>
               </span>
             ) : null}
 
             {areaLabel ? (
-              <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5">
-                <MdOutlineSell className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white px-2.5 py-1">
+                <MdOutlineSell className="h-3 w-3 shrink-0 text-slate-400" />
                 <span className="font-medium">{areaLabel}</span>
               </span>
             ) : null}
           </div>
         )}
 
-        <div className={`mt-5 rounded-[24px] border p-4 ${priceBoxClasses}`}>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+        {/* ── Price box ── */}
+        <div className={`mt-4 rounded-[20px] border p-3.5 ${priceBoxClasses}`}>
+          <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-slate-500">
             {pricePresentation.eyebrow}
           </p>
-          <div className={`mt-2 font-semibold leading-tight tracking-[-0.04em] ${priceValueClasses}`}>
+          <div className={`mt-1.5 font-semibold leading-tight tracking-[-0.03em] ${priceValueClasses}`}>
             {pricePresentation.value}
           </div>
-          <p className="mt-3 text-sm leading-6 text-slate-600">
+          <p className="mt-2 text-[0.78rem] leading-[1.5] text-slate-500">
             {pricePresentation.caption}
           </p>
         </div>
 
+        {/* Support items */}
         {supportItems.length > 0 ? (
-          <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <div className="mt-3 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
             {supportItems.map((item) => {
               const SupportIcon = SUPPORT_ICON_MAP[item.key] || MdOutlineSell;
               return (
                 <div
                   key={item.key}
-                  className="rounded-[18px] border border-slate-200 bg-white px-3.5 py-3"
+                  className="rounded-[16px] border border-slate-200/70 bg-white px-3 py-2.5"
                 >
-                  <div className="flex items-start gap-2.5">
-                    <SupportIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" />
+                  <div className="flex items-start gap-2">
+                    <SupportIcon className="mt-0.5 h-3 w-3 shrink-0 text-slate-400" />
                     <div className="min-w-0">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                         {item.label}
                       </p>
-                      <p className="mt-1 text-sm font-medium leading-5 text-slate-800">
+                      <p className="mt-0.5 text-[0.8rem] font-medium leading-5 text-slate-800">
                         {item.value}
                       </p>
                     </div>
@@ -235,18 +248,21 @@ const ProjectListingCard = ({ project, compact = false }) => {
           </div>
         ) : null}
 
-        <div className="mt-auto pt-5">
-          <div className="flex flex-col gap-2.5">
+        {/* ── CTA area ── */}
+        <div className="mt-auto pt-4">
+          <div className="flex flex-col gap-2">
+            {/* Primary CTA → project page */}
             <Link
               to={projectPath}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#0f172a_0%,#1f2937_100%)] px-4 py-3.5 text-sm font-semibold text-white shadow-[0_20px_34px_-22px_rgba(15,23,42,0.78)] transition hover:-translate-y-0.5 hover:shadow-[0_24px_42px_-18px_rgba(15,23,42,0.8)]"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[linear-gradient(135deg,#0f172a_0%,#1e293b_100%)] px-4 py-3 text-[0.82rem] font-semibold text-white shadow-[0_14px_28px_-16px_rgba(15,23,42,0.7)] transition hover:-translate-y-px hover:shadow-[0_18px_36px_-14px_rgba(15,23,42,0.75)]"
               data-track="project-card-primary-cta"
               data-project-id={project.id}
             >
               <span>{primaryCta}</span>
-              <FaArrowRightLong className="h-3.5 w-3.5" />
+              <FaArrowRightLong className="h-3 w-3" />
             </Link>
 
+            {/* Secondary CTA → inquiry action */}
             {secondaryCta.action === "whatsapp" && whatsappHref ? (
               <a
                 href={whatsappHref}
@@ -255,35 +271,47 @@ const ProjectListingCard = ({ project, compact = false }) => {
                 data-whatsapp-url={whatsappHref}
                 data-track="project-card-secondary-cta"
                 data-project-id={project.id}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#25D366]/25 bg-[#25D366]/10 px-4 py-3.5 text-sm font-semibold text-[#138f47] transition hover:border-[#25D366]/40 hover:bg-[#25D366]/14"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#25D366]/20 bg-[#25D366]/8 px-4 py-3 text-[0.82rem] font-semibold text-[#138f47] transition hover:border-[#25D366]/35 hover:bg-[#25D366]/12"
               >
-                <FaWhatsapp className="h-4 w-4" />
+                <FaWhatsapp className="h-3.5 w-3.5" />
                 <span>{secondaryCta.label}</span>
               </a>
+            ) : fallbackPhone ? (
+              <PhoneLink
+                phone={fallbackPhone}
+                requireAuth={false}
+                data-track="project-card-secondary-cta"
+                data-project-id={project.id}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-[0.82rem] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+              >
+                <FaPhone className="h-3 w-3 text-[#b16b2d]/70" />
+                <span>{secondaryCta.label}</span>
+              </PhoneLink>
             ) : (
               <Link
                 to={projectPath}
                 data-track="project-card-secondary-cta"
                 data-project-id={project.id}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-[0.82rem] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
               >
                 <span>{secondaryCta.label}</span>
               </Link>
             )}
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-            <PhoneLink
-              phone={fallbackPhone}
-              requireAuth={false}
-              className="inline-flex items-center gap-2 text-slate-600 transition hover:text-slate-900"
-              data-project-id={project.id}
-            >
-              <FaPhone className="h-3.5 w-3.5 text-[#b16b2d]" />
-              <span>{t("localProjects.quickCall", { defaultValue: "Call advisor" })}</span>
-            </PhoneLink>
-
-            {secondaryCta.action !== "whatsapp" && whatsappHref ? (
+          {/* Tertiary links */}
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[0.78rem]">
+            {secondaryCta.action === "whatsapp" && fallbackPhone ? (
+              <PhoneLink
+                phone={fallbackPhone}
+                requireAuth={false}
+                className="inline-flex items-center gap-1.5 text-slate-500 transition hover:text-slate-800"
+                data-project-id={project.id}
+              >
+                <FaPhone className="h-3 w-3 text-[#b16b2d]/70" />
+                <span>{t("localProjects.quickCall", { defaultValue: "Call advisor" })}</span>
+              </PhoneLink>
+            ) : whatsappHref ? (
               <a
                 href={whatsappHref}
                 target="_blank"
@@ -291,9 +319,9 @@ const ProjectListingCard = ({ project, compact = false }) => {
                 data-whatsapp-url={whatsappHref}
                 data-track="project-card-whatsapp-inline"
                 data-project-id={project.id}
-                className="inline-flex items-center gap-2 text-[#138f47] transition hover:text-[#0f7e3e]"
+                className="inline-flex items-center gap-1.5 text-[#138f47]/80 transition hover:text-[#0f7e3e]"
               >
-                <FaWhatsapp className="h-3.5 w-3.5" />
+                <FaWhatsapp className="h-3 w-3" />
                 <span>{t("contact.whatsapp")}</span>
               </a>
             ) : null}

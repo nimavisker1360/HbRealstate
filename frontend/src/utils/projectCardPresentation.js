@@ -178,7 +178,13 @@ const getPriceCandidate = (
   { convertAmount, defaultCurrency = "USD" } = {}
 ) => {
   if (type === "exact") {
-    const directAmount = toPositiveNumber(project?.directPrice);
+    const startingAmount = toPositiveNumber(project?.startingPrice);
+    const directAmount = toPositiveNumber(
+      project?.directPrice ||
+        (!startingAmount && normalizePriceDisplayMode(project?.priceDisplayMode) === "exact_price"
+          ? project?.price
+          : 0)
+    );
     const directCurrency = pickText(project?.directPriceCurrency, project?.currency, defaultCurrency);
     return {
       amount: directAmount,
@@ -242,61 +248,43 @@ const getBadgeCandidates = (project, options = {}) => {
   const citizenshipOpportunity = isCitizenshipOpportunityProject(project, options);
   const investmentOpportunity = isInvestmentProject(project, options);
   const maxBadges = Math.min(Math.max(Number(options.maxBadges) || 2, 1), 2);
+  const hasOffer = Boolean(project?.hasSpecialOffer);
 
-  return [
-    project?.hasSpecialOffer
-      ? {
-          key: "specialOffer",
-          priority: 100,
-          tone: "rose",
-        }
+  const candidates = [
+    hasOffer
+      ? { key: "specialOffer", priority: 100, tone: "rose" }
       : null,
     citizenshipOpportunity
-      ? {
-          key: "citizenship",
-          priority: 96,
-          tone: "emerald",
-        }
+      ? { key: "citizenship", priority: 96, tone: "emerald" }
       : null,
     isReadyProject(project)
-      ? {
-          key: "ready",
-          priority: 92,
-          tone: "slate",
-        }
+      ? { key: "ready", priority: 92, tone: "slate" }
       : null,
     isInstallmentProperty(project)
-      ? {
-          key: "installment",
-          priority: 88,
-          tone: "sky",
-        }
+      ? { key: "installment", priority: 88, tone: "sky" }
       : null,
     investmentOpportunity
-      ? {
-          key: "investment",
-          priority: 84,
-          tone: "amber",
-        }
+      ? { key: "investment", priority: 84, tone: "amber" }
       : null,
     isPrimeLocationProject(project, options)
-      ? {
-          key: "primeLocation",
-          priority: 80,
-          tone: "stone",
-        }
+      ? { key: "primeLocation", priority: 80, tone: "stone" }
       : null,
-    hasLimitedUnitsSignal(project)
-      ? {
-          key: "limitedUnits",
-          priority: 72,
-          tone: project?.hasSpecialOffer ? "rose" : "stone",
-        }
+    hasLimitedUnitsSignal(project) && !hasOffer
+      ? { key: "limitedUnits", priority: 72, tone: "stone" }
       : null,
   ]
     .filter(Boolean)
-    .sort((left, right) => right.priority - left.priority)
-    .slice(0, maxBadges);
+    .sort((left, right) => right.priority - left.priority);
+
+  if (candidates.length >= 2) {
+    const keys = new Set(candidates.map((c) => c.key));
+    if (keys.has("investment") && keys.has("citizenship")) {
+      const idx = candidates.findIndex((c) => c.key === "investment");
+      if (idx !== -1) candidates.splice(idx, 1);
+    }
+  }
+
+  return candidates.slice(0, maxBadges);
 };
 
 export const getProjectBadges = (project, options = {}) =>
@@ -589,7 +577,17 @@ export const getProjectPricePresentation = (
   };
 };
 
-export const getProjectPrimaryCTA = (_project, { t } = {}) => {
+export const getProjectPrimaryCTA = (project, { t } = {}) => {
+  if (project?.hasSpecialOffer) {
+    return t("localProjects.ctaPrimaryOffer", {
+      defaultValue: "Explore Offer",
+    });
+  }
+  if (isReadyProject(project)) {
+    return t("localProjects.ctaPrimaryReady", {
+      defaultValue: "View Project",
+    });
+  }
   return t("localProjects.ctaPrimaryDefault", {
     defaultValue: "Explore Project",
   });

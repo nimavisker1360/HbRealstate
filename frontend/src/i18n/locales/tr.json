@@ -975,7 +975,21 @@
     "consultant": "Proje Danışmanı",
     "consultantDescription": "Bu proje için atanmış danışman",
     "consultantUnavailable": "Bu projeye danışman atanmamış.",
-    "location": "İletişim"
+    "location": "Konum",
+    "clickToEnlarge": "Büyütmek için tıklayın",
+    "factCitizenship": "Vatandaşlığa Uygun",
+    "factInstallment": "Taksit Seçeneği Mevcut",
+    "ctaRequestPriceList": "Fiyat Listesi İste",
+    "ctaWhatsAppNow": "WhatsApp ile Yazın",
+    "ctaCallAdvisor": "Danışmanı Arayın",
+    "ctaBookViewing": "Görüşme Planlayın",
+    "offerLayout": "Tip",
+    "offerDownPayment": "Peşinat",
+    "offerMonths": "ay",
+    "floorPlanCtaPriced": "Plan Detayını Gör",
+    "floorPlanCtaRequest": "Bu Tipi Talep Et",
+    "floorPlanSupportPriced": "Fiyatlandırılmış plan mevcut — detayları görüntüleyin veya güncel stok listesini isteyin.",
+    "floorPlanSupportRequest": "Fiyatlandırma henüz yayınlanmadı — ekibimizden güncel stok bilgisini talep edin."
   },
   "services": {
     "breadcrumb": {

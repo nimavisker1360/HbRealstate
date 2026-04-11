@@ -977,7 +977,21 @@
     "consultant": "Project Consultant",
     "consultantDescription": "Your dedicated advisor for this project",
     "consultantUnavailable": "No consultant assigned to this project.",
-    "location": "Location"
+    "location": "Location",
+    "clickToEnlarge": "Click to enlarge",
+    "factCitizenship": "Citizenship Eligible",
+    "factInstallment": "Installments Available",
+    "ctaRequestPriceList": "Request Price List",
+    "ctaWhatsAppNow": "WhatsApp Now",
+    "ctaCallAdvisor": "Call Advisor",
+    "ctaBookViewing": "Book a Viewing",
+    "offerLayout": "Layout",
+    "offerDownPayment": "Down payment",
+    "offerMonths": "months",
+    "floorPlanCtaPriced": "View Plan Details",
+    "floorPlanCtaRequest": "Request This Layout",
+    "floorPlanSupportPriced": "Priced layout available — view details or request the full unit list.",
+    "floorPlanSupportRequest": "Pricing not yet published — request the latest availability from our team."
   },
   "services": {
     "breadcrumb": {
