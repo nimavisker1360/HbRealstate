@@ -2,6 +2,33 @@ import asyncHandler from "express-async-handler";
 import { prisma } from "../config/prismaConfig.js";
 
 const normalizeEmail = (value = "") => String(value || "").trim().toLowerCase();
+const normalizeBookingIdentifier = (value = "") => {
+  const raw = String(value || "").trim();
+  try {
+    return decodeURIComponent(raw);
+  } catch (_error) {
+    return raw;
+  }
+};
+const extractResidencyId = (value = "") => {
+  const normalized = normalizeBookingIdentifier(value);
+  if (!normalized) return "";
+  if (/^[a-f0-9]{24}$/i.test(normalized)) return normalized;
+  const match = normalized.match(/([a-f0-9]{24})$/i);
+  return match ? match[1] : "";
+};
+const isSameResidencyIdentifier = (left, right) => {
+  const normalizedLeft = normalizeBookingIdentifier(left);
+  const normalizedRight = normalizeBookingIdentifier(right);
+
+  if (!normalizedLeft || !normalizedRight) return false;
+  if (normalizedLeft === normalizedRight) return true;
+
+  const leftObjectId = extractResidencyId(normalizedLeft);
+  const rightObjectId = extractResidencyId(normalizedRight);
+
+  return Boolean(leftObjectId && rightObjectId && leftObjectId === rightObjectId);
+};
 
 const buildUserCreateData = (payload = {}) => ({
   email: normalizeEmail(payload.email),
@@ -57,15 +84,24 @@ export const bookVisit = asyncHandler(async (req, res) => {
   const email = normalizeEmail(req.body?.email);
   const { date } = req.body;
   const { id } = req.params;
+  const bookingId = extractResidencyId(id) || normalizeBookingIdentifier(id);
 
   try {
     if (!email) {
       return res.status(400).json({ message: "Email is required" });
     }
 
+    if (!bookingId) {
+      return res.status(400).json({ message: "Residency ID is required" });
+    }
+
     const user = await findOrCreateUser(email);
 
-    if (user.bookedVisits.some((visit) => visit.id === id)) {
+    if (
+      user.bookedVisits.some((visit) =>
+        isSameResidencyIdentifier(visit?.id, bookingId)
+      )
+    ) {
       return res.status(400).json({
         message: "This residency visit is already booked",
       });
@@ -74,7 +110,7 @@ export const bookVisit = asyncHandler(async (req, res) => {
     await prisma.user.update({
       where: { email },
       data: {
-        bookedVisits: { push: { id, date } },
+        bookedVisits: { push: { id: bookingId, date } },
       },
     });
 
@@ -109,6 +145,7 @@ export const allBookings = asyncHandler(async (req, res) => {
 export const cancelBooking = asyncHandler(async (req, res) => {
   const email = normalizeEmail(req.body?.email);
   const { id } = req.params;
+  const bookingId = extractResidencyId(id) || normalizeBookingIdentifier(id);
 
   try {
     if (!email) {
@@ -124,17 +161,19 @@ export const cancelBooking = asyncHandler(async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const index = user.bookedVisits.findIndex((visit) => visit.id === id);
-    if (index === -1) {
+    const updatedBookings = user.bookedVisits.filter(
+      (visit) => !isSameResidencyIdentifier(visit?.id, bookingId)
+    );
+
+    if (updatedBookings.length === user.bookedVisits.length) {
       return res.status(400).json({
         message: "Booking not found",
       });
     }
 
-    user.bookedVisits.splice(index, 1);
     await prisma.user.update({
       where: { email },
-      data: { bookedVisits: user.bookedVisits },
+      data: { bookedVisits: updatedBookings },
     });
 
     return res.send("Booking cancelled successfully");
@@ -357,26 +396,35 @@ export const getAllUsersBookings = asyncHandler(async (req, res) => {
       },
     });
 
-    const allBookingIds = users.flatMap((user) =>
-      user.bookedVisits.map((booking) => booking.id)
+    const allBookingIds = Array.from(
+      new Set(
+        users.flatMap((user) =>
+          user.bookedVisits
+            .map((booking) => extractResidencyId(booking?.id))
+            .filter(Boolean)
+        )
+      )
     );
 
-    const residencies = await prisma.residency.findMany({
-      where: {
-        id: {
-          in: allBookingIds,
-        },
-      },
-      select: {
-        id: true,
-        title: true,
-        address: true,
-        city: true,
-        country: true,
-        image: true,
-        price: true,
-      },
-    });
+    const residencies =
+      allBookingIds.length > 0
+        ? await prisma.residency.findMany({
+            where: {
+              id: {
+                in: allBookingIds,
+              },
+            },
+            select: {
+              id: true,
+              title: true,
+              address: true,
+              city: true,
+              country: true,
+              image: true,
+              price: true,
+            },
+          })
+        : [];
 
     const residencyMap = {};
     residencies.forEach((residency) => {
@@ -386,9 +434,11 @@ export const getAllUsersBookings = asyncHandler(async (req, res) => {
     const allBookings = [];
     users.forEach((user) => {
       user.bookedVisits.forEach((booking) => {
-        const residency = residencyMap[booking.id];
+        const resolvedBookingId =
+          extractResidencyId(booking?.id) || normalizeBookingIdentifier(booking?.id);
+        const residency = residencyMap[resolvedBookingId];
         allBookings.push({
-          bookingId: `${user.id}-${booking.id}`,
+          bookingId: `${user.id}-${resolvedBookingId || booking?.id || "unknown"}`,
           user: {
             id: user.id,
             name: user.name,
@@ -396,10 +446,10 @@ export const getAllUsersBookings = asyncHandler(async (req, res) => {
             image: user.image,
           },
           property: residency || {
-            id: booking.id,
+            id: resolvedBookingId || booking?.id,
             title: "Property Not Found",
           },
-          date: booking.date,
+          date: booking?.date,
         });
       });
     });

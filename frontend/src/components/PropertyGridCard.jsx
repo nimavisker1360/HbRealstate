@@ -1,11 +1,10 @@
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import PropTypes from "prop-types";
 import { MdLocationOn } from "react-icons/md";
-import { useContext } from "react";
-import CurrencyContext from "../context/CurrencyContext";
+import HeartBtn from "./HeartBtn";
 import { getOptimizedImageUrl } from "../utils/media";
-import { getPropertyDisplayPriceInfo } from "../utils/propertyPricing";
+import { getPropertySignals } from "../utils/contentGraph";
 import { resolveProjectPath, resolvePropertyPath } from "../utils/seo";
 
 // Get category display name (bilingual)
@@ -84,31 +83,74 @@ const joinUniqueParts = (...values) => {
     .join(", ");
 };
 
+const BADGE_TONE_CLASSES = {
+  emerald: "border-emerald-200/80 bg-white/95 text-emerald-700",
+  amber: "border-amber-200/80 bg-white/95 text-amber-700",
+  sky: "border-sky-200/80 bg-white/95 text-sky-700",
+  slate: "border-slate-200/80 bg-white/95 text-slate-700",
+  stone: "border-stone-200/80 bg-white/95 text-stone-700",
+  rose: "border-rose-200/80 bg-white/95 text-rose-700",
+};
+
+const normalizeText = (value = "") =>
+  String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const hasReadyStatus = (property) => {
+  if (property?.readyToMove === true) return true;
+  const statusText = normalizeText(
+    [property?.listingStatus, property?.projectStatus, property?.status]
+      .filter(Boolean)
+      .join(" ")
+  );
+  return ["ready", "hazir", "tamamlandi", "completed"].some((token) =>
+    statusText.includes(token)
+  );
+};
+
+const hasTitleDeedReady = (property) => {
+  const deedStatus = normalizeText([property?.titleDeedStatus, property?.deedStatus].filter(Boolean).join(" "));
+  return ["title deed", "tapu", "kat mulkiyeti"].some((token) =>
+    deedStatus.includes(token)
+  );
+};
+
+const hasSpecialOffer = (property) => Boolean(property?.hasSpecialOffer || property?.offBadge);
+
+const buildBadges = (property) => {
+  const signals = getPropertySignals(property);
+  const badges = [
+    hasSpecialOffer(property)
+      ? { key: "specialOffer", tone: "rose" }
+      : null,
+    signals.citizenship
+      ? { key: "citizenship", tone: "emerald" }
+      : null,
+    signals.installment
+      ? { key: "installment", tone: "sky" }
+      : null,
+    signals.intents.includes("investment")
+      ? { key: "investment", tone: "amber" }
+      : null,
+    hasReadyStatus(property)
+      ? { key: "ready", tone: "slate" }
+      : null,
+    hasTitleDeedReady(property)
+      ? { key: "titleDeed", tone: "emerald" }
+      : null,
+  ]
+    .filter(Boolean)
+    .slice(0, 3);
+
+  return badges;
+};
+
 const PropertyGridCard = ({ property }) => {
-  const navigate = useNavigate();
   const { i18n } = useTranslation();
-  const { selectedCurrency, baseCurrency, rates, convertAmount, formatMoney } =
-    useContext(CurrencyContext);
-  const displayCurrency =
-    selectedCurrency && (selectedCurrency === baseCurrency || rates?.[selectedCurrency])
-      ? selectedCurrency
-      : baseCurrency;
-  const sourceCurrency = property.currency || baseCurrency;
-  const displayPriceInfo = getPropertyDisplayPriceInfo(property, {
-    convertAmount,
-    comparisonCurrency: baseCurrency,
-    defaultCurrency: baseCurrency,
-  });
-  const convertedPrice = convertAmount(
-    displayPriceInfo.amount,
-    displayPriceInfo.currency || sourceCurrency,
-    displayCurrency
-  );
-  const formattedPrice = formatMoney(
-    convertedPrice,
-    displayCurrency,
-    i18n.language === "tr" ? "tr-TR" : "en-US"
-  );
   const propertyRoute =
     property?.propertyType === "local-project" ||
     property?.propertyType === "international-project"
@@ -146,55 +188,84 @@ const PropertyGridCard = ({ property }) => {
         cityLabel,
         countryLabel
       );
+  const badges = buildBadges(property);
+  const showOfferRibbon = hasSpecialOffer(property);
 
   return (
-    <div
-      className="group bg-white rounded-xl overflow-hidden cursor-pointer transition-all duration-500 hover:shadow-xl hover:shadow-gray-300/50 border border-gray-400 hover:border-gray-500"
-      onClick={() => navigate(propertyRoute)}
+    <article
+      className="group flex h-full min-h-[388px] flex-col overflow-hidden rounded-[28px] border border-[#e7dece] bg-[linear-gradient(180deg,#ffffff_0%,#fcfaf6_100%)] shadow-[0_22px_60px_-40px_rgba(15,23,42,0.4)] transition duration-300 hover:-translate-y-1 hover:border-[#d8c7aa] hover:shadow-[0_28px_72px_-36px_rgba(15,23,42,0.42)]"
     >
-      {/* Image */}
       <div className="relative overflow-hidden">
-        <img
-          src={getOptimizedImageUrl(property.image, { width: 520, height: 320 })}
-          alt={displayTitle}
-          loading="lazy"
-          decoding="async"
-          className="w-full h-[140px] object-cover transition-transform duration-500 group-hover:scale-110"
-        />
-        {/* Overlay gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        
-        {/* Price badge */}
-        <div className="absolute top-2 right-2 px-2 py-1 bg-emerald-500 text-white text-xs font-semibold rounded-md shadow-lg">
-          {formattedPrice}
+        <Link
+          to={propertyRoute}
+          className="block overflow-hidden"
+          aria-label={displayTitle}
+        >
+          <div className="relative aspect-[16/10] overflow-hidden">
+            <img
+              src={getOptimizedImageUrl(property.image, { width: 1200, height: 780 })}
+              alt={displayTitle}
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.03]"
+            />
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,23,42,0.06)_0%,rgba(15,23,42,0.14)_34%,rgba(15,23,42,0.72)_100%)]" />
+          </div>
+        </Link>
+
+        <div className="absolute left-4 top-4 z-10 flex max-w-[78%] flex-wrap gap-2">
+          {badges.map((badge) => (
+            <span
+              key={badge.key}
+              className={`inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-semibold tracking-[0.08em] backdrop-blur ${
+                BADGE_TONE_CLASSES[badge.tone] || BADGE_TONE_CLASSES.slate
+              }`}
+            >
+              {i18n.t(`localProjects.badges.${badge.key}`)}
+            </span>
+          ))}
         </div>
-      </div>
 
-      {/* Content */}
-      <div className="p-3">
-        {/* Title */}
-        <h3 className="text-sm font-semibold text-gray-800 mb-1.5 line-clamp-1 group-hover:text-emerald-600 transition-colors duration-300">
-          {displayTitle}
-        </h3>
-
-        {/* Address */}
-        <div className="flex items-start gap-1 mb-2">
-          <MdLocationOn className="text-emerald-500 mt-0.5 flex-shrink-0" size={14} />
-          <p className="text-xs text-gray-500 line-clamp-1">
-            {displayLocation}
-          </p>
-        </div>
-
-        {/* Category Badge */}
-        <div className="flex items-center pt-2 border-t border-gray-100">
-          <div className="ml-auto">
-            <span className="text-[10px] text-emerald-600 font-medium px-1.5 py-0.5 bg-emerald-50 rounded-full">
-              {getCategoryLabel(property.category, property.propertyType, i18n.language)}
+        {showOfferRibbon && (
+          <div className="pointer-events-none absolute right-[-42px] top-6 z-20 rotate-45 bg-rose-600 px-12 py-1.5 shadow-[0_10px_25px_-12px_rgba(244,63,94,0.85)]">
+            <span className="block font-serif text-[11px] font-black italic uppercase tracking-[0.26em] text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.18)]">
+              off
             </span>
           </div>
+        )}
+      </div>
+
+      <div className="flex flex-1 flex-col p-4 sm:p-5">
+        <div>
+          <Link to={propertyRoute} aria-label={displayTitle}>
+            <h3 className="line-clamp-2 text-[1rem] font-semibold leading-snug text-slate-800 transition group-hover:text-slate-900 sm:text-[1.05rem]">
+              {displayTitle}
+            </h3>
+          </Link>
+
+          <div className="mt-2 flex items-start gap-1.5 text-[13px] leading-snug text-slate-600">
+            <MdLocationOn className="mt-0.5 h-4 w-4 shrink-0 text-[#b16b2d]" />
+            <p className="line-clamp-2">
+              {displayLocation || i18n.t("listing.locationPlaceholder")}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4 flex justify-end">
+          <span className="inline-flex items-center rounded-full border border-[#ecdfcb] bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
+            {getCategoryLabel(property.category, property.propertyType, i18n.language)}
+          </span>
         </div>
       </div>
-    </div>
+
+      <div className="absolute bottom-4 right-4 z-20">
+        <HeartBtn
+          id={String(property?.id)}
+          size={18}
+          className="rounded-full bg-white/96 p-2.5 shadow-[0_12px_24px_-16px_rgba(15,23,42,0.65)] backdrop-blur"
+        />
+      </div>
+    </article>
   );
 };
 
@@ -209,8 +280,6 @@ PropertyGridCard.propTypes = {
     district: PropTypes.string,
     city: PropTypes.string,
     country: PropTypes.string,
-    price: PropTypes.number,
-    currency: PropTypes.string,
     propertyType: PropTypes.string,
     category: PropTypes.string,
     addressDetails: PropTypes.shape({

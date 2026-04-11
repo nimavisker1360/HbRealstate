@@ -1,10 +1,11 @@
-import PropertyGridCard from "./PropertyGridCard";
 import { Link, useNavigate } from "react-router-dom";
 import useProperties from "../hooks/useProperties";
 import { useEffect, useState, useRef, useMemo, useContext } from "react";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import {
+  MdChevronLeft,
+  MdChevronRight,
   MdLocationOn,
   MdSearch,
   MdKeyboardArrowDown,
@@ -16,7 +17,10 @@ import {
 } from "react-icons/md";
 import CurrencyContext from "../context/CurrencyContext";
 import useConsultants from "../hooks/useConsultants";
+import HeartBtn from "./HeartBtn";
+import { getOptimizedImageUrl } from "../utils/media";
 import { getPropertyComparablePrice } from "../utils/propertyPricing";
+import { resolvePropertyPath, resolveProjectPath } from "../utils/seo";
 
 const normalizeText = (value) =>
   String(value || "")
@@ -27,6 +31,229 @@ const normalizeText = (value) =>
     .trim();
 
 const toArray = (value) => (Array.isArray(value) ? value : []);
+
+const pickText = (...values) => {
+  for (const value of values) {
+    if (value === null || value === undefined) continue;
+    const normalized = String(value).trim();
+    if (normalized) return normalized;
+  }
+  return "";
+};
+
+const joinUniqueParts = (...values) => {
+  const seen = new Set();
+
+  return values
+    .map((value) => String(value || "").trim())
+    .filter((value) => {
+      if (!value) return false;
+      const normalized = value.toLowerCase();
+      if (seen.has(normalized)) return false;
+      seen.add(normalized);
+      return true;
+    })
+    .join(", ");
+};
+
+const HOME_LISTING_PRICE_THRESHOLD_TRY = 18000000;
+
+const HOME_CARD_BADGE_TONES = {
+  emerald: "border-emerald-200/80 bg-white/95 text-emerald-700",
+  amber: "border-amber-200/80 bg-white/95 text-amber-700",
+  sky: "border-sky-200/80 bg-white/95 text-sky-700",
+  slate: "border-slate-200/80 bg-white/95 text-slate-700",
+  stone: "border-stone-200/80 bg-white/95 text-stone-700",
+  rose: "border-rose-200/80 bg-white/95 text-rose-700",
+};
+
+const LISTING_CATEGORY_LABELS = {
+  tr: {
+    "local-project": "Yurt İçi Proje",
+    "international-project": "Yurt Dışı Proje",
+    residential: "Konut",
+    commercial: "Ticari",
+    land: "Arsa",
+    building: "Bina",
+    villa: "Villa",
+    "tourist-facility": "Turistik Tesis",
+    timeshare: "Devre Mülk",
+    default: "Satılık",
+  },
+  en: {
+    "local-project": "Local Project",
+    "international-project": "International Project",
+    residential: "Residential",
+    commercial: "Commercial",
+    land: "Land",
+    building: "Building",
+    villa: "Villa",
+    "tourist-facility": "Tourist Facility",
+    timeshare: "Timeshare",
+    default: "For Sale",
+  },
+};
+
+const getListingCategoryLabel = (category, propertyType, lang = "tr") => {
+  const currentLabels = LISTING_CATEGORY_LABELS[lang] || LISTING_CATEGORY_LABELS.tr;
+
+  if (propertyType === "local-project" || propertyType === "international-project") {
+    return currentLabels[propertyType];
+  }
+
+  return currentLabels[category] || category || currentLabels.default;
+};
+
+const HOME_LISTING_FALLBACK_IMAGE =
+  "https://images.unsplash.com/photo-1502005097973-6a7082348e28?w=400&h=300&fit=crop";
+
+const HomeListingCard = ({ property }) => {
+  const { t, i18n } = useTranslation();
+  const { baseCurrency, convertAmount } = useContext(CurrencyContext);
+
+  const propertyRoute =
+    property?.propertyType === "local-project" ||
+    property?.propertyType === "international-project"
+      ? resolveProjectPath(property)
+      : resolvePropertyPath(property);
+  const title = pickText(
+    property?.title,
+    property?.name,
+    property?.projectName,
+    property?.district,
+    property?.city,
+    property?.country,
+    "Property"
+  );
+  const districtLabel = pickText(
+    property?.addressDetails?.district,
+    property?.district,
+    property?.ilce
+  );
+  const cityLabel = pickText(property?.city, property?.addressDetails?.city);
+  const countryLabel = pickText(property?.country, property?.addressDetails?.country);
+  const locationLabel = joinUniqueParts(
+    pickText(property?.address, districtLabel),
+    cityLabel,
+    countryLabel
+  );
+  const categoryLabel = getListingCategoryLabel(
+    property?.category,
+    property?.propertyType,
+    i18n.language
+  );
+  const priceInTry = getPropertyComparablePrice(property, {
+    convertAmount,
+    comparisonCurrency: "TRY",
+    defaultCurrency: baseCurrency,
+  });
+  const premiumEligible = priceInTry >= HOME_LISTING_PRICE_THRESHOLD_TRY;
+  const showOfferRibbon = Boolean(property?.offBadge || property?.hasSpecialOffer);
+  const badges = premiumEligible
+    ? [
+        { key: "citizenship", tone: "emerald" },
+        { key: "investment", tone: "sky" },
+      ]
+    : [];
+
+  return (
+    <article
+      data-home-listing-card
+      className="group flex h-full min-h-[388px] w-[82vw] flex-none snap-start overflow-hidden rounded-[28px] border border-[#e7dece] bg-[linear-gradient(180deg,#ffffff_0%,#fcfaf6_100%)] shadow-[0_22px_60px_-40px_rgba(15,23,42,0.4)] transition duration-300 hover:-translate-y-1 hover:border-[#d8c7aa] hover:shadow-[0_28px_72px_-36px_rgba(15,23,42,0.42)] sm:w-[max(15rem,min(18.75rem,calc((100cqw-5.5rem)/4)))]"
+      style={{ scrollSnapAlign: "start", scrollSnapStop: "always" }}
+    >
+      <Link to={propertyRoute} className="flex h-full w-full flex-col" aria-label={title}>
+        <div className="relative overflow-hidden">
+          <div className="relative aspect-[16/10] overflow-hidden">
+            <img
+              src={getOptimizedImageUrl(
+                property?.images?.[0] || property?.image || HOME_LISTING_FALLBACK_IMAGE,
+                { width: 1200, height: 780 }
+              )}
+              alt={title}
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.03]"
+            />
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,23,42,0.06)_0%,rgba(15,23,42,0.14)_34%,rgba(15,23,42,0.72)_100%)]" />
+          </div>
+
+          <div className="absolute left-4 top-4 z-10 flex max-w-[78%] flex-wrap gap-2">
+            {badges.map((badge) => (
+              <span
+                key={badge.key}
+                className={`inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-semibold tracking-[0.08em] backdrop-blur ${
+                  HOME_CARD_BADGE_TONES[badge.tone] || HOME_CARD_BADGE_TONES.slate
+                }`}
+              >
+                {t(`localProjects.badges.${badge.key}`)}
+              </span>
+            ))}
+          </div>
+
+          {showOfferRibbon && (
+            <div className="pointer-events-none absolute right-[-42px] top-6 z-20 rotate-45 bg-rose-600 px-12 py-1.5 shadow-[0_10px_25px_-12px_rgba(244,63,94,0.85)]">
+              <span className="block font-serif text-[11px] font-black italic uppercase tracking-[0.26em] text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.18)]">
+                off
+              </span>
+            </div>
+          )}
+
+          <div className="absolute bottom-4 right-4 z-20">
+            <HeartBtn
+              id={String(property?.id)}
+              size={18}
+              className="rounded-full bg-white/96 p-2.5 shadow-[0_12px_24px_-16px_rgba(15,23,42,0.65)] backdrop-blur"
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-1 flex-col justify-between p-4 sm:p-5">
+          <div>
+            <h3 className="line-clamp-2 text-[1rem] font-semibold leading-snug text-slate-800 sm:text-[1.05rem]">
+              {title}
+            </h3>
+
+            <div className="mt-2 flex items-start gap-1.5 text-[13px] leading-snug text-slate-600">
+              <MdLocationOn className="mt-0.5 h-4 w-4 shrink-0 text-[#b16b2d]" />
+              <p className="line-clamp-2">{locationLabel || t("listing.locationPlaceholder")}</p>
+            </div>
+          </div>
+
+          <div className="mt-4 flex justify-end">
+            <span className="inline-flex items-center rounded-full border border-[#ecdfcb] bg-white/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
+              {categoryLabel}
+            </span>
+          </div>
+        </div>
+      </Link>
+    </article>
+  );
+};
+
+HomeListingCard.propTypes = {
+  property: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    title: PropTypes.string,
+    name: PropTypes.string,
+    projectName: PropTypes.string,
+    image: PropTypes.string,
+    images: PropTypes.arrayOf(PropTypes.string),
+    address: PropTypes.string,
+    city: PropTypes.string,
+    country: PropTypes.string,
+    district: PropTypes.string,
+    propertyType: PropTypes.string,
+    category: PropTypes.string,
+    currency: PropTypes.string,
+    price: PropTypes.number,
+    addressDetails: PropTypes.shape({
+      city: PropTypes.string,
+      country: PropTypes.string,
+      district: PropTypes.string,
+    }),
+  }).isRequired,
+};
 
 const SEA_VIEW_KEYWORDS = [
   "sea view",
@@ -283,13 +510,15 @@ AnimatedCard.propTypes = {
   delay: PropTypes.number,
 };
 
-const Properties = () => {
+const Properties = ({ properties, showControls = true } = {}) => {
   const { t, i18n } = useTranslation();
   const { data, isError, isLoading } = useProperties();
   const { data: consultants = [] } = useConsultants();
   const navigate = useNavigate();
   const [headerVisible, setHeaderVisible] = useState(false);
   const headerRef = useRef(null);
+  const trackRef = useRef(null);
+  const viewportRef = useRef(null);
   const { selectedCurrency, baseCurrency, rates, convertAmount, formatMoney } =
     useContext(CurrencyContext);
   const displayCurrency =
@@ -668,13 +897,71 @@ const Properties = () => {
     convertAmount,
   ]);
 
-  const filteredProperties = useMemo(() => {
+  const internalFilteredProperties = useMemo(() => {
     if (!consultantFilter) return baseFilteredProperties;
     return baseFilteredProperties.filter((property) => {
       const consultantId = normalizeId(getPropertyConsultantId(property));
       return consultantId === normalizeId(consultantFilter);
     });
   }, [baseFilteredProperties, consultantFilter]);
+
+  const displayedProperties = Array.isArray(properties)
+    ? properties
+    : internalFilteredProperties;
+  const isHomeCarousel = !showControls;
+
+  const canScroll = displayedProperties.length > 4;
+
+  const handleScroll = (direction) => {
+    const viewport = viewportRef.current;
+    const track = trackRef.current;
+
+    if (!viewport || !track) return;
+
+    void viewport.offsetHeight;
+
+    const card = track.querySelector("[data-home-listing-card]");
+    if (!card) return;
+
+    const cards = track.querySelectorAll("[data-home-listing-card]");
+    if (!cards || cards.length === 0) return;
+
+    const firstCard = cards[0];
+    const cardWidth = firstCard.getBoundingClientRect().width;
+    const computedGap =
+      parseFloat(window.getComputedStyle(track).columnGap?.replace("px", "") || "0") || 0;
+    const gap = computedGap || 16;
+    const viewportWidth = viewport.clientWidth;
+    const isMobile = viewportWidth < 768;
+    const currentScroll = viewport.scrollLeft;
+    const maxScroll = viewport.scrollWidth - viewport.clientWidth;
+
+    if (maxScroll <= 0) return;
+
+    let target;
+    if (isMobile) {
+      const scrollAmount = cardWidth + gap;
+      const currentCardIndex = Math.round(currentScroll / scrollAmount);
+
+      if (direction === -1) {
+        target = Math.max(0, (currentCardIndex - 1) * scrollAmount);
+      } else {
+        target = Math.min(maxScroll, (currentCardIndex + 1) * scrollAmount);
+      }
+    } else {
+      const scrollAmount = (cardWidth + gap) * 1.5;
+      if (direction === -1) {
+        target = Math.max(0, currentScroll - scrollAmount);
+      } else {
+        target = Math.min(maxScroll, currentScroll + scrollAmount);
+      }
+    }
+
+    viewport.scrollTo({
+      left: target,
+      behavior: "smooth",
+    });
+  };
 
   const handleAllFilters = () => {
     const params = new URLSearchParams();
@@ -712,14 +999,16 @@ const Properties = () => {
             <div className="h-4 w-64 bg-gray-200 rounded mx-auto animate-pulse" />
           </div>
           {/* Loading Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {[...Array(12)].map((_, i) => (
-              <div key={i} className="bg-white rounded-xl overflow-hidden animate-pulse shadow-sm border border-gray-100">
-                <div className="h-[140px] bg-gray-200" />
-                <div className="p-3 space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-3/4" />
-                  <div className="h-3 bg-gray-200 rounded w-1/2" />
-                  <div className="h-3 bg-gray-200 rounded w-full" />
+          <div className="flex gap-4 overflow-hidden px-2 [container-type:inline-size]">
+            {[...Array(4)].map((_, i) => (
+              <div
+                key={i}
+                className="h-[360px] w-[82vw] flex-none animate-pulse overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm sm:w-[max(15rem,min(18.75rem,calc((100cqw-5.5rem)/4)))]"
+              >
+                <div className="h-[65%] bg-slate-200" />
+                <div className="space-y-3 p-5">
+                  <div className="h-4 w-4/5 rounded bg-slate-200" />
+                  <div className="h-10 rounded-2xl bg-slate-200" />
                 </div>
               </div>
             ))}
@@ -730,38 +1019,52 @@ const Properties = () => {
   }
 
   return (
-    <section 
+    <section
       id="featured-properties"
-      className="relative py-20 xl:py-28 overflow-visible"
+      className={`relative overflow-visible ${isHomeCarousel ? "py-16 sm:py-20" : "py-20 xl:py-28"}`}
     >
       {/* Background - Clean White with subtle tint */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-br from-white via-slate-50 to-white" />
+        <div
+          className={`absolute inset-0 ${
+            isHomeCarousel
+              ? "bg-gradient-to-b from-[#fdfcf9] via-[#f8f6f1] to-[#fdfcf9]"
+              : "bg-gradient-to-br from-white via-slate-50 to-white"
+          }`}
+        />
         {/* Decorative elements */}
         <div className="absolute top-0 left-0 w-72 h-72 bg-emerald-500/5 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl translate-x-1/3 translate-y-1/3" />
       </div>
       
-      <div className="max-padd-container relative z-10">
-        {/* Section Header */}
-        <div 
-          ref={headerRef}
-          className={`text-center mb-14 transition-all duration-1000 ${headerVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
-        >
-          <span className="investment-opportunities-pill relative mb-4 inline-block overflow-hidden rounded-md bg-emerald-500 px-4 py-1.5 text-sm font-medium text-white shadow-md">
-            <span className="relative z-[1]">{t("properties.futureHomeAwaits")}</span>
-          </span>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-4">
-            {t("properties.findDreamHere")}
-          </h2>
-          <p className="text-gray-500 max-w-2xl mx-auto">
-            {t("properties.subtitle")}
-          </p>
-        </div>
+      <div
+        className={`relative z-10 ${
+          isHomeCarousel
+            ? "mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8"
+            : "max-padd-container"
+        }`}
+      >
+        {showControls && (
+          <>
+            {/* Section Header */}
+            <div 
+              ref={headerRef}
+              className={`text-center mb-14 transition-all duration-1000 ${headerVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+            >
+              <span className="investment-opportunities-pill relative mb-4 inline-block overflow-hidden rounded-md bg-emerald-500 px-4 py-1.5 text-sm font-medium text-white shadow-md">
+                <span className="relative z-[1]">{t("properties.futureHomeAwaits")}</span>
+              </span>
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-4">
+                {t("properties.findDreamHere")}
+              </h2>
+              <p className="text-gray-500 max-w-2xl mx-auto">
+                {t("properties.subtitle")}
+              </p>
+            </div>
 
-        {/* Filter Bar */}
-        <div className="mb-12 relative z-20">
-          <div className="rounded-2xl border border-gray-200/80 bg-white/90 shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur isolation-isolate">
+            {/* Filter Bar */}
+            <div className="relative z-30 mb-6 -mb-8 md:mb-8 md:-mb-10">
+              <div className="rounded-2xl border border-gray-200/80 bg-white/90 shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur isolation-isolate">
             <div className="flex flex-col gap-3 p-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center sm:gap-3 sm:p-4">
               <div className="flex items-center gap-2 w-full sm:flex-1 sm:min-w-[260px]">
                 {/* Location Search */}
@@ -1065,40 +1368,86 @@ const Properties = () => {
                 {t("listing.quickCitizenshipEligible")}
               </button>
             </div>
-          </div>
-        </div>
-
-        {/* Properties Grid - Exclude projects (they have their own pages) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredProperties.slice(0, 12).map((property, index) => (
-            <AnimatedCard key={property.id} delay={index * 100}>
-              <PropertyGridCard property={property} />
-            </AnimatedCard>
-          ))}
-          {filteredProperties.length === 0 && (
-            <div className="col-span-full text-center text-gray-500">
-              {t("properties.noProperties")}
+              </div>
             </div>
-          )}
-        </div>
+          </>
+        )}
 
-        {/* View More Button */}
-        <AnimatedCard delay={800}>
-          <div className="flex justify-center mt-14">
-            <Link
-              to="/listing"
-              className="investment-opportunities-pill group relative overflow-hidden rounded-xl bg-emerald-500 px-8 py-3.5 font-medium text-white transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/25"
+        {/* Properties Carousel - Match the project section experience */}
+        {displayedProperties.length > 0 ? (
+          <div className="relative z-10 pt-8 md:pt-10">
+            {canScroll && (
+              <>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleScroll(-1);
+                  }}
+                  className="absolute -left-3 top-1/2 z-30 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-md transition hover:bg-gray-100"
+                  aria-label="Scroll left"
+                >
+                  <MdChevronLeft size={22} />
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleScroll(1);
+                  }}
+                  className="absolute -right-3 top-1/2 z-30 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-md transition hover:bg-gray-100"
+                  aria-label="Scroll right"
+                >
+                  <MdChevronRight size={22} />
+                </button>
+              </>
+            )}
+
+            <div
+              className={`pointer-events-none absolute inset-y-0 left-0 z-10 w-8 sm:w-12 ${
+                isHomeCarousel
+                  ? "bg-gradient-to-r from-[#fdfcf9] via-[#fdfcf9]/80 to-transparent"
+                  : "bg-gradient-to-r from-white via-white/80 to-transparent"
+              }`}
+            />
+            <div
+              className={`pointer-events-none absolute inset-y-0 right-0 z-10 w-8 sm:w-12 ${
+                isHomeCarousel
+                  ? "bg-gradient-to-l from-[#fdfcf9] via-[#fdfcf9]/80 to-transparent"
+                  : "bg-gradient-to-l from-white via-white/80 to-transparent"
+              }`}
+            />
+
+            <div
+              ref={viewportRef}
+              className="overflow-x-auto overflow-y-hidden pb-2 scroll-smooth scrollbar-hide w-full snap-x snap-mandatory px-2 [container-type:inline-size]"
+              style={{
+                scrollbarWidth: "none",
+                msOverflowStyle: "none",
+                WebkitOverflowScrolling: "touch",
+                scrollBehavior: "smooth",
+                scrollSnapType: "x mandatory",
+              }}
             >
-              <span className="relative z-10 flex items-center gap-2">
-                {t("properties.viewAll")}
-                <svg className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
-              </span>
-              <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            </Link>
+              <div
+                ref={trackRef}
+                className="flex gap-4 sm:gap-6"
+                style={{ width: "max-content", minWidth: "100%" }}
+              >
+                {displayedProperties.map((property) => (
+                  <HomeListingCard key={property.id} property={property} />
+                ))}
+              </div>
+            </div>
           </div>
-        </AnimatedCard>
+        ) : (
+          <div className="rounded-2xl border border-dashed border-slate-300 bg-white/70 px-6 py-16 text-center text-slate-500">
+            {t("properties.noProperties")}
+          </div>
+        )}
+
       </div>
     </section>
   );

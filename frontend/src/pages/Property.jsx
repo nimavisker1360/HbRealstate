@@ -171,7 +171,7 @@ const MUHIT_FEATURES = [
 ];
 
 import { CgRuler } from "react-icons/cg";
-import { resolveProjectPath } from "../utils/seo";
+import { resolveProjectPath, extractObjectId } from "../utils/seo";
 import IstanbulMarketAnalytics from "../components/market/IstanbulMarketAnalytics";
 import InquirySidebarCard from "../components/InquirySidebarCard";
 import { getLocalizedAlt } from "../utils/mediaAlt";
@@ -269,6 +269,7 @@ const Property = ({ topSlot = null }) => {
   const { data, isLoading, isError } = useQuery(["resd", id], () =>
     getProperty(id)
   );
+  const resolvedPropertyId = data?.id || extractObjectId(id) || id;
 
   useEffect(() => {
     if (
@@ -396,6 +397,14 @@ const Property = ({ topSlot = null }) => {
     userDetails: { token, bookings },
     setUserDetails,
   } = useContext(UserDetailContext);
+  const matchesActivePropertyBooking = (bookingId = "") =>
+    Boolean(bookingId) &&
+    (bookingId === id ||
+      bookingId === resolvedPropertyId ||
+      extractObjectId(bookingId) === resolvedPropertyId);
+  const activeBooking = bookings?.find((booking) =>
+    matchesActivePropertyBooking(booking?.id)
+  );
 
   useEffect(() => {
     if (!isAuthenticated || !id) return;
@@ -413,11 +422,14 @@ const Property = ({ topSlot = null }) => {
   }, [id, isAuthenticated]);
 
   const { mutate: cancelBooking, isLoading: cancelling } = useMutation({
-    mutationFn: () => removeBooking(id, user?.email, token),
+    mutationFn: () =>
+      removeBooking(activeBooking?.id || resolvedPropertyId, user?.email, token),
     onSuccess: () => {
       setUserDetails((prev) => ({
         ...prev,
-        bookings: prev.bookings.filter((booking) => booking?.id !== id),
+        bookings: prev.bookings.filter(
+          (booking) => !matchesActivePropertyBooking(booking?.id)
+        ),
       }));
 
       toast.success(bilingualKey("booking.bookingCancelled"), {
@@ -1040,7 +1052,7 @@ const Property = ({ topSlot = null }) => {
             )}
           </div>
           <div className="space-y-3">
-            {bookings?.map((booking) => booking.id).includes(id) ? (
+            {activeBooking ? (
               <>
                 <div className="flex gap-2">
                   <Button
@@ -1063,7 +1075,7 @@ const Property = ({ topSlot = null }) => {
                 <p className="text-green-600 medium-15 flex items-center gap-2">
                   <MdCheck className="text-lg" />
                   {t('propertyDetails.bookedVisit')}{" "}
-                  {bookings?.filter((booking) => booking?.id === id)[0].date}
+                  {activeBooking.date}
                 </p>
               </>
             ) : (
@@ -1095,7 +1107,7 @@ const Property = ({ topSlot = null }) => {
             <BookingModal
               opened={modalOpened}
               setOpened={setModalOpened}
-              propertyId={id}
+              propertyId={resolvedPropertyId}
               email={user?.email}
               onBooked={() => setContactModalOpen(true)}
             />
@@ -1385,7 +1397,7 @@ const Property = ({ topSlot = null }) => {
 
         <aside className="space-y-6 lg:sticky lg:top-28">
           <InquirySidebarCard
-            propertyId={id}
+            propertyId={resolvedPropertyId}
             propertyTitle={data?.title}
             listingNo={data?.listingNo || ""}
             locationLabel={
@@ -1499,7 +1511,7 @@ const Property = ({ topSlot = null }) => {
       <ContactModal
         opened={contactModalOpen}
         onClose={() => setContactModalOpen(false)}
-        propertyId={id}
+        propertyId={resolvedPropertyId}
         propertyTitle={data?.title}
         listingNo={data?.listingNo}
         userEmail={user?.email}

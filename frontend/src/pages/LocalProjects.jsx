@@ -20,9 +20,8 @@ import greeceHeroBg from "../assets/hero/greece.jpg";
 import useProperties from "../hooks/useProperties";
 import CurrencyContext from "../context/CurrencyContext";
 import PropertiesMap from "../components/PropertiesMap";
-import PropertyCard from "../components/PropertyCard";
-import HeartBtn from "../components/HeartBtn";
-import { getOptimizedImageUrl } from "../utils/media";
+import ProjectListingCard from "../components/ProjectListingCard";
+import { getPropertyDistrict } from "../utils/contentGraph";
 import { resolveProjectPath } from "../utils/seo";
 import { getLocalizedAlt } from "../utils/mediaAlt";
 
@@ -273,6 +272,37 @@ const hasSpecialOfferData = (specialOffer) =>
         Number(specialOffer.locationMinutes || 0) > 0)
   );
 
+const normalizeProjectTypeValue = (value) => {
+  const normalized = String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/_+/g, "-");
+
+  if (
+    normalized === "local-project" ||
+    normalized === "international-project" ||
+    normalized === "special-offer"
+  ) {
+    return normalized;
+  }
+
+  if (normalized === "localproject") return "local-project";
+  if (normalized === "internationalproject") return "international-project";
+  if (normalized === "specialoffer") return "special-offer";
+
+  return normalized;
+};
+
+const hasProjectListingSignals = (project) =>
+  Boolean(
+    project?.projectName ||
+      project?.title ||
+      project?.name ||
+      project?.projeHakkinda ||
+      (Array.isArray(project?.dairePlanlari) && project.dairePlanlari.length > 0)
+  );
+
 const normalizeProjectType = (value) => {
   const normalized = String(value || "")
     .trim()
@@ -298,12 +328,7 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
     .trim()
     .toLowerCase();
   const isHotOffersMode = hotOffersQuery === "1" || hotOffersQuery === "true";
-  const { selectedCurrency, baseCurrency, rates, convertAmount, formatMoney } =
-    useContext(CurrencyContext);
-  const displayCurrency =
-    selectedCurrency && (selectedCurrency === baseCurrency || rates?.[selectedCurrency])
-      ? selectedCurrency
-      : baseCurrency;
+  const { baseCurrency, convertAmount } = useContext(CurrencyContext);
   const { t, i18n } = useTranslation();
   const { data: allProperties, isLoading } = useProperties();
   const resolvedProjectType =
@@ -324,18 +349,34 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
   // Filter projects from all properties
   const localProjects = useMemo(() => {
     if (!allProperties) return [];
-    
+
     // In Hot Offers mode include local + international projects
     const filtered = allProperties.filter((p) => {
+      const projectTypeValue = normalizeProjectTypeValue(p.propertyType || p.projectType || p.category);
+      const hasProjectSignals = hasProjectListingSignals(p);
+
       if (isHotOffersMode) {
         return (
-          p.propertyType === "local-project" ||
-          p.propertyType === "international-project"
+          projectTypeValue === "local-project" ||
+          projectTypeValue === "international-project" ||
+          projectTypeValue === "special-offer" ||
+          hasProjectSignals
         );
       }
-      return p.propertyType === resolvedProjectType;
+      if (resolvedProjectType === "special-offer") {
+        return (
+          projectTypeValue === "local-project" ||
+          projectTypeValue === "international-project" ||
+          projectTypeValue === "special-offer" ||
+          hasProjectSignals
+        );
+      }
+      return (
+        projectTypeValue === resolvedProjectType ||
+        (resolvedProjectType === "local-project" && hasProjectSignals)
+      );
     });
-    
+
     return filtered.map((p) => {
       const specialOffers = Array.isArray(p.projeHakkinda?.specialOffers)
         ? p.projeHakkinda.specialOffers.filter((offer) => hasSpecialOfferData(offer))
@@ -348,21 +389,27 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
           ? legacySpecialOffer
           : {};
       const hasSpecialOffer = hasSpecialOfferData(activeSpecialOffer);
+      const directPrice = Number(p.price || 0);
+      const explicitStartingPrice = Number(p.startingPrice || 0);
       const floorPlanPrices =
         p.dairePlanlari
           ?.map((d) => Number(d.fiyat || d.fiyatUSD || 0))
           .filter((price) => price > 0) || [];
       const specialOfferPrice = Number(activeSpecialOffer.priceGBP || activeSpecialOffer.priceUSD || 0);
       const startingPrice =
-        Number(p.price || 0) > 0
-          ? Number(p.price || 0)
+        explicitStartingPrice > 0
+          ? explicitStartingPrice
+          : directPrice > 0
+          ? directPrice
           : specialOfferPrice > 0
           ? specialOfferPrice
           : floorPlanPrices.length > 0
           ? Math.min(...floorPlanPrices)
           : 0;
       const startingCurrency =
-        Number(p.price || 0) > 0
+        explicitStartingPrice > 0
+          ? p.startingCurrency || p.currency || baseCurrency
+          : directPrice > 0
           ? p.currency || baseCurrency
           : specialOfferPrice > 0
           ? "GBP"
@@ -384,22 +431,43 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
       const areaMax = areaValues.length > 0 ? Math.max(...areaValues) : 0;
 
       return {
+        ...p,
         id: p.id,
         projectPath: resolveProjectPath(p),
-        name: activeSpecialOffer.title || p.title,
+        title: p.projectName || p.title || activeSpecialOffer.title || "",
+        name: p.projectName || p.title || activeSpecialOffer.title || "",
         city: p.city || "",
         country: p.country || (p.propertyType === "international-project" ? "" : "Turkey"),
-        district: p.address || "",
+        district: getPropertyDistrict(p) || p.address || "",
         address: p.address || "",
         rooms: roomTypes,
+        propertyTypes: roomTypes,
         areaMin,
         areaMax,
         price: startingPrice,
         currency: startingCurrency,
+        directPrice,
+        directPriceCurrency: p.currency || baseCurrency,
+        startingPrice,
+        startingCurrency,
         deliveryDate: p.deliveryDate || "",
         status: p.projectStatus || "devam-ediyor",
+        projectStatus: p.projectStatus || "",
+        listingStatus: p.listingStatus || "",
         image: p.images?.[0] || "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400&h=300&fit=crop",
         propertyType: p.propertyType,
+        shortDescription:
+          p.shortDescription ||
+          p.description_en ||
+          p.description_tr ||
+          p.description,
+        shortDescription_tr: p.shortDescription_tr || p.description_tr || "",
+        shortDescription_en: p.shortDescription_en || p.description_en || "",
+        shortDescription_ru: p.shortDescription_ru || p.description_ru || "",
+        description: p.description || "",
+        description_tr: p.description_tr || "",
+        description_en: p.description_en || "",
+        description_ru: p.description_ru || "",
         projeHakkinda: p.projeHakkinda,
         dairePlanlari: p.dairePlanlari,
         vaziyetPlani: p.vaziyetPlani,
@@ -407,6 +475,16 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
         kampanya: p.kampanya,
         mapImage: p.mapImage,
         gyo: Boolean(p.gyo),
+        deedStatus: p.deedStatus || p.titleDeedStatus || "",
+        titleDeedStatus: p.titleDeedStatus || p.deedStatus || "",
+        priceDisplayMode: p.priceDisplayMode || "",
+        citizenshipEligible: Boolean(p.citizenshipEligible || p.gyo),
+        investmentSuitable: Boolean(p.investmentSuitable),
+        installmentAvailable: Boolean(p.installmentAvailable || activeSpecialOffer.installmentMonths),
+        readyToMove: Boolean(p.readyToMove),
+        consultant: p.consultant || null,
+        consultantId: p.consultant?.id || p.consultantId || "",
+        phone: p.consultant?.phone || p.phone || "",
         hasSpecialOffer,
         specialOffers,
         specialOffer: {
@@ -425,8 +503,10 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
           locationMinutes: Number(activeSpecialOffer.locationMinutes || 0),
         },
       };
-    }).filter((project) => (isHotOffersMode ? project.hasSpecialOffer : true));
-  }, [allProperties, resolvedProjectType, baseCurrency, isHotOffersMode]);
+    }).filter((project) =>
+      isHotOffersMode || isSpecialOffersPage ? project.hasSpecialOffer : true
+    );
+  }, [allProperties, resolvedProjectType, baseCurrency, isHotOffersMode, isSpecialOffersPage]);
 
   // Filter states
   const [selectedCity, setSelectedCity] = useState("");
@@ -767,33 +847,13 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
     () =>
       filteredProjects.map((project) => ({
         id: project.id,
-        title: project.name,
+        title: project.title || project.name,
         image: project.image,
         address: project.address || project.district || "",
         city: project.city || "",
         country: project.country || "",
         price: Number(project.price || 0),
         currency: project.currency || baseCurrency,
-      })),
-    [filteredProjects, baseCurrency]
-  );
-
-  const hotOffersCards = useMemo(
-    () =>
-      filteredProjects.map((project) => ({
-        id: project.id,
-        title: project.name,
-        image: project.image,
-        address: project.address || project.district || "",
-        city: project.city || "",
-        country: project.country || "",
-        description: project.kampanya || "",
-        price: Number(project.price || 0),
-        currency: project.currency || baseCurrency,
-        propertyType: project.propertyType,
-        category: project.propertyType,
-        offBadge: true,
-        dairePlanlari: project.dairePlanlari || [],
       })),
     [filteredProjects, baseCurrency]
   );
@@ -1082,23 +1142,36 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
             />
           </div>
 
-          <div className="w-full lg:w-[40%] h-auto lg:h-[calc(100vh-170px)] bg-white border-l border-slate-200 flex flex-col">
-            <div className="p-5 border-b border-slate-200">
-              <h2 className="text-2xl font-bold text-slate-900">{t("footer.hotOffers")}</h2>
-              <p className="mt-1 text-sm text-slate-500">
+          <div className="flex h-auto w-full flex-col border-l border-slate-200 bg-white lg:h-[calc(100vh-170px)] lg:w-[40%]">
+            <div className="border-b border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#fbf7ef_100%)] p-5">
+              <span className="inline-flex rounded-full border border-[#eadcc4] bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8f5a24]">
+                {t("localProjects.sectionEyebrow", { defaultValue: "Curated Selection" })}
+              </span>
+              <h2 className="mt-3 text-xl font-semibold tracking-[-0.02em] text-slate-900">
+                {t("localProjects.sectionTitleHotOffers", {
+                  defaultValue: "Priority projects with live buyer momentum",
+                })}
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                {t("localProjects.sectionSubtitleHotOffers", {
+                  defaultValue:
+                    "Review selected projects where current pricing, campaigns, or payment flexibility make action more time-sensitive.",
+                })}
+              </p>
+              <p className="mt-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
                 {filteredProjects.length} {t("localProjects.projectsFound")}
               </p>
             </div>
 
-            <div className="flex-1 overflow-y-auto bg-white">
-              {hotOffersCards.length > 0 ? (
-                hotOffersCards.map((project) => (
-                  <div key={project.id} className="relative">
-                    <PropertyCard property={project} />
-                  </div>
-                ))
+            <div className="flex-1 overflow-y-auto bg-[#fcfaf6] p-4">
+              {filteredProjects.length > 0 ? (
+                <div className="space-y-4">
+                  {filteredProjects.map((project) => (
+                    <ProjectListingCard key={project.id} project={project} compact />
+                  ))}
+                </div>
               ) : (
-                <div className="text-center py-12 text-slate-500">
+                <div className="py-12 text-center text-slate-500">
                   <p>{t("localProjects.noProjectsFound")}</p>
                 </div>
               )}
@@ -1418,8 +1491,71 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
 
       {/* Projects Listing Section */}
       <Container id="local-projects" size="lg" className="scroll-mt-28 py-8">
-        {/* Active Filters Summary */}
         {(selectedCity || selectedDistricts.length > 0 || priceMinGBP || priceMaxGBP) && (
+            <div className="mb-6 rounded-xl border border-slate-200 bg-white px-4 py-3 lg:px-5">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm text-slate-500">{t("localProjects.activeFilters")}:</span>
+
+                {selectedCity && (
+                  <span className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
+                    {getCityLabel(cityOptions.find((c) => c.value === selectedCity))}
+                    <button
+                      type="button"
+                      onClick={() => handleCityChange("")}
+                      className="text-blue-500 transition hover:text-blue-800"
+                      aria-label={t("localProjects.clearAll")}
+                    >
+                      x
+                    </button>
+                  </span>
+                )}
+
+                {selectedDistricts.map((district) => (
+                  <span
+                    key={district}
+                    className="inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700"
+                  >
+                    {district}
+                    <button
+                      type="button"
+                      onClick={() => toggleDistrict(district)}
+                      className="text-emerald-500 transition hover:text-emerald-800"
+                      aria-label={t("localProjects.clearAll")}
+                    >
+                      x
+                    </button>
+                  </span>
+                ))}
+
+                {(priceMinGBP || priceMaxGBP) && (
+                  <span className="inline-flex items-center gap-2 rounded-full border border-amber-100 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
+                    {`${priceFilterSymbol}${priceMinGBP || "0"} - ${priceFilterSymbol}${priceMaxGBP || "max"}`}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPriceMinGBP("");
+                        setPriceMaxGBP("");
+                      }}
+                      className="text-amber-500 transition hover:text-amber-800"
+                      aria-label={t("localProjects.clearAll")}
+                    >
+                      x
+                    </button>
+                  </span>
+                )}
+
+                <button
+                  type="button"
+                  onClick={clearAllFilters}
+                  className="ml-1 text-xs font-semibold text-rose-600 underline transition hover:text-rose-700"
+                >
+                  {t("localProjects.clearAll")}
+                </button>
+              </div>
+            </div>
+          )}
+
+        {/* Legacy active filter summary removed after redesign
           <div className="flex flex-wrap items-center gap-2 mb-4">
             <span className="text-slate-500 text-sm">{t("localProjects.activeFilters")}:</span>
             
@@ -1469,51 +1605,55 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
               {t("localProjects.clearAll")}
             </button>
           </div>
-        )}
+        */}
 
         {/* Results Count */}
-        <div className="text-slate-600 text-sm mb-4">
+        <div className="hidden text-slate-600 text-sm mb-4">
           {filteredProjects.length} {t("localProjects.projectsFound")}
         </div>
 
         {/* Tabs */}
         {!isHotOffersMode && (
-          <div className="flex items-center gap-1 mb-6 border-b border-slate-200">
+          <div className="mt-6 flex flex-wrap items-center gap-2">
             <button
-              className={`px-4 py-2 text-sm font-medium transition-colors ${
+              type="button"
+              className={`rounded-full px-4 py-2 text-sm font-medium transition ${
                 !projectCategory
-                  ? "text-slate-900 border-b-2 border-blue-600"
-                  : "text-slate-500 hover:text-slate-800"
+                  ? "bg-[#0f172a] text-white shadow-[0_14px_30px_-18px_rgba(15,23,42,0.75)]"
+                  : "bg-white text-slate-600 ring-1 ring-slate-200 hover:text-slate-900"
               }`}
               onClick={() => setProjectCategory("")}
             >
               {t("localProjects.allProjects")}
             </button>
             <button
-              className={`px-4 py-2 text-sm font-medium transition-colors ${
+              type="button"
+              className={`rounded-full px-4 py-2 text-sm font-medium transition ${
                 projectCategory === "devam-ediyor"
-                  ? "text-slate-900 border-b-2 border-blue-600"
-                  : "text-slate-500 hover:text-slate-800"
+                  ? "bg-[#0f172a] text-white shadow-[0_14px_30px_-18px_rgba(15,23,42,0.75)]"
+                  : "bg-white text-slate-600 ring-1 ring-slate-200 hover:text-slate-900"
               }`}
               onClick={() => setProjectCategory("devam-ediyor")}
             >
               {t("localProjects.ongoing")}
             </button>
             <button
-              className={`px-4 py-2 text-sm font-medium transition-colors ${
+              type="button"
+              className={`rounded-full px-4 py-2 text-sm font-medium transition ${
                 projectCategory === "tamamlandi"
-                  ? "text-slate-900 border-b-2 border-blue-600"
-                  : "text-slate-500 hover:text-slate-800"
+                  ? "bg-[#0f172a] text-white shadow-[0_14px_30px_-18px_rgba(15,23,42,0.75)]"
+                  : "bg-white text-slate-600 ring-1 ring-slate-200 hover:text-slate-900"
               }`}
               onClick={() => setProjectCategory("tamamlandi")}
             >
               {t("localProjects.completed")}
             </button>
             <button
-              className={`px-4 py-2 text-sm font-medium transition-colors ${
+              type="button"
+              className={`rounded-full px-4 py-2 text-sm font-medium transition ${
                 projectCategory === "special-offer"
-                  ? "text-slate-900 border-b-2 border-blue-600"
-                  : "text-slate-500 hover:text-slate-800"
+                  ? "bg-[#0f172a] text-white shadow-[0_14px_30px_-18px_rgba(15,23,42,0.75)]"
+                  : "bg-white text-slate-600 ring-1 ring-slate-200 hover:text-slate-900"
               }`}
               onClick={() => setProjectCategory("special-offer")}
             >
@@ -1522,6 +1662,20 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
           </div>
         )}
 
+        {isLoading ? (
+          <div className="flex justify-center py-12">
+            <Loader size="lg" />
+          </div>
+        ) : (
+          <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-7 xl:grid-cols-3 xl:gap-8">
+            {filteredProjects.map((project) => (
+              <ProjectListingCard key={project.id} project={project} />
+            ))}
+          </div>
+        )}
+
+        {false && (
+          <>
         {/* Project Cards */}
         {isLoading ? (
           <div className="flex justify-center py-12">
@@ -1756,6 +1910,8 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
           </div>
 
         </div>
+        )}
+          </>
         )}
 
         {/* Show message if no projects */}

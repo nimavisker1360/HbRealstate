@@ -638,6 +638,7 @@ export const getResidenciesByConsultant = asyncHandler(async (req, res) => {
 // Delete residency
 export const deleteResidency = asyncHandler(async (req, res) => {
   const { id } = req.params;
+  const resolvedResidencyId = extractObjectIdCandidate(id) || id;
 
   console.log("========================================");
   console.log("🗑️ Deleting Residency...");
@@ -673,10 +674,16 @@ export const deleteResidency = asyncHandler(async (req, res) => {
 
     // Filter and update users who have this residency booked
     for (const user of usersWithBookings) {
-      const hasBooking = user.bookedVisits.some((booking) => booking.id === id);
+      const hasBooking = user.bookedVisits.some((booking) => {
+        const bookingId = extractObjectIdCandidate(booking?.id) || booking?.id;
+        return bookingId === resolvedResidencyId || booking?.id === id;
+      });
       if (hasBooking) {
         const updatedBookings = user.bookedVisits.filter(
-          (booking) => booking.id !== id
+          (booking) => {
+            const bookingId = extractObjectIdCandidate(booking?.id) || booking?.id;
+            return bookingId !== resolvedResidencyId && booking?.id !== id;
+          }
         );
         await prisma.user.update({
           where: { id: user.id },

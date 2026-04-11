@@ -561,13 +561,16 @@ const Listing = () => {
         defaultCurrency: baseCurrency,
       })
     )
-    .filter(
-      (property) =>
-        property.title.toLowerCase().includes(filter.toLowerCase()) ||
-        property.city.toLowerCase().includes(filter.toLowerCase()) ||
-        property.country.toLowerCase().includes(filter.toLowerCase()) ||
-        property.address.toLowerCase().includes(filter.toLowerCase())
-    );
+    .filter((property) => {
+      const q = filter.toLowerCase();
+      if (!q) return true;
+      return (
+        (property.title || "").toLowerCase().includes(q) ||
+        (property.city || "").toLowerCase().includes(q) ||
+        (property.country || "").toLowerCase().includes(q) ||
+        (property.address || "").toLowerCase().includes(q)
+      );
+    });
 
   const consultantPropertyCounts = useMemo(() => {
     const counts = {};

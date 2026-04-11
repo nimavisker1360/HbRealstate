@@ -89,7 +89,7 @@ const ALL_DIS_OZELLIKLER = [
   "Peyzaj",
 ];
 
-// All possible Engelli/Yaşlı Uygun (Accessibility Features)
+// All possible Engelli/Yaşlıya Uygun (Accessibility Features)
 const ALL_ENGELLI_UYGUN = [
   "Engelli Asansörü",
   "Engelli Rampası",
@@ -164,7 +164,7 @@ const FEATURE_TRANSLATIONS = {
   "Çocuk Parkı": "Playground",
   "Spor Alanı": "Sports Area",
   "Peyzaj": "Landscaping",
-  // Engelli/Yaşlı Uygun
+  // Engelli/Yaşlıya Uygun
   "Engelli Asansörü": "Disabled Elevator",
   "Engelli Rampası": "Disabled Ramp",
   "Engelli WC": "Disabled WC",
@@ -364,8 +364,50 @@ const ProjectDetail = ({ topSlot = null }) => {
   const getSecondaryPrices = (amount, sourceCurrency) =>
     secondaryCurrencyCodes.map((code) => ({
       code,
-      label: formatMoney(convertAmount(amount, sourceCurrency, code), code, priceLocale),
+      label: formatMoney(
+        Math.floor(convertAmount(amount, sourceCurrency, code)),
+        code,
+        priceLocale
+      ),
     }));
+
+  const getFloorPlanPriceSummary = (plan) => {
+    const amount = Math.floor(Number(plan?.fiyat || 0));
+    const sourceCurrency = project.currency || baseCurrency;
+
+    if (amount > 0) {
+      const convertedAmount = Math.floor(
+        convertAmount(amount, sourceCurrency, displayCurrency)
+      );
+      return {
+        label: t("projectDetail.startingFromEyebrow", {
+          defaultValue: "STARTING FROM",
+        }),
+        value: formatMoney(convertedAmount, displayCurrency, priceLocale),
+        hint: t("projectDetail.floorPlanPriceHint", {
+          defaultValue: "Indicative entry price for this layout.",
+        }),
+        actionLabel: t("projectDetail.viewPlan", {
+          defaultValue: "View Plan",
+        }),
+        isAvailable: true,
+      };
+    }
+
+    return {
+      label: t("projectDetail.price", { defaultValue: "Price" }),
+      value: t("projectDetail.contactForDetails", {
+        defaultValue: "Contact for Details",
+      }),
+      hint: t("projectDetail.floorPlanPriceOnRequest", {
+        defaultValue: "Request the latest unit list and availability.",
+      }),
+      actionLabel: t("projectDetail.contactForDetails", {
+        defaultValue: "Contact for Details",
+      }),
+      isAvailable: false,
+    };
+  };
   
   const [activeTab, setActiveTab] = useState("all");
   const [featuresTab, setFeaturesTab] = useState("binaOzellikleri");
@@ -400,7 +442,6 @@ const ProjectDetail = ({ topSlot = null }) => {
   const mainGallerySwipeHandledRef = useRef(false);
   const lightboxSwipeHandledRef = useRef(false);
   const descriptionSectionRef = useRef(null);
-  const locationSectionRef = useRef(null);
   const marketSectionRef = useRef(null);
 
   // Fetch project data from API
@@ -765,7 +806,6 @@ const ProjectDetail = ({ topSlot = null }) => {
 
     const sectionMap = {
       description: descriptionSectionRef,
-      location: locationSectionRef,
       market: marketSectionRef,
     };
     sectionMap[sectionKey]?.current?.scrollIntoView({
@@ -1192,18 +1232,6 @@ const ProjectDetail = ({ topSlot = null }) => {
                   <MdDescription size={16} />
                   {i18n.language?.startsWith("tr") ? "Açıklama" : "Description"}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => scrollToSection("location")}
-                  className={`flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition-colors ${
-                    activeOverviewTab === "location"
-                      ? "bg-[#0b4f93] text-white"
-                      : "text-slate-700 hover:text-slate-900"
-                  }`}
-                >
-                  <MdLocationOn size={16} />
-                  {i18n.language?.startsWith("tr") ? "Konumu" : "Location"}
-                </button>
                 {showMarketAnalytics && (
                   <button
                     type="button"
@@ -1297,7 +1325,9 @@ const ProjectDetail = ({ topSlot = null }) => {
                             {offer.roomType || "-"}
                           </div>
                           <div className="rounded-md border border-slate-200 bg-white px-2.5 py-2">
-                            {Number(offer.areaM2 || 0) > 0 ? `${offer.areaM2} m²` : "-"}
+                            {Number(offer.areaM2 || 0) > 0
+                              ? `${Math.floor(Number(offer.areaM2 || 0))} m2`
+                              : "-"}
                           </div>
                           <div className="rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-amber-700">
                             {specialOfferDownPaymentAmount > 0
@@ -1397,6 +1427,255 @@ const ProjectDetail = ({ topSlot = null }) => {
                 );
               })()}
 
+              {/* Features Section */}
+              <section className="mb-8">
+                <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <span className="text-lg" aria-hidden>
+                    {"\u2728"}
+                  </span>
+                  {t("projectDetail.features")}
+                </h2>
+                
+                {/* Feature Category Tabs with Icons */}
+                <div className="flex items-center gap-1 mb-4 overflow-x-auto pb-2 border-b">
+                  <button
+                    className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
+                      featuresTab === "binaOzellikleri"
+                        ? "border-b-2 border-gray-900 text-gray-900"
+                        : "text-gray-500 hover:text-gray-700"
+                    }`}
+                    onClick={() => setFeaturesTab("binaOzellikleri")}
+                  >
+                    <BsHouseDoor />
+                    {t("projectDetail.buildingFeatures")}
+                  </button>
+                  <button
+                    className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
+                      featuresTab === "disOzellikler"
+                        ? "border-b-2 border-gray-900 text-gray-900"
+                        : "text-gray-500 hover:text-gray-700"
+                    }`}
+                    onClick={() => setFeaturesTab("disOzellikler")}
+                  >
+                    <BsTree />
+                    {t("projectDetail.exteriorFeatures")}
+                  </button>
+                  <button
+                    className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
+                      featuresTab === "engelliUygun"
+                        ? "border-b-2 border-gray-900 text-gray-900"
+                        : "text-gray-500 hover:text-gray-700"
+                    }`}
+                    onClick={() => setFeaturesTab("engelliUygun")}
+                  >
+                    <BsPeople />
+                    {t("projectDetail.accessibility")}
+                  </button>
+                  <button
+                    className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
+                      featuresTab === "eglenceAlisveris"
+                        ? "border-b-2 border-gray-900 text-gray-900"
+                        : "text-gray-500 hover:text-gray-700"
+                    }`}
+                    onClick={() => setFeaturesTab("eglenceAlisveris")}
+                  >
+                    <BsCart4 />
+                    {t("projectDetail.entertainment")}
+                  </button>
+                  <button
+                    className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
+                      featuresTab === "guvenlik"
+                        ? "border-b-2 border-gray-900 text-gray-900"
+                        : "text-gray-500 hover:text-gray-700"
+                    }`}
+                    onClick={() => setFeaturesTab("guvenlik")}
+                  >
+                    <BsShieldCheck />
+                    {t("projectDetail.security")}
+                  </button>
+                  <button
+                    className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
+                      featuresTab === "manzara"
+                        ? "border-b-2 border-gray-900 text-gray-900"
+                        : "text-gray-500 hover:text-gray-700"
+                    }`}
+                    onClick={() => setFeaturesTab("manzara")}
+                  >
+                    <BsEye />
+                    {t("projectDetail.view")}
+                  </button>
+                  <button
+                    className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
+                      featuresTab === "muhit"
+                        ? "border-b-2 border-gray-900 text-gray-900"
+                        : "text-gray-500 hover:text-gray-700"
+                    }`}
+                    onClick={() => setFeaturesTab("muhit")}
+                  >
+                    <BsGeoAlt />
+                    {t("projectDetail.neighborhood")}
+                  </button>
+                </div>
+
+                {/* Features Grid - Show all possible features with check/uncheck */}
+                <div className="p-5 bg-white border border-gray-100 rounded-xl">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {/* Bina Özellikleri */}
+                    {featuresTab === "binaOzellikleri" && ALL_BINA_OZELLIKLERI.map((feature, index) => {
+                      const hasFeature = project.ozellikler?.binaOzellikleri?.some(f => 
+                        f === feature || f.includes(feature) || feature.includes(f.split(" / ")[0])
+                      );
+                      return (
+                        <div
+                          key={index}
+                          className={`flex items-center gap-2 text-sm ${!hasFeature ? "opacity-50" : ""}`}
+                        >
+                          {hasFeature ? (
+                            <MdCheck className="text-green-500 flex-shrink-0" size={18} />
+                          ) : (
+                            <MdClose className="text-red-400 flex-shrink-0" size={18} />
+                          )}
+                          <span className={hasFeature ? "text-gray-700 font-medium" : "text-gray-400"}>
+                            {getTranslatedFeature(feature, i18n.language)}
+                          </span>
+                        </div>
+                      );
+                    })}
+
+                    {/* Dış Özellikler */}
+                    {featuresTab === "disOzellikler" && ALL_DIS_OZELLIKLER.map((feature, index) => {
+                      const hasFeature = project.ozellikler?.disOzellikler?.some(f => 
+                        f === feature || f.includes(feature) || feature.includes(f.split(" / ")[0])
+                      );
+                      return (
+                        <div
+                          key={index}
+                          className={`flex items-center gap-2 text-sm ${!hasFeature ? "opacity-50" : ""}`}
+                        >
+                          {hasFeature ? (
+                            <MdCheck className="text-green-500 flex-shrink-0" size={18} />
+                          ) : (
+                            <MdClose className="text-red-400 flex-shrink-0" size={18} />
+                          )}
+                          <span className={hasFeature ? "text-gray-700 font-medium" : "text-gray-400"}>
+                            {getTranslatedFeature(feature, i18n.language)}
+                          </span>
+                        </div>
+                      );
+                    })}
+
+                    {/* Engelli/Yaşlıya Uygun */}
+                    {featuresTab === "engelliUygun" && ALL_ENGELLI_UYGUN.map((feature, index) => {
+                      const hasFeature = project.ozellikler?.engelliUygun?.some(f => 
+                        f === feature || f.includes(feature) || feature.includes(f.split(" / ")[0])
+                      );
+                      return (
+                        <div
+                          key={index}
+                          className={`flex items-center gap-2 text-sm ${!hasFeature ? "opacity-50" : ""}`}
+                        >
+                          {hasFeature ? (
+                            <MdCheck className="text-green-500 flex-shrink-0" size={18} />
+                          ) : (
+                            <MdClose className="text-red-400 flex-shrink-0" size={18} />
+                          )}
+                          <span className={hasFeature ? "text-gray-700 font-medium" : "text-gray-400"}>
+                            {getTranslatedFeature(feature, i18n.language)}
+                          </span>
+                        </div>
+                      );
+                    })}
+
+                    {/* Eğlence & Alışveriş */}
+                    {featuresTab === "eglenceAlisveris" && ALL_EGLENCE_ALISVERIS.map((feature, index) => {
+                      const hasFeature = project.ozellikler?.eglenceAlisveris?.some(f => 
+                        f === feature || f.includes(feature) || feature.includes(f.split(" / ")[0])
+                      );
+                      return (
+                        <div
+                          key={index}
+                          className={`flex items-center gap-2 text-sm ${!hasFeature ? "opacity-50" : ""}`}
+                        >
+                          {hasFeature ? (
+                            <MdCheck className="text-green-500 flex-shrink-0" size={18} />
+                          ) : (
+                            <MdClose className="text-red-400 flex-shrink-0" size={18} />
+                          )}
+                          <span className={hasFeature ? "text-gray-700 font-medium" : "text-gray-400"}>
+                            {getTranslatedFeature(feature, i18n.language)}
+                          </span>
+                        </div>
+                      );
+                    })}
+
+                    {/* Güvenlik */}
+                    {featuresTab === "guvenlik" && ALL_GUVENLIK.map((feature, index) => {
+                      const hasFeature = project.ozellikler?.guvenlik?.some(f => 
+                        f === feature || f.includes(feature) || feature.includes(f.split(" / ")[0])
+                      );
+                      return (
+                        <div
+                          key={index}
+                          className={`flex items-center gap-2 text-sm ${!hasFeature ? "opacity-50" : ""}`}
+                        >
+                          {hasFeature ? (
+                            <MdCheck className="text-green-500 flex-shrink-0" size={18} />
+                          ) : (
+                            <MdClose className="text-red-400 flex-shrink-0" size={18} />
+                          )}
+                          <span className={hasFeature ? "text-gray-700 font-medium" : "text-gray-400"}>
+                            {getTranslatedFeature(feature, i18n.language)}
+                          </span>
+                        </div>
+                      );
+                    })}
+
+                    {/* Manzara */}
+                    {featuresTab === "manzara" && ALL_MANZARA.map((feature, index) => {
+                      const hasFeature = project.ozellikler?.manzara?.some(f => 
+                        f === feature || f.includes(feature) || feature.includes(f.split(" / ")[0])
+                      );
+                      return (
+                        <div
+                          key={index}
+                          className={`flex items-center gap-2 text-sm ${!hasFeature ? "opacity-50" : ""}`}
+                        >
+                          {hasFeature ? (
+                            <MdCheck className="text-green-500 flex-shrink-0" size={18} />
+                          ) : (
+                            <MdClose className="text-red-400 flex-shrink-0" size={18} />
+                          )}
+                          <span className={hasFeature ? "text-gray-700 font-medium" : "text-gray-400"}>
+                            {getTranslatedFeature(feature, i18n.language)}
+                          </span>
+                        </div>
+                      );
+                    })}
+
+                    {/* Muhit */}
+                    {featuresTab === "muhit" && ALL_MUHIT.map((feature, index) => {
+                      const hasFeature = project.ozellikler?.muhit?.some(f => 
+                        f === feature || f.includes(feature) || feature.includes(f.split(" / ")[0])
+                      );
+                      return (
+                        <div
+                          key={index}
+                          className={`flex items-center gap-2 text-sm ${!hasFeature ? "opacity-50" : ""}`}
+                        >
+                          {hasFeature ? (
+                            <MdCheck className="text-green-500 flex-shrink-0" size={18} />
+                          ) : (
+                            <MdClose className="text-red-400 flex-shrink-0" size={18} />
+                          )}
+                          <span className={hasFeature ? "text-gray-700 font-medium" : "text-gray-400"}>
+                            {getTranslatedFeature(feature, i18n.language)}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </section>
               {/* Nearby Distances */}
               {project.projeHakkinda?.yakinMesafeler && (
                 <div className="mt-4">
@@ -1419,7 +1698,7 @@ const ProjectDetail = ({ topSlot = null }) => {
             {project.dairePlanlari && project.dairePlanlari.length > 0 && (
               <section className="mb-8">
                 {/* Room Type Tabs */}
-                <div className="flex items-center gap-6 mb-4 border-b">
+                <div className="mb-4 flex items-center gap-6 border-b">
                   <button
                     className={`px-2 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${
                       activeTab === "all"
@@ -1445,55 +1724,72 @@ const ProjectDetail = ({ topSlot = null }) => {
                   ))}
                 </div>
 
-
-                {/* Floor Plan Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* Floor Plan Cards — horizontal bar layout (grid columns avoid flex shrink overlap) */}
+                <div className="grid grid-cols-1 gap-4 min-[1200px]:grid-cols-2">
                   {filteredPlans.map((plan) => {
-                    const planSecondaryPrices = getSecondaryPrices(
-                      plan.fiyat,
-                      project.currency || baseCurrency
-                    );
+                    const floorPlanPrice = getFloorPlanPriceSummary(plan);
+                    const floorArea = Math.floor(Number(plan.metrekare || 0));
                     return (
-                      <div key={plan.id} className="border border-gray-200 rounded-lg p-4">
-                        <h3 className="font-bold text-gray-900 text-lg mb-2">
-                          {plan.tip} - {plan.varyant}
-                        </h3>
-                        {plan.fiyat > 0 && (
-                          <div className="mb-3">
-                            <span className="text-blue-600 font-medium">
-                              {formatMoney(
-                                convertAmount(
-                                  plan.fiyat,
-                                  project.currency || baseCurrency,
-                                  displayCurrency
-                                ),
-                                displayCurrency,
-                                priceLocale
-                              )}
-                            </span>
-                            {planSecondaryPrices.length > 0 && (
-                              <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500">
-                                {planSecondaryPrices.map((price) => (
-                                  <span key={price.code} className="whitespace-nowrap">
-                                    <span className="font-medium text-gray-600">{price.code}</span>{" "}
-                                    {price.label}
-                                  </span>
-                                ))}
+                      <div
+                        key={plan.id}
+                        className="group rounded-2xl border border-[#e7dece] bg-[linear-gradient(180deg,#ffffff_0%,#fcfaf6_100%)] shadow-[0_16px_44px_-36px_rgba(15,23,42,0.35)] transition duration-300 hover:border-[#d8c7aa] hover:shadow-[0_22px_52px_-32px_rgba(15,23,42,0.4)]"
+                      >
+                        <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-[minmax(11rem,1fr)_minmax(10rem,13rem)] sm:items-stretch sm:gap-x-4 md:p-5 md:gap-x-5">
+                          <div className="min-w-0">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0 pr-1">
+                                <div className="inline-flex items-center rounded-full border border-[#e7dcc8] bg-white px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8f5a24]">
+                                  {plan.tip}
+                                </div>
+                                <h3 className="mt-2 break-words text-base font-semibold tracking-[-0.02em] text-slate-900 sm:text-lg">
+                                  {plan.tip} - {plan.varyant}
+                                </h3>
+                                <p className="mt-1.5 line-clamp-2 text-xs leading-5 text-slate-600 sm:text-sm sm:leading-6">
+                                  {t("projectDetail.floorPlanPriceHint", {
+                                    defaultValue: "Indicative entry price for this layout.",
+                                  })}
+                                </p>
                               </div>
-                            )}
+                              <div className="flex shrink-0 flex-col items-end gap-1">
+                                <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                                  {t("projectDetail.area", { defaultValue: "Area" })}
+                                </span>
+                                <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 ring-1 ring-inset ring-slate-200">
+                                  {floorArea} m2
+                                </span>
+                              </div>
+                            </div>
                           </div>
-                        )}
-                        <div className="flex items-center justify-between text-sm">
-                          <div className="flex items-center gap-2 text-gray-600">
-                            <span className="w-4 h-4 border border-gray-400 rounded-sm inline-block"></span>
-                            <span>{plan.metrekare} m²</span>
+
+                          <div className="flex min-w-0 flex-col rounded-xl border border-[#ecdfcb] bg-[linear-gradient(180deg,#fffaf2_0%,#fdf7ee_100%)] px-3 py-2.5 sm:self-center">
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                              {floorPlanPrice.label}
+                            </div>
+                            <div
+                              className={`mt-1 max-w-full break-all text-base font-semibold tabular-nums leading-snug tracking-tight sm:break-normal sm:text-[1.05rem] ${
+                                floorPlanPrice.isAvailable ? "text-blue-600" : "text-slate-900"
+                              }`}
+                            >
+                              {floorPlanPrice.value}
+                            </div>
+                            {floorPlanPrice.isAvailable ? (
+                              <span className="mt-1.5 inline-flex w-fit max-w-full items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold leading-snug text-emerald-700 ring-1 ring-inset ring-emerald-100">
+                                {t("projectDetail.startingFrom", {
+                                  defaultValue: "Starting from",
+                                })}
+                              </span>
+                            ) : null}
+                            <p className="mt-1.5 line-clamp-2 text-[10px] leading-relaxed text-slate-500 sm:text-[11px]">
+                              {floorPlanPrice.hint}
+                            </p>
+                            <button
+                              type="button"
+                              className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-[#0f172a] px-3 py-2 text-xs font-semibold text-white shadow-[0_12px_24px_-16px_rgba(15,23,42,0.75)] transition hover:-translate-y-0.5 hover:bg-slate-800 sm:text-sm"
+                              onClick={() => setFloorPlanModal({ open: true, plan })}
+                            >
+                              {floorPlanPrice.actionLabel}
+                            </button>
                           </div>
-                          <button 
-                            className="text-blue-600 hover:underline"
-                            onClick={() => setFloorPlanModal({ open: true, plan })}
-                          >
-                            {t("projectDetail.details")}
-                          </button>
                         </div>
                       </div>
                     );
@@ -1501,7 +1797,6 @@ const ProjectDetail = ({ topSlot = null }) => {
                 </div>
               </section>
             )}
-
             {/* Site Plan */}
             {project.vaziyetPlani && (
               <section className="mb-8">
@@ -1535,282 +1830,6 @@ const ProjectDetail = ({ topSlot = null }) => {
               </section>
             )}
 
-            {/* Location / Map Section */}
-            <section ref={locationSectionRef} className="mb-8 scroll-mt-28">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">{t("projectDetail.location")}</h2>
-              <div className="relative">
-                {project.mapImage ? (
-                  <img
-                    src={getOptimizedImageUrl(project.mapImage, {
-                      width: 1400,
-                      height: 900,
-                    })}
-                    alt={getLocalizedAlt(i18n.language, "projectLocationMap", {
-                      title: project.name,
-                    })}
-                    className="w-full h-[350px] object-cover rounded-lg border"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                ) : (
-                  <div className="w-full h-[350px] bg-gray-100 rounded-lg border flex items-center justify-center">
-                    <div className="text-center text-gray-400">
-                      <MdLocationOn size={48} className="mx-auto mb-2" />
-                      <p className="text-sm">{project.city} / {project.district}</p>
-                      <p className="text-xs mt-1">Harita görüntüsü eklenecek</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </section>
-
-            {/* Features Section - Below Location - Comprehensive Display */}
-            <section className="mb-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <span className="text-lg">📋</span>
-                {t("projectDetail.features")}
-              </h2>
-              
-              {/* Feature Category Tabs with Icons */}
-              <div className="flex items-center gap-1 mb-4 overflow-x-auto pb-2 border-b">
-                <button
-                  className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
-                    featuresTab === "binaOzellikleri"
-                      ? "border-b-2 border-gray-900 text-gray-900"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
-                  onClick={() => setFeaturesTab("binaOzellikleri")}
-                >
-                  <BsHouseDoor />
-                  {t("projectDetail.buildingFeatures")}
-                </button>
-                <button
-                  className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
-                    featuresTab === "disOzellikler"
-                      ? "border-b-2 border-gray-900 text-gray-900"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
-                  onClick={() => setFeaturesTab("disOzellikler")}
-                >
-                  <BsTree />
-                  {t("projectDetail.exteriorFeatures")}
-                </button>
-                <button
-                  className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
-                    featuresTab === "engelliUygun"
-                      ? "border-b-2 border-gray-900 text-gray-900"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
-                  onClick={() => setFeaturesTab("engelliUygun")}
-                >
-                  <BsPeople />
-                  {t("projectDetail.accessibility")}
-                </button>
-                <button
-                  className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
-                    featuresTab === "eglenceAlisveris"
-                      ? "border-b-2 border-gray-900 text-gray-900"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
-                  onClick={() => setFeaturesTab("eglenceAlisveris")}
-                >
-                  <BsCart4 />
-                  {t("projectDetail.entertainment")}
-                </button>
-                <button
-                  className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
-                    featuresTab === "guvenlik"
-                      ? "border-b-2 border-gray-900 text-gray-900"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
-                  onClick={() => setFeaturesTab("guvenlik")}
-                >
-                  <BsShieldCheck />
-                  {t("projectDetail.security")}
-                </button>
-                <button
-                  className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
-                    featuresTab === "manzara"
-                      ? "border-b-2 border-gray-900 text-gray-900"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
-                  onClick={() => setFeaturesTab("manzara")}
-                >
-                  <BsEye />
-                  {t("projectDetail.view")}
-                </button>
-                <button
-                  className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
-                    featuresTab === "muhit"
-                      ? "border-b-2 border-gray-900 text-gray-900"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
-                  onClick={() => setFeaturesTab("muhit")}
-                >
-                  <BsGeoAlt />
-                  {t("projectDetail.neighborhood")}
-                </button>
-              </div>
-
-              {/* Features Grid - Show all possible features with check/uncheck */}
-              <div className="p-5 bg-white border border-gray-100 rounded-xl">
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {/* Bina Özellikleri */}
-                  {featuresTab === "binaOzellikleri" && ALL_BINA_OZELLIKLERI.map((feature, index) => {
-                    const hasFeature = project.ozellikler?.binaOzellikleri?.some(f => 
-                      f === feature || f.includes(feature) || feature.includes(f.split(" / ")[0])
-                    );
-                    return (
-                      <div
-                        key={index}
-                        className={`flex items-center gap-2 text-sm ${!hasFeature ? "opacity-50" : ""}`}
-                      >
-                        {hasFeature ? (
-                          <MdCheck className="text-green-500 flex-shrink-0" size={18} />
-                        ) : (
-                          <MdClose className="text-red-400 flex-shrink-0" size={18} />
-                        )}
-                        <span className={hasFeature ? "text-gray-700 font-medium" : "text-gray-400"}>
-                          {getTranslatedFeature(feature, i18n.language)}
-                        </span>
-                      </div>
-                    );
-                  })}
-
-                  {/* Dış Özellikler */}
-                  {featuresTab === "disOzellikler" && ALL_DIS_OZELLIKLER.map((feature, index) => {
-                    const hasFeature = project.ozellikler?.disOzellikler?.some(f => 
-                      f === feature || f.includes(feature) || feature.includes(f.split(" / ")[0])
-                    );
-                    return (
-                      <div
-                        key={index}
-                        className={`flex items-center gap-2 text-sm ${!hasFeature ? "opacity-50" : ""}`}
-                      >
-                        {hasFeature ? (
-                          <MdCheck className="text-green-500 flex-shrink-0" size={18} />
-                        ) : (
-                          <MdClose className="text-red-400 flex-shrink-0" size={18} />
-                        )}
-                        <span className={hasFeature ? "text-gray-700 font-medium" : "text-gray-400"}>
-                          {getTranslatedFeature(feature, i18n.language)}
-                        </span>
-                      </div>
-                    );
-                  })}
-
-                  {/* Engelli/Yaşlı Uygun */}
-                  {featuresTab === "engelliUygun" && ALL_ENGELLI_UYGUN.map((feature, index) => {
-                    const hasFeature = project.ozellikler?.engelliUygun?.some(f => 
-                      f === feature || f.includes(feature) || feature.includes(f.split(" / ")[0])
-                    );
-                    return (
-                      <div
-                        key={index}
-                        className={`flex items-center gap-2 text-sm ${!hasFeature ? "opacity-50" : ""}`}
-                      >
-                        {hasFeature ? (
-                          <MdCheck className="text-green-500 flex-shrink-0" size={18} />
-                        ) : (
-                          <MdClose className="text-red-400 flex-shrink-0" size={18} />
-                        )}
-                        <span className={hasFeature ? "text-gray-700 font-medium" : "text-gray-400"}>
-                          {getTranslatedFeature(feature, i18n.language)}
-                        </span>
-                      </div>
-                    );
-                  })}
-
-                  {/* Eğlence & Alışveriş */}
-                  {featuresTab === "eglenceAlisveris" && ALL_EGLENCE_ALISVERIS.map((feature, index) => {
-                    const hasFeature = project.ozellikler?.eglenceAlisveris?.some(f => 
-                      f === feature || f.includes(feature) || feature.includes(f.split(" / ")[0])
-                    );
-                    return (
-                      <div
-                        key={index}
-                        className={`flex items-center gap-2 text-sm ${!hasFeature ? "opacity-50" : ""}`}
-                      >
-                        {hasFeature ? (
-                          <MdCheck className="text-green-500 flex-shrink-0" size={18} />
-                        ) : (
-                          <MdClose className="text-red-400 flex-shrink-0" size={18} />
-                        )}
-                        <span className={hasFeature ? "text-gray-700 font-medium" : "text-gray-400"}>
-                          {getTranslatedFeature(feature, i18n.language)}
-                        </span>
-                      </div>
-                    );
-                  })}
-
-                  {/* Güvenlik */}
-                  {featuresTab === "guvenlik" && ALL_GUVENLIK.map((feature, index) => {
-                    const hasFeature = project.ozellikler?.guvenlik?.some(f => 
-                      f === feature || f.includes(feature) || feature.includes(f.split(" / ")[0])
-                    );
-                    return (
-                      <div
-                        key={index}
-                        className={`flex items-center gap-2 text-sm ${!hasFeature ? "opacity-50" : ""}`}
-                      >
-                        {hasFeature ? (
-                          <MdCheck className="text-green-500 flex-shrink-0" size={18} />
-                        ) : (
-                          <MdClose className="text-red-400 flex-shrink-0" size={18} />
-                        )}
-                        <span className={hasFeature ? "text-gray-700 font-medium" : "text-gray-400"}>
-                          {getTranslatedFeature(feature, i18n.language)}
-                        </span>
-                      </div>
-                    );
-                  })}
-
-                  {/* Manzara */}
-                  {featuresTab === "manzara" && ALL_MANZARA.map((feature, index) => {
-                    const hasFeature = project.ozellikler?.manzara?.some(f => 
-                      f === feature || f.includes(feature) || feature.includes(f.split(" / ")[0])
-                    );
-                    return (
-                      <div
-                        key={index}
-                        className={`flex items-center gap-2 text-sm ${!hasFeature ? "opacity-50" : ""}`}
-                      >
-                        {hasFeature ? (
-                          <MdCheck className="text-green-500 flex-shrink-0" size={18} />
-                        ) : (
-                          <MdClose className="text-red-400 flex-shrink-0" size={18} />
-                        )}
-                        <span className={hasFeature ? "text-gray-700 font-medium" : "text-gray-400"}>
-                          {getTranslatedFeature(feature, i18n.language)}
-                        </span>
-                      </div>
-                    );
-                  })}
-
-                  {/* Muhit */}
-                  {featuresTab === "muhit" && ALL_MUHIT.map((feature, index) => {
-                    const hasFeature = project.ozellikler?.muhit?.some(f => 
-                      f === feature || f.includes(feature) || feature.includes(f.split(" / ")[0])
-                    );
-                    return (
-                      <div
-                        key={index}
-                        className={`flex items-center gap-2 text-sm ${!hasFeature ? "opacity-50" : ""}`}
-                      >
-                        {hasFeature ? (
-                          <MdCheck className="text-green-500 flex-shrink-0" size={18} />
-                        ) : (
-                          <MdClose className="text-red-400 flex-shrink-0" size={18} />
-                        )}
-                        <span className={hasFeature ? "text-gray-700 font-medium" : "text-gray-400"}>
-                          {getTranslatedFeature(feature, i18n.language)}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </section>
           </Grid.Col>
 
           {/* Right Column - Contact Form */}
@@ -2086,7 +2105,11 @@ const ProjectDetail = ({ topSlot = null }) => {
               />
             ) : (
               <div className="flex items-center justify-center h-64 bg-gray-100 rounded-lg">
-                <p className="text-gray-500">{t("projectDetail.noFloorPlanImage") || "Görsel mevcut değil"}</p>
+                <p className="text-gray-500">
+                  {t("projectDetail.noFloorPlanImage", {
+                    defaultValue: "No image available",
+                  })}
+                </p>
               </div>
             )}
             <div className="grid grid-cols-2 gap-4 pt-4 border-t">
@@ -2100,10 +2123,12 @@ const ProjectDetail = ({ topSlot = null }) => {
                     <p className="text-sm text-gray-500">{t("projectDetail.price") || "Fiyat"}</p>
                     <p className="font-bold text-blue-600 text-lg">
                       {formatMoney(
-                        convertAmount(
-                          floorPlanModal.plan.fiyat,
-                          project.currency || baseCurrency,
-                          displayCurrency
+                        Math.floor(
+                          convertAmount(
+                            floorPlanModal.plan.fiyat,
+                            project.currency || baseCurrency,
+                            displayCurrency
+                          )
                         ),
                         displayCurrency,
                         priceLocale
@@ -2125,7 +2150,7 @@ const ProjectDetail = ({ topSlot = null }) => {
               <div>
                 <p className="text-sm text-gray-500">{t("projectDetail.area") || "Alan"}</p>
                 <p className="font-bold text-gray-900 text-lg">
-                  {floorPlanModal.plan.metrekare} m²
+                  {Math.floor(Number(floorPlanModal.plan.metrekare || 0))} m2
                 </p>
               </div>
             </div>
@@ -2168,7 +2193,7 @@ const ProjectDetail = ({ topSlot = null }) => {
             onClick={() => setVideoModalOpen(false)}
             className="absolute top-4 right-4 w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white text-2xl z-10"
           >
-            ×
+            {"\u00D7"}
           </button>
 
           {/* Video Info */}

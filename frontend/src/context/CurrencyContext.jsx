@@ -304,15 +304,17 @@ export const CurrencyProvider = ({ children }) => {
   const formatMoney = useCallback((amount, currencyCode, locale = "tr-TR") => {
     const value = Number(amount || 0);
     if (!Number.isFinite(value)) return "";
+    const whole = Math.floor(value);
     try {
       return new Intl.NumberFormat(locale, {
         style: "currency",
         currency: currencyCode,
         currencyDisplay: "narrowSymbol",
+        minimumFractionDigits: 0,
         maximumFractionDigits: 0,
-      }).format(value);
+      }).format(whole);
     } catch {
-      return `${currencyCode} ${Math.round(value).toLocaleString("tr-TR")}`;
+      return `${currencyCode} ${whole.toLocaleString("tr-TR")}`;
     }
   }, []);
 
