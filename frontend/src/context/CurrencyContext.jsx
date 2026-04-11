@@ -8,7 +8,6 @@ const LEGACY_CACHE_KEYS = ["exchangeRatesCache_v3"];
 const SELECTED_KEY = "selectedCurrency_v2";
 const MIGRATION_KEY = "selectedCurrency_migrated_v1";
 const SUPPORTED_CURRENCIES = [
-  { code: "EUR", symbol: "\u20AC" },
   { code: "GBP", symbol: "\u00A3" },
   { code: "USD", symbol: "$" },
   { code: "TRY", symbol: "\u20BA" },
