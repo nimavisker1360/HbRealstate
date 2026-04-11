@@ -1,15 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import {
-  MdSell,
-  MdEmail,
-} from "react-icons/md";
+import { MdSell, MdEmail } from "react-icons/md";
 import { FaWhatsapp } from "react-icons/fa";
 import PropTypes from "prop-types";
-import CurrencyContext from "../context/CurrencyContext";
-import { useContext } from "react";
 import { getOptimizedImageUrl } from "../utils/media";
-import { getPropertyDisplayPriceInfo } from "../utils/propertyPricing";
 import { resolveProjectPath, resolvePropertyPath } from "../utils/seo";
 import HeartBtn from "./HeartBtn";
 
@@ -17,16 +11,16 @@ import HeartBtn from "./HeartBtn";
 const getCategoryLabel = (category, propertyType, lang = "tr") => {
   const labels = {
     tr: {
-      "local-project": "Yurt İçi Proje",
-      "international-project": "Yurt Dışı Proje",
+      "local-project": "Yurt Ä°Ã§i Proje",
+      "international-project": "Yurt DÄ±ÅŸÄ± Proje",
       residential: "Konut",
       commercial: "Ticari",
       land: "Arsa",
       building: "Bina",
       villa: "Villa",
       "tourist-facility": "Turistik Tesis",
-      timeshare: "Devre Mülk",
-      default: "Satılık",
+      timeshare: "Devre MÃ¼lk",
+      default: "SatÄ±lÄ±k",
     },
     en: {
       "local-project": "Local Project",
@@ -41,65 +35,26 @@ const getCategoryLabel = (category, propertyType, lang = "tr") => {
       default: "For Sale",
     },
   };
-  
+
   const currentLabels = labels[lang] || labels.tr;
-  
+
   if (propertyType === "local-project" || propertyType === "international-project") {
     return currentLabels[propertyType];
   }
-  
+
   return currentLabels[category] || category || currentLabels.default;
 };
 
 const PropertyCard = ({ property, onCardClick }) => {
   const navigate = useNavigate();
-  const { t, i18n } = useTranslation();
-  const { selectedCurrency, baseCurrency, rates, convertAmount, formatMoney } =
-    useContext(CurrencyContext);
-  const isForSale = property.propertyType === "sale" || !property.propertyType;
-  const isLocalProject = property.propertyType === "local-project";
-  const isInternationalProject = property.propertyType === "international-project";
-  const isProject = isLocalProject || isInternationalProject;
+  const { i18n } = useTranslation();
+
   const getPropertyRoute = (targetProperty) =>
     targetProperty?.propertyType === "local-project" ||
     targetProperty?.propertyType === "international-project"
       ? resolveProjectPath(targetProperty)
       : resolvePropertyPath(targetProperty);
 
-  const displayCurrency =
-    selectedCurrency && (selectedCurrency === baseCurrency || rates?.[selectedCurrency])
-      ? selectedCurrency
-      : baseCurrency;
-  const sourceCurrency = property.currency || baseCurrency;
-  const displayPriceInfo = getPropertyDisplayPriceInfo(property, {
-    convertAmount,
-    comparisonCurrency: baseCurrency,
-    defaultCurrency: baseCurrency,
-  });
-  const displayPrice = displayPriceInfo.amount;
-  const displayPriceCurrency = displayPriceInfo.currency || sourceCurrency;
-  const convertedDisplayPrice = convertAmount(
-    displayPrice,
-    displayPriceCurrency,
-    displayCurrency
-  );
-  const convertedPrice = convertAmount(
-    property.price,
-    sourceCurrency,
-    displayCurrency
-  );
-  const formattedDisplayPrice = formatMoney(
-    convertedDisplayPrice,
-    displayCurrency,
-    i18n.language === "tr" ? "tr-TR" : "en-US"
-  );
-  const formattedPrice = formatMoney(
-    convertedPrice,
-    displayCurrency,
-    i18n.language === "tr" ? "tr-TR" : "en-US"
-  );
-
-  // Get description based on current language
   const getDescription = () => {
     if (i18n.language?.startsWith("tr")) {
       return property.description_tr || property.description;
@@ -124,7 +79,7 @@ const PropertyCard = ({ property, onCardClick }) => {
   };
 
   const whatsappHref = `https://wa.me/905551234567?text=${encodeURIComponent(
-    `Hi, I'm interested in the property: ${property.title} - ${formattedPrice}`
+    `Hi, I'm interested in the property: ${property.title}`
   )}`;
 
   const handleWhatsAppClick = (e) => {
@@ -181,34 +136,6 @@ const PropertyCard = ({ property, onCardClick }) => {
             />
           </div>
 
-          {/* Price */}
-          <div className="mt-2">
-            {isProject ? (
-              // For projects - show "Starting from" price
-              displayPrice > 0 ? (
-                <div>
-                  <span className="text-sm text-gray-500">{t("propertyCard.startingFrom", "Başlangıç fiyatı")}</span>
-                  <span className="text-2xl font-bold text-green-600 ml-2">
-                    {formattedDisplayPrice}
-                  </span>
-                </div>
-              ) : (
-                <span className="text-lg font-medium text-gray-500">{t("propertyCard.contactForPrice", "Fiyat için iletişime geçin")}</span>
-              )
-            ) : (
-              // For regular properties
-              <>
-                <span className="text-2xl font-bold text-green-600">
-                  {formattedPrice}
-                </span>
-                {!isForSale && (
-                  <span className="text-sm text-gray-500 ml-1">/mo</span>
-                )}
-              </>
-            )}
-          </div>
-
-          {/* Facilities */}
           {/* Description */}
           <p className="mt-2 text-sm text-gray-500 line-clamp-2">
             {getDescription()}

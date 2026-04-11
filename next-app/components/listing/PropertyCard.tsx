@@ -5,18 +5,6 @@ interface PropertyCardProps {
   property: PropertyItem;
 }
 
-const formatPrice = (price: number, currency: string): string => {
-  try {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency,
-      maximumFractionDigits: 0,
-    }).format(price);
-  } catch {
-    return `${price.toLocaleString("en-US")} ${currency}`;
-  }
-};
-
 export default function PropertyCard({ property }: PropertyCardProps) {
   return (
     <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -31,10 +19,6 @@ export default function PropertyCard({ property }: PropertyCardProps) {
 
       <p className="mb-3 text-sm text-slate-600">
         {property.district}, {property.city}, {property.country}
-      </p>
-
-      <p className="mb-4 text-2xl font-bold text-emerald-700">
-        {formatPrice(property.price, property.currency)}
       </p>
 
       <div className="mb-4 grid grid-cols-2 gap-2 text-sm text-slate-700">

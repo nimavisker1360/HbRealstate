@@ -36,6 +36,7 @@ import useProperties from "../hooks/useProperties";
 import useConsultants from "../hooks/useConsultants";
 import useCountries from "../hooks/useCountries";
 import UserDetailContext from "../context/UserDetailContext";
+import CurrencyContext from "../context/CurrencyContext";
 import { aboutTurkeyMenu } from "../constant/aboutTurkeyMenu";
 import { buyerGuideMenu } from "../constant/buyerGuideMenu";
 import {
@@ -63,6 +64,10 @@ import {
 import { toast } from "react-toastify";
 import { bilingualFromMessage, bilingualKey } from "../utils/bilingualToast";
 import { resolveProjectPath } from "../utils/seo";
+import {
+  getProjectFloorPlanPriceInfo,
+  getProjectSpecialOfferPriceInfo,
+} from "../utils/projectPriceUtils";
 import {
   MdDashboard,
   MdAddHome,
@@ -353,6 +358,7 @@ const AdminPanel = () => {
   const {
     userDetails: { token },
   } = useContext(UserDetailContext);
+  const { convertAmount } = useContext(CurrencyContext);
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
 
@@ -2545,19 +2551,64 @@ const AdminPanel = () => {
                         <Table.Td>
                           <Text size="sm" fw={600} color="green">
                             {(() => {
-                              let displayPrice = property.price;
-                              let displayCurrency = property.currency;
+                              const isProject = [
+                                "local-project",
+                                "international-project",
+                              ].includes(property?.propertyType);
+                              const directPrice = Number(property?.price || 0);
+                              let displayPrice =
+                                isProject && directPrice > 0
+                                  ? Math.round(
+                                      convertAmount(
+                                        directPrice,
+                                        property?.currency || "USD",
+                                        "USD"
+                                      )
+                                    )
+                                  : directPrice;
+                              let displayCurrency =
+                                isProject && displayPrice > 0
+                                  ? "USD"
+                                  : property?.currency;
+
                               if (!displayPrice || displayPrice === 0) {
-                                if (property.dairePlanlari?.length > 0) {
+                                const specialOfferCandidates = Array.isArray(
+                                  property?.projeHakkinda?.specialOffers
+                                )
+                                  ? property.projeHakkinda.specialOffers
+                                  : [];
+                                const legacySpecialOffer =
+                                  property?.projeHakkinda?.specialOffer;
+                                const activeSpecialOffer =
+                                  specialOfferCandidates[0] || legacySpecialOffer;
+                                const specialOfferPrice =
+                                  getProjectSpecialOfferPriceInfo(
+                                    activeSpecialOffer,
+                                    {
+                                      convertAmount,
+                                      fallbackCurrency:
+                                        property?.currency || "USD",
+                                      targetCurrency: "USD",
+                                    }
+                                  ).amount;
+
+                                if (specialOfferPrice > 0) {
+                                  displayPrice = specialOfferPrice;
+                                  displayCurrency = "USD";
+                                } else if (property.dairePlanlari?.length > 0) {
                                   const prices = property.dairePlanlari
-                                    .map(plan => plan.fiyat || plan.fiyatUSD || 0)
-                                    .filter(p => p > 0);
+                                    .map((plan) =>
+                                      getProjectFloorPlanPriceInfo(plan, {
+                                        convertAmount,
+                                        fallbackCurrency:
+                                          property?.currency || "USD",
+                                        targetCurrency: "USD",
+                                      }).amount
+                                    )
+                                    .filter((price) => price > 0);
                                   if (prices.length > 0) {
                                     displayPrice = Math.min(...prices);
-                                    if (!displayCurrency) {
-                                      const firstPlan = property.dairePlanlari.find(plan => (plan.fiyat || plan.fiyatUSD) > 0);
-                                      displayCurrency = firstPlan?.currency || "USD";
-                                    }
+                                    displayCurrency = "USD";
                                   }
                                 }
                               }

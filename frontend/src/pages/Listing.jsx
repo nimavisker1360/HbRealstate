@@ -959,14 +959,6 @@ const Listing = () => {
                   </span>
                 )}
               </div>
-              {activeFiltersCount > 0 && (
-                <button
-                  onClick={clearAllFilters}
-                  className="flex items-center gap-1 px-3 py-2 border border-gray-300 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
-                >
-                  <span>{t('listing.clear')}</span>
-                </button>
-              )}
             </div>
 
           </div>
@@ -1039,19 +1031,30 @@ const Listing = () => {
                 {t("listing.quickCitizenshipEligible")}
               </button>
 
-              <button
-                type="button"
-                onClick={() => setShowAllFiltersModal(true)}
-                className="flex items-center gap-2 rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-gray-950"
-              >
-                <MdFilterList />
-                <span>{t('listing.allFilters')}</span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAllFiltersModal(true)}
+                  className="flex items-center gap-2 rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-gray-950"
+                >
+                  <MdFilterList />
+                  <span>{t('listing.allFilters')}</span>
+                  {activeFiltersCount > 0 && (
+                    <span className="rounded-full bg-teal-500 px-1.5 py-0.5 text-[10px] text-white">
+                      {activeFiltersCount}
+                    </span>
+                  )}
+                </button>
                 {activeFiltersCount > 0 && (
-                  <span className="rounded-full bg-teal-500 px-1.5 py-0.5 text-[10px] text-white">
-                    {activeFiltersCount}
-                  </span>
+                  <button
+                    type="button"
+                    onClick={clearAllFilters}
+                    className="flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-emerald-500"
+                  >
+                    <span>{t('listing.clear')}</span>
+                  </button>
                 )}
-              </button>
+              </div>
             </div>
           </div>
         </div>

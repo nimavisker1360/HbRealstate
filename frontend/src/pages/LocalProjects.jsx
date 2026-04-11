@@ -24,6 +24,10 @@ import ProjectListingCard from "../components/ProjectListingCard";
 import { getPropertyDistrict } from "../utils/contentGraph";
 import { resolveProjectPath } from "../utils/seo";
 import { getLocalizedAlt } from "../utils/mediaAlt";
+import {
+  getProjectFloorPlanPriceInfo,
+  getProjectSpecialOfferPriceInfo,
+} from "../utils/projectPriceUtils";
 
 // Turkish cities data
 const TURKISH_CITIES = [
@@ -291,7 +295,13 @@ const hasSpecialOfferData = (specialOffer) =>
         specialOffer.title ||
         specialOffer.roomType ||
         Number(specialOffer.areaM2 || 0) > 0 ||
-        Number(specialOffer.priceGBP || specialOffer.priceUSD || 0) > 0 ||
+        Number(
+          specialOffer.priceUSD ||
+            specialOffer.priceGBP ||
+            specialOffer.priceEUR ||
+            specialOffer.priceTRY ||
+            0
+        ) > 0 ||
         Number(specialOffer.downPaymentAmount || 0) > 0 ||
         Number(specialOffer.downPaymentPercent || 0) > 0 ||
         Number(specialOffer.installmentMonths || 0) > 0 ||
@@ -474,13 +484,38 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
           ? legacySpecialOffer
           : {};
       const hasSpecialOffer = hasSpecialOfferData(activeSpecialOffer);
-      const directPrice = Number(p.price || 0);
-      const explicitStartingPrice = Number(p.startingPrice || 0);
+      const directPrice = Number(
+        p.price > 0
+          ? convertAmount(p.price, p.currency || baseCurrency, "USD")
+          : 0
+      );
+      const explicitStartingPrice = Number(
+        p.startingPrice > 0
+          ? convertAmount(
+              p.startingPrice,
+              p.startingCurrency || p.currency || baseCurrency,
+              "USD"
+            )
+          : 0
+      );
       const floorPlanPrices =
         p.dairePlanlari
-          ?.map((d) => Number(d.fiyat || d.fiyatUSD || 0))
+          ?.map((plan) =>
+            getProjectFloorPlanPriceInfo(plan, {
+              convertAmount,
+              fallbackCurrency: p.currency || baseCurrency,
+              targetCurrency: "USD",
+            }).amount
+          )
           .filter((price) => price > 0) || [];
-      const specialOfferPrice = Number(activeSpecialOffer.priceGBP || activeSpecialOffer.priceUSD || 0);
+      const specialOfferPrice = getProjectSpecialOfferPriceInfo(
+        activeSpecialOffer,
+        {
+          convertAmount,
+          fallbackCurrency: p.currency || baseCurrency,
+          targetCurrency: "USD",
+        }
+      ).amount;
       const startingPrice =
         explicitStartingPrice > 0
           ? explicitStartingPrice
@@ -493,11 +528,13 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
           : 0;
       const startingCurrency =
         explicitStartingPrice > 0
-          ? p.startingCurrency || p.currency || baseCurrency
+          ? "USD"
           : directPrice > 0
-          ? p.currency || baseCurrency
+          ? "USD"
           : specialOfferPrice > 0
-          ? "GBP"
+          ? "USD"
+          : floorPlanPrices.length > 0
+          ? "USD"
           : p.currency || baseCurrency;
 
       const roomTypes = [
@@ -534,7 +571,7 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
         price: startingPrice,
         currency: startingCurrency,
         directPrice,
-        directPriceCurrency: p.currency || baseCurrency,
+        directPriceCurrency: directPrice > 0 ? "USD" : p.currency || baseCurrency,
         startingPrice,
         startingCurrency,
         deliveryDate: p.deliveryDate || "",
@@ -578,7 +615,8 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
           title: activeSpecialOffer.title || p.projectName || p.title || "",
           roomType: activeSpecialOffer.roomType || roomTypes[0] || "",
           areaM2: Number(activeSpecialOffer.areaM2 || areaMin || 0),
-          priceGBP: specialOfferPrice || startingPrice || 0,
+          priceUSD: specialOfferPrice || startingPrice || 0,
+          priceGBP: 0,
           downPaymentAmount: Number(
             activeSpecialOffer.downPaymentAmount ??
               activeSpecialOffer.downPaymentPercent ??
@@ -593,7 +631,14 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
     }).filter((project) =>
       isHotOffersMode || isSpecialOffersPage ? project.hasSpecialOffer : true
     );
-  }, [allProperties, resolvedProjectType, baseCurrency, isHotOffersMode, isSpecialOffersPage]);
+  }, [
+    allProperties,
+    resolvedProjectType,
+    baseCurrency,
+    convertAmount,
+    isHotOffersMode,
+    isSpecialOffersPage,
+  ]);
 
   // Filter states
   const [selectedCity, setSelectedCity] = useState("");

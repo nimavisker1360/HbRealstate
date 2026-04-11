@@ -72,6 +72,7 @@ import {
   getFloorPlanCTA,
   buildProjectWhatsAppMessage,
 } from "../utils/projectDetailPresentation";
+import { getProjectSpecialOfferPriceInfo } from "../utils/projectPriceUtils";
 
 // All possible Bina Özellikleri (Building Features)
 const ALL_BINA_OZELLIKLERI = [
@@ -283,7 +284,13 @@ const hasSpecialOfferData = (specialOffer) =>
         specialOffer.title ||
         specialOffer.roomType ||
         Number(specialOffer.areaM2 || 0) > 0 ||
-        Number(specialOffer.priceGBP || specialOffer.priceUSD || 0) > 0 ||
+        Number(
+          specialOffer.priceUSD ||
+            specialOffer.priceGBP ||
+            specialOffer.priceEUR ||
+            specialOffer.priceTRY ||
+            0
+        ) > 0 ||
         Number(specialOffer.downPaymentAmount || 0) > 0 ||
         Number(specialOffer.downPaymentPercent || 0) > 0 ||
         Number(specialOffer.installmentMonths || 0) > 0 ||
@@ -508,6 +515,17 @@ const ProjectDetail = ({ topSlot = null }) => {
         ? [legacySpecialOffer]
         : [];
 
+    const normalizedProjectPrice =
+      Number(propertyData.price || 0) > 0
+        ? Math.round(
+            convertAmount(
+              Number(propertyData.price || 0),
+              propertyData.currency || baseCurrency,
+              "USD"
+            )
+          )
+        : 0;
+
     return {
       id: propertyData.id,
       name: propertyData.title,
@@ -515,8 +533,8 @@ const ProjectDetail = ({ topSlot = null }) => {
       propertyType: propertyData.propertyType || "",
       city: propertyData.city,
       district: inferDistrictFromRawProperty(propertyData),
-      price: propertyData.price,
-      currency: propertyData.currency,
+      price: normalizedProjectPrice,
+      currency: "USD",
       deliveryDate: propertyData.deliveryDate || "",
       images: propertyData.images || [],
       videos: propertyData.videos || [],
@@ -535,7 +553,7 @@ const ProjectDetail = ({ topSlot = null }) => {
       createdAt: propertyData.createdAt || "",
       updatedAt: propertyData.updatedAt || "",
     };
-  }, [propertyData]);
+  }, [baseCurrency, convertAmount, propertyData]);
 
   const isBookableProject =
     project?.propertyType === "local-project" ||
@@ -847,29 +865,32 @@ const ProjectDetail = ({ topSlot = null }) => {
     }
   };
 
-  const detailBadges = getProjectBadges(propertyData, {
+  const detailBadges = getProjectBadges(project || propertyData, {
     convertAmount,
     defaultCurrency: baseCurrency,
     maxBadges: 2,
   });
 
-  const detailPricePresentation = getProjectPricePresentation(propertyData, {
+  const detailPricePresentation = getProjectPricePresentation(
+    project || propertyData,
+    {
+      t,
+      language: i18n.language,
+      convertAmount,
+      formatMoney,
+      displayCurrency,
+      defaultCurrency: baseCurrency,
+    }
+  );
+
+  const detailBenefitLine = getProjectBenefitLine(project || propertyData, {
     t,
     language: i18n.language,
     convertAmount,
-    formatMoney,
-    displayCurrency,
     defaultCurrency: baseCurrency,
   });
 
-  const detailBenefitLine = getProjectBenefitLine(propertyData, {
-    t,
-    language: i18n.language,
-    convertAmount,
-    defaultCurrency: baseCurrency,
-  });
-
-  const detailQuickFacts = getProjectQuickFacts(propertyData, {
+  const detailQuickFacts = getProjectQuickFacts(project || propertyData, {
     t,
     convertAmount,
     defaultCurrency: baseCurrency,
@@ -1438,16 +1459,20 @@ const ProjectDetail = ({ topSlot = null }) => {
 
               {isSpecialOfferProject && primarySpecialOffer && (() => {
                 const offer = primarySpecialOffer;
-                const specialOfferPriceAmount = Number(
-                  offer.priceGBP || offer.priceUSD || offer.priceEUR || project.price || 0
+                const specialOfferPriceInfo = getProjectSpecialOfferPriceInfo(
+                  offer,
+                  {
+                    convertAmount,
+                    fallbackCurrency: project.currency || baseCurrency,
+                    targetCurrency: "USD",
+                  }
                 );
-                const specialOfferPriceCurrency = Number(offer.priceGBP || 0) > 0
-                  ? "GBP"
-                  : Number(offer.priceUSD || 0) > 0
-                  ? "USD"
-                  : Number(offer.priceEUR || 0) > 0
-                  ? "EUR"
-                  : project.currency || baseCurrency;
+                const specialOfferPriceAmount =
+                  specialOfferPriceInfo.amount || Number(project.price || 0);
+                const specialOfferPriceCurrency =
+                  specialOfferPriceAmount > 0
+                    ? specialOfferPriceInfo.currency
+                    : project.currency || baseCurrency;
                 const locale = i18n.language === "tr" ? "tr-TR" : "en-US";
                 const locationMinutesLabel = i18n.language?.startsWith("tr")
                   ? "dk"

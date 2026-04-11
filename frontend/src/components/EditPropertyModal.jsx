@@ -443,6 +443,12 @@ import {
   LOCAL_PROJECT_DEFAULT_COUNTRY,
   LOCAL_PROJECT_DISTRICT_OPTIONS,
 } from "../constant/projectLocationOptions";
+import {
+  getProjectFloorPlanPriceInfo,
+  getProjectSpecialOfferPriceInfo,
+  normalizeProjectFloorPlan,
+  normalizeProjectSpecialOffer,
+} from "../utils/projectPriceUtils";
 
 const FIAT_CURRENCIES = [
   { code: "USD", symbol: "$" },
@@ -524,7 +530,13 @@ const hasSpecialOfferData = (specialOffer) =>
         specialOffer.title ||
         specialOffer.roomType ||
         Number(specialOffer.areaM2 || 0) > 0 ||
-        Number(specialOffer.priceGBP || specialOffer.priceUSD || 0) > 0 ||
+        Number(
+          specialOffer.priceUSD ||
+            specialOffer.priceGBP ||
+            specialOffer.priceEUR ||
+            specialOffer.priceTRY ||
+            0
+        ) > 0 ||
         Number(specialOffer.downPaymentAmount || 0) > 0 ||
         Number(specialOffer.downPaymentPercent || 0) > 0 ||
         Number(specialOffer.installmentMonths || 0) > 0 ||
@@ -532,10 +544,14 @@ const hasSpecialOfferData = (specialOffer) =>
         Number(specialOffer.locationMinutes || 0) > 0)
   );
 
-const createSpecialOfferDraft = (overrides = {}) => {
-  const downPayment = Number(
-    overrides.downPaymentAmount ?? overrides.downPaymentPercent
-  ) || 0;
+const createSpecialOfferDraft = (overrides = {}, { convertAmount } = {}) => {
+  const normalizedOffer = normalizeProjectSpecialOffer(overrides, {
+    convertAmount,
+  });
+  const downPayment =
+    Number(
+      normalizedOffer.downPaymentAmount ?? normalizedOffer.downPaymentPercent
+    ) || 0;
 
   return {
     id: overrides.id || Date.now() + Math.floor(Math.random() * 100000),
@@ -543,7 +559,7 @@ const createSpecialOfferDraft = (overrides = {}) => {
     title: String(overrides.title || ""),
     roomType: String(overrides.roomType || ""),
     areaM2: Number(overrides.areaM2) || 0,
-    priceGBP: toRoundedPrice(overrides.priceGBP || overrides.priceUSD),
+    priceUSD: toRoundedPrice(normalizedOffer.priceUSD),
     downPaymentPercent: downPayment,
     downPaymentAmount: downPayment,
     installmentMonths: Number(overrides.installmentMonths) || 0,
@@ -552,31 +568,39 @@ const createSpecialOfferDraft = (overrides = {}) => {
   };
 };
 
-const getInitialSpecialOffers = (property = {}) => {
+const getInitialSpecialOffers = (property = {}, { convertAmount } = {}) => {
   const specialOffers = Array.isArray(property.projeHakkinda?.specialOffers)
     ? property.projeHakkinda.specialOffers
         .filter((offer) => offer && typeof offer === "object")
-        .map((offer) => createSpecialOfferDraft(offer))
+        .map((offer) => createSpecialOfferDraft(offer, { convertAmount }))
     : [];
 
   if (specialOffers.length > 0) return specialOffers;
 
   if (hasSpecialOfferData(property.projeHakkinda?.specialOffer)) {
-    return [createSpecialOfferDraft(property.projeHakkinda.specialOffer)];
+    return [
+      createSpecialOfferDraft(property.projeHakkinda.specialOffer, {
+        convertAmount,
+      }),
+    ];
   }
+
+  const firstPlanPriceInfo = getProjectFloorPlanPriceInfo(
+    property.dairePlanlari?.[0],
+    {
+      convertAmount,
+      fallbackCurrency: property.currency || "USD",
+      targetCurrency: "USD",
+    }
+  );
 
   return [
     createSpecialOfferDraft({
       title: property.projectName || "",
       roomType: property.dairePlanlari?.[0]?.tip || "",
       areaM2: Number(property.dairePlanlari?.[0]?.metrekare || 0),
-      priceGBP: toRoundedPrice(
-        property.dairePlanlari?.[0]?.fiyatGBP ||
-          property.dairePlanlari?.[0]?.fiyatUSD ||
-          property.dairePlanlari?.[0]?.fiyat ||
-          0
-      ),
-    }),
+      priceUSD: firstPlanPriceInfo.amount,
+    }, { convertAmount }),
   ];
 };
 
@@ -761,25 +785,14 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
       )
     : [];
 
-  const floorPlanBaseCurrency = normalizeFiatCurrency(
-    property?.currency || form.values.currency
-  );
+  const floorPlanBaseCurrency = "USD";
 
   const getFloorPlanPriceByCurrency = (plan, targetCurrency) => {
-    const fieldKey = FLOOR_PLAN_PRICE_FIELDS[targetCurrency];
-    if (hasOwnField(plan, fieldKey)) {
-      return toRoundedPrice(plan[fieldKey]);
-    }
-
-    const legacyPrice = toRoundedPrice(plan?.fiyat);
-    if (!legacyPrice) return 0;
-
-    const sourceCurrency = normalizeFiatCurrency(
-      plan?.currency || floorPlanBaseCurrency
-    );
-    return toRoundedPrice(
-      convertAmount(legacyPrice, sourceCurrency, targetCurrency)
-    );
+    return getProjectFloorPlanPriceInfo(plan, {
+      convertAmount,
+      fallbackCurrency: plan?.currency || floorPlanBaseCurrency,
+      targetCurrency,
+    }).amount;
   };
 
   const updateFloorPlanPrices = (index, sourceCurrency, value) => {
@@ -799,7 +812,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
 
       const baseFieldKey = FLOOR_PLAN_PRICE_FIELDS[floorPlanBaseCurrency];
       currentPlan.fiyat = toRoundedPrice(currentPlan[baseFieldKey]);
-      currentPlan.currency = floorPlanBaseCurrency;
+      currentPlan.currency = "USD";
       nextPlans[index] = currentPlan;
 
       return nextPlans;
@@ -914,7 +927,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
       setGyo(Boolean(property.gyo));
       setBrochureUrl(property.brochureUrl || "");
       setMapImage(property.mapImage || "");
-      setSpecialOffers(getInitialSpecialOffers(property));
+      setSpecialOffers(getInitialSpecialOffers(property, { convertAmount }));
       setIsSpecialOfferEnabled(
         hasAnySpecialOfferData(property.projeHakkinda?.specialOffers) ||
         hasSpecialOfferData(property.projeHakkinda?.specialOffer)
@@ -976,10 +989,11 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
       });
       setDairePlanlari(
         (property.dairePlanlari || []).map((plan) => ({
-          ...plan,
-          currency: normalizeFiatCurrency(
-            plan?.currency || property?.currency || floorPlanBaseCurrency
-          ),
+          ...normalizeProjectFloorPlan(plan, {
+            convertAmount,
+            fallbackCurrency: property?.currency || "USD",
+          }),
+          currency: "USD",
         }))
       );
       setVaziyetPlani(property.vaziyetPlani || "");
@@ -1186,22 +1200,30 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
 
   const addSpecialOffer = () => {
     const firstOffer = specialOffers?.[0] || {};
+    const firstPlanPriceInfo = getProjectFloorPlanPriceInfo(
+      dairePlanlari?.[0],
+      {
+        convertAmount,
+        fallbackCurrency: property?.currency || "USD",
+        targetCurrency: "USD",
+      }
+    );
     const newOffer = createSpecialOfferDraft({
       title: projectName || firstOffer.title || property?.projectName || "",
       roomType: firstOffer.roomType || dairePlanlari?.[0]?.tip || "",
       areaM2:
         Number(firstOffer.areaM2) ||
         Number(dairePlanlari?.[0]?.metrekare || 0),
-      priceGBP:
-        Number(firstOffer.priceGBP || firstOffer.priceUSD) ||
-        toRoundedPrice(
-          dairePlanlari?.[0]?.fiyatGBP || dairePlanlari?.[0]?.fiyatUSD || dairePlanlari?.[0]?.fiyat || 0
-        ),
+      priceUSD:
+        getProjectSpecialOfferPriceInfo(firstOffer, {
+          convertAmount,
+          targetCurrency: "USD",
+        }).amount || firstPlanPriceInfo.amount,
       downPaymentPercent: Number(firstOffer.downPaymentPercent || 0),
       installmentMonths: Number(firstOffer.installmentMonths || 0),
       locationLabel: "",
       locationMinutes: 0,
-    });
+    }, { convertAmount });
     setSpecialOffers((prev) => [...(prev || []), newOffer]);
   };
 
@@ -1288,16 +1310,21 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
       : String(values.country || "").trim();
     const normalizedSpecialOffers = (specialOffers || [])
       .map((offer) => {
-        const downPaymentValue = Number(
-          offer?.downPaymentAmount ?? offer?.downPaymentPercent
-        ) || 0;
+        const normalizedOffer = normalizeProjectSpecialOffer(offer, {
+          convertAmount,
+        });
+        const downPaymentValue =
+          Number(
+            normalizedOffer.downPaymentAmount ??
+              normalizedOffer.downPaymentPercent
+          ) || 0;
         return {
-          ...createSpecialOfferDraft(offer),
+          ...createSpecialOfferDraft(normalizedOffer, { convertAmount }),
           enabled: true,
           title: String(offer?.title || projectName || "").trim(),
           roomType: String(offer?.roomType || "").trim(),
           areaM2: Number(offer?.areaM2) || 0,
-          priceGBP: toRoundedPrice(offer?.priceGBP || offer?.priceUSD),
+          priceUSD: toRoundedPrice(normalizedOffer.priceUSD),
           downPaymentPercent: downPaymentValue,
           downPaymentAmount: downPaymentValue,
           installmentMonths: Number(offer?.installmentMonths) || 0,
@@ -1313,7 +1340,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
       primarySpecialOffer?.roomType || ""
     ).trim();
     const specialOfferAreaValue = Number(primarySpecialOffer?.areaM2 || 0);
-    const specialOfferPriceValue = toRoundedPrice(primarySpecialOffer?.priceGBP || primarySpecialOffer?.priceUSD);
+    const specialOfferPriceValue = toRoundedPrice(primarySpecialOffer?.priceUSD);
     const specialOfferDownPaymentValue = Number(
       primarySpecialOffer?.downPaymentPercent || 0
     );
@@ -1327,7 +1354,26 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
       primarySpecialOffer?.locationMinutes || 0
     );
 
-    const nextDairePlanlari = [...dairePlanlari];
+    const nextDairePlanlari = (dairePlanlari || []).map((plan) =>
+      normalizeProjectFloorPlan(plan, {
+        convertAmount,
+        fallbackCurrency: plan?.currency || property?.currency || "USD",
+      })
+    );
+    const floorPlanUsdValues = nextDairePlanlari
+      .map((plan) => Number(plan?.fiyatUSD || plan?.fiyat || 0))
+      .filter((value) => value > 0);
+    const previousProjectPriceUsd = toRoundedPrice(
+      convertAmount(
+        Number(property?.price || 0),
+        normalizeFiatCurrency(property?.currency || normalizedCurrency),
+        "USD"
+      )
+    );
+    const normalizedProjectPrice =
+      specialOfferPriceValue ||
+      (floorPlanUsdValues.length > 0 ? Math.min(...floorPlanUsdValues) : 0) ||
+      previousProjectPriceUsd;
 
     const generatedCampaign = [];
     if (specialOfferDownPaymentValue > 0) {
@@ -1351,7 +1397,8 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
                 title: specialOfferTitleValue,
                 roomType: specialOfferRoomTypeValue,
                 areaM2: specialOfferAreaValue,
-                priceGBP: specialOfferPriceValue,
+                priceUSD: specialOfferPriceValue,
+                priceGBP: 0,
                 downPaymentPercent: specialOfferDownPaymentValue,
                 downPaymentAmount: specialOfferDownPaymentValue,
                 installmentMonths: specialOfferInstallmentValue,
@@ -1387,10 +1434,10 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
         ? (projeHakkinda?.description_ru || property?.description_ru)
         : values.description_ru,
       price: isProject
-        ? property?.price || 0
+        ? normalizedProjectPrice
         : normalizedPrice,
       currency: isProject
-        ? normalizeFiatCurrency(property?.currency || normalizedCurrency)
+        ? "USD"
         : normalizedCurrency,
       country: normalizedLocationCountry,
       city: normalizedLocationCity,
@@ -2466,19 +2513,19 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
                       <Grid mt="xs">
                         <Grid.Col span={3}>
                           <NumberInput
-                            label="Price (GBP)"
+                            label="Price (USD)"
                             min={0}
                             thousandSeparator="."
                             decimalSeparator=","
-                            value={offer.priceGBP ?? 0}
+                            value={offer.priceUSD ?? 0}
                             onChange={(value) =>
-                              updateSpecialOfferField(index, "priceGBP", Number(value) || 0)
+                              updateSpecialOfferField(index, "priceUSD", Number(value) || 0)
                             }
                           />
                         </Grid.Col>
                         <Grid.Col span={3}>
                           <NumberInput
-                            label="Down Payment (GBP)"
+                            label="Down Payment (USD)"
                             min={0}
                             thousandSeparator="."
                             decimalSeparator=","
@@ -2776,7 +2823,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
                         fiyatEUR: 0,
                         fiyatGBP: 0,
                         fiyatTRY: 0,
-                        currency: floorPlanBaseCurrency,
+                        currency: "USD",
                         metrekare: 0,
                         image: "",
                       },
