@@ -94,7 +94,7 @@ const HomeProjectCard = ({ property, badges }) => {
           {property.hasSpecialOffer && (
             <div className="pointer-events-none absolute right-[-42px] top-6 z-20 rotate-45 bg-rose-600 px-12 py-1.5 shadow-[0_10px_25px_-12px_rgba(244,63,94,0.85)]">
               <span className="block font-serif text-[11px] font-black italic uppercase tracking-[0.26em] text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.18)]">
-                off
+                offer
               </span>
             </div>
           )}
