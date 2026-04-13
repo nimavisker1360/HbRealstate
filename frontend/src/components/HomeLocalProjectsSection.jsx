@@ -229,65 +229,76 @@ const HomeLocalProjectsSection = ({ properties } = {}) => {
             ))}
           </div>
         ) : previewProjects.length > 0 ? (
-          <div className="relative">
-            {canScroll && (
-              <>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleScroll(-1);
-                  }}
-                  className="absolute -left-3 top-1/2 z-30 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-md transition hover:bg-gray-100"
-                  aria-label="Scroll left"
-                >
-                  <MdChevronLeft size={22} />
-                </button>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleScroll(1);
-                  }}
-                  className="absolute -right-3 top-1/2 z-30 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-md transition hover:bg-gray-100"
-                  aria-label="Scroll right"
-                >
-                  <MdChevronRight size={22} />
-                </button>
-              </>
-            )}
+          <>
+            <div className="relative">
+              {canScroll && (
+                <>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleScroll(-1);
+                    }}
+                    className="absolute -left-3 top-1/2 z-30 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-md transition hover:bg-gray-100"
+                    aria-label="Scroll left"
+                  >
+                    <MdChevronLeft size={22} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleScroll(1);
+                    }}
+                    className="absolute -right-3 top-1/2 z-30 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-md transition hover:bg-gray-100"
+                    aria-label="Scroll right"
+                  >
+                    <MdChevronRight size={22} />
+                  </button>
+                </>
+              )}
 
-            <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-[#fdfcf9] via-[#fdfcf9]/80 to-transparent sm:w-12" />
-            <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-[#fdfcf9] via-[#fdfcf9]/80 to-transparent sm:w-12" />
+              <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-[#fdfcf9] via-[#fdfcf9]/80 to-transparent sm:w-12" />
+              <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-[#fdfcf9] via-[#fdfcf9]/80 to-transparent sm:w-12" />
 
-            <div
-              ref={viewportRef}
-              className="overflow-x-auto overflow-y-hidden pb-2 scroll-smooth scrollbar-hide w-full snap-x snap-mandatory px-2 [container-type:inline-size]"
-              style={{
-                scrollbarWidth: "none",
-                msOverflowStyle: "none",
-                WebkitOverflowScrolling: "touch",
-                scrollBehavior: "smooth",
-                scrollSnapType: "x mandatory",
-              }}
-            >
               <div
-                ref={trackRef}
-                className="flex gap-4 sm:gap-6"
-                style={{ width: "max-content", minWidth: "100%" }}
+                ref={viewportRef}
+                className="overflow-x-auto overflow-y-hidden pb-2 scroll-smooth scrollbar-hide w-full snap-x snap-mandatory px-2 [container-type:inline-size]"
+                style={{
+                  scrollbarWidth: "none",
+                  msOverflowStyle: "none",
+                  WebkitOverflowScrolling: "touch",
+                  scrollBehavior: "smooth",
+                  scrollSnapType: "x mandatory",
+                }}
               >
-                {previewProjects.map((project) => (
-                  <HomeProjectCard
-                    key={project.id}
-                    property={project}
-                    badges={project.badges}
-                  />
-                ))}
+                <div
+                  ref={trackRef}
+                  className="flex gap-4 sm:gap-6"
+                  style={{ width: "max-content", minWidth: "100%" }}
+                >
+                  {previewProjects.map((project) => (
+                    <HomeProjectCard
+                      key={project.id}
+                      property={project}
+                      badges={project.badges}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
+
+            <div className="mt-8 flex justify-center">
+              <Link
+                to="/projects"
+                className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-7 py-3 text-sm font-semibold text-white shadow-[0_14px_28px_-16px_rgba(5,150,105,0.9)] transition hover:bg-emerald-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-offset-2"
+              >
+                {t("localProjects.showMoreProjectsButton")}
+              </Link>
+            </div>
+          </>
         ) : (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-white/70 px-6 py-16 text-center text-slate-500">
             {t("properties.noProperties")}

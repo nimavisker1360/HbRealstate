@@ -326,18 +326,50 @@ const normalizeProjectTypeValue = (value) => {
 
   if (normalized === "localproject") return "local-project";
   if (normalized === "internationalproject") return "international-project";
+  if (normalized === "local") return "local-project";
+  if (normalized === "international") return "international-project";
   if (normalized === "specialoffer") return "special-offer";
 
   return normalized;
 };
 
+const hasProjectMetaObject = (value) =>
+  Boolean(
+    value &&
+      typeof value === "object" &&
+      !Array.isArray(value) &&
+      Object.keys(value).length > 0
+  );
+
+const hasMeaningfulFloorPlans = (plans) =>
+  Array.isArray(plans) &&
+  plans.some((plan) => {
+    if (!plan || typeof plan !== "object") return false;
+    return Boolean(
+      plan.tip ||
+        plan.roomType ||
+        Number(plan.metrekare || plan.areaM2 || 0) > 0 ||
+        Number(plan.fiyatMin || plan.priceMin || 0) > 0 ||
+        Number(plan.fiyatMax || plan.priceMax || 0) > 0 ||
+        plan.image ||
+        (Array.isArray(plan.images) && plan.images.length > 0)
+    );
+  });
+
 const hasProjectListingSignals = (project) =>
   Boolean(
     project?.projectName ||
-      project?.title ||
-      project?.name ||
-      project?.projeHakkinda ||
-      (Array.isArray(project?.dairePlanlari) && project.dairePlanlari.length > 0)
+      project?.ilanNo ||
+      project?.deliveryDate ||
+      project?.projectStatus ||
+      project?.vaziyetPlani ||
+      project?.mapImage ||
+      project?.brochureUrl ||
+      project?.kampanya ||
+      hasProjectMetaObject(project?.projeHakkinda) ||
+      hasProjectMetaObject(project?.iletisim) ||
+      hasProjectMetaObject(project?.ozellikler) ||
+      hasMeaningfulFloorPlans(project?.dairePlanlari)
   );
 
 const inferProjectLocationType = (project) => {
@@ -385,12 +417,16 @@ const resolveProjectLocationType = (project) => {
     return explicitProjectType;
   }
 
+  if (!hasProjectListingSignals(project)) {
+    return null;
+  }
+
   const inferredProjectType = inferProjectLocationType(project);
   if (inferredProjectType) {
     return inferredProjectType;
   }
 
-  return hasProjectListingSignals(project) ? "local-project" : null;
+  return "local-project";
 };
 
 const normalizeProjectType = (value) => {
@@ -445,34 +481,37 @@ const LocalProjects = ({ projectType = "local-project", heroTitle = null }) => {
       const explicitProjectType = normalizeProjectTypeValue(
         p.propertyType || p.projectType || p.category
       );
-      const locationProjectType = resolveProjectLocationType(p);
+      const strictProjectType =
+        explicitProjectType === "local-project" ||
+        explicitProjectType === "international-project"
+          ? explicitProjectType
+          : null;
+      const isStructuredProject =
+        strictProjectType !== null && hasProjectListingSignals(p);
 
       if (isHotOffersMode) {
-        return (
-          locationProjectType === "local-project" ||
-          locationProjectType === "international-project" ||
-          explicitProjectType === "special-offer"
-        );
+        return isStructuredProject || explicitProjectType === "special-offer";
       }
       if (resolvedProjectType === "special-offer") {
-        return (
-          locationProjectType === "local-project" ||
-          locationProjectType === "international-project" ||
-          explicitProjectType === "special-offer"
-        );
+        return explicitProjectType === "special-offer";
       }
-      return locationProjectType === resolvedProjectType;
+      return isStructuredProject && strictProjectType === resolvedProjectType;
     });
 
     return filtered.map((p) => {
       const explicitProjectType = normalizeProjectTypeValue(
         p.propertyType || p.projectType || p.category
       );
-      const locationProjectType = resolveProjectLocationType(p);
+      const strictProjectType =
+        explicitProjectType === "local-project" ||
+        explicitProjectType === "international-project"
+          ? explicitProjectType
+          : null;
+      const locationProjectType = strictProjectType || resolveProjectLocationType(p);
       const displayProjectType =
         explicitProjectType === "special-offer"
           ? "special-offer"
-          : locationProjectType || explicitProjectType || p.propertyType;
+          : strictProjectType || locationProjectType || explicitProjectType || p.propertyType;
       const specialOffers = Array.isArray(p.projeHakkinda?.specialOffers)
         ? p.projeHakkinda.specialOffers.filter((offer) => hasSpecialOfferData(offer))
         : [];
