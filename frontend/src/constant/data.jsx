@@ -9,9 +9,12 @@ import blog3 from "../assets/blog3.jpg";
 import blog4 from "../assets/blog4.jpg";
 
 // icons
-import { FaFacebook, FaInstagram } from "react-icons/fa6";
+import { FaFacebook, FaInstagram, FaYoutube } from "react-icons/fa6";
 
 export const PRIMARY_CONTACT_PHONE = "+90 530 387 10 50";
+export const INSTAGRAM_URL =
+  "https://www.instagram.com/hb_gayrimenkul_international?igsh=MTZ3dTBsN2VpbGZ1NA%3D%3D&utm_source=qr";
+export const YOUTUBE_URL = import.meta.env.VITE_HB_YOUTUBE_URL || "https://www.youtube.com";
 
 // properties data
 export const PROPERTIES = [
@@ -239,7 +242,12 @@ export const SOCIALS = {
     {
       icon: <FaInstagram />,
       id: "instagram",
-      url: "https://www.instagram.com/hb_gayrimenkul_international?igsh=MTZ3dTBsN2VpbGZ1NA%3D%3D&utm_source=qr",
+      url: INSTAGRAM_URL,
+    },
+    {
+      icon: <FaYoutube />,
+      id: "youtube",
+      url: YOUTUBE_URL,
     },
   ],
 };

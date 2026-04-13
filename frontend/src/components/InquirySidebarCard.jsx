@@ -2,10 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import { MdInfoOutline } from "react-icons/md";
+import { FaInstagram, FaYoutube } from "react-icons/fa6";
 import { bilingualKey } from "../utils/bilingualToast";
 import { sendEmail } from "../utils/api";
 import useAuthCheck from "../hooks/useAuthCheck";
 import { useAuth0 } from "@auth0/auth0-react";
+import { INSTAGRAM_URL, YOUTUBE_URL } from "../constant/data";
 import {
   buildCurrentReturnTo,
   consumePostLoginResume,
@@ -151,12 +153,36 @@ const InquirySidebarCard = ({
           </div>
         ) : null}
 
-        <h3 className="text-[28px] font-semibold leading-tight text-slate-900">
-          {t("projectDetail.contactUs")}
-        </h3>
-        <p className="mt-3 text-sm leading-6 text-slate-600">
-          {t("projectDetail.contactDescription")}
-        </p>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h3 className="text-[28px] font-semibold leading-tight text-slate-900">
+              {t("projectDetail.contactUs")}
+            </h3>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              {t("projectDetail.contactDescription")}
+            </p>
+          </div>
+          <div className="flex items-center gap-3 pt-1">
+            <a
+              href={INSTAGRAM_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center justify-center text-pink-600 transition hover:scale-110 hover:text-pink-700"
+              aria-label="Instagram"
+            >
+              <FaInstagram size={24} />
+            </a>
+            <a
+              href={YOUTUBE_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center justify-center text-red-600 transition hover:scale-110 hover:text-red-700"
+              aria-label="YouTube"
+            >
+              <FaYoutube size={24} />
+            </a>
+          </div>
+        </div>
 
         {(propertyTitle || locationLabel) && (
           <div className="mt-5 rounded-2xl border border-white/80 bg-white/90 p-4 shadow-[0_14px_30px_-24px_rgba(255,122,26,0.5)] backdrop-blur">

@@ -29,7 +29,12 @@ import {
   MdChevronRight,
 } from "react-icons/md";
 import { FaKey } from "react-icons/fa";
-import { FaCalendarPlus, FaPhone, FaRegClock, FaWhatsapp } from "react-icons/fa6";
+import {
+  FaCalendarPlus,
+  FaPhone,
+  FaRegClock,
+  FaWhatsapp,
+} from "react-icons/fa6";
 import { 
   BsHouseDoor, 
   BsTree, 
