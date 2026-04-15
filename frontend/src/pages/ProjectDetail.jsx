@@ -2004,18 +2004,6 @@ const ProjectDetail = ({ topSlot = null }) => {
                   </div>
                 </div>
               </section>
-              <div className="mb-8 md:hidden" data-inquiry-sidebar>
-                <InquirySidebarCard
-                  propertyId={project.id}
-                  propertyTitle={project.name}
-                  listingNo={project.ilanNo || propertyData?.listingNo || ""}
-                  locationLabel={[project.city, project.district].filter(Boolean).join(" / ")}
-                  consultantId={project.consultantId || projectConsultant?.id || ""}
-                  subjectPrefix="Project Inquiry"
-                  resumeKey={`project-inquiry-sidebar-${project.id}`}
-                />
-                {renderConsultantCard("mt-6")}
-              </div>
               {/* Nearby Distances */}
               {project.projeHakkinda?.yakinMesafeler && (
                 <div className="mt-4">
@@ -2143,6 +2131,19 @@ const ProjectDetail = ({ topSlot = null }) => {
                 </div>
               </section>
             )}
+
+            <div className="mb-8 md:hidden" data-inquiry-sidebar>
+              <InquirySidebarCard
+                propertyId={project.id}
+                propertyTitle={project.name}
+                listingNo={project.ilanNo || propertyData?.listingNo || ""}
+                locationLabel={[project.city, project.district].filter(Boolean).join(" / ")}
+                consultantId={project.consultantId || projectConsultant?.id || ""}
+                subjectPrefix="Project Inquiry"
+                resumeKey={`project-inquiry-sidebar-${project.id}`}
+              />
+              {renderConsultantCard("mt-6")}
+            </div>
 
           </Grid.Col>
 
