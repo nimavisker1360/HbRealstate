@@ -31,6 +31,7 @@ export const LOCAL_PROJECT_DISTRICT_OPTIONS = {
     "Avcılar",
     "Bağcılar",
     "Bahçelievler",
+    "Bahçeşehir",
     "Bakırköy",
     "Başakşehir",
     "Bayrampaşa",
