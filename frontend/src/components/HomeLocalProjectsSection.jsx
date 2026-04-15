@@ -13,7 +13,12 @@ import { getProjectBadges } from "../utils/projectCardPresentation";
 const PROJECT_FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400&h=300&fit=crop";
 
-const ALLOWED_BADGE_KEYS = new Set(["citizenship", "specialOffer", "investment"]);
+const ALLOWED_BADGE_KEYS = new Set([
+  "recentlyAdded",
+  "citizenship",
+  "specialOffer",
+  "investment",
+]);
 const BADGE_TONE_CLASSES = {
   emerald: "border-emerald-200/80 bg-white/95 text-emerald-700",
   amber: "border-amber-200/80 bg-white/95 text-amber-700",
