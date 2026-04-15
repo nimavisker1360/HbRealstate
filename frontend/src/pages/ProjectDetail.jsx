@@ -451,7 +451,12 @@ const ProjectDetail = ({ topSlot = null }) => {
     setBookingModalOpened(true);
   };
   const scrollToInquirySidebar = () => {
-    const inquirySection = document.querySelector("[data-inquiry-sidebar]");
+    const inquirySections = Array.from(
+      document.querySelectorAll("[data-inquiry-sidebar]")
+    );
+    const inquirySection = inquirySections.find(
+      (section) => section instanceof HTMLElement && section.offsetParent !== null
+    );
     if (inquirySection) {
       inquirySection.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
@@ -920,6 +925,83 @@ const ProjectDetail = ({ topSlot = null }) => {
     sky: "bg-sky-50 text-sky-700 ring-sky-200",
     amber: "bg-amber-50 text-amber-700 ring-amber-200",
     stone: "bg-stone-50 text-stone-600 ring-stone-200",
+  };
+
+  const renderConsultantCard = (wrapperClassName = "mt-6") => {
+    if (!(projectConsultant || project.consultantId)) return null;
+    return (
+      <div className={wrapperClassName}>
+        <Paper
+          shadow="sm"
+          className="overflow-hidden rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_22px_70px_-48px_rgba(15,23,42,0.35)]"
+        >
+          <h3 className="text-lg font-bold text-gray-900 mb-2">
+            {t("projectDetail.consultant")}
+          </h3>
+          <p className="text-sm text-gray-600 mb-4">
+            {t("projectDetail.consultantDescription")}
+          </p>
+
+          {consultantsLoading && !projectConsultant && (
+            <div className="flex items-center justify-center py-6">
+              <Loader size="sm" />
+            </div>
+          )}
+
+          {!consultantsLoading && !projectConsultant && (
+            <p className="text-sm text-gray-500">
+              {t("projectDetail.consultantUnavailable")}
+            </p>
+          )}
+
+          {projectConsultant && (
+            <>
+              <div className="flex items-center gap-4 mb-4">
+                <Avatar
+                  src={projectConsultant.image}
+                  alt={getLocalizedAlt(i18n.language, "consultantPhoto", {
+                    name: projectConsultant.name,
+                  })}
+                  size="lg"
+                  radius="xl"
+                />
+                <div className="flex-1">
+                  <h4 className="font-semibold text-gray-900">
+                    {projectConsultant.name}
+                  </h4>
+                  {consultantTitle && (
+                    <p className="text-sm text-gray-600">
+                      {consultantTitle}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <PhoneLink
+                  phone={projectConsultant.phone}
+                  className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 transition-colors hover:border-green-500 hover:text-green-600"
+                >
+                  <FaPhone className="text-gray-500" />
+                  <span dir="ltr">{projectConsultant.phone}</span>
+                </PhoneLink>
+                {consultantWhatsApp && (
+                  <a
+                    href={`https://wa.me/${consultantWhatsApp}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 rounded-lg bg-[#25D366] px-3 py-2 text-sm font-medium text-white hover:bg-[#20bd5a] transition-colors"
+                  >
+                    <FaWhatsapp />
+                    WhatsApp
+                  </a>
+                )}
+              </div>
+            </>
+          )}
+        </Paper>
+      </div>
+    );
   };
 
   return (
@@ -1922,6 +2004,18 @@ const ProjectDetail = ({ topSlot = null }) => {
                   </div>
                 </div>
               </section>
+              <div className="mb-8 md:hidden" data-inquiry-sidebar>
+                <InquirySidebarCard
+                  propertyId={project.id}
+                  propertyTitle={project.name}
+                  listingNo={project.ilanNo || propertyData?.listingNo || ""}
+                  locationLabel={[project.city, project.district].filter(Boolean).join(" / ")}
+                  consultantId={project.consultantId || projectConsultant?.id || ""}
+                  subjectPrefix="Project Inquiry"
+                  resumeKey={`project-inquiry-sidebar-${project.id}`}
+                />
+                {renderConsultantCard("mt-6")}
+              </div>
               {/* Nearby Distances */}
               {project.projeHakkinda?.yakinMesafeler && (
                 <div className="mt-4">
@@ -2054,7 +2148,7 @@ const ProjectDetail = ({ topSlot = null }) => {
 
           {/* Right Column - Contact Form */}
           <Grid.Col span={{ base: 12, md: 4 }}>
-            <div className="sticky top-24" data-inquiry-sidebar>
+            <div className="sticky top-24 hidden md:block" data-inquiry-sidebar>
               <InquirySidebarCard
                 propertyId={project.id}
                 propertyTitle={project.name}
@@ -2064,79 +2158,8 @@ const ProjectDetail = ({ topSlot = null }) => {
                 subjectPrefix="Project Inquiry"
                 resumeKey={`project-inquiry-sidebar-${project.id}`}
               />
+              {renderConsultantCard("mt-6")}
             </div>
-
-            {(projectConsultant || project.consultantId) && (
-              <Paper
-                shadow="sm"
-                className="mt-6 overflow-hidden rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_22px_70px_-48px_rgba(15,23,42,0.35)]"
-              >
-                <h3 className="text-lg font-bold text-gray-900 mb-2">
-                  {t("projectDetail.consultant")}
-                </h3>
-                <p className="text-sm text-gray-600 mb-4">
-                  {t("projectDetail.consultantDescription")}
-                </p>
-
-                {consultantsLoading && !projectConsultant && (
-                  <div className="flex items-center justify-center py-6">
-                    <Loader size="sm" />
-                  </div>
-                )}
-
-                {!consultantsLoading && !projectConsultant && (
-                  <p className="text-sm text-gray-500">
-                    {t("projectDetail.consultantUnavailable")}
-                  </p>
-                )}
-
-                {projectConsultant && (
-                  <>
-                    <div className="flex items-center gap-4 mb-4">
-                      <Avatar
-                        src={projectConsultant.image}
-                        alt={getLocalizedAlt(i18n.language, "consultantPhoto", {
-                          name: projectConsultant.name,
-                        })}
-                        size="lg"
-                        radius="xl"
-                      />
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-gray-900">
-                          {projectConsultant.name}
-                        </h4>
-                        {consultantTitle && (
-                          <p className="text-sm text-gray-600">
-                            {consultantTitle}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <PhoneLink
-                        phone={projectConsultant.phone}
-                        className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 transition-colors hover:border-green-500 hover:text-green-600"
-                      >
-                        <FaPhone className="text-gray-500" />
-                        <span dir="ltr">{projectConsultant.phone}</span>
-                      </PhoneLink>
-                      {consultantWhatsApp && (
-                        <a
-                          href={`https://wa.me/${consultantWhatsApp}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-center gap-2 rounded-lg bg-[#25D366] px-3 py-2 text-sm font-medium text-white hover:bg-[#20bd5a] transition-colors"
-                        >
-                          <FaWhatsapp />
-                          WhatsApp
-                        </a>
-                      )}
-                    </div>
-                  </>
-                )}
-              </Paper>
-            )}
           </Grid.Col>
         </Grid>
       </Container>
