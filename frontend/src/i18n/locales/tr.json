@@ -842,6 +842,7 @@
     "sectionStatBody": "Baz\u0131 fiyatlar merak uyand\u0131rmak, niyeti filtrelemek ve dan\u0131\u015fman g\u00f6r\u00fc\u015fmesini tetiklemek i\u00e7in bilin\u00e7li olarak yumu\u015fat\u0131l\u0131r.",
     "sectionLiveBadge": "Canl\u0131",
     "badges": {
+      "recentlyAdded": "Yeni Eklendi",
       "specialOffer": "\u00d6zel F\u0131rsat",
       "citizenship": "Vatanda\u015fl\u0131\u011fa Uygun",
       "primeLocation": "Prestijli Lokasyon",

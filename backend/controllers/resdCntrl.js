@@ -72,6 +72,16 @@ const normalizePublishedState = (value) => {
   return value !== false;
 };
 
+const normalizeBooleanState = (value, fallback = false) => {
+  if (value === undefined || value === null) return fallback;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (["true", "1", "yes", "on"].includes(normalized)) return true;
+    if (["false", "0", "no", "off"].includes(normalized)) return false;
+  }
+  return Boolean(value);
+};
+
 const PUBLIC_RESIDENCY_FILTER = {
   published: { $ne: false },
 };
@@ -140,6 +150,7 @@ export const createResidency = asyncHandler(async (req, res) => {
     projectStatus,
     listingStatus,
     published,
+    recentlyAdded,
     gyo,
     // Project-specific features (Özellikler tabs)
     binaOzellikleri,
@@ -243,6 +254,7 @@ export const createResidency = asyncHandler(async (req, res) => {
       projectStatus: projectStatus || "devam-ediyor",
       listingStatus: normalizeListingStatus(listingStatus, projectStatus),
       published: normalizePublishedState(published),
+      recentlyAdded: normalizeBooleanState(recentlyAdded, false),
       gyo: Boolean(gyo),
       // Project-specific features (Özellikler tabs)
       binaOzellikleri: binaOzellikleri || [],
@@ -474,6 +486,7 @@ export const updateResidency = asyncHandler(async (req, res) => {
     projectStatus,
     listingStatus,
     published,
+    recentlyAdded,
     gyo,
     // Project-specific features (Özellikler tabs)
     binaOzellikleri,
@@ -561,6 +574,9 @@ export const updateResidency = asyncHandler(async (req, res) => {
       projectStatus: projectStatus || "devam-ediyor",
       listingStatus: normalizeListingStatus(listingStatus, projectStatus),
       published: normalizePublishedState(published),
+      ...(recentlyAdded !== undefined
+        ? { recentlyAdded: normalizeBooleanState(recentlyAdded) }
+        : {}),
       gyo: Boolean(gyo),
       // Project-specific features (Özellikler tabs)
       binaOzellikleri: binaOzellikleri || [],

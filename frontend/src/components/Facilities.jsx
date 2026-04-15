@@ -1,5 +1,5 @@
 import { useAuth0 } from "@auth0/auth0-react";
-import { Box, Button, Group, NumberInput } from "@mantine/core";
+import { Box, Button, Group, NumberInput, Switch } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useContext } from "react";
 import UserDetailContext from "../context/UserDetailContext";
@@ -32,16 +32,18 @@ const Facilities = ({
       bedrooms: propertyDetails.facilities.bedrooms,
       parkings: propertyDetails.facilities.parkings,
       bathrooms: propertyDetails.facilities.bathrooms,
+      recentlyAdded: Boolean(propertyDetails.recentlyAdded),
     },
     // All fields are optional - no validation required
   });
-  const { bedrooms, parkings, bathrooms } = form.values;
+  const { bedrooms, parkings, bathrooms, recentlyAdded } = form.values;
 
   const handleSubmit = () => {
     // All fields are optional, submit directly
     setPropertyDetails((prev) => ({
       ...prev,
       facilities: { bedrooms, parkings, bathrooms },
+      recentlyAdded,
     }));
     mutate();
   };
@@ -60,6 +62,7 @@ const Facilities = ({
         {
           ...propertyDetails,
           facilities: { bedrooms, parkings, bathrooms },
+          recentlyAdded,
         },
         token,
         user?.email // Pass userEmail obtained from Auth0
@@ -135,6 +138,7 @@ const Facilities = ({
         vaziyetPlani: "",
         iletisim: null,
         ozellikler: null,
+        recentlyAdded: false,
         gyo: false,
       });
 
@@ -173,6 +177,15 @@ const Facilities = ({
           label="Otopark Sayısı"
           min={0}
           {...form.getInputProps("parkings")}
+        />
+        <Switch
+          mt="md"
+          label="Recently Added"
+          description="Aktif olduÄŸunda kart Ã¼zerinde 'Recently Added' etiketi gÃ¶sterilir."
+          checked={recentlyAdded}
+          onChange={(event) =>
+            form.setFieldValue("recentlyAdded", event.currentTarget.checked)
+          }
         />
 
         <Group position="center" mt="xl">

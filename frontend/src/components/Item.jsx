@@ -69,9 +69,12 @@ const formatDate = (dateString) => {
 
 const Item = ({ property }) => {
   const navigate = useNavigate();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { selectedCurrency, baseCurrency, rates, convertAmount, formatMoney } =
     useContext(CurrencyContext);
+  const isRecentlyAdded =
+    property?.recentlyAdded === true ||
+    String(property?.recentlyAdded || "").trim().toLowerCase() === "true";
   const isForSale = property.propertyType === "sale" || !property.propertyType;
   const sourceCurrency = property.currency || baseCurrency;
   const displayCurrency =
@@ -108,11 +111,18 @@ const Item = ({ property }) => {
           className="rounded-xl"
         />
         {/* Category Badge */}
-        <div className="absolute top-4 left-4">
+        <div className="absolute top-4 left-4 flex flex-col items-start gap-1.5">
           <span className="flexCenter gap-x-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-500 text-white">
             <MdSell size={14} />
             {getCategoryLabel(property.category, property.propertyType, i18n.language)}
           </span>
+          {isRecentlyAdded && (
+            <span className="rounded-full bg-amber-500 px-3 py-1 text-[11px] font-semibold text-white">
+              {t("localProjects.badges.recentlyAdded", {
+                defaultValue: "Recently Added",
+              })}
+            </span>
+          )}
         </div>
         {/* like btn */}
         <div className="absolute top-4 right-6">
@@ -158,6 +168,7 @@ Item.propTypes = {
     price: PropTypes.number,
     currency: PropTypes.string,
     propertyType: PropTypes.string,
+    recentlyAdded: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
     updatedAt: PropTypes.string,
     createdAt: PropTypes.string,
     facilities: PropTypes.shape({

@@ -121,9 +121,19 @@ const hasTitleDeedReady = (property) => {
 
 const hasSpecialOffer = (property) => Boolean(property?.hasSpecialOffer || property?.offBadge);
 
+const isMarkedRecentlyAdded = (property) => {
+  if (typeof property?.recentlyAdded === "string") {
+    return property.recentlyAdded.trim().toLowerCase() === "true";
+  }
+  return property?.recentlyAdded === true;
+};
+
 const buildBadges = (property) => {
   const signals = getPropertySignals(property);
   const badges = [
+    isMarkedRecentlyAdded(property)
+      ? { key: "recentlyAdded", tone: "amber" }
+      : null,
     hasSpecialOffer(property)
       ? { key: "specialOffer", tone: "rose" }
       : null,
@@ -282,6 +292,7 @@ PropertyGridCard.propTypes = {
     country: PropTypes.string,
     propertyType: PropTypes.string,
     category: PropTypes.string,
+    recentlyAdded: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
     addressDetails: PropTypes.shape({
       city: PropTypes.string,
       country: PropTypes.string,

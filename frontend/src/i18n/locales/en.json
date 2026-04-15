@@ -844,6 +844,7 @@
     "sectionStatBody": "Some prices are intentionally softened to create curiosity, qualify intent, and drive advisor conversations.",
     "sectionLiveBadge": "Live",
     "badges": {
+      "recentlyAdded": "Recently Added",
       "specialOffer": "Special Offer",
       "citizenship": "Citizenship Eligible",
       "primeLocation": "Prime Location",

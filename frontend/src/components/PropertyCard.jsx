@@ -47,7 +47,10 @@ const getCategoryLabel = (category, propertyType, lang = "tr") => {
 
 const PropertyCard = ({ property, onCardClick }) => {
   const navigate = useNavigate();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isRecentlyAdded =
+    property?.recentlyAdded === true ||
+    String(property?.recentlyAdded || "").trim().toLowerCase() === "true";
 
   const getPropertyRoute = (targetProperty) =>
     targetProperty?.propertyType === "local-project" ||
@@ -108,11 +111,18 @@ const PropertyCard = ({ property, onCardClick }) => {
             </div>
           )}
           {/* Category Badge */}
-          <div className="absolute top-3 left-3">
+          <div className="absolute top-3 left-3 flex flex-col items-start gap-1.5">
             <span className="flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold bg-green-500 text-white">
               <MdSell size={12} />
               {getCategoryLabel(property.category, property.propertyType, i18n.language)}
             </span>
+            {isRecentlyAdded && (
+              <span className="flex items-center gap-1 rounded bg-amber-500/95 px-2 py-1 text-[11px] font-semibold text-white">
+                {t("localProjects.badges.recentlyAdded", {
+                  defaultValue: "Recently Added",
+                })}
+              </span>
+            )}
           </div>
         </div>
 
@@ -181,6 +191,7 @@ PropertyCard.propTypes = {
     currency: PropTypes.string,
     propertyType: PropTypes.string,
     offBadge: PropTypes.bool,
+    recentlyAdded: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
     facilities: PropTypes.shape({
       bedrooms: PropTypes.number,
       bathrooms: PropTypes.number,

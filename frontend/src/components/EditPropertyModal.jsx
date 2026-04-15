@@ -678,6 +678,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
   const [projectStatus, setProjectStatus] = useState("devam-ediyor");
   const [listingStatus, setListingStatus] = useState("offplan");
   const [isDraft, setIsDraft] = useState(false);
+  const [isRecentlyAdded, setIsRecentlyAdded] = useState(false);
   const [gyo, setGyo] = useState(false);
   const [brochureUrl, setBrochureUrl] = useState("");
   const [mapImage, setMapImage] = useState("");
@@ -924,6 +925,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
             : listingStatusFromProjectStatus(property.projectStatus) || "offplan")
       );
       setIsDraft(property.published === false);
+      setIsRecentlyAdded(Boolean(property.recentlyAdded));
       setGyo(Boolean(property.gyo));
       setBrochureUrl(property.brochureUrl || "");
       setMapImage(property.mapImage || "");
@@ -1499,6 +1501,7 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
       projectStatus: isProjectType ? projectStatus : "",
       listingStatus: normalizedListingStatus,
       published: !isDraft,
+      recentlyAdded: isRecentlyAdded,
       gyo: isProjectType ? gyo : false,
       brochureUrl: isProjectType ? brochureUrl : "",
       mapImage: isProjectType ? mapImage : "",
@@ -3279,6 +3282,13 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
             description="Aciksa bu kayit ana sayfa ve genel listelerde gosterilmez."
             checked={isDraft}
             onChange={(event) => setIsDraft(event.currentTarget.checked)}
+          />
+          <Switch
+            mt="sm"
+            label="Recently Added"
+            description="Aktif olduÄŸunda kart Ã¼zerinde 'Recently Added' etiketi gÃ¶sterilir."
+            checked={isRecentlyAdded}
+            onChange={(event) => setIsRecentlyAdded(event.currentTarget.checked)}
           />
         </div>
         <Group justify="flex-end" mt="xl">

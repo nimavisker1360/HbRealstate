@@ -1233,6 +1233,7 @@ const AdminPanel = () => {
     brochureUrl: "",
     iletisim: null,
     ozellikler: null,
+    recentlyAdded: false,
     gyo: false,
   });
 
@@ -2196,6 +2197,7 @@ const AdminPanel = () => {
       brochureUrl: "",
       iletisim: null,
       ozellikler: null,
+      recentlyAdded: false,
       gyo: false,
     });
     setActive(0);
@@ -2507,6 +2509,7 @@ const AdminPanel = () => {
                       <Table.Th>Fiyat</Table.Th>
                       <Table.Th>Tür</Table.Th>
                       <Table.Th>Consultant</Table.Th>
+                      <Table.Th>Recently Added</Table.Th>
                       <Table.Th>Durum</Table.Th>
                       <Table.Th>İşlemler</Table.Th>
                     </Table.Tr>
@@ -2665,6 +2668,15 @@ const AdminPanel = () => {
                         </Table.Td>
                         <Table.Td>
                           <Badge
+                            color={property.recentlyAdded ? "blue" : "gray"}
+                            variant="light"
+                            size="sm"
+                          >
+                            {property.recentlyAdded ? "Yes" : "No"}
+                          </Badge>
+                        </Table.Td>
+                        <Table.Td>
+                          <Badge
                             color={property.published ? "green" : "gray"}
                             variant="light"
                             size="sm"
@@ -2751,6 +2763,9 @@ const AdminPanel = () => {
                     </Text>
                     <Text size="sm" color="dimmed">
                       Draft: {properties.filter((p) => !p.published).length}
+                    </Text>
+                    <Text size="sm" color="dimmed">
+                      Recently Added: {properties.filter((p) => p.recentlyAdded).length}
                     </Text>
                   </div>
                 </div>

@@ -107,6 +107,13 @@ const getListingCategoryLabel = (category, propertyType, lang = "tr") => {
 const HOME_LISTING_FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1502005097973-6a7082348e28?w=400&h=300&fit=crop";
 
+const isMarkedRecentlyAdded = (property) => {
+  if (typeof property?.recentlyAdded === "string") {
+    return property.recentlyAdded.trim().toLowerCase() === "true";
+  }
+  return property?.recentlyAdded === true;
+};
+
 const HomeListingCard = ({ property }) => {
   const { t, i18n } = useTranslation();
   const { baseCurrency, convertAmount } = useContext(CurrencyContext);
@@ -148,13 +155,15 @@ const HomeListingCard = ({ property }) => {
     defaultCurrency: baseCurrency,
   });
   const premiumEligible = priceInTry >= HOME_LISTING_PRICE_THRESHOLD_TRY;
+  const recentlyAdded = isMarkedRecentlyAdded(property);
   const showOfferRibbon = Boolean(property?.offBadge || property?.hasSpecialOffer);
-  const badges = premiumEligible
-    ? [
-        { key: "citizenship", tone: "emerald" },
-        { key: "investment", tone: "sky" },
-      ]
-    : [];
+  const badges = [
+    recentlyAdded ? { key: "recentlyAdded", tone: "amber" } : null,
+    premiumEligible ? { key: "citizenship", tone: "emerald" } : null,
+    premiumEligible ? { key: "investment", tone: "sky" } : null,
+  ]
+    .filter(Boolean)
+    .slice(0, 2);
 
   return (
     <article
@@ -247,6 +256,7 @@ HomeListingCard.propTypes = {
     category: PropTypes.string,
     currency: PropTypes.string,
     price: PropTypes.number,
+    recentlyAdded: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
     addressDetails: PropTypes.shape({
       city: PropTypes.string,
       country: PropTypes.string,

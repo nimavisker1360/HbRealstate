@@ -244,6 +244,13 @@ const isInvestmentProject = (
   getPropertyIntents(project).includes("investment") ||
   isHighValueOpportunityProject(project, { convertAmount, defaultCurrency });
 
+const isMarkedRecentlyAdded = (project) => {
+  if (typeof project?.recentlyAdded === "string") {
+    return project.recentlyAdded.trim().toLowerCase() === "true";
+  }
+  return project?.recentlyAdded === true;
+};
+
 const getBadgeCandidates = (project, options = {}) => {
   const citizenshipOpportunity = isCitizenshipOpportunityProject(project, options);
   const investmentOpportunity = isInvestmentProject(project, options);
@@ -251,6 +258,9 @@ const getBadgeCandidates = (project, options = {}) => {
   const hasOffer = Boolean(project?.hasSpecialOffer);
 
   const candidates = [
+    isMarkedRecentlyAdded(project)
+      ? { key: "recentlyAdded", priority: 104, tone: "amber" }
+      : null,
     hasOffer
       ? { key: "specialOffer", priority: 100, tone: "rose" }
       : null,

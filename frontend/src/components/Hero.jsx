@@ -546,7 +546,7 @@ const Hero = () => {
           <button
             type="button"
             onClick={handleDownloadClick}
-            className="hero-download-button pointer-events-auto inline-flex h-[54px] min-w-[230px] items-center justify-center rounded-[10px] border border-[#7e1716] px-8 text-[16px] font-extrabold uppercase tracking-[0.04em] text-white transition hover:bg-[#8e1d1a] animate-hero-fade"
+            className="hero-download-button pointer-events-auto inline-flex h-[44px] min-w-[170px] items-center justify-center rounded-[10px] border border-[#7e1716] px-5 text-[13px] font-extrabold uppercase tracking-[0.03em] text-white transition hover:bg-[#8e1d1a] animate-hero-fade sm:h-[54px] sm:min-w-[230px] sm:px-8 sm:text-[16px] sm:tracking-[0.04em]"
           >
             {t("hero.downloadNow", { defaultValue: "Download Now" })}
           </button>
@@ -558,7 +558,7 @@ const Hero = () => {
           <Link
             to="/services"
             aria-label="Open services page"
-            className="hero-services-button pointer-events-auto inline-flex min-h-[56px] items-center justify-center rounded-[10px] px-6 py-3 text-[15px] font-extrabold text-white transition duration-300 hover:-translate-y-0.5 hover:brightness-110 sm:min-h-[60px] sm:px-8 sm:text-[18px]"
+            className="hero-services-button pointer-events-auto inline-flex min-h-[44px] items-center justify-center rounded-[10px] px-4 py-2 text-[13px] font-extrabold text-white transition duration-300 hover:-translate-y-0.5 hover:brightness-110 sm:min-h-[60px] sm:px-8 sm:py-3 sm:text-[18px]"
           >
             <span className="hero-services-button__label">
               {HERO_SERVICES_CTA_LABEL}
@@ -572,12 +572,12 @@ const Hero = () => {
           <button
             type="button"
             onClick={handlePreviousSlide}
-            className="pointer-events-auto inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/30 bg-black/25 text-white backdrop-blur-sm transition hover:bg-black/40"
+            className="pointer-events-auto inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/30 bg-black/25 text-white backdrop-blur-sm transition hover:bg-black/40 sm:h-11 sm:w-11"
             aria-label="Previous slide"
           >
             <svg
               viewBox="0 0 24 24"
-              className="h-6 w-6"
+              className="h-5 w-5 sm:h-6 sm:w-6"
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
@@ -591,12 +591,12 @@ const Hero = () => {
           <button
             type="button"
             onClick={handleNextSlide}
-            className="pointer-events-auto inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/30 bg-black/25 text-white backdrop-blur-sm transition hover:bg-black/40"
+            className="pointer-events-auto inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/30 bg-black/25 text-white backdrop-blur-sm transition hover:bg-black/40 sm:h-11 sm:w-11"
             aria-label="Next slide"
           >
             <svg
               viewBox="0 0 24 24"
-              className="h-6 w-6"
+              className="h-5 w-5 sm:h-6 sm:w-6"
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
