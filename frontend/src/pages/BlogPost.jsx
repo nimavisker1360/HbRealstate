@@ -24,7 +24,6 @@ import {
   pickRelatedBlogs,
   pickRelatedGuides,
   pickRelatedProjects,
-  pickRelatedProperties,
   toCategoryPath,
 } from "../utils/contentGraph";
 import { fixMojibake } from "../utils/text";
@@ -434,11 +433,6 @@ const BlogPost = () => {
     content: localizedContent,
   };
   const blogContext = buildContentContext(localizedBlogContextSource);
-  const relatedProperties = pickRelatedProperties({
-    properties,
-    context: blogContext,
-    limit: 4,
-  });
   const relatedProjects = pickRelatedProjects({
     properties,
     context: blogContext,
@@ -1005,25 +999,24 @@ const BlogPost = () => {
               </div>
             </div>
 
-            {!isStatsBlog && (
-              <>
-                <FaqSection title={uiText.faq} items={localizedFaq} />
+            {!isStatsBlog && <FaqSection title={uiText.faq} items={localizedFaq} />}
 
+          </div>
+        </article>
+        <BlogContactForm
+          contextTitle={getLocalizedContent("title")}
+          className="mt-4"
+          fullWidth={!isStatsBlog}
+        />
+            </div>
+            {!isStatsBlog && (
+              <div className="order-3 mt-12 w-full lg:col-span-2">
                 <RelatedContentSection
                   title="Suggested Next Reads"
                   titleKey="relatedContent.blogPost.suggestedNextReadsTitle"
                   description="Editorial suggestions resolved into live internal links."
                   descriptionKey="relatedContent.blogPost.suggestedNextReadsDescription"
                   items={manualSuggestedLinks}
-                />
-
-                <RelatedContentSection
-                  title="Related Properties"
-                  titleKey="relatedContent.blogPost.relatedPropertiesTitle"
-                  description="Commercial listings connected to this article by market, topic, and buyer intent."
-                  descriptionKey="relatedContent.blogPost.relatedPropertiesDescription"
-                  items={relatedProperties}
-                  type="property"
                 />
 
                 <RelatedContentSection
@@ -1059,17 +1052,8 @@ const BlogPost = () => {
                   primaryAction={ctaBlock.primaryAction}
                   secondaryAction={ctaBlock.secondaryAction}
                 />
-              </>
+              </div>
             )}
-
-          </div>
-        </article>
-        <BlogContactForm
-          contextTitle={getLocalizedContent("title")}
-          className="mt-4"
-          fullWidth={!isStatsBlog}
-        />
-            </div>
           </div>
         </div>
       </div>
