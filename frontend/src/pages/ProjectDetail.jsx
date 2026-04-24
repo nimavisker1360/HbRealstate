@@ -37,11 +37,9 @@ import {
 } from "react-icons/fa6";
 import { 
   BsHouseDoor, 
+  BsGrid,
   BsTree, 
-  BsPeople, 
-  BsCart4, 
   BsShieldCheck, 
-  BsEye, 
   BsGeoAlt 
 } from "react-icons/bs";
 import { useAuth0 } from "@auth0/auth0-react";
@@ -84,62 +82,17 @@ const ALL_BINA_OZELLIKLERI = [
   "Akıllı Ev",
   "Alarm (Yangın)",
   "Intercom Sistemi",
-  "Kablo TV",
   "Jeneratör",
-  "Ses Yalıtımı",
-  "Su Deposu",
 ];
 
 // All possible Dış Özellikler (Exterior Features)
 const ALL_DIS_OZELLIKLER = [
-  "Bahçe",
-  "Buhar Odası",
   "Sauna",
   "Türk Hamamı",
   "SPA",
   "Otopark",
   "Havuz",
   "Çocuk Parkı",
-  "Spor Alanı",
-  "Peyzaj",
-];
-
-// All possible Engelli/Yaşlıya Uygun (Accessibility Features)
-const ALL_ENGELLI_UYGUN = [
-  "Engelli Asansörü",
-  "Engelli Rampası",
-  "Engelli WC",
-  "Yaşlı Dostu Tasarım",
-  "Görme Engelli Yardımcıları",
-];
-
-// All possible Eğlence & Alışveriş (Entertainment/Shopping)
-const ALL_EGLENCE_ALISVERIS = [
-  "AVM",
-  "Restoran",
-  "Cafe",
-  "Sinema",
-  "Fitness Salonu",
-  "Çocuk Kulübü",
-];
-
-// All possible Güvenlik (Security Features)
-const ALL_GUVENLIK = [
-  "24 Saat Güvenlik",
-  "Güvenlik Kamerası",
-  "Kartlı Giriş Sistemi",
-  "Yangın Merdiveni",
-  "Yangın Söndürme Sistemi",
-];
-
-// All possible Manzara (View Features)
-const ALL_MANZARA = [
-  "Şehir Manzarası",
-  "Deniz Manzarası",
-  "Göl Manzarası",
-  "Orman Manzarası",
-  "Havuz Manzarası",
-  "Bahçe Manzarası",
 ];
 
 // All possible Muhit (Neighborhood Features)
@@ -425,7 +378,8 @@ const ProjectDetail = ({ topSlot = null }) => {
   };
   
   const [activeTab, setActiveTab] = useState("all");
-  const [featuresTab, setFeaturesTab] = useState("binaOzellikleri");
+  const [featuresTab, setFeaturesTab] = useState("siteOzellikleri");
+  const [siteFeaturesTab, setSiteFeaturesTab] = useState("binaOzellikleri");
   const [selectedImage, setSelectedImage] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [floorPlanModal, setFloorPlanModal] = useState({ open: false, plan: null });
@@ -1768,69 +1722,14 @@ const ProjectDetail = ({ topSlot = null }) => {
                 <div className="flex items-center gap-1 mb-4 overflow-x-auto pb-2 border-b">
                   <button
                     className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
-                      featuresTab === "binaOzellikleri"
+                      featuresTab === "siteOzellikleri"
                         ? "border-b-2 border-gray-900 text-gray-900"
                         : "text-gray-500 hover:text-gray-700"
                     }`}
-                    onClick={() => setFeaturesTab("binaOzellikleri")}
+                    onClick={() => setFeaturesTab("siteOzellikleri")}
                   >
-                    <BsHouseDoor />
-                    {t("projectDetail.buildingFeatures")}
-                  </button>
-                  <button
-                    className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
-                      featuresTab === "disOzellikler"
-                        ? "border-b-2 border-gray-900 text-gray-900"
-                        : "text-gray-500 hover:text-gray-700"
-                    }`}
-                    onClick={() => setFeaturesTab("disOzellikler")}
-                  >
-                    <BsTree />
-                    {t("projectDetail.exteriorFeatures")}
-                  </button>
-                  <button
-                    className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
-                      featuresTab === "engelliUygun"
-                        ? "border-b-2 border-gray-900 text-gray-900"
-                        : "text-gray-500 hover:text-gray-700"
-                    }`}
-                    onClick={() => setFeaturesTab("engelliUygun")}
-                  >
-                    <BsPeople />
-                    {t("projectDetail.accessibility")}
-                  </button>
-                  <button
-                    className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
-                      featuresTab === "eglenceAlisveris"
-                        ? "border-b-2 border-gray-900 text-gray-900"
-                        : "text-gray-500 hover:text-gray-700"
-                    }`}
-                    onClick={() => setFeaturesTab("eglenceAlisveris")}
-                  >
-                    <BsCart4 />
-                    {t("projectDetail.entertainment")}
-                  </button>
-                  <button
-                    className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
-                      featuresTab === "guvenlik"
-                        ? "border-b-2 border-gray-900 text-gray-900"
-                        : "text-gray-500 hover:text-gray-700"
-                    }`}
-                    onClick={() => setFeaturesTab("guvenlik")}
-                  >
-                    <BsShieldCheck />
-                    {t("projectDetail.security")}
-                  </button>
-                  <button
-                    className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
-                      featuresTab === "manzara"
-                        ? "border-b-2 border-gray-900 text-gray-900"
-                        : "text-gray-500 hover:text-gray-700"
-                    }`}
-                    onClick={() => setFeaturesTab("manzara")}
-                  >
-                    <BsEye />
-                    {t("projectDetail.view")}
+                    <BsGrid />
+                    {t("projectDetail.siteFeatures")}
                   </button>
                   <button
                     className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
@@ -1847,9 +1746,35 @@ const ProjectDetail = ({ topSlot = null }) => {
 
                 {/* Features Grid - Show all possible features with check/uncheck */}
                 <div className="p-5 bg-white border border-gray-100 rounded-xl">
+                  {featuresTab === "siteOzellikleri" && (
+                    <div className="flex items-center gap-2 mb-5 overflow-x-auto pb-1">
+                      <button
+                        className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap rounded-full border transition-colors ${
+                          siteFeaturesTab === "binaOzellikleri"
+                            ? "border-gray-900 bg-gray-900 text-white"
+                            : "border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-800"
+                        }`}
+                        onClick={() => setSiteFeaturesTab("binaOzellikleri")}
+                      >
+                        <BsHouseDoor />
+                        {t("projectDetail.buildingFeatures")}
+                      </button>
+                      <button
+                        className={`flex items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap rounded-full border transition-colors ${
+                          siteFeaturesTab === "disOzellikler"
+                            ? "border-gray-900 bg-gray-900 text-white"
+                            : "border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-800"
+                        }`}
+                        onClick={() => setSiteFeaturesTab("disOzellikler")}
+                      >
+                        <BsTree />
+                        {t("projectDetail.exteriorFeatures")}
+                      </button>
+                    </div>
+                  )}
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                     {/* Bina Özellikleri */}
-                    {featuresTab === "binaOzellikleri" && ALL_BINA_OZELLIKLERI.map((feature, index) => {
+                    {featuresTab === "siteOzellikleri" && siteFeaturesTab === "binaOzellikleri" && ALL_BINA_OZELLIKLERI.map((feature, index) => {
                       const hasFeature = project.ozellikler?.binaOzellikleri?.some(f => 
                         f === feature || f.includes(feature) || feature.includes(f.split(" / ")[0])
                       );
@@ -1871,96 +1796,8 @@ const ProjectDetail = ({ topSlot = null }) => {
                     })}
 
                     {/* Dış Özellikler */}
-                    {featuresTab === "disOzellikler" && ALL_DIS_OZELLIKLER.map((feature, index) => {
+                    {featuresTab === "siteOzellikleri" && siteFeaturesTab === "disOzellikler" && ALL_DIS_OZELLIKLER.map((feature, index) => {
                       const hasFeature = project.ozellikler?.disOzellikler?.some(f => 
-                        f === feature || f.includes(feature) || feature.includes(f.split(" / ")[0])
-                      );
-                      return (
-                        <div
-                          key={index}
-                          className={`flex items-center gap-2 text-sm ${!hasFeature ? "opacity-50" : ""}`}
-                        >
-                          {hasFeature ? (
-                            <MdCheck className="text-green-500 flex-shrink-0" size={18} />
-                          ) : (
-                            <MdClose className="text-red-400 flex-shrink-0" size={18} />
-                          )}
-                          <span className={hasFeature ? "text-gray-700 font-medium" : "text-gray-400"}>
-                            {getTranslatedFeature(feature, i18n.language)}
-                          </span>
-                        </div>
-                      );
-                    })}
-
-                    {/* Engelli/Yaşlıya Uygun */}
-                    {featuresTab === "engelliUygun" && ALL_ENGELLI_UYGUN.map((feature, index) => {
-                      const hasFeature = project.ozellikler?.engelliUygun?.some(f => 
-                        f === feature || f.includes(feature) || feature.includes(f.split(" / ")[0])
-                      );
-                      return (
-                        <div
-                          key={index}
-                          className={`flex items-center gap-2 text-sm ${!hasFeature ? "opacity-50" : ""}`}
-                        >
-                          {hasFeature ? (
-                            <MdCheck className="text-green-500 flex-shrink-0" size={18} />
-                          ) : (
-                            <MdClose className="text-red-400 flex-shrink-0" size={18} />
-                          )}
-                          <span className={hasFeature ? "text-gray-700 font-medium" : "text-gray-400"}>
-                            {getTranslatedFeature(feature, i18n.language)}
-                          </span>
-                        </div>
-                      );
-                    })}
-
-                    {/* Eğlence & Alışveriş */}
-                    {featuresTab === "eglenceAlisveris" && ALL_EGLENCE_ALISVERIS.map((feature, index) => {
-                      const hasFeature = project.ozellikler?.eglenceAlisveris?.some(f => 
-                        f === feature || f.includes(feature) || feature.includes(f.split(" / ")[0])
-                      );
-                      return (
-                        <div
-                          key={index}
-                          className={`flex items-center gap-2 text-sm ${!hasFeature ? "opacity-50" : ""}`}
-                        >
-                          {hasFeature ? (
-                            <MdCheck className="text-green-500 flex-shrink-0" size={18} />
-                          ) : (
-                            <MdClose className="text-red-400 flex-shrink-0" size={18} />
-                          )}
-                          <span className={hasFeature ? "text-gray-700 font-medium" : "text-gray-400"}>
-                            {getTranslatedFeature(feature, i18n.language)}
-                          </span>
-                        </div>
-                      );
-                    })}
-
-                    {/* Güvenlik */}
-                    {featuresTab === "guvenlik" && ALL_GUVENLIK.map((feature, index) => {
-                      const hasFeature = project.ozellikler?.guvenlik?.some(f => 
-                        f === feature || f.includes(feature) || feature.includes(f.split(" / ")[0])
-                      );
-                      return (
-                        <div
-                          key={index}
-                          className={`flex items-center gap-2 text-sm ${!hasFeature ? "opacity-50" : ""}`}
-                        >
-                          {hasFeature ? (
-                            <MdCheck className="text-green-500 flex-shrink-0" size={18} />
-                          ) : (
-                            <MdClose className="text-red-400 flex-shrink-0" size={18} />
-                          )}
-                          <span className={hasFeature ? "text-gray-700 font-medium" : "text-gray-400"}>
-                            {getTranslatedFeature(feature, i18n.language)}
-                          </span>
-                        </div>
-                      );
-                    })}
-
-                    {/* Manzara */}
-                    {featuresTab === "manzara" && ALL_MANZARA.map((feature, index) => {
-                      const hasFeature = project.ozellikler?.manzara?.some(f => 
                         f === feature || f.includes(feature) || feature.includes(f.split(" / ")[0])
                       );
                       return (

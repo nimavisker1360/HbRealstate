@@ -30,8 +30,7 @@ import {
   MdLocationOn,
   MdPerson,
 } from "react-icons/md";
-import { BsBuilding, BsGrid, BsShield, BsTree, BsEye, BsPeople } from "react-icons/bs";
-import { FaWheelchair, FaShoppingCart } from "react-icons/fa";
+import { BsBuilding, BsGrid, BsTree, BsPeople } from "react-icons/bs";
 import useConsultants from "../hooks/useConsultants";
 import CurrencyContext from "../context/CurrencyContext";
 import { pickAndUploadImages } from "../utils/blobUpload";
@@ -48,15 +47,10 @@ const BINA_OZELLIKLERI = [
   "Akıllı Ev",
   "Alarm (Yangın)",
   "Intercom Sistemi",
-  "Kablo TV",
   "Jeneratör",
-  "Ses Yalıtımı",
-  "Su Deposu",
 ];
 
 const DIS_OZELLIKLER = [
-  "Bahçe / Garden",
-  "Buhar Odası / Steam Room",
   "Sauna",
   "Türk Hamamı / Turkish Bath",
   "SPA",
@@ -64,44 +58,8 @@ const DIS_OZELLIKLER = [
   "Havuz / Pool",
   "Gym",
   "Çocuk Parkı / Children's Playground",
-  "Spor Alanı / Sports Area",
   "Basketbol Sahası / Basketball Court",
   "Futbol Sahası / Football Court",
-  "Peyzaj / Landscaping",
-];
-
-const ENGELLI_YASLI_UYGUN = [
-  "Engelli Asansörü",
-  "Engelli Rampası",
-  "Engelli WC",
-  "Yaşlı Dostu Tasarım",
-  "Görme Engelli Yardımcıları",
-];
-
-const EGLENCE_ALISVERIS = [
-  "AVM / Shopping Mall",
-  "Restoran / Restaurant",
-  "Cafe",
-  "Sinema / Cinema",
-  "Fitness Salonu / Gym",
-  "Çocuk Kulübü / Kids Club",
-];
-
-const GUVENLIK = [
-  "24 Saat Güvenlik",
-  "Güvenlik Kamerası",
-  "Kartlı Giriş Sistemi",
-  "Yangın Merdiveni",
-  "Yangın Söndürme Sistemi",
-];
-
-const MANZARA = [
-  "Şehir Manzarası",
-  "Deniz Manzarası",
-  "Göl Manzarası",
-  "Orman Manzarası",
-  "Havuz Manzarası",
-  "Bahçe Manzarası",
 ];
 
 const MUHIT = [
@@ -1439,149 +1397,67 @@ const ProjectDetails = ({
               <Text fw={700} size="lg">Özellikler</Text>
             </div>
 
-            <Tabs defaultValue="bina" variant="outline">
+            <Tabs defaultValue="site" variant="outline">
               <Tabs.List>
-                <Tabs.Tab value="bina" leftSection={<BsBuilding size={14} />}>
-                  Bina Özellikleri
-                </Tabs.Tab>
-                <Tabs.Tab value="dis" leftSection={<BsTree size={14} />}>
-                  Dış Özellikler
-                </Tabs.Tab>
-                <Tabs.Tab value="engelli" leftSection={<FaWheelchair size={14} />}>
-                  Engelliye ve Yaşlıya Uygun
-                </Tabs.Tab>
-                <Tabs.Tab value="eglence" leftSection={<FaShoppingCart size={14} />}>
-                  Eğlence & Alışveriş
-                </Tabs.Tab>
-                <Tabs.Tab value="guvenlik" leftSection={<BsShield size={14} />}>
-                  Güvenlik
-                </Tabs.Tab>
-                <Tabs.Tab value="manzara" leftSection={<BsEye size={14} />}>
-                  Manzara
+                <Tabs.Tab value="site" leftSection={<BsGrid size={14} />}>
+                  Site Özellikleri
                 </Tabs.Tab>
                 <Tabs.Tab value="muhit" leftSection={<BsPeople size={14} />}>
                   Muhit
                 </Tabs.Tab>
               </Tabs.List>
 
-              <Tabs.Panel value="bina" pt="md">
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                  {BINA_OZELLIKLERI.map((feature) => (
-                    <Checkbox
-                      key={feature}
-                      label={feature}
-                      size="sm"
-                      checked={form.values.binaOzellikleri.includes(feature)}
-                      onChange={(e) => {
-                        if (e.currentTarget.checked) {
-                          form.setFieldValue("binaOzellikleri", [...form.values.binaOzellikleri, feature]);
-                        } else {
-                          form.setFieldValue("binaOzellikleri", form.values.binaOzellikleri.filter((f) => f !== feature));
-                        }
-                      }}
-                    />
-                  ))}
-                </div>
-              </Tabs.Panel>
+              <Tabs.Panel value="site" pt="md">
+                <Tabs defaultValue="bina" variant="pills">
+                  <Tabs.List>
+                    <Tabs.Tab value="bina" leftSection={<BsBuilding size={14} />}>
+                      Bina Özellikleri
+                    </Tabs.Tab>
+                    <Tabs.Tab value="dis" leftSection={<BsTree size={14} />}>
+                      Dış Özellikler
+                    </Tabs.Tab>
+                  </Tabs.List>
 
-              <Tabs.Panel value="dis" pt="md">
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                  {DIS_OZELLIKLER.map((feature) => (
-                    <Checkbox
-                      key={feature}
-                      label={feature}
-                      size="sm"
-                      checked={form.values.disOzellikler.includes(feature)}
-                      onChange={(e) => {
-                        if (e.currentTarget.checked) {
-                          form.setFieldValue("disOzellikler", [...form.values.disOzellikler, feature]);
-                        } else {
-                          form.setFieldValue("disOzellikler", form.values.disOzellikler.filter((f) => f !== feature));
-                        }
-                      }}
-                    />
-                  ))}
-                </div>
-              </Tabs.Panel>
+                  <Tabs.Panel value="bina" pt="md">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                      {BINA_OZELLIKLERI.map((feature) => (
+                        <Checkbox
+                          key={feature}
+                          label={feature}
+                          size="sm"
+                          checked={form.values.binaOzellikleri.includes(feature)}
+                          onChange={(e) => {
+                            if (e.currentTarget.checked) {
+                              form.setFieldValue("binaOzellikleri", [...form.values.binaOzellikleri, feature]);
+                            } else {
+                              form.setFieldValue("binaOzellikleri", form.values.binaOzellikleri.filter((f) => f !== feature));
+                            }
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </Tabs.Panel>
 
-              <Tabs.Panel value="engelli" pt="md">
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                  {ENGELLI_YASLI_UYGUN.map((feature) => (
-                    <Checkbox
-                      key={feature}
-                      label={feature}
-                      size="sm"
-                      checked={form.values.engelliYasliUygun.includes(feature)}
-                      onChange={(e) => {
-                        if (e.currentTarget.checked) {
-                          form.setFieldValue("engelliYasliUygun", [...form.values.engelliYasliUygun, feature]);
-                        } else {
-                          form.setFieldValue("engelliYasliUygun", form.values.engelliYasliUygun.filter((f) => f !== feature));
-                        }
-                      }}
-                    />
-                  ))}
-                </div>
-              </Tabs.Panel>
-
-              <Tabs.Panel value="eglence" pt="md">
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                  {EGLENCE_ALISVERIS.map((feature) => (
-                    <Checkbox
-                      key={feature}
-                      label={feature}
-                      size="sm"
-                      checked={form.values.eglenceAlisveris.includes(feature)}
-                      onChange={(e) => {
-                        if (e.currentTarget.checked) {
-                          form.setFieldValue("eglenceAlisveris", [...form.values.eglenceAlisveris, feature]);
-                        } else {
-                          form.setFieldValue("eglenceAlisveris", form.values.eglenceAlisveris.filter((f) => f !== feature));
-                        }
-                      }}
-                    />
-                  ))}
-                </div>
-              </Tabs.Panel>
-
-              <Tabs.Panel value="guvenlik" pt="md">
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                  {GUVENLIK.map((feature) => (
-                    <Checkbox
-                      key={feature}
-                      label={feature}
-                      size="sm"
-                      checked={form.values.guvenlik.includes(feature)}
-                      onChange={(e) => {
-                        if (e.currentTarget.checked) {
-                          form.setFieldValue("guvenlik", [...form.values.guvenlik, feature]);
-                        } else {
-                          form.setFieldValue("guvenlik", form.values.guvenlik.filter((f) => f !== feature));
-                        }
-                      }}
-                    />
-                  ))}
-                </div>
-              </Tabs.Panel>
-
-              <Tabs.Panel value="manzara" pt="md">
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                  {MANZARA.map((feature) => (
-                    <Checkbox
-                      key={feature}
-                      label={feature}
-                      size="sm"
-                      checked={form.values.manzara.includes(feature)}
-                      onChange={(e) => {
-                        if (e.currentTarget.checked) {
-                          form.setFieldValue("manzara", [...form.values.manzara, feature]);
-                        } else {
-                          form.setFieldValue("manzara", form.values.manzara.filter((f) => f !== feature));
-                        }
-                      }}
-                    />
-                  ))}
-                </div>
+                  <Tabs.Panel value="dis" pt="md">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                      {DIS_OZELLIKLER.map((feature) => (
+                        <Checkbox
+                          key={feature}
+                          label={feature}
+                          size="sm"
+                          checked={form.values.disOzellikler.includes(feature)}
+                          onChange={(e) => {
+                            if (e.currentTarget.checked) {
+                              form.setFieldValue("disOzellikler", [...form.values.disOzellikler, feature]);
+                            } else {
+                              form.setFieldValue("disOzellikler", form.values.disOzellikler.filter((f) => f !== feature));
+                            }
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </Tabs.Panel>
+                </Tabs>
               </Tabs.Panel>
 
               <Tabs.Panel value="muhit" pt="md">

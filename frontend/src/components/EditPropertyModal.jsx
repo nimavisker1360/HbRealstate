@@ -52,8 +52,8 @@ import {
   MdPlayCircleOutline,
 } from "react-icons/md";
 import { AiOutlineClose } from "react-icons/ai";
-import { BsHouseDoor, BsTree, BsLightningCharge, BsGeoAlt, BsGrid, BsEye, BsBuilding, BsShield, BsPeople } from "react-icons/bs";
-import { FaLandmark, FaHome, FaBriefcase, FaWheelchair, FaShoppingCart } from "react-icons/fa";
+import { BsHouseDoor, BsTree, BsLightningCharge, BsGeoAlt, BsGrid, BsEye, BsBuilding, BsPeople } from "react-icons/bs";
+import { FaLandmark, FaHome, FaBriefcase } from "react-icons/fa";
 import { pickAndUploadImages, pickAndUploadVideos } from "../utils/blobUpload";
 import UploadProgressBar from "./UploadProgressBar";
 
@@ -292,15 +292,10 @@ const PROJE_BINA_OZELLIKLERI = [
   "Akıllı Ev",
   "Alarm (Yangın)",
   "Intercom Sistemi",
-  "Kablo TV",
   "Jeneratör",
-  "Ses Yalıtımı",
-  "Su Deposu",
 ];
 
 const PROJE_DIS_OZELLIKLER = [
-  "Bahçe / Garden",
-  "Buhar Odası / Steam Room",
   "Sauna",
   "Türk Hamamı / Turkish Bath",
   "SPA",
@@ -308,10 +303,8 @@ const PROJE_DIS_OZELLIKLER = [
   "Havuz / Pool",
   "Gym",
   "Çocuk Parkı / Children's Playground",
-  "Spor Alanı / Sports Area",
   "Basketbol Sahası / Basketball Court",
   "Futbol Sahası / Football Court",
-  "Peyzaj / Landscaping",
 ];
 
 const PROJE_ENGELLI_YASLI_UYGUN = [
@@ -2995,149 +2988,67 @@ const EditPropertyModal = ({ opened, setOpened, property, onSuccess }) => {
                 <Text fw={700} size="lg">Özellikler</Text>
               </div>
 
-              <Tabs defaultValue="bina" variant="outline">
+              <Tabs defaultValue="site" variant="outline">
                 <Tabs.List>
-                  <Tabs.Tab value="bina" leftSection={<BsBuilding size={14} />}>
-                    Bina Özellikleri
-                  </Tabs.Tab>
-                  <Tabs.Tab value="dis" leftSection={<BsTree size={14} />}>
-                    Dış Özellikler
-                  </Tabs.Tab>
-                  <Tabs.Tab value="engelli" leftSection={<FaWheelchair size={14} />}>
-                    Engelliye ve Yaşlıya Uygun
-                  </Tabs.Tab>
-                  <Tabs.Tab value="eglence" leftSection={<FaShoppingCart size={14} />}>
-                    Eğlence & Alışveriş
-                  </Tabs.Tab>
-                  <Tabs.Tab value="guvenlik" leftSection={<BsShield size={14} />}>
-                    Güvenlik
-                  </Tabs.Tab>
-                  <Tabs.Tab value="manzara" leftSection={<BsEye size={14} />}>
-                    Manzara
+                  <Tabs.Tab value="site" leftSection={<BsGrid size={14} />}>
+                    Site Özellikleri
                   </Tabs.Tab>
                   <Tabs.Tab value="muhit" leftSection={<BsPeople size={14} />}>
                     Muhit
                   </Tabs.Tab>
                 </Tabs.List>
 
-                <Tabs.Panel value="bina" pt="md">
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                    {PROJE_BINA_OZELLIKLERI.map((feature) => (
-                      <Checkbox
-                        key={feature}
-                        label={feature}
-                        size="sm"
-                        checked={projeBinaOzellikleri.includes(feature)}
-                        onChange={(e) => {
-                          if (e.currentTarget.checked) {
-                            setProjeBinaOzellikleri([...projeBinaOzellikleri, feature]);
-                          } else {
-                            setProjeBinaOzellikleri(projeBinaOzellikleri.filter((f) => f !== feature));
-                          }
-                        }}
-                      />
-                    ))}
-                  </div>
-                </Tabs.Panel>
+                <Tabs.Panel value="site" pt="md">
+                  <Tabs defaultValue="bina" variant="pills">
+                    <Tabs.List>
+                      <Tabs.Tab value="bina" leftSection={<BsBuilding size={14} />}>
+                        Bina Özellikleri
+                      </Tabs.Tab>
+                      <Tabs.Tab value="dis" leftSection={<BsTree size={14} />}>
+                        Dış Özellikler
+                      </Tabs.Tab>
+                    </Tabs.List>
 
-                <Tabs.Panel value="dis" pt="md">
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                    {PROJE_DIS_OZELLIKLER.map((feature) => (
-                      <Checkbox
-                        key={feature}
-                        label={feature}
-                        size="sm"
-                        checked={projeDisOzellikler.includes(feature)}
-                        onChange={(e) => {
-                          if (e.currentTarget.checked) {
-                            setProjeDisOzellikler([...projeDisOzellikler, feature]);
-                          } else {
-                            setProjeDisOzellikler(projeDisOzellikler.filter((f) => f !== feature));
-                          }
-                        }}
-                      />
-                    ))}
-                  </div>
-                </Tabs.Panel>
+                    <Tabs.Panel value="bina" pt="md">
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                        {PROJE_BINA_OZELLIKLERI.map((feature) => (
+                          <Checkbox
+                            key={feature}
+                            label={feature}
+                            size="sm"
+                            checked={projeBinaOzellikleri.includes(feature)}
+                            onChange={(e) => {
+                              if (e.currentTarget.checked) {
+                                setProjeBinaOzellikleri([...projeBinaOzellikleri, feature]);
+                              } else {
+                                setProjeBinaOzellikleri(projeBinaOzellikleri.filter((f) => f !== feature));
+                              }
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </Tabs.Panel>
 
-                <Tabs.Panel value="engelli" pt="md">
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                    {PROJE_ENGELLI_YASLI_UYGUN.map((feature) => (
-                      <Checkbox
-                        key={feature}
-                        label={feature}
-                        size="sm"
-                        checked={projeEngelliYasliUygun.includes(feature)}
-                        onChange={(e) => {
-                          if (e.currentTarget.checked) {
-                            setProjeEngelliYasliUygun([...projeEngelliYasliUygun, feature]);
-                          } else {
-                            setProjeEngelliYasliUygun(projeEngelliYasliUygun.filter((f) => f !== feature));
-                          }
-                        }}
-                      />
-                    ))}
-                  </div>
-                </Tabs.Panel>
-
-                <Tabs.Panel value="eglence" pt="md">
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                    {PROJE_EGLENCE_ALISVERIS.map((feature) => (
-                      <Checkbox
-                        key={feature}
-                        label={feature}
-                        size="sm"
-                        checked={projeEglenceAlisveris.includes(feature)}
-                        onChange={(e) => {
-                          if (e.currentTarget.checked) {
-                            setProjeEglenceAlisveris([...projeEglenceAlisveris, feature]);
-                          } else {
-                            setProjeEglenceAlisveris(projeEglenceAlisveris.filter((f) => f !== feature));
-                          }
-                        }}
-                      />
-                    ))}
-                  </div>
-                </Tabs.Panel>
-
-                <Tabs.Panel value="guvenlik" pt="md">
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                    {PROJE_GUVENLIK.map((feature) => (
-                      <Checkbox
-                        key={feature}
-                        label={feature}
-                        size="sm"
-                        checked={projeGuvenlik.includes(feature)}
-                        onChange={(e) => {
-                          if (e.currentTarget.checked) {
-                            setProjeGuvenlik([...projeGuvenlik, feature]);
-                          } else {
-                            setProjeGuvenlik(projeGuvenlik.filter((f) => f !== feature));
-                          }
-                        }}
-                      />
-                    ))}
-                  </div>
-                </Tabs.Panel>
-
-                <Tabs.Panel value="manzara" pt="md">
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                    {PROJE_MANZARA.map((feature) => (
-                      <Checkbox
-                        key={feature}
-                        label={feature}
-                        size="sm"
-                        checked={projeManzara.includes(feature)}
-                        onChange={(e) => {
-                          if (e.currentTarget.checked) {
-                            setProjeManzara([...projeManzara, feature]);
-                          } else {
-                            setProjeManzara(projeManzara.filter((f) => f !== feature));
-                          }
-                        }}
-                      />
-                    ))}
-                  </div>
+                    <Tabs.Panel value="dis" pt="md">
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                        {PROJE_DIS_OZELLIKLER.map((feature) => (
+                          <Checkbox
+                            key={feature}
+                            label={feature}
+                            size="sm"
+                            checked={projeDisOzellikler.includes(feature)}
+                            onChange={(e) => {
+                              if (e.currentTarget.checked) {
+                                setProjeDisOzellikler([...projeDisOzellikler, feature]);
+                              } else {
+                                setProjeDisOzellikler(projeDisOzellikler.filter((f) => f !== feature));
+                              }
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </Tabs.Panel>
+                  </Tabs>
                 </Tabs.Panel>
 
                 <Tabs.Panel value="muhit" pt="md">
