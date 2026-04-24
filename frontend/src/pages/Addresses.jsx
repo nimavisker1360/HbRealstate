@@ -58,7 +58,7 @@ const Addresses = ({ variant = "addresses" }) => {
 
   const contactInfo = {
     phone: PRIMARY_CONTACT_PHONE,
-    email: "hprealstate2019@gmail.com",
+    email: "hbrealstate2019@gmail.com",
   };
 
   const handleBranchClick = (branch) => {

@@ -231,7 +231,7 @@ export const FOOTER_CONTACT_INFO = {
       value: "Ecevit Sok. Karalım Sitesi No:10/1, Göneyli, Lefkoşa",
     },
     { label: "Contact Number", value: PRIMARY_CONTACT_PHONE },
-    { label: "Email Address", value: "hprealstate2019@gmail.com" },
+    { label: "Email Address", value: "hbrealstate2019@gmail.com" },
   ],
 };
 

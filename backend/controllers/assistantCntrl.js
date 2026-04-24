@@ -112,7 +112,7 @@ export const assistantSendResults = asyncHandler(async (req, res) => {
               <p style="margin: 0; color: #555; font-size: 13px; line-height: 1.5;">
                 Contact us directly:<br/>
                 <strong>Phone:</strong> +90 542 435 9694<br/>
-                <strong>Email:</strong> hprealstate2019@gmail.com
+                <strong>Email:</strong> hbrealstate2019@gmail.com
               </p>
             </div>
             <p style="color: #555; margin-top: 20px; font-size: 14px;">
