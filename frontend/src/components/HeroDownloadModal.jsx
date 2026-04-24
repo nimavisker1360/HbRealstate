@@ -107,12 +107,16 @@ const HeroDownloadModal = ({ opened, onClose }) => {
       return;
     }
 
-    if (!formData.email.trim()) {
-      toast.error(bilingualKey("contactModal.errorEmail"));
+    if (!formData.email.trim() && !formData.phone.trim()) {
+      toast.error(
+        t("contactModal.errorContact", {
+          defaultValue: "Please enter your email address or phone number",
+        })
+      );
       return;
     }
 
-    if (!EMAIL_REGEX.test(formData.email.trim())) {
+    if (formData.email.trim() && !EMAIL_REGEX.test(formData.email.trim())) {
       toast.error(bilingualKey("contactModal.errorEmailInvalid"));
       return;
     }

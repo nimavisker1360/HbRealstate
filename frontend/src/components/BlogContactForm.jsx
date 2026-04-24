@@ -75,8 +75,12 @@ const BlogContactForm = ({ contextTitle, className, fullWidth }) => {
       toast.error(bilingualKey("projectDetail.errorName"));
       return;
     }
-    if (!formData.email.trim()) {
-      toast.error(bilingualKey("projectDetail.errorEmail"));
+    if (!formData.email.trim() && !formData.phone.trim()) {
+      toast.error(
+        t("projectDetail.errorContact", {
+          defaultValue: "Please enter your email address or phone number",
+        })
+      );
       return;
     }
     if (!formData.message.trim()) {
@@ -85,7 +89,7 @@ const BlogContactForm = ({ contextTitle, className, fullWidth }) => {
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
+    if (formData.email.trim() && !emailRegex.test(formData.email.trim())) {
       toast.error(bilingualKey("projectDetail.errorEmailInvalid"));
       return;
     }
@@ -146,7 +150,6 @@ const BlogContactForm = ({ contextTitle, className, fullWidth }) => {
               onChange={(event) =>
                 setFormData({ ...formData, email: event.target.value })
               }
-              required
             />
             <TextInput
               placeholder={t("projectDetail.phone")}

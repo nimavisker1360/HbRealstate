@@ -1,24 +1,176 @@
 import asyncHandler from "express-async-handler";
-import nodemailer from "nodemailer";
 import { prisma } from "../config/prismaConfig.js";
 import {
   extractLeadAttribution,
   LEAD_STATUS_VALUES,
+  normalizeLeadString,
 } from "../utils/leadAttribution.js";
 import { handleLeadStatusTransition } from "../services/leadStatusWorkflow.js";
+import {
+  getGmailSender,
+  getGmailTransporter,
+} from "../utils/gmailTransporter.js";
 
-// Create transporter with Gmail
-const createTransporter = () => {
-  return nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
+const CONTACT_RECIPIENT = "hbrealstate2019@gmail.com";
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const normalizeOptionalString = (value) => normalizeLeadString(value);
+
+const normalizeOptionalEmail = (value) => {
+  const normalizedEmail = normalizeOptionalString(value);
+  if (!normalizedEmail) return null;
+  return normalizedEmail.toLowerCase();
 };
 
-// Send email and save to database
+const escapeHtml = (value) =>
+  String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+
+const formatTimestamp = (value) => {
+  if (!(value instanceof Date) || Number.isNaN(value.getTime())) {
+    return new Date().toISOString();
+  }
+
+  return value.toISOString();
+};
+
+const buildDetailRows = (fields) =>
+  fields
+    .filter((field) => field.value)
+    .map(
+      (field) => `
+        <tr>
+          <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; width: 160px; vertical-align: top;">
+            <strong style="color: #111827;">${escapeHtml(field.label)}</strong>
+          </td>
+          <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; color: #374151;">
+            ${field.value}
+          </td>
+        </tr>
+      `
+    )
+    .join("");
+
+const buildContactEmailHtml = (payload) => {
+  const {
+    name,
+    email,
+    phone,
+    subject,
+    message,
+    pageUrl,
+    timestamp,
+    propertyId,
+    propertyTitle,
+    listingNo,
+    consultantName,
+    consultantEmail,
+  } = payload;
+
+  const propertySummary = [propertyTitle, listingNo, propertyId]
+    .filter(Boolean)
+    .join(" | ");
+  const consultantSummary = [consultantName, consultantEmail]
+    .filter(Boolean)
+    .join(" | ");
+
+  const rows = buildDetailRows([
+    { label: "Name", value: escapeHtml(name) },
+    {
+      label: "Email",
+      value: email
+        ? `<a href="mailto:${escapeHtml(email)}" style="color: #0f766e;">${escapeHtml(email)}</a>`
+        : "Not provided",
+    },
+    {
+      label: "Phone",
+      value: phone
+        ? `<a href="tel:${escapeHtml(phone)}" style="color: #0f766e;">${escapeHtml(phone)}</a>`
+        : "Not provided",
+    },
+    { label: "Subject", value: escapeHtml(subject) },
+    {
+      label: "Property",
+      value: propertySummary ? escapeHtml(propertySummary) : null,
+    },
+    {
+      label: "Consultant",
+      value: consultantSummary ? escapeHtml(consultantSummary) : null,
+    },
+    {
+      label: "Page URL",
+      value: pageUrl
+        ? `<a href="${escapeHtml(pageUrl)}" style="color: #0f766e;">${escapeHtml(pageUrl)}</a>`
+        : "Not provided",
+    },
+    { label: "Timestamp", value: escapeHtml(timestamp) },
+  ]);
+
+  return `
+    <div style="font-family: Arial, sans-serif; background: #f8fafc; padding: 24px; color: #111827;">
+      <div style="max-width: 680px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; overflow: hidden;">
+        <div style="padding: 24px 28px; background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);">
+          <h1 style="margin: 0; color: #ffffff; font-size: 24px;">New Website Contact</h1>
+          <p style="margin: 8px 0 0; color: rgba(255,255,255,0.9); font-size: 14px;">
+            Submitted from the HB Real Estate website.
+          </p>
+        </div>
+        <div style="padding: 28px;">
+          <table style="width: 100%; border-collapse: collapse;">
+            ${rows}
+          </table>
+          <div style="margin-top: 24px;">
+            <h2 style="margin: 0 0 12px; font-size: 16px; color: #111827;">Message</h2>
+            <div style="padding: 16px; border: 1px solid #e5e7eb; border-radius: 12px; background: #f9fafb; color: #374151; line-height: 1.7;">
+              ${escapeHtml(message).replace(/\r?\n/g, "<br />")}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+};
+
+const buildContactEmailText = (payload) => {
+  const {
+    name,
+    email,
+    phone,
+    subject,
+    message,
+    pageUrl,
+    timestamp,
+    propertyId,
+    propertyTitle,
+    listingNo,
+    consultantName,
+    consultantEmail,
+  } = payload;
+
+  return [
+    "New Website Contact",
+    "",
+    `Name: ${name}`,
+    `Email: ${email || "Not provided"}`,
+    `Phone: ${phone || "Not provided"}`,
+    `Subject: ${subject}`,
+    `Property Title: ${propertyTitle || "Not provided"}`,
+    `Property ID: ${propertyId || "Not provided"}`,
+    `Listing No: ${listingNo || "Not provided"}`,
+    `Consultant: ${consultantName || "Not provided"}`,
+    `Consultant Email: ${consultantEmail || "Not provided"}`,
+    `Page URL: ${pageUrl || "Not provided"}`,
+    `Timestamp: ${timestamp}`,
+    "",
+    "Message:",
+    message,
+  ].join("\n");
+};
+
 export const sendEmail = asyncHandler(async (req, res) => {
   const {
     name,
@@ -32,33 +184,81 @@ export const sendEmail = asyncHandler(async (req, res) => {
     consultantId,
     consultantName,
     consultantEmail,
-  } = req.body;
+    pageUrl,
+  } = req.body || {};
+
   const leadAttribution = extractLeadAttribution(req, {
     defaultLeadSource: "form",
   });
 
-  // Validate required fields
-  if (!name || !email || !message) {
+  const normalizedName = normalizeOptionalString(name);
+  const normalizedEmail = normalizeOptionalEmail(email);
+  const normalizedPhone = normalizeOptionalString(phone);
+  const normalizedMessage = normalizeOptionalString(message);
+  const normalizedSubject =
+    normalizeOptionalString(subject) || "Website Contact Request";
+  const normalizedPageUrl =
+    normalizeOptionalString(pageUrl) || leadAttribution.landingPage;
+  const submittedAt = leadAttribution.submittedAt || new Date();
+  const timestamp = formatTimestamp(submittedAt);
+
+  if (!normalizedName) {
     return res.status(400).json({
       success: false,
-      message: "Name, email and message are required",
+      message: "Name is required.",
     });
   }
 
+  if (!normalizedEmail && !normalizedPhone) {
+    return res.status(400).json({
+      success: false,
+      message: "Either email or phone is required.",
+    });
+  }
+
+  if (normalizedEmail && !EMAIL_REGEX.test(normalizedEmail)) {
+    return res.status(400).json({
+      success: false,
+      message: "Please provide a valid email address.",
+    });
+  }
+
+  if (!normalizedMessage) {
+    return res.status(400).json({
+      success: false,
+      message: "Message is required.",
+    });
+  }
+
+  const normalizedPayload = {
+    name: normalizedName,
+    email: normalizedEmail,
+    phone: normalizedPhone,
+    subject: normalizedSubject,
+    message: normalizedMessage,
+    pageUrl: normalizedPageUrl,
+    timestamp,
+    propertyId: normalizeOptionalString(propertyId),
+    propertyTitle: normalizeOptionalString(propertyTitle),
+    listingNo: normalizeOptionalString(listingNo),
+    consultantId: normalizeOptionalString(consultantId),
+    consultantName: normalizeOptionalString(consultantName),
+    consultantEmail: normalizeOptionalEmail(consultantEmail),
+  };
+
   try {
-    // Save message to database first
-    const savedMessage = await prisma.contactMessage.create({
+    await prisma.contactMessage.create({
       data: {
-        name,
-        email,
-        phone: phone || null,
-        subject: subject || "Property Inquiry",
-        message,
-        propertyId: propertyId || null,
-        propertyTitle: propertyTitle || null,
-        consultantId: consultantId || null,
-        consultantName: consultantName || null,
-        consultantEmail: consultantEmail || null,
+        name: normalizedPayload.name,
+        email: normalizedPayload.email,
+        phone: normalizedPayload.phone,
+        subject: normalizedPayload.subject,
+        message: normalizedPayload.message,
+        propertyId: normalizedPayload.propertyId,
+        propertyTitle: normalizedPayload.propertyTitle,
+        consultantId: normalizedPayload.consultantId,
+        consultantName: normalizedPayload.consultantName,
+        consultantEmail: normalizedPayload.consultantEmail,
         gclid: leadAttribution.gclid,
         gbraid: leadAttribution.gbraid,
         wbraid: leadAttribution.wbraid,
@@ -67,143 +267,35 @@ export const sendEmail = asyncHandler(async (req, res) => {
         utmCampaign: leadAttribution.utmCampaign,
         utmTerm: leadAttribution.utmTerm,
         utmContent: leadAttribution.utmContent,
-        landingPage: leadAttribution.landingPage,
+        landingPage: normalizedPayload.pageUrl,
         referrer: leadAttribution.referrer,
         leadStatus: leadAttribution.leadStatus,
         leadSource: leadAttribution.leadSource,
-        submittedAt: leadAttribution.submittedAt,
+        submittedAt,
       },
     });
 
-    // Try to send email (but don't fail if email sending fails)
-    try {
-      const transporter = createTransporter();
+    const transporter = getGmailTransporter();
+    const sender = getGmailSender();
 
-      // Email to the company
-      const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to: process.env.EMAIL_TO || process.env.EMAIL_USER,
-        replyTo: email,
-        subject: subject || `New Contact from ${name}`,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #06a84e 0%, #048a3d 100%); padding: 30px; border-radius: 10px 10px 0 0;">
-              <h1 style="color: white; margin: 0; text-align: center;">New Property Inquiry</h1>
-            </div>
-            <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e0e0e0; border-top: none;">
-              ${(propertyTitle || propertyId || listingNo) ? `
-              <div style="background: linear-gradient(135deg, #06a84e 0%, #048a3d 100%); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                <div style="color: white; font-weight: bold; font-size: 16px; margin-bottom: 5px;">🏠 Property:</div>
-                ${propertyTitle ? `<div style="color: white; font-size: 14px;">${propertyTitle}</div>` : ""}
-                ${listingNo ? `<div style="color: rgba(255,255,255,0.95); font-size: 13px; margin-top: 5px;"><strong>Listing No:</strong> ${listingNo}</div>` : ""}
-                ${propertyId ? `<div style="color: rgba(255,255,255,0.8); font-size: 12px; margin-top: 5px;">ID: ${propertyId}</div>` : ''}
-              </div>
-              ` : ''}
-              <table style="width: 100%; border-collapse: collapse;">
-                <tr>
-                  <td style="padding: 10px 0; border-bottom: 1px solid #e0e0e0;">
-                    <strong style="color: #333;">Name:</strong>
-                  </td>
-                  <td style="padding: 10px 0; border-bottom: 1px solid #e0e0e0; color: #555;">
-                    ${name}
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 10px 0; border-bottom: 1px solid #e0e0e0;">
-                    <strong style="color: #333;">Email:</strong>
-                  </td>
-                  <td style="padding: 10px 0; border-bottom: 1px solid #e0e0e0; color: #555;">
-                    <a href="mailto:${email}" style="color: #06a84e;">${email}</a>
-                  </td>
-                </tr>
-                ${phone ? `
-                <tr>
-                  <td style="padding: 10px 0; border-bottom: 1px solid #e0e0e0;">
-                    <strong style="color: #333;">Phone:</strong>
-                  </td>
-                  <td style="padding: 10px 0; border-bottom: 1px solid #e0e0e0; color: #555;">
-                    <a href="tel:${phone}" style="color: #06a84e;">${phone}</a>
-                  </td>
-                </tr>
-                ` : ''}
-                <tr>
-                  <td style="padding: 10px 0; border-bottom: 1px solid #e0e0e0;">
-                    <strong style="color: #333;">Subject:</strong>
-                  </td>
-                  <td style="padding: 10px 0; border-bottom: 1px solid #e0e0e0; color: #555;">
-                    ${subject || 'Property Inquiry'}
-                  </td>
-                </tr>
-                ${(consultantName || consultantEmail) ? `
-                <tr>
-                  <td style="padding: 10px 0; border-bottom: 1px solid #e0e0e0;">
-                    <strong style="color: #333;">Consultant:</strong>
-                  </td>
-                  <td style="padding: 10px 0; border-bottom: 1px solid #e0e0e0; color: #555;">
-                    ${consultantName || "Selected consultant"}
-                    ${consultantEmail ? `<div><a href="mailto:${consultantEmail}" style="color: #06a84e;">${consultantEmail}</a></div>` : ""}
-                  </td>
-                </tr>
-                ` : ''}
-              </table>
-              <div style="margin-top: 20px;">
-                <strong style="color: #333;">Message:</strong>
-                <div style="background: white; padding: 15px; border-radius: 5px; margin-top: 10px; border: 1px solid #e0e0e0; color: #555; line-height: 1.6;">
-                  ${message.replace(/\n/g, '<br>')}
-                </div>
-              </div>
-            </div>
-            <div style="text-align: center; margin-top: 20px; color: #888; font-size: 12px;">
-              <p>This email was sent from HB International Real Estate website</p>
-            </div>
-          </div>
-        `,
-      };
-
-      // Send email
-      await transporter.sendMail(mailOptions);
-
-      // Send confirmation email to the user
-      const confirmationMail = {
-        from: process.env.EMAIL_USER,
-        to: email,
-        subject: "Thank you for contacting HB International",
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #06a84e 0%, #048a3d 100%); padding: 30px; border-radius: 10px 10px 0 0;">
-              <h1 style="color: white; margin: 0; text-align: center;">Thank You!</h1>
-            </div>
-            <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e0e0e0; border-top: none;">
-              <p style="color: #333; font-size: 16px;">Dear ${name},</p>
-              <p style="color: #555; line-height: 1.6;">Thank you for contacting HB International Real Estate. We have received your inquiry and will get back to you as soon as possible.</p>
-              <p style="color: #555; line-height: 1.6;">In the meantime, feel free to browse our properties or contact us directly:</p>
-              <div style="background: white; padding: 15px; border-radius: 5px; margin: 20px 0; border: 1px solid #e0e0e0;">
-                <p style="margin: 5px 0; color: #555;"><strong>Phone:</strong> +90 542 435 9694</p>
-                <p style="margin: 5px 0; color: #555;"><strong>Email:</strong> hprealstate2019@gmail.com</p>
-              </div>
-              <p style="color: #555; line-height: 1.6;">Best regards,<br><strong style="color: #06a84e;">HB International Team</strong></p>
-            </div>
-          </div>
-        `,
-      };
-
-      await transporter.sendMail(confirmationMail);
-    } catch (emailError) {
-      console.error("Email sending failed:", emailError);
-      // Don't fail the request, message is already saved
-    }
+    await transporter.sendMail({
+      from: `"HB Real Estate" <${sender}>`,
+      to: CONTACT_RECIPIENT,
+      replyTo: normalizedPayload.email || undefined,
+      subject: normalizedPayload.subject,
+      text: buildContactEmailText(normalizedPayload),
+      html: buildContactEmailHtml(normalizedPayload),
+    });
 
     res.status(200).json({
       success: true,
-      message: "Message received successfully",
-      data: savedMessage,
+      message: "Message sent successfully.",
     });
   } catch (error) {
-    console.error("Error:", error);
+    console.error("Contact email submission failed:", error);
     res.status(500).json({
       success: false,
-      message: "Failed to save message",
-      error: error.message,
+      message: "We could not send your message right now. Please try again later.",
     });
   }
 });
@@ -262,7 +354,6 @@ export const updateLeadStatus = asyncHandler(async (req, res) => {
   }
 });
 
-// Get all contact messages
 export const getAllMessages = asyncHandler(async (req, res) => {
   try {
     const messages = await prisma.contactMessage.findMany({
@@ -286,7 +377,6 @@ export const getAllMessages = asyncHandler(async (req, res) => {
   }
 });
 
-// Delete a contact message
 export const deleteMessage = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
@@ -309,7 +399,6 @@ export const deleteMessage = asyncHandler(async (req, res) => {
   }
 });
 
-// Mark message as read
 export const markAsRead = asyncHandler(async (req, res) => {
   const { id } = req.params;
 

@@ -8,6 +8,14 @@ export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "/api",
 });
 
+const getCurrentPageUrl = () => {
+  if (typeof window === "undefined" || !window.location?.href) {
+    return undefined;
+  }
+
+  return String(window.location.href);
+};
+
 // Store for the token refresh function (will be set from Layout)
 let tokenRefreshCallback = null;
 let lastToastTime = 0;
@@ -479,14 +487,21 @@ export const getAllUsers = async (token) => {
 // Send Email
 export const sendEmail = async (emailData) => {
   try {
-    const { attribution, leadSource, lead_source, ...restEmailData } =
-      emailData || {};
+    const {
+      attribution,
+      leadSource,
+      lead_source,
+      pageUrl,
+      ...restEmailData
+    } = emailData || {};
     const attributionFields =
       attribution && typeof attribution === "object" && !Array.isArray(attribution)
         ? attribution
         : {};
+    const resolvedPageUrl = pageUrl || getCurrentPageUrl();
     const response = await api.post("/email/send", {
       ...restEmailData,
+      pageUrl: resolvedPageUrl,
       ...buildLeadAttributionPayload({
         ...attributionFields,
         lead_source:

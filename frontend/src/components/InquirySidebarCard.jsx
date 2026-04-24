@@ -98,12 +98,19 @@ const InquirySidebarCard = ({
       return;
     }
 
-    if (!contactForm.email.trim()) {
-      toast.error(bilingualKey("projectDetail.errorEmail"));
+    if (!contactForm.email.trim() && !contactForm.phone.trim()) {
+      toast.error(
+        t("projectDetail.errorContact", {
+          defaultValue: "Please enter your email address or phone number",
+        })
+      );
       return;
     }
 
-    if (!EMAIL_REGEX.test(contactForm.email)) {
+    if (
+      contactForm.email.trim() &&
+      !EMAIL_REGEX.test(contactForm.email.trim())
+    ) {
       toast.error(bilingualKey("projectDetail.errorEmailInvalid"));
       return;
     }
@@ -222,7 +229,6 @@ const InquirySidebarCard = ({
             autoComplete="email"
             inputMode="email"
             className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition focus:border-[#ff8a3d] focus:ring-4 focus:ring-[#ff8a3d]/10"
-            required
           />
 
           <div className="relative">

@@ -94,13 +94,20 @@ const ContactModal = ({
       return;
     }
 
+    const trimmedEmail = formData.email.trim();
+    const trimmedPhone = formData.phone.trim();
+
     // Validation
     if (!formData.name.trim()) {
       toast.error(bilingualKey("contactModal.errorName"));
       return;
     }
-    if (!formData.email.trim()) {
-      toast.error(bilingualKey("contactModal.errorEmail"));
+    if (!trimmedEmail && !trimmedPhone) {
+      toast.error(
+        t("contactModal.errorContact", {
+          defaultValue: "Please enter your email address or phone number",
+        })
+      );
       return;
     }
     if (!formData.message.trim()) {
@@ -110,7 +117,7 @@ const ContactModal = ({
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
+    if (trimmedEmail && !emailRegex.test(trimmedEmail)) {
       toast.error(bilingualKey("contactModal.errorEmailInvalid"));
       return;
     }
@@ -262,7 +269,6 @@ const ContactModal = ({
             <TextInput
               label={t("contactModal.emailAddress")}
               placeholder={t("contactModal.emailPlaceholder")}
-              required
               type="email"
               value={formData.email}
               onChange={(e) => handleChange("email", e.target.value)}
