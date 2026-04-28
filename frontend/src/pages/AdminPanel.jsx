@@ -72,8 +72,6 @@ import {
   MdDashboard,
   MdAddHome,
   MdList,
-
- 
   MdHome,
   MdRefresh,
   MdEdit,
@@ -92,11 +90,13 @@ import {
   MdCheckCircle,
   MdRateReview,
   MdBuild,
+  MdVideocam,
 } from "react-icons/md";
 import { FaStar } from "react-icons/fa6";
 import { pickAndUploadImages, pickAndUploadVideos } from "../utils/blobUpload";
 import UploadProgressBar from "../components/UploadProgressBar";
 import StagingManagement from "../components/admin/StagingManagement";
+import VideoManagement from "../components/admin/VideoManagement";
 
 // DnD Kit imports
 import {
@@ -2423,6 +2423,28 @@ const AdminPanel = () => {
               </div>
             </Group>
           </Paper>
+
+          <Paper
+            shadow="sm"
+            p="lg"
+            radius="md"
+            className={`cursor-pointer hover:shadow-md transition-shadow ${
+              activeTab === "videos" ? "border-2 border-emerald-500" : ""
+            }`}
+            onClick={() => setActiveTab("videos")}
+          >
+            <Group>
+              <div className="bg-emerald-100 text-emerald-600 p-3 rounded-full">
+                <MdVideocam size={24} />
+              </div>
+              <div>
+                <Text fw={600}>Videos</Text>
+                <Text size="sm" color="dimmed">
+                  Vidmox adapter, playback URLs and status
+                </Text>
+              </div>
+            </Group>
+          </Paper>
         </div>
 
         {/* Property List Section */}
@@ -3609,6 +3631,12 @@ const AdminPanel = () => {
         {activeTab === "staging" && (
           <Paper shadow="sm" p="xl" radius="md" className="mb-6">
             <StagingManagement />
+          </Paper>
+        )}
+
+        {activeTab === "videos" && (
+          <Paper shadow="sm" p="xl" radius="md" className="mb-6">
+            <VideoManagement token={token} properties={properties || []} />
           </Paper>
         )}
 

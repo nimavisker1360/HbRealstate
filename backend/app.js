@@ -14,6 +14,7 @@ import { aiSalesAgentRoute } from "./routes/aiSalesAgentRoute.js";
 import { uploadRoute } from "./routes/uploadRoute.js";
 import { inspectionRoute } from "./routes/inspectionRoute.js";
 import { stagingRoute } from "./routes/stagingRoute.js";
+import { videoEventRouter, videoRoute } from "./routes/videoRoute.js";
 import { getSitemapXml } from "./controllers/sitemapCntrl.js";
 import { loadBackendEnv } from "./config/loadEnv.js";
 
@@ -21,7 +22,13 @@ loadBackendEnv();
 
 const app = express();
 
-app.use(express.json());
+app.use(
+  express.json({
+    verify: (req, _res, buffer) => {
+      req.rawBody = buffer?.toString?.("utf8") || "";
+    },
+  })
+);
 app.use(cookieParser());
 app.use(cors());
 
@@ -43,5 +50,7 @@ app.use("/api/market", marketRoute);
 app.use("/api/upload", uploadRoute);
 app.use("/api/inspection", inspectionRoute);
 app.use("/api/staging", stagingRoute);
+app.use("/api/videos", videoRoute);
+app.use("/api/video-events", videoEventRouter);
 
 export default app;

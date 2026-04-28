@@ -33,6 +33,7 @@ const AISalesAgentWidget = () => {
           labels={labels}
           messages={state.messages}
           lead={state.lead}
+          leadId={state.persistedLeadId}
           leadSubmitted={Boolean(state.leadSubmitted)}
           leadTemperature={state.leadTemperature}
           isLoading={isLoading}

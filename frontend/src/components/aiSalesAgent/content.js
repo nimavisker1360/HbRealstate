@@ -27,7 +27,12 @@ const copy = {
     resources: "Useful guides",
     matchReasons: "Why it matches",
     viewDetails: "View details",
+    priceOnRequest: "Price on request",
     openArticle: "Open article",
+    bookViewing: "Book Viewing",
+    similarProperties: "Similar Properties",
+    videoCtaPrompt:
+      "Looks like this project matches your interest. Would you like full price details or similar options on WhatsApp?",
     noRecommendations:
       "Recommendations will appear once the agent has enough context.",
     emailHandoff: "Send by email",
@@ -81,7 +86,12 @@ const copy = {
     resources: "Faydali rehberler",
     matchReasons: "Eslesme nedenleri",
     viewDetails: "Detayi gor",
+    priceOnRequest: "Fiyat bilgisi isteyin",
     openArticle: "Makaleyi ac",
+    bookViewing: "Randevu Al",
+    similarProperties: "Benzer Portfoyler",
+    videoCtaPrompt:
+      "Bu proje ilginize uyuyor gibi gorunuyor. Tum fiyat detaylarini veya benzer secenekleri WhatsApp'tan ister misiniz?",
     noRecommendations:
       "Asistan yeterli bilgi topladiginda oneriler burada gorunecek.",
     emailHandoff: "E-posta ile gonder",
@@ -135,7 +145,12 @@ const copy = {
     resources: "Poleznye materialy",
     matchReasons: "Pochemu podkhodit",
     viewDetails: "Otkryt detalno",
+    priceOnRequest: "Tsena po zaprosu",
     openArticle: "Otkryt statyu",
+    bookViewing: "Zabronirovat Prosmotr",
+    similarProperties: "Pokazat Pokhozhie",
+    videoCtaPrompt:
+      "Pokhozhe, etot proekt vam podkhodit. Otpravit polnye tseny ili pokhozhie varianty v WhatsApp?",
     noRecommendations:
       "Rekomendatsii poyavyatsya, kogda agent poluchit dostatochno konteksta.",
     emailHandoff: "Otpravit po email",

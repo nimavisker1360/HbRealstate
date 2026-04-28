@@ -332,6 +332,7 @@ const getVisibleRecommendations = ({
   }
 
   return ["recommendation", "contact_capture", "cta_handoff"].includes(stage)
+    || stage === "qualification"
     ? recommendations
     : [];
 };

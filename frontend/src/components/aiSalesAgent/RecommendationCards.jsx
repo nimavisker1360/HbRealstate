@@ -1,4 +1,11 @@
 import PropTypes from "prop-types";
+import SmartPropertyVideo from "../video/SmartPropertyVideo";
+import {
+  buildVideoTrackingPayload,
+  buildVideoWhatsAppUrl,
+  openAiAssistantForSimilarProperties,
+  trackVideoEngagementEvent,
+} from "../../utils/videoLeadTracking";
 
 const MATCH_REASON_LABELS = {
   project_match: "Exact project match",
@@ -24,7 +31,17 @@ const MATCH_REASON_LABELS = {
 const formatReason = (reason) =>
   MATCH_REASON_LABELS[reason] || reason.replace(/_/g, " ");
 
-const RecommendationCards = ({ items, labels }) => {
+const normalizeString = (value, fallback = "") => {
+  const normalized = String(value || "").trim();
+  return normalized || fallback;
+};
+
+const isProjectRecommendation = (item = {}) =>
+  ["local-project", "international-project", "project", "projects"].includes(
+    normalizeString(item?.property_type).toLowerCase()
+  );
+
+const RecommendationCards = ({ items, labels, lead, leadId }) => {
   if (!Array.isArray(items) || items.length === 0) return null;
 
   return (
@@ -41,6 +58,62 @@ const RecommendationCards = ({ items, labels }) => {
             : Array.isArray(item.matchReasons) && item.matchReasons.length > 0
             ? item.matchReasons.map(formatReason)
             : [];
+          const locationLabel = [item.city, item.district].filter(Boolean).join(" / ");
+          const primaryVideo = item.heroVideo || item.videos?.[0] || null;
+          const projectScoped = isProjectRecommendation(item);
+          const propertyId = projectScoped ? "" : item.id;
+          const projectId = projectScoped ? item.id : "";
+          const detailUrl = normalizeString(item.detail_url);
+          const priceLabel = item.price_usd
+            ? `$${Number(item.price_usd).toLocaleString()}`
+            : labels.priceOnRequest || "Price on request";
+
+          const handleWhatsAppClick = async () => {
+            if (!primaryVideo?.id) return;
+
+            await trackVideoEngagementEvent(
+              buildVideoTrackingPayload({
+                videoId: primaryVideo.id,
+                leadId,
+                propertyId,
+                projectId,
+                eventType: "cta_clicked",
+                watchPercent: 100,
+                source: "video_ai_assistant",
+                context: {
+                  userIntentCitizenship:
+                    lead?.purpose === "citizenship" || lead?.citizenshipInterest === true,
+                  userIntentInstallment: lead?.paymentPlan === "installment",
+                  userIntent:
+                    lead?.purpose === "citizenship"
+                      ? "citizenship"
+                      : lead?.paymentPlan === "installment"
+                      ? "installment"
+                      : "",
+                  priceUsd: Number(item.price_usd) || 0,
+                  isInstallmentProperty: /installment|payment|taksit/i.test(
+                    normalizeString(item.payment_plan)
+                  ),
+                },
+              })
+            );
+
+            const whatsappUrl = buildVideoWhatsAppUrl({
+              title: item.title,
+              location: locationLabel,
+              priceLabel,
+              detailUrl,
+              source: "video_ai_assistant",
+            });
+            window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+          };
+
+          const handleSimilarPropertiesClick = () => {
+            const prompt = `Show me similar properties to ${item.title}${
+              locationLabel ? ` in ${locationLabel}` : ""
+            }`;
+            openAiAssistantForSimilarProperties(prompt);
+          };
 
           return (
             <div
@@ -57,6 +130,46 @@ const RecommendationCards = ({ items, labels }) => {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 to-transparent" />
                 </div>
+              ) : null}
+              {primaryVideo ? (
+                <SmartPropertyVideo
+                  video={primaryVideo}
+                  propertyId={propertyId}
+                  projectId={projectId}
+                  leadId={leadId}
+                  placement="ai_assistant"
+                  context={{
+                    userIntentCitizenship:
+                      lead?.purpose === "citizenship" || lead?.citizenshipInterest === true,
+                    userIntentInstallment: lead?.paymentPlan === "installment",
+                    userIntent:
+                      lead?.purpose === "citizenship"
+                        ? "citizenship"
+                        : lead?.paymentPlan === "installment"
+                        ? "installment"
+                        : "",
+                    priceUsd: Number(item.price_usd) || 0,
+                    isInstallmentProperty: /installment|payment|taksit/i.test(
+                      normalizeString(item.payment_plan)
+                    ),
+                  }}
+                  ctaMessage={
+                    labels.videoCtaPrompt ||
+                    "Looks like this project matches your interest. Would you like full price details or similar options on WhatsApp?"
+                  }
+                  ctaLabels={{
+                    whatsapp: labels.whatsapp,
+                    similarProperties: labels.similarProperties,
+                    bookViewing: labels.bookViewing,
+                  }}
+                  onWhatsAppClick={handleWhatsAppClick}
+                  onSimilarPropertiesClick={handleSimilarPropertiesClick}
+                  onBookViewingClick={
+                    detailUrl
+                      ? () => window.open(detailUrl, "_blank", "noopener,noreferrer")
+                      : null
+                  }
+                />
               ) : null}
               <div className="space-y-2 p-4">
                 <div className="flex items-start justify-between gap-3">
@@ -111,14 +224,33 @@ const RecommendationCards = ({ items, labels }) => {
                   <p className="text-xs leading-5 text-slate-600">{item.recommendationNote}</p>
                 ) : null}
 
-                {item.detail_url ? (
-                  <a
-                    href={item.detail_url}
-                    className="inline-flex rounded-full bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800"
-                  >
-                    {labels.viewDetails}
-                  </a>
-                ) : null}
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {detailUrl ? (
+                    <a
+                      href={detailUrl}
+                      className="inline-flex rounded-full bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800"
+                    >
+                      {labels.viewDetails}
+                    </a>
+                  ) : null}
+                  {primaryVideo ? (
+                    <button
+                      type="button"
+                      onClick={handleWhatsAppClick}
+                      className="inline-flex rounded-full bg-[#25D366] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#20bd5a]"
+                    >
+                      {labels.whatsapp}
+                    </button>
+                  ) : null}
+                  {detailUrl ? (
+                    <a
+                      href={detailUrl}
+                      className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                    >
+                      {labels.bookViewing}
+                    </a>
+                  ) : null}
+                </div>
               </div>
             </div>
           );
@@ -130,10 +262,17 @@ const RecommendationCards = ({ items, labels }) => {
 
 RecommendationCards.propTypes = {
   items: PropTypes.arrayOf(PropTypes.object),
+  lead: PropTypes.object,
+  leadId: PropTypes.string,
   labels: PropTypes.shape({
     recommendations: PropTypes.string.isRequired,
     matchReasons: PropTypes.string.isRequired,
     viewDetails: PropTypes.string.isRequired,
+    whatsapp: PropTypes.string,
+    bookViewing: PropTypes.string,
+    similarProperties: PropTypes.string,
+    videoCtaPrompt: PropTypes.string,
+    priceOnRequest: PropTypes.string,
   }).isRequired,
 };
 

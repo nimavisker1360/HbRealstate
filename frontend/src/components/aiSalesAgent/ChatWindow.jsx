@@ -17,6 +17,7 @@ const ChatWindow = ({
   labels,
   messages,
   lead,
+  leadId,
   leadSubmitted,
   leadTemperature,
   isLoading,
@@ -122,7 +123,12 @@ const ChatWindow = ({
                       <ResourceLinks items={message.resources} labels={labels} />
                     ) : null}
                     {!isUser ? (
-                      <RecommendationCards items={message.recommendations} labels={labels} />
+                      <RecommendationCards
+                        items={message.recommendations}
+                        labels={labels}
+                        lead={lead}
+                        leadId={leadId}
+                      />
                     ) : null}
                   </div>
                 </div>
@@ -208,6 +214,7 @@ ChatWindow.propTypes = {
   labels: PropTypes.object.isRequired,
   messages: PropTypes.arrayOf(PropTypes.object).isRequired,
   lead: PropTypes.object,
+  leadId: PropTypes.string,
   leadSubmitted: PropTypes.bool,
   leadTemperature: PropTypes.string,
   isLoading: PropTypes.bool,

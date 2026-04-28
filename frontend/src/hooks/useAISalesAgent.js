@@ -377,17 +377,6 @@ export const useAISalesAgent = () => {
     setIsOpen(false);
   }, []);
 
-  useEffect(() => {
-    const handleOpenRequest = () => {
-      openWidget();
-    };
-
-    window.addEventListener("hb:ai-agent:open", handleOpenRequest);
-    return () => {
-      window.removeEventListener("hb:ai-agent:open", handleOpenRequest);
-    };
-  }, [openWidget]);
-
   const sendMessage = useCallback(
     async (rawMessage) => {
       const content = String(rawMessage || "").trim();
@@ -453,6 +442,26 @@ export const useAISalesAgent = () => {
       updateState,
     ]
   );
+
+  useEffect(() => {
+    const handleOpenRequest = () => {
+      openWidget();
+    };
+    const handleVideoIntentRequest = async (event) => {
+      const message = String(event?.detail?.message || "").trim();
+      await openWidget();
+      if (message) {
+        await sendMessage(message);
+      }
+    };
+
+    window.addEventListener("hb:ai-agent:open", handleOpenRequest);
+    window.addEventListener("hb:ai-agent:video-intent", handleVideoIntentRequest);
+    return () => {
+      window.removeEventListener("hb:ai-agent:open", handleOpenRequest);
+      window.removeEventListener("hb:ai-agent:video-intent", handleVideoIntentRequest);
+    };
+  }, [openWidget, sendMessage]);
 
   const submitLead = useCallback(
     async (leadPatch = {}) => {

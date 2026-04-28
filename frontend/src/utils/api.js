@@ -741,6 +741,60 @@ export const createAISalesAgentEmailHandoff = async ({
   return response.data;
 };
 
+export const createVideoUploadSession = async (data, token) => {
+  const response = await api.post("/videos/create-upload", data, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    timeout: 30000,
+  });
+  return response.data;
+};
+
+export const getAdminVideos = async (token, params = {}) => {
+  const response = await api.get("/videos/admin/all", {
+    params,
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    timeout: 15000,
+  });
+  return response.data;
+};
+
+export const updateAdminVideo = async (videoId, data, token) => {
+  const response = await api.patch(`/videos/${videoId}`, data, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    timeout: 15000,
+  });
+  return response.data;
+};
+
+export const getPropertyVideosApi = async (propertyId, params = {}) => {
+  const response = await api.get(`/videos/property/${propertyId}`, {
+    params,
+    timeout: 10000,
+  });
+  return response.data;
+};
+
+export const getProjectVideosApi = async (projectId, params = {}) => {
+  const response = await api.get(`/videos/project/${projectId}`, {
+    params,
+    timeout: 10000,
+  });
+  return response.data;
+};
+
+export const trackVideoEvent = async (data) => {
+  const response = await api.post("/video-events", data, {
+    timeout: 10000,
+  });
+  return response.data;
+};
+
 // Get All Contact Messages
 export const getAllContactMessages = async (token) => {
   try {

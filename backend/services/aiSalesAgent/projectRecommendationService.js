@@ -1,6 +1,7 @@
 import { AI_AGENT_SCORING_THRESHOLDS } from "../../constants/aiSalesAgent.js";
 import { getLocalizedAgentCopy } from "./copy.js";
 import { searchProperties } from "../realEstateAssistant.js";
+import { attachVideosToRecommendations } from "../videoRecommendationService.js";
 
 const ASSISTANT_TRY_PER_USD = (() => {
   const parsed = Number(process.env.ASSISTANT_TRY_PER_USD);
@@ -1051,13 +1052,14 @@ export const getDeterministicRecommendations = async (
   const shortlisted = selectBestRecommendations(scored, lead, pageContext, limit);
 
   if (lead.citizenshipInterest === true) {
-    return shortlisted.sort((left, right) => {
+    const sorted = shortlisted.sort((left, right) => {
       const leftBoost = matchesCitizenshipHeuristic(left) ? 1 : 0;
       const rightBoost = matchesCitizenshipHeuristic(right) ? 1 : 0;
       if (leftBoost !== rightBoost) return rightBoost - leftBoost;
       return right.recommendationScore - left.recommendationScore;
     });
+    return attachVideosToRecommendations(sorted);
   }
 
-  return shortlisted;
+  return attachVideosToRecommendations(shortlisted);
 };

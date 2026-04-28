@@ -11,7 +11,7 @@ import useBookings from "../hooks/useBookings.jsx";
 import useImageOptimization from "../hooks/useImageOptimization";
 import { trackWhatsAppConversionFromClick } from "../utils/analytics";
 import { captureAttributionParams } from "../utils/attribution";
-import AssistantChatWidget from "./AssistantChatModal";
+import AISalesAgentWidget from "./aiSalesAgent/AISalesAgentWidget";
 import SitewideSchema from "./seo/SitewideSchema";
 
 const Layout = () => {
@@ -210,7 +210,7 @@ const Layout = () => {
         <Outlet />
       </div>
       {!hideFooter && <Footer />}
-      <AssistantChatWidget />
+      <AISalesAgentWidget />
     </div>
   );
 };
