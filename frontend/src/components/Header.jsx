@@ -275,7 +275,7 @@ const Header = () => {
             <div className="flex items-center gap-2 sm:gap-3">
               <button
                 onClick={handleLiveClick}
-                className="hidden md:inline-flex items-center gap-2 whitespace-nowrap px-2 py-2 text-xs font-bold text-gray-800 transition-colors hover:text-secondaryRed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 disabled:cursor-wait disabled:opacity-70"
+                className="hidden h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-[#e5bd58] px-3 text-sm font-extrabold text-black shadow-[0_8px_20px_rgba(229,189,88,0.2)] transition hover:bg-[#f0cf79] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#e5bd58] focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-wait disabled:opacity-70 md:inline-flex"
                 type="button"
                 disabled={isLoading || liveRedirecting}
               >
@@ -355,6 +355,18 @@ const Header = () => {
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-12">
           <div className="flex items-center justify-between gap-4 py-2">
             <div className="flex-1">
+              <button
+                onClick={handleLiveClick}
+                className="inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-md bg-[#e5bd58] px-3 text-sm font-extrabold text-black shadow-[0_8px_20px_rgba(229,189,88,0.2)] transition hover:bg-[#f0cf79] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#e5bd58] focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-wait disabled:opacity-70 md:hidden"
+                type="button"
+                disabled={isLoading || liveRedirecting}
+              >
+                <span className="relative flex size-2.5 shrink-0" aria-hidden="true">
+                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-red-500 opacity-70" />
+                  <span className="relative inline-flex size-2.5 rounded-full bg-red-600 shadow-[0_0_10px_rgba(220,38,38,0.85)]" />
+                </span>
+                {t("nav.live")}
+              </button>
               {/* Desktop Navbar */}
               <Navbar
                 containerStyles="hidden lg:flex items-center gap-6 text-[13px] font-semibold"
