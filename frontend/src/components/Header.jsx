@@ -2,7 +2,7 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Navbar from "./Navbar";
 import { MdArrowBack, MdClose, MdMenu, MdSearch } from "react-icons/md";
-import { FaHandshake, FaWhatsapp } from "react-icons/fa";
+import { FaWhatsapp } from "react-icons/fa";
 import userIcon from "../assets/user.svg";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth0 } from "@auth0/auth0-react";
@@ -17,6 +17,11 @@ import { PRIMARY_CONTACT_PHONE } from "../constant/data";
 import logo from "../assets/logo.png";
 import CurrencyContext from "../context/CurrencyContext";
 import { LOGIN_MODAL_REQUEST_EVENT } from "../utils/loginPrompt";
+import {
+  buildCurrentReturnTo,
+  consumePostLoginResume,
+  savePostLoginResume,
+} from "../utils/postLoginResume";
 
 const Header = () => {
   const { t } = useTranslation();
@@ -26,16 +31,42 @@ const Header = () => {
   const [contactModalOpen, setContactModalOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [searchOverlayOpen, setSearchOverlayOpen] = useState(false);
+  const [pendingLiveLogin, setPendingLiveLogin] = useState(false);
   const headerRef = useRef(null);
   const { currencies, selectedCurrency, setSelectedCurrency } =
     useContext(CurrencyContext);
   const location = useLocation();
   const navigate = useNavigate();
+  const liveAppUrl =
+    import.meta.env.VITE_HB_LIVE_URL || "http://localhost:3002/live";
   const toggleMenu = () => setMenuOpened(!menuOpened);
   const { isAuthenticated, user, logout, isLoading } = useAuth0();
 
   const handleLoginClick = () => {
     setLoginModalOpen(true);
+  };
+
+  const handleLiveClick = () => {
+    if (!isAuthenticated) {
+      savePostLoginResume({
+        type: "live-stream",
+        targetUrl: liveAppUrl,
+        returnTo: buildCurrentReturnTo(),
+      });
+      setPendingLiveLogin(true);
+      setLoginModalOpen(true);
+      return;
+    }
+
+    window.location.assign(liveAppUrl);
+  };
+
+  const handleLoginModalClose = () => {
+    if (pendingLiveLogin) {
+      consumePostLoginResume("live-stream");
+      setPendingLiveLogin(false);
+    }
+    setLoginModalOpen(false);
   };
 
   useEffect(() => {
@@ -109,6 +140,15 @@ const Header = () => {
   }, [isAuthenticated, loginModalOpen]);
 
   useEffect(() => {
+    if (isLoading || !isAuthenticated) return;
+
+    const resumeState = consumePostLoginResume("live-stream");
+    if (resumeState?.targetUrl) {
+      window.location.assign(resumeState.targetUrl);
+    }
+  }, [isAuthenticated, isLoading]);
+
+  useEffect(() => {
     const handleLoginModalRequest = () => {
       if (!isAuthenticated) {
         setLoginModalOpen(true);
@@ -172,12 +212,15 @@ const Header = () => {
             </Link>
             <div className="flex items-center gap-2 sm:gap-3">
               <button
-                onClick={() => navigate("/contact")}
-                className="hidden md:inline-flex items-center gap-2 rounded-md bg-secondary px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-secondary/90"
+                onClick={handleLiveClick}
+                className="hidden md:inline-flex items-center gap-2 whitespace-nowrap px-2 py-2 text-xs font-bold text-gray-800 transition-colors hover:text-secondaryRed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
                 type="button"
               >
-                <FaHandshake className="text-sm" />
-                {t("header.partner")}
+                <span className="relative flex size-2.5 shrink-0" aria-hidden="true">
+                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-red-500 opacity-70" />
+                  <span className="relative inline-flex size-2.5 rounded-full bg-red-600 shadow-[0_0_10px_rgba(220,38,38,0.85)]" />
+                </span>
+                {t("nav.live")}
               </button>
               <div className="hidden sm:flex items-center gap-2 border border-secondaryRed/80 px-3 py-1 text-sm text-gray-800">
                 {currencies.map((currency) => (
@@ -325,7 +368,7 @@ const Header = () => {
       {/* Login Modal */}
       <LoginModal
         isOpen={loginModalOpen}
-        onClose={() => setLoginModalOpen(false)}
+        onClose={handleLoginModalClose}
       />
 
       {/* Contact Modal */}
@@ -352,4 +395,3 @@ const Header = () => {
 };
 
 export default Header;
-

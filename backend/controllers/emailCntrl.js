@@ -9,6 +9,9 @@ import { handleLeadStatusTransition } from "../services/leadStatusWorkflow.js";
 import {
   getGmailSender,
   getGmailTransporter,
+  getPasswordEmailSender,
+  getPasswordEmailTransporter,
+  isEmailPasswordConfigured,
 } from "../utils/gmailTransporter.js";
 
 const CONTACT_RECIPIENT = "hbrealstate2019@gmail.com";
@@ -171,6 +174,36 @@ const buildContactEmailText = (payload) => {
   ].join("\n");
 };
 
+const isOauthAuthError = (error) =>
+  error?.code === "EAUTH" ||
+  /invalid_grant|expired|revoked|oauth/i.test(String(error?.message || ""));
+
+const sendContactNotification = async (mailOptions) => {
+  try {
+    const transporter = getGmailTransporter();
+    const sender = getGmailSender();
+    return await transporter.sendMail({
+      ...mailOptions,
+      from: `"HB Real Estate" <${sender}>`,
+    });
+  } catch (error) {
+    if (!isOauthAuthError(error) || !isEmailPasswordConfigured()) {
+      throw error;
+    }
+
+    console.warn(
+      "Gmail OAuth failed; retrying contact notification with password SMTP."
+    );
+
+    const fallbackTransporter = getPasswordEmailTransporter();
+    const fallbackSender = getPasswordEmailSender();
+    return fallbackTransporter.sendMail({
+      ...mailOptions,
+      from: `"HB Real Estate" <${fallbackSender}>`,
+    });
+  }
+};
+
 export const sendEmail = asyncHandler(async (req, res) => {
   const {
     name,
@@ -275,11 +308,7 @@ export const sendEmail = asyncHandler(async (req, res) => {
       },
     });
 
-    const transporter = getGmailTransporter();
-    const sender = getGmailSender();
-
-    await transporter.sendMail({
-      from: `"HB Real Estate" <${sender}>`,
+    await sendContactNotification({
       to: CONTACT_RECIPIENT,
       replyTo: normalizedPayload.email || undefined,
       subject: normalizedPayload.subject,
