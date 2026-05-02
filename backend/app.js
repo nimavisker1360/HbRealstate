@@ -15,6 +15,7 @@ import { uploadRoute } from "./routes/uploadRoute.js";
 import { inspectionRoute } from "./routes/inspectionRoute.js";
 import { stagingRoute } from "./routes/stagingRoute.js";
 import { videoEventRouter, videoRoute } from "./routes/videoRoute.js";
+import { liveRoute } from "./routes/liveRoute.js";
 import { getSitemapXml } from "./controllers/sitemapCntrl.js";
 import { loadBackendEnv } from "./config/loadEnv.js";
 
@@ -52,5 +53,6 @@ app.use("/api/inspection", inspectionRoute);
 app.use("/api/staging", stagingRoute);
 app.use("/api/videos", videoRoute);
 app.use("/api/video-events", videoEventRouter);
+app.use("/api/live", liveRoute);
 
 export default app;

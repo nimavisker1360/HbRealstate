@@ -795,6 +795,18 @@ export const trackVideoEvent = async (data) => {
   return response.data;
 };
 
+export const getLiveToken = async (token) => {
+  const response = await api.get("/live/token", {
+    headers: token
+      ? {
+          Authorization: `Bearer ${token}`,
+        }
+      : undefined,
+    timeout: 10000,
+  });
+  return response.data;
+};
+
 // Get All Contact Messages
 export const getAllContactMessages = async (token) => {
   try {

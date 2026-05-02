@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Navbar from "./Navbar";
 import { MdArrowBack, MdClose, MdMenu, MdSearch } from "react-icons/md";
@@ -22,6 +22,7 @@ import {
   consumePostLoginResume,
   savePostLoginResume,
 } from "../utils/postLoginResume";
+import { getLiveToken } from "../utils/api";
 
 const Header = () => {
   const { t } = useTranslation();
@@ -32,33 +33,94 @@ const Header = () => {
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [searchOverlayOpen, setSearchOverlayOpen] = useState(false);
   const [pendingLiveLogin, setPendingLiveLogin] = useState(false);
+  const [liveRedirecting, setLiveRedirecting] = useState(false);
   const headerRef = useRef(null);
   const { currencies, selectedCurrency, setSelectedCurrency } =
     useContext(CurrencyContext);
   const location = useLocation();
   const navigate = useNavigate();
   const liveAppUrl =
-    import.meta.env.VITE_HB_LIVE_URL || "http://localhost:3002/live";
+    import.meta.env.VITE_LIVE_APP_URL || "https://live.hbrealstate.com";
   const toggleMenu = () => setMenuOpened(!menuOpened);
-  const { isAuthenticated, user, logout, isLoading } = useAuth0();
+  const {
+    isAuthenticated,
+    user,
+    logout,
+    isLoading,
+    getAccessTokenSilently,
+    getIdTokenClaims,
+  } = useAuth0();
 
   const handleLoginClick = () => {
     setLoginModalOpen(true);
   };
 
-  const handleLiveClick = () => {
-    if (!isAuthenticated) {
-      savePostLoginResume({
-        type: "live-stream",
-        targetUrl: liveAppUrl,
-        returnTo: buildCurrentReturnTo(),
+  const buildLiveRedirectUrl = useCallback(
+    (token) => `${liveAppUrl}?token=${encodeURIComponent(token)}`,
+    [liveAppUrl]
+  );
+
+  const getFreshIdToken = useCallback(async () => {
+    try {
+      await getAccessTokenSilently({
+        cacheMode: "off",
+        authorizationParams: {
+          scope: "openid profile email",
+        },
       });
-      setPendingLiveLogin(true);
-      setLoginModalOpen(true);
+    } catch (error) {
+      // Fall back to current ID token claims below.
+    }
+
+    const claims = await getIdTokenClaims();
+    return claims?.__raw || null;
+  }, [getAccessTokenSilently, getIdTokenClaims]);
+
+  const startLiveLoginFlow = useCallback(() => {
+    const returnTo = buildCurrentReturnTo();
+    savePostLoginResume({
+      type: "live-stream",
+      targetUrl: liveAppUrl,
+      returnTo,
+    });
+    setPendingLiveLogin(true);
+    setLoginModalOpen(true);
+  }, [liveAppUrl]);
+
+  const redirectToLiveWithToken = useCallback(async () => {
+    setLiveRedirecting(true);
+    try {
+      const auth0Token = await getFreshIdToken();
+      if (!auth0Token) {
+        startLiveLoginFlow();
+        return;
+      }
+
+      const response = await getLiveToken(auth0Token);
+      if (response?.token) {
+        window.location.assign(buildLiveRedirectUrl(response.token));
+      }
+    } catch (error) {
+      if (error?.response?.status === 401) {
+        startLiveLoginFlow();
+        return;
+      }
+
+      console.error("Failed to create live stream token:", error);
+    } finally {
+      setLiveRedirecting(false);
+    }
+  }, [buildLiveRedirectUrl, getFreshIdToken, startLiveLoginFlow]);
+
+  const handleLiveClick = async () => {
+    if (isLoading || liveRedirecting) return;
+
+    if (!isAuthenticated) {
+      startLiveLoginFlow();
       return;
     }
 
-    window.location.assign(liveAppUrl);
+    await redirectToLiveWithToken();
   };
 
   const handleLoginModalClose = () => {
@@ -144,9 +206,9 @@ const Header = () => {
 
     const resumeState = consumePostLoginResume("live-stream");
     if (resumeState?.targetUrl) {
-      window.location.assign(resumeState.targetUrl);
+      redirectToLiveWithToken();
     }
-  }, [isAuthenticated, isLoading]);
+  }, [isAuthenticated, isLoading, redirectToLiveWithToken]);
 
   useEffect(() => {
     const handleLoginModalRequest = () => {
@@ -213,8 +275,9 @@ const Header = () => {
             <div className="flex items-center gap-2 sm:gap-3">
               <button
                 onClick={handleLiveClick}
-                className="hidden md:inline-flex items-center gap-2 whitespace-nowrap px-2 py-2 text-xs font-bold text-gray-800 transition-colors hover:text-secondaryRed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
+                className="hidden md:inline-flex items-center gap-2 whitespace-nowrap px-2 py-2 text-xs font-bold text-gray-800 transition-colors hover:text-secondaryRed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 disabled:cursor-wait disabled:opacity-70"
                 type="button"
+                disabled={isLoading || liveRedirecting}
               >
                 <span className="relative flex size-2.5 shrink-0" aria-hidden="true">
                   <span className="absolute inline-flex size-full animate-ping rounded-full bg-red-500 opacity-70" />
