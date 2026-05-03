@@ -807,6 +807,18 @@ export const getLiveToken = async (token) => {
   return response.data;
 };
 
+export const getLiveSsoToken = async (token) => {
+  const response = await api.get("/live/sso-token", {
+    headers: token
+      ? {
+          Authorization: `Bearer ${token}`,
+        }
+      : undefined,
+    timeout: 10000,
+  });
+  return response.data;
+};
+
 // Get All Contact Messages
 export const getAllContactMessages = async (token) => {
   try {

@@ -1,6 +1,8 @@
 import express from "express";
 import { createHmac } from "node:crypto";
 import jwtCheck from "../config/authOConfig.js";
+import { prisma } from "../config/prismaConfig.js";
+import { getAuthenticatedEmail } from "../middleware/requireAdminUser.js";
 
 const router = express.Router();
 
@@ -50,6 +52,45 @@ router.get("/token", jwtCheck, (req, res) => {
       email: user.email ?? null,
       name: user.name ?? null,
       picture: user.picture ?? null,
+    },
+    secret
+  );
+
+  return res.json({ token });
+});
+
+router.get("/sso-token", jwtCheck, async (req, res) => {
+  const user = req?.auth?.payload;
+
+  if (!user?.sub) {
+    return res.status(401).json({
+      success: false,
+      message: "Authentication required.",
+    });
+  }
+
+  const secret = process.env.HB_SSO_SECRET;
+  if (!secret) {
+    return res.status(500).json({
+      success: false,
+      message: "HB_SSO_SECRET is not configured.",
+    });
+  }
+
+  const email = getAuthenticatedEmail(req);
+  const persistedUser = email
+    ? await prisma.user.findUnique({
+        where: { email },
+        select: { isAdmin: true },
+      })
+    : null;
+
+  const token = signLiveJwt(
+    {
+      sub: user.sub,
+      email: email || user.email || null,
+      name: user.name ?? null,
+      role: persistedUser?.isAdmin ? "OWNER" : "BUYER",
     },
     secret
   );

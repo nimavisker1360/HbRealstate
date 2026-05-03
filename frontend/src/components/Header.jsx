@@ -23,7 +23,7 @@ import {
   getPostLoginResume,
   savePostLoginResume,
 } from "../utils/postLoginResume";
-import { getLiveToken } from "../utils/api";
+import { getLiveSsoToken, getLiveToken } from "../utils/api";
 
 const Header = () => {
   const { t } = useTranslation();
@@ -110,6 +110,30 @@ const Header = () => {
     [liveAppUrl]
   );
 
+  const getLiveCallbackUrl = useCallback(() => {
+    const callbackValue = new URLSearchParams(location.search || "").get(
+      "callbackUrl"
+    );
+
+    if (!callbackValue) return null;
+
+    try {
+      const callbackUrl = new URL(callbackValue);
+      const allowedLiveOrigin = new URL(liveAppUrl).origin;
+
+      if (
+        callbackUrl.origin !== allowedLiveOrigin ||
+        callbackUrl.pathname !== "/api/auth/sso"
+      ) {
+        return null;
+      }
+
+      return callbackUrl.toString();
+    } catch {
+      return null;
+    }
+  }, [liveAppUrl, location.search]);
+
   const getFreshIdToken = useCallback(async () => {
     try {
       await getAccessTokenSilently({
@@ -161,6 +185,33 @@ const Header = () => {
       setLiveRedirecting(false);
     }
   }, [buildLiveRedirectUrl, getFreshIdToken, startLiveLoginFlow]);
+
+  const redirectToLiveCallback = useCallback(
+    async (callbackUrl) => {
+      if (liveRedirecting) return;
+
+      setLiveRedirecting(true);
+      try {
+        const auth0Token = await getFreshIdToken();
+        if (!auth0Token) {
+          setLoginModalOpen(true);
+          return;
+        }
+
+        const response = await getLiveSsoToken(auth0Token);
+        if (response?.token) {
+          const nextUrl = new URL(callbackUrl);
+          nextUrl.searchParams.set("token", response.token);
+          window.location.assign(nextUrl.toString());
+        }
+      } catch (error) {
+        console.error("Failed to create live SSO token:", error);
+      } finally {
+        setLiveRedirecting(false);
+      }
+    },
+    [getFreshIdToken, liveRedirecting]
+  );
 
   const handleLiveClick = async () => {
     if (isLoading || liveRedirecting) return;
@@ -252,12 +303,25 @@ const Header = () => {
 
     if (isAuthenticated) {
       setLoginModalOpen(false);
+      const liveCallbackUrl = getLiveCallbackUrl();
+      if (liveCallbackUrl) {
+        redirectToLiveCallback(liveCallbackUrl);
+        return;
+      }
+
       navigate("/", { replace: true });
       return;
     }
 
     setLoginModalOpen(true);
-  }, [isAuthenticated, isLoading, location.pathname, navigate]);
+  }, [
+    getLiveCallbackUrl,
+    isAuthenticated,
+    isLoading,
+    location.pathname,
+    navigate,
+    redirectToLiveCallback,
+  ]);
 
   useEffect(() => {
     if (isAuthenticated && loginModalOpen) {
