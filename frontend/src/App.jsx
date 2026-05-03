@@ -127,6 +127,7 @@ export default function App() {
                 <Routes>
                   <Route element={<Layout />}>
                     <Route path="/" element={<Home />} />
+                    <Route path="/login" element={<Home />} />
                     <Route path="/contact" element={<Addresses variant="contact" />} />
                     <Route path="/browse" element={<LegacyBrowseRedirect />} />
                     <Route path="/services">

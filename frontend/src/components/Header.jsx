@@ -20,6 +20,7 @@ import { LOGIN_MODAL_REQUEST_EVENT } from "../utils/loginPrompt";
 import {
   buildCurrentReturnTo,
   consumePostLoginResume,
+  getPostLoginResume,
   savePostLoginResume,
 } from "../utils/postLoginResume";
 import { getLiveToken } from "../utils/api";
@@ -51,8 +52,57 @@ const Header = () => {
     getIdTokenClaims,
   } = useAuth0();
 
-  const handleLoginClick = () => {
+  const navigateAwayFromLoginRoute = useCallback(() => {
+    if (location.pathname !== "/login") return;
+
+    const background = location.state?.loginBackground;
+    if (
+      background &&
+      typeof background.pathname === "string" &&
+      background.pathname !== "/login"
+    ) {
+      navigate(
+        {
+          pathname: background.pathname || "/",
+          search: background.search || "",
+          hash: background.hash || "",
+        },
+        { replace: true }
+      );
+      return;
+    }
+
+    navigate("/", { replace: true });
+  }, [location.pathname, location.state, navigate]);
+
+  const openLoginRoute = useCallback(() => {
+    const returnTo = buildCurrentReturnTo();
+    const existingResume = getPostLoginResume();
+
+    if (!existingResume) {
+      savePostLoginResume({
+        type: "login",
+        returnTo,
+      });
+    }
+
     setLoginModalOpen(true);
+
+    if (location.pathname !== "/login") {
+      navigate("/login", {
+        state: {
+          loginBackground: {
+            pathname: location.pathname || "/",
+            search: location.search || "",
+            hash: location.hash || "",
+          },
+        },
+      });
+    }
+  }, [location.hash, location.pathname, location.search, navigate]);
+
+  const handleLoginClick = () => {
+    openLoginRoute();
   };
 
   const buildLiveRedirectUrl = useCallback(
@@ -128,7 +178,9 @@ const Header = () => {
       consumePostLoginResume("live-stream");
       setPendingLiveLogin(false);
     }
+    consumePostLoginResume("login");
     setLoginModalOpen(false);
+    navigateAwayFromLoginRoute();
   };
 
   useEffect(() => {
@@ -196,6 +248,18 @@ const Header = () => {
   ]);
 
   useEffect(() => {
+    if (isLoading || location.pathname !== "/login") return;
+
+    if (isAuthenticated) {
+      setLoginModalOpen(false);
+      navigate("/", { replace: true });
+      return;
+    }
+
+    setLoginModalOpen(true);
+  }, [isAuthenticated, isLoading, location.pathname, navigate]);
+
+  useEffect(() => {
     if (isAuthenticated && loginModalOpen) {
       setLoginModalOpen(false);
     }
@@ -213,7 +277,7 @@ const Header = () => {
   useEffect(() => {
     const handleLoginModalRequest = () => {
       if (!isAuthenticated) {
-        setLoginModalOpen(true);
+        openLoginRoute();
       }
     };
 
@@ -228,7 +292,7 @@ const Header = () => {
         handleLoginModalRequest
       );
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, openLoginRoute]);
 
   useEffect(() => {
     const headerEl = headerRef.current;
