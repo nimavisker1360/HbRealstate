@@ -28,6 +28,26 @@ const signLiveJwt = (payload, secret) => {
   return `${encodedToken}.${signature}`;
 };
 
+const readEmailList = (value) =>
+  String(value || "")
+    .split(",")
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean);
+
+const resolveSsoRole = ({ email, persistedUser }) => {
+  if (persistedUser?.isAdmin) {
+    return "OWNER";
+  }
+
+  const agentEmails = readEmailList(process.env.HB_LIVE_AGENT_EMAILS);
+
+  if (email && agentEmails.includes(email.toLowerCase())) {
+    return "AGENT";
+  }
+
+  return "BUYER";
+};
+
 router.get("/token", jwtCheck, (req, res) => {
   const user = req?.auth?.payload;
 
@@ -90,7 +110,7 @@ router.get("/sso-token", jwtCheck, async (req, res) => {
       sub: user.sub,
       email: email || user.email || null,
       name: user.name ?? null,
-      role: persistedUser?.isAdmin ? "OWNER" : "BUYER",
+      role: resolveSsoRole({ email, persistedUser }),
     },
     secret
   );
