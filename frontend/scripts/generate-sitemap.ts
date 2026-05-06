@@ -73,6 +73,7 @@ const staticPages: SitemapUrl[] = [
   { path: "/istanbul-apartments", changefreq: "weekly", priority: "0.8" },
   { path: "/kyrenia-apartments", changefreq: "weekly", priority: "0.8" },
   { path: "/investment-opportunities", changefreq: "weekly", priority: "0.8" },
+  { path: "/citizenship", changefreq: "weekly", priority: "0.9" },
   { path: "/turkey-property-investment", changefreq: "weekly", priority: "0.8" },
   { path: "/turkish-citizenship-property", changefreq: "weekly", priority: "0.8" },
   { path: "/services", changefreq: "weekly", priority: "0.8" },

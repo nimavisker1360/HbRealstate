@@ -44,6 +44,7 @@ const RouteSeo = () => {
       pathname.startsWith("/listing/") ||
       pathname === "/services" ||
       pathname.startsWith("/services/") ||
+      pathname === "/citizenship" ||
       pathname === "/browse" ||
       pathname.startsWith("/projects/") ||
       pathname === "/investment-guides" ||

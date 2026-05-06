@@ -1390,5 +1390,125 @@
         "a6": "Primarily Turkey and Cyprus markets; ask for other locations."
       }
     }
+  },
+  "citizenshipLanding": {
+    "seoTitle": "Turkish Citizenship by Investment | HB Real Estate",
+    "seoDescription": "Get Turkish citizenship by real estate investment starting from $400,000. Discover verified Istanbul properties, legal guidance, and free consultation with HB Real Estate.",
+    "whatsappMessage": "Hello, I want a Turkish citizenship property shortlist.",
+    "hero": {
+      "eyebrow": "Turkish Citizenship by Investment",
+      "title": "Turkish Citizenship by Real Estate Investment",
+      "subtitle": "Invest from $400,000 in verified properties and secure Turkish citizenship with expert real estate and legal guidance.",
+      "primaryCta": "Get my shortlist",
+      "whatsappCta": "Talk on WhatsApp"
+    },
+    "trustBadges": [
+      "Citizenship-focused property shortlist",
+      "Multilingual advisor team",
+      "Due diligence minded process"
+    ],
+    "stats": [
+      { "value": "$400K+", "label": "Minimum property route" },
+      { "value": "3", "label": "Languages supported" },
+      { "value": "5", "label": "Guided process steps" },
+      { "value": "24h", "label": "Advisor response target" }
+    ],
+    "form": {
+      "eyebrow": "Private consultation",
+      "title": "Request eligible projects",
+      "subtitle": "Share your contact details and investment range.",
+      "name": "Full name",
+      "namePlaceholder": "Your name",
+      "phone": "Phone / WhatsApp",
+      "email": "Email",
+      "budget": "Budget",
+      "preferredLanguage": "Preferred Language",
+      "message": "Notes",
+      "messagePlaceholder": "Preferred city, unit type, or family needs",
+      "select": "Select",
+      "languageEnglish": "English",
+      "languageTurkish": "Turkish",
+      "languageRussian": "Russian",
+      "submit": "Send request",
+      "sending": "Sending...",
+      "privacy": "Your details are used only to respond to this investment request.",
+      "submitted": "Your request was received. Our team will prepare the next step.",
+      "success": "Thank you. An advisor will contact you shortly.",
+      "error": "Could not send your request. Please try again.",
+      "nameError": "Please enter your name.",
+      "contactError": "Please enter your email or phone number.",
+      "emailError": "Please enter a valid email address.",
+      "emailSubject": "Turkish Citizenship Investment Lead",
+      "defaultMessage": "I want a citizenship-eligible property shortlist."
+    },
+    "benefits": {
+      "eyebrow": "Why this route",
+      "title": "A property purchase should work beyond the passport.",
+      "items": [
+        { "title": "Compliance-first selection", "body": "We focus on assets that can support the citizenship path with cleaner documentation and clearer next steps." },
+        { "title": "Premium project access", "body": "Compare Istanbul developments by location, delivery, pricing, and long-term investment quality." },
+        { "title": "Advisor-led execution", "body": "Move from shortlist to due diligence with multilingual coordination and practical guidance." }
+      ]
+    },
+    "process": {
+      "eyebrow": "5-step process",
+      "title": "From first shortlist to compliant ownership.",
+      "steps": [
+        { "title": "Qualification call", "body": "We confirm your budget, timeline, family needs, and preferred locations." },
+        { "title": "Eligible shortlist", "body": "You receive a focused set of citizenship-suitable projects and units." },
+        { "title": "Project comparison", "body": "We compare pricing, delivery status, payment structure, and resale depth." },
+        { "title": "Due diligence handoff", "body": "Your selected option moves into document, valuation, and transaction checks." },
+        { "title": "Purchase coordination", "body": "We coordinate next steps with the relevant advisors through closing milestones." }
+      ]
+    },
+    "projects": {
+      "eyebrow": "Eligible projects",
+      "title": "Citizenship-focused Istanbul opportunities",
+      "viewAll": "View all eligible listings",
+      "badge": "Citizenship eligible",
+      "installmentBadge": "Installment available",
+      "startingPrice": "Starting price",
+      "viewDetails": "View Details",
+      "whatsapp": "WhatsApp",
+      "whatsappMessage": "Hello, I am interested in this citizenship eligible project: {{project}}",
+      "priceOnRequest": "Price on request",
+      "locationFallback": "Istanbul, Turkey",
+      "descriptionFallback": "Selected development for citizenship-led buyers.",
+      "empty": "Eligible project inventory changes often. Request a private shortlist for current options."
+    },
+    "authority": {
+      "eyebrow": "Trust and authority",
+      "title": "Built for serious international buyers.",
+      "body": "HB International combines real estate selection, local market context, and multilingual client coordination for buyers who need clarity before committing capital.",
+      "items": [
+        { "title": "Local market context", "body": "Compare districts and projects with practical investment criteria." },
+        { "title": "Responsive coordination", "body": "Keep the process clear from first inquiry to next-step planning." },
+        { "title": "Direct advisor access", "body": "Speak with a real consultant instead of browsing alone." }
+      ]
+    },
+    "faq": {
+      "eyebrow": "FAQ",
+      "title": "Questions buyers ask before they move.",
+      "items": [
+        { "question": "What is the minimum real estate investment for Turkish citizenship?", "answer": "The common property route is based on a qualifying real estate investment of at least USD 400,000, subject to current rules and proper transaction structure." },
+        { "question": "Can I buy more than one property?", "answer": "Multiple properties may be possible when the total qualifying structure and documentation meet the required criteria." },
+        { "question": "Are off-plan projects eligible?", "answer": "Some projects may be suitable, but timing, valuation, title status, and developer documentation need stricter review." },
+        { "question": "Do you provide legal advice?", "answer": "We provide real estate guidance and can coordinate with appropriate legal professionals. Legal eligibility should be verified by qualified counsel." },
+        { "question": "How fast will I receive a shortlist?", "answer": "After the form is submitted, an advisor reviews your budget and preferences before sharing relevant next steps." }
+      ]
+    },
+    "finalCta": {
+      "eyebrow": "Start with clarity",
+      "title": "Get a private citizenship property shortlist.",
+      "body": "Tell us your budget and timing. We will respond with the most relevant next step.",
+      "primary": "Request shortlist",
+      "whatsapp": "WhatsApp advisor",
+      "phone": "Call now",
+      "email": "Email us"
+    },
+    "sticky": {
+      "form": "Get shortlist",
+      "phone": "Call"
+    }
   }
 }

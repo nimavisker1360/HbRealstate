@@ -445,7 +445,7 @@ const Header = () => {
                 rel="noreferrer"
                 className="animate-whatsapp-ring flex h-9 w-9 items-center justify-center rounded-full border-2 border-emerald-500 text-emerald-500 transition hover:bg-emerald-50"
                 aria-label="WhatsApp"
-                data-whatsapp-url="true"
+                data-whatsapp-url={`https://wa.me/${normalizeWhatsAppNumber(PRIMARY_CONTACT_PHONE)}`}
               >
                 <FaWhatsapp size={18} />
               </a>

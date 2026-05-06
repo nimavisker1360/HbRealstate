@@ -23,6 +23,7 @@ const AddProperty = lazy(() => import("./pages/AddProperty"));
 const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 const Consultants = lazy(() => import("./pages/Consultants"));
 const TodayProperties = lazy(() => import("./pages/TodayProperties"));
+const CitizenshipLanding = lazy(() => import("./pages/CitizenshipLanding"));
 const MyStagingRequests = lazy(() => import("./pages/MyStagingRequests"));
 const BlogsPage = lazy(() => import("./pages/Blogs"));
 const CountryBlogs = lazy(() => import("./pages/CountryBlogs"));
@@ -218,6 +219,7 @@ export default function App() {
                       }
                     />
                     <Route path="/consultants" element={<Consultants />} />
+                    <Route path="/citizenship" element={<CitizenshipLanding />} />
                     <Route path="/today" element={<TodayProperties />} />
                     <Route path="/blogs" element={<BlogsPage />} />
                     <Route path="/blogs/:countrySlug" element={<CountryBlogs />} />

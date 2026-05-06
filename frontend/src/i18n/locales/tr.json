@@ -1386,5 +1386,125 @@
         "a6": "Öncelik Türkiye ve Kıbrıs; diğer lokasyonlar için sorun."
       }
     }
+  },
+  "citizenshipLanding": {
+    "seoTitle": "Gayrimenkul Yatırımı ile Türk Vatandaşlığı | HB Real Estate",
+    "seoDescription": "400.000$’dan başlayan gayrimenkul yatırımıyla Türk vatandaşlığı sürecinizi başlatın. Onaylı İstanbul projeleri, uzman danışmanlık ve ücretsiz görüşme.",
+    "whatsappMessage": "Merhaba, Türk vatandaşlığına uygun gayrimenkul kısa listesi istiyorum.",
+    "hero": {
+      "eyebrow": "Yatırım ile Türk Vatandaşlığı",
+      "title": "Gayrimenkul Yatırımı ile Türk Vatandaşlığı",
+      "subtitle": "400.000$’dan başlayan onaylı gayrimenkul yatırımlarıyla Türk vatandaşlığı sürecinizi uzman danışmanlıkla başlatın.",
+      "primaryCta": "Kısa listemi al",
+      "whatsappCta": "WhatsApp'ta konuş"
+    },
+    "trustBadges": [
+      "Vatandaşlık odaklı gayrimenkul kısa listesi",
+      "Çok dilli danışman ekibi",
+      "Due diligence odaklı süreç"
+    ],
+    "stats": [
+      { "value": "$400K+", "label": "Minimum gayrimenkul rotası" },
+      { "value": "3", "label": "Dil desteği" },
+      { "value": "5", "label": "Yönlendirmeli süreç adımı" },
+      { "value": "24s", "label": "Danışman dönüş hedefi" }
+    ],
+    "form": {
+      "eyebrow": "Özel danışmanlık",
+      "title": "Uygun projeleri isteyin",
+      "subtitle": "İletişim bilgilerinizi ve yatırım aralığınızı paylaşın.",
+      "name": "Ad soyad",
+      "namePlaceholder": "Adınız",
+      "phone": "Telefon / WhatsApp",
+      "email": "E-posta",
+      "budget": "Bütçe",
+      "preferredLanguage": "Tercih edilen dil",
+      "message": "Notlar",
+      "messagePlaceholder": "Tercih edilen şehir, daire tipi veya aile ihtiyaçları",
+      "select": "Seçin",
+      "languageEnglish": "İngilizce",
+      "languageTurkish": "Türkçe",
+      "languageRussian": "Rusça",
+      "submit": "Talep gönder",
+      "sending": "Gönderiliyor...",
+      "privacy": "Bilgileriniz yalnızca bu yatırım talebine dönüş yapmak için kullanılır.",
+      "submitted": "Talebiniz alındı. Ekibimiz sonraki adımı hazırlayacak.",
+      "success": "Teşekkürler. Bir danışman kısa süre içinde sizinle iletişime geçecek.",
+      "error": "Talebiniz gönderilemedi. Lütfen tekrar deneyin.",
+      "nameError": "Lütfen adınızı girin.",
+      "contactError": "Lütfen e-posta veya telefon numaranızı girin.",
+      "emailError": "Lütfen geçerli bir e-posta adresi girin.",
+      "emailSubject": "Türk Vatandaşlığı Yatırım Talebi",
+      "defaultMessage": "Vatandaşlığa uygun gayrimenkul kısa listesi istiyorum."
+    },
+    "benefits": {
+      "eyebrow": "Neden bu rota",
+      "title": "Gayrimenkul alımı pasaportun ötesinde de çalışmalı.",
+      "items": [
+        { "title": "Uyumluluk öncelikli seçim", "body": "Daha temiz dokümantasyon ve net sonraki adımlarla vatandaşlık yolunu destekleyebilecek varlıklara odaklanıyoruz." },
+        { "title": "Premium proje erişimi", "body": "İstanbul projelerini konum, teslim, fiyatlama ve uzun vadeli yatırım kalitesiyle karşılaştırın." },
+        { "title": "Danışman eşliğinde ilerleme", "body": "Kısa listeden due diligence sürecine çok dilli koordinasyon ve pratik yönlendirmeyle geçin." }
+      ]
+    },
+    "process": {
+      "eyebrow": "5 adımlı süreç",
+      "title": "İlk kısa listeden uyumlu mülkiyete.",
+      "steps": [
+        { "title": "Ön görüşme", "body": "Bütçenizi, zamanlamanızı, aile ihtiyaçlarınızı ve tercih edilen lokasyonları netleştiririz." },
+        { "title": "Uygun kısa liste", "body": "Vatandaşlığa uygun proje ve ünitelerden odaklı bir liste alırsınız." },
+        { "title": "Proje karşılaştırması", "body": "Fiyat, teslim durumu, ödeme yapısı ve yeniden satış derinliğini karşılaştırırız." },
+        { "title": "Due diligence aktarımı", "body": "Seçilen opsiyon belge, değerleme ve işlem kontrollerine geçer." },
+        { "title": "Satın alma koordinasyonu", "body": "Kapanış aşamalarına kadar ilgili danışmanlarla sonraki adımları koordine ederiz." }
+      ]
+    },
+    "projects": {
+      "eyebrow": "Uygun projeler",
+      "title": "Vatandaşlık odaklı İstanbul fırsatları",
+      "viewAll": "Tüm uygun ilanları gör",
+      "badge": "Vatandaşlığa uygun",
+      "installmentBadge": "Taksit imkanı",
+      "startingPrice": "Başlangıç fiyatı",
+      "viewDetails": "Detayları Gör",
+      "whatsapp": "WhatsApp",
+      "whatsappMessage": "Merhaba, vatandaşlığa uygun bu projeyle ilgileniyorum: {{project}}",
+      "priceOnRequest": "Fiyat talep üzerine",
+      "locationFallback": "İstanbul, Türkiye",
+      "descriptionFallback": "Vatandaşlık odaklı alıcılar için seçilmiş proje.",
+      "empty": "Uygun proje envanteri sık değişir. Güncel seçenekler için özel kısa liste isteyin."
+    },
+    "authority": {
+      "eyebrow": "Güven ve otorite",
+      "title": "Ciddi uluslararası alıcılar için tasarlandı.",
+      "body": "HB International, sermaye taahhüdünden önce netlik isteyen alıcılar için gayrimenkul seçimi, yerel piyasa bağlamı ve çok dilli müşteri koordinasyonunu birleştirir.",
+      "items": [
+        { "title": "Yerel piyasa bağlamı", "body": "İlçeleri ve projeleri pratik yatırım kriterleriyle karşılaştırın." },
+        { "title": "Hızlı koordinasyon", "body": "İlk talepten sonraki adım planlamasına kadar süreci net tutun." },
+        { "title": "Doğrudan danışman erişimi", "body": "Tek başınıza gezinmek yerine gerçek bir danışmanla konuşun." }
+      ]
+    },
+    "faq": {
+      "eyebrow": "SSS",
+      "title": "Alıcıların karar öncesi sorduğu sorular.",
+      "items": [
+        { "question": "Türk vatandaşlığı için minimum gayrimenkul yatırımı nedir?", "answer": "Yaygın gayrimenkul rotası, güncel kurallara ve doğru işlem yapısına bağlı olarak en az 400.000 ABD doları nitelikli yatırım esasına dayanır." },
+        { "question": "Birden fazla gayrimenkul alabilir miyim?", "answer": "Toplam yapı ve belgeler gerekli kriterleri karşılıyorsa birden fazla gayrimenkul mümkün olabilir." },
+        { "question": "Lansman veya inşaat halindeki projeler uygun mu?", "answer": "Bazı projeler uygun olabilir; ancak zamanlama, değerleme, tapu durumu ve geliştirici belgeleri daha sıkı incelenmelidir." },
+        { "question": "Hukuki danışmanlık veriyor musunuz?", "answer": "Gayrimenkul danışmanlığı sağlıyor ve uygun hukuk profesyonelleriyle koordinasyon kurabiliyoruz. Hukuki uygunluk yetkin danışmanlarca doğrulanmalıdır." },
+        { "question": "Kısa listeyi ne kadar hızlı alırım?", "answer": "Form gönderildikten sonra danışman bütçenizi ve tercihlerinizi inceleyerek ilgili sonraki adımları paylaşır." }
+      ]
+    },
+    "finalCta": {
+      "eyebrow": "Netlikle başlayın",
+      "title": "Özel vatandaşlık gayrimenkul kısa listesi alın.",
+      "body": "Bütçenizi ve zamanlamanızı paylaşın. Size en ilgili sonraki adımla dönüş yapalım.",
+      "primary": "Kısa liste iste",
+      "whatsapp": "WhatsApp danışmanı",
+      "phone": "Hemen ara",
+      "email": "E-posta gönder"
+    },
+    "sticky": {
+      "form": "Kısa liste al",
+      "phone": "Ara"
+    }
   }
 }
