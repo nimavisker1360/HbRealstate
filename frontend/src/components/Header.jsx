@@ -17,6 +17,7 @@ import { PRIMARY_CONTACT_PHONE } from "../constant/data";
 import logo from "../assets/logo.png";
 import CurrencyContext from "../context/CurrencyContext";
 import { LOGIN_MODAL_REQUEST_EVENT } from "../utils/loginPrompt";
+import { LIVE_STREAM_REQUEST_EVENT } from "../utils/liveStream";
 import {
   buildCurrentReturnTo,
   consumePostLoginResume,
@@ -213,7 +214,7 @@ const Header = () => {
     [getFreshIdToken, liveRedirecting]
   );
 
-  const handleLiveClick = async () => {
+  const handleLiveClick = useCallback(async () => {
     if (isLoading || liveRedirecting) return;
 
     if (!isAuthenticated) {
@@ -222,7 +223,13 @@ const Header = () => {
     }
 
     await redirectToLiveWithToken();
-  };
+  }, [
+    isLoading,
+    liveRedirecting,
+    isAuthenticated,
+    startLiveLoginFlow,
+    redirectToLiveWithToken,
+  ]);
 
   const handleLoginModalClose = () => {
     if (pendingLiveLogin) {
@@ -359,6 +366,21 @@ const Header = () => {
   }, [isAuthenticated, openLoginRoute]);
 
   useEffect(() => {
+    const handleLiveStreamRequest = () => {
+      handleLiveClick();
+    };
+
+    window.addEventListener(LIVE_STREAM_REQUEST_EVENT, handleLiveStreamRequest);
+
+    return () => {
+      window.removeEventListener(
+        LIVE_STREAM_REQUEST_EVENT,
+        handleLiveStreamRequest
+      );
+    };
+  }, [handleLiveClick]);
+
+  useEffect(() => {
     const headerEl = headerRef.current;
     if (!headerEl) return;
 
@@ -411,7 +433,7 @@ const Header = () => {
                   <span className="absolute inline-flex size-full animate-ping rounded-full bg-red-500 opacity-70" />
                   <span className="relative inline-flex size-2.5 rounded-full bg-red-600 shadow-[0_0_10px_rgba(220,38,38,0.85)]" />
                 </span>
-                {t("nav.live")}
+                {t("reels.watch", { defaultValue: "Watch Reels" })}
               </button>
               <div className="hidden sm:flex items-center gap-2 border border-secondaryRed/80 px-3 py-1 text-sm text-gray-800">
                 {currencies.map((currency) => (
@@ -493,7 +515,7 @@ const Header = () => {
                   <span className="absolute inline-flex size-full animate-ping rounded-full bg-red-500 opacity-70" />
                   <span className="relative inline-flex size-2.5 rounded-full bg-red-600 shadow-[0_0_10px_rgba(220,38,38,0.85)]" />
                 </span>
-                {t("nav.live")}
+                {t("reels.watch", { defaultValue: "Watch Reels" })}
               </button>
               {/* Desktop Navbar */}
               <Navbar

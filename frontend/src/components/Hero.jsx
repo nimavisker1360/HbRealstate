@@ -16,6 +16,7 @@ import iconCyprus from "../assets/icons/cyprus.png";
 import HeroDownloadModal from "./HeroDownloadModal";
 import useAuthCheck from "../hooks/useAuthCheck";
 import { getLocalizedAlt } from "../utils/mediaAlt";
+import { requestLiveStream } from "../utils/liveStream";
 import {
   buildCurrentReturnTo,
   getPostLoginResume,
@@ -29,9 +30,11 @@ const DESKTOP_SLIDE_INTERVAL_MS = 6500;
 const ALL_SLIDE_TRANSITION_MS = 900;
 const HERO_GUIDE_VIDEO_SOURCE = "/citizen.mp4";
 const HERO_SERVICES_VIDEO_SOURCE = "/final.mp4";
+const HERO_REELS_VIDEO_SOURCE = "/reels2.mp4";
 const HERO_VIDEO_SOURCES = [
   HERO_GUIDE_VIDEO_SOURCE,
   HERO_SERVICES_VIDEO_SOURCE,
+  HERO_REELS_VIDEO_SOURCE,
 ];
 const HERO_VIDEO_POSTER = heroBg;
 const HERO_SERVICES_CTA_LABEL = "HB RealstateServices";
@@ -44,6 +47,7 @@ const ALL_HERO_SLIDES = [
     showContent: false,
     showDownloadButton: true,
     showServicesButton: false,
+    showReelsButton: false,
   },
   {
     type: "video",
@@ -52,6 +56,16 @@ const ALL_HERO_SLIDES = [
     showContent: false,
     showDownloadButton: false,
     showServicesButton: true,
+    showReelsButton: false,
+  },
+  {
+    type: "video",
+    src: HERO_REELS_VIDEO_SOURCE,
+    altKey: "featuredPropertyFilm",
+    showContent: false,
+    showDownloadButton: false,
+    showServicesButton: false,
+    showReelsButton: true,
   },
   {
     type: "image",
@@ -60,6 +74,7 @@ const ALL_HERO_SLIDES = [
     showContent: true,
     showDownloadButton: false,
     showServicesButton: false,
+    showReelsButton: false,
   },
   // Add new slides here, for example: { src: "/new-slide.jpg", alt: "New slide" },
 ];
@@ -238,6 +253,7 @@ const Hero = () => {
           showContent: true,
           showDownloadButton: false,
           showServicesButton: false,
+          showReelsButton: false,
         };
   const shouldShowHeroContent =
     activeTab === "ALL"
@@ -251,6 +267,10 @@ const Hero = () => {
     activeTab === "ALL" &&
     !isAllSlidesAnimating &&
     activeHeroMedia.showServicesButton;
+  const shouldShowReelsButton =
+    activeTab === "ALL" &&
+    !isAllSlidesAnimating &&
+    activeHeroMedia.showReelsButton;
   const activeHeroLocationKey = activeTab === "ALL" ? "ISTANBUL" : activeTab;
   const heroHeading = t(`hero.locationTitles.${activeHeroLocationKey}`, {
     defaultValue: t("hero.h1", {
@@ -398,6 +418,10 @@ const Hero = () => {
     }
 
     setIsDownloadModalOpen(true);
+  };
+
+  const handleWatchReelsClick = () => {
+    requestLiveStream({ source: "hero-reels-slide" });
   };
 
   useEffect(() => {
@@ -564,6 +588,22 @@ const Hero = () => {
               {HERO_SERVICES_CTA_LABEL}
             </span>
           </Link>
+        </div>
+      )}
+
+      {shouldShowReelsButton && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-[92px] z-10 flex justify-center px-6 sm:bottom-[108px]">
+          <button
+            type="button"
+            onClick={handleWatchReelsClick}
+            className="pointer-events-auto inline-flex h-[44px] min-w-[170px] items-center justify-center gap-2.5 rounded-[10px] bg-[#e5bd58] px-5 text-[13px] font-extrabold uppercase tracking-[0.03em] text-black shadow-[0_10px_30px_rgba(229,189,88,0.35)] transition hover:bg-[#f0cf79] animate-hero-fade sm:h-[54px] sm:min-w-[230px] sm:px-8 sm:text-[16px] sm:tracking-[0.04em]"
+          >
+            <span className="relative flex size-2.5 shrink-0" aria-hidden="true">
+              <span className="absolute inline-flex size-full animate-ping rounded-full bg-red-500 opacity-70" />
+              <span className="relative inline-flex size-2.5 rounded-full bg-red-600 shadow-[0_0_10px_rgba(220,38,38,0.85)]" />
+            </span>
+            {t("reels.watch", { defaultValue: "Watch Reels" })}
+          </button>
         </div>
       )}
 

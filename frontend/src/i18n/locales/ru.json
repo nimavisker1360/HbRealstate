@@ -102,6 +102,11 @@
     "consultants": "Консультанты",
     "today": "Объекты сегодня"
   },
+  "reels": {
+    "title": "Смотрите наши Reels о недвижимости",
+    "subtitle": "Живые туры, эксклюзивные объекты и закулисье от HB Realstate.",
+    "watch": "Смотреть Reels"
+  },
   "aboutTurkeyMenu": {
     "mediterraneanRegion": "Средиземноморский регион",
     "aegeanRegion": "Эгейский регион",
