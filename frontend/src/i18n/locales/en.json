@@ -247,6 +247,13 @@
     "searchPlaceholder": "Search by city, address or property name...",
     "exploreBtn": "Explore Properties"
   },
+  "homeContact": {
+    "connectLabel": "Connect With HB",
+    "firstName": "First Name",
+    "lastName": "Surname",
+    "submit": "Contact",
+    "sending": "Sending"
+  },
   "about": {
     "title": "About Us",
     "subtitle": "Your Trusted Partner in Turkish Real Estate",

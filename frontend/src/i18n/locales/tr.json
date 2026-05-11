@@ -235,18 +235,25 @@
     "touristFacility": "Turistik Tesis"
   },
   "hero": {
-    "h1": "Istanbul'da Satilik Gayrimenkul",
+    "h1": "İstanbul Satılık Gayrimenkul",
     "locationTitles": {
-      "ISTANBUL": "Istanbul'da Satilik Gayrimenkul",
-      "GREECE": "Yunanistan'da Satilik Gayrimenkul",
-      "DUBAI": "Dubai'de Satilik Gayrimenkul",
-      "GEORGIA": "Gurcistan'da Satilik Gayrimenkul",
-      "CYPRUS": "Kibris'ta Satilik Gayrimenkul"
+      "ISTANBUL": "İstanbul Satılık Gayrimenkul",
+      "GREECE": "Yunanistan Satılık Gayrimenkul",
+      "DUBAI": "Dubai Satılık Gayrimenkul",
+      "GEORGIA": "Gürcistan Satılık Gayrimenkul",
+      "CYPRUS": "Kıbrıs Satılık Gayrimenkul"
     },
     "title": "Doğru Lokasyon, Doğru Zaman, Doğru Yatırım",
     "subtitle": "HB International ile premium gayrimenkul fırsatlarını keşfedin",
     "searchPlaceholder": "şehir, adres veya mülk adı ile arayın...",
     "exploreBtn": "Mülkleri Keşfet"
+  },
+  "homeContact": {
+    "connectLabel": "HB ile İletişime Geçin",
+    "firstName": "Ad",
+    "lastName": "Soyad",
+    "submit": "İletişim",
+    "sending": "Gönderiliyor"
   },
   "about": {
     "title": "Hakkımızda",

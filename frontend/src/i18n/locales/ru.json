@@ -247,6 +247,13 @@
     "searchPlaceholder": "Поиск по городу, адресу или названию объекта...",
     "exploreBtn": "Смотреть объекты"
   },
+  "homeContact": {
+    "connectLabel": "Связаться с HB",
+    "firstName": "Имя",
+    "lastName": "Фамилия",
+    "submit": "Связаться",
+    "sending": "Отправка"
+  },
   "about": {
     "title": "О нас",
     "subtitle": "Ваш надежный партнер в турецкой недвижимости",

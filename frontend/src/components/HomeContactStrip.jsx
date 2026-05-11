@@ -136,7 +136,7 @@ const HomeContactStrip = () => {
       <div className="w-full px-0">
         <div className="overflow-hidden border border-[#ead9d4] bg-[#f4ede8]">
           <div className="flex flex-col xl:flex-row xl:items-center">
-            <div className="flex items-center gap-4 border-b border-[#ead9d4] px-6 py-5 xl:w-[285px] xl:border-b-0">
+            <div className="flex items-center gap-4 border-b border-[#ead9d4] px-6 py-5 xl:shrink-0 xl:border-b-0">
               <div className="shrink-0 text-[#971b1e]">
                 <svg
                   viewBox="0 0 24 24"
@@ -155,7 +155,7 @@ const HomeContactStrip = () => {
               </div>
 
               <div className="min-w-0">
-                <h2 className="text-[17px] font-semibold uppercase tracking-[-0.01em] text-[#971b1e] sm:text-[18px]">
+                <h2 className="whitespace-nowrap text-[17px] font-semibold uppercase tracking-[-0.01em] text-[#971b1e] sm:text-[18px]">
                   {t("homeContact.connectLabel", {
                     defaultValue: "Connect With HB",
                   })}
