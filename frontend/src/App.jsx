@@ -21,6 +21,9 @@ const Listing = lazy(() => import("./pages/seo/ListingSeoPage"));
 const Property = lazy(() => import("./pages/seo/PropertySeoPage"));
 const AddProperty = lazy(() => import("./pages/AddProperty"));
 const AdminPanel = lazy(() => import("./pages/AdminPanel"));
+const PropertyReelsAgentsAdmin = lazy(() =>
+  import("./pages/PropertyReelsAgentsAdmin")
+);
 const Consultants = lazy(() => import("./pages/Consultants"));
 const TodayProperties = lazy(() => import("./pages/TodayProperties"));
 const CitizenshipLanding = lazy(() => import("./pages/CitizenshipLanding"));
@@ -191,6 +194,14 @@ export default function App() {
                       element={
                         <RequireAuth>
                           <AdminPanel />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/admin/property-reels-agents"
+                      element={
+                        <RequireAuth>
+                          <PropertyReelsAgentsAdmin />
                         </RequireAuth>
                       }
                     />

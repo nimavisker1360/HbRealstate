@@ -819,6 +819,55 @@ export const getLiveSsoToken = async (token) => {
   return response.data;
 };
 
+export const getPropertyReelsAgents = async (token) => {
+  const response = await api.get("/property-reels-agents", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    timeout: 15000,
+  });
+  return response.data;
+};
+
+export const createPropertyReelsAgent = async (data, token) => {
+  const response = await api.post("/property-reels-agents", data, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    timeout: 15000,
+  });
+  return response.data;
+};
+
+export const updatePropertyReelsAgent = async (agentId, data, token) => {
+  const response = await api.patch(`/property-reels-agents/${agentId}`, data, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    timeout: 15000,
+  });
+  return response.data;
+};
+
+export const loginPropertyReelsAgent = async ({ email, password }) => {
+  const response = await api.post(
+    "/property-reels-agents/login",
+    { email, password },
+    { timeout: 15000 }
+  );
+  return response.data;
+};
+
+export const getPropertyReelsAgentSession = async (token) => {
+  const response = await api.get("/property-reels-agents/session", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    timeout: 15000,
+  });
+  return response.data;
+};
+
 // Get All Contact Messages
 export const getAllContactMessages = async (token) => {
   try {

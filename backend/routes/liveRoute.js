@@ -3,6 +3,7 @@ import { createHmac } from "node:crypto";
 import jwtCheck from "../config/authOConfig.js";
 import { prisma } from "../config/prismaConfig.js";
 import { getAuthenticatedEmail } from "../middleware/requireAdminUser.js";
+import { USER_ROLES, isActiveAgent, isAdminUser } from "../utils/userAccess.js";
 
 const router = express.Router();
 
@@ -28,21 +29,13 @@ const signLiveJwt = (payload, secret) => {
   return `${encodedToken}.${signature}`;
 };
 
-const readEmailList = (value) =>
-  String(value || "")
-    .split(",")
-    .map((item) => item.trim().toLowerCase())
-    .filter(Boolean);
-
 const resolveSsoRole = ({ email, persistedUser }) => {
-  if (persistedUser?.isAdmin) {
-    return "OWNER";
+  if (isAdminUser(persistedUser)) {
+    return USER_ROLES.ADMIN;
   }
 
-  const agentEmails = readEmailList(process.env.HB_LIVE_AGENT_EMAILS);
-
-  if (email && agentEmails.includes(email.toLowerCase())) {
-    return "AGENT";
+  if (email && isActiveAgent(persistedUser)) {
+    return USER_ROLES.AGENT;
   }
 
   return "BUYER";
@@ -101,7 +94,7 @@ router.get("/sso-token", jwtCheck, async (req, res) => {
   const persistedUser = email
     ? await prisma.user.findUnique({
         where: { email },
-        select: { isAdmin: true },
+        select: { isAdmin: true, role: true, status: true },
       })
     : null;
 

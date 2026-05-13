@@ -46,6 +46,7 @@ const Layout = () => {
     pathname === "/browse" ||
     underServicesHub ||
     pathname === "/admin" ||
+    pathname.startsWith("/admin/") ||
     pathname === "/my-staging-requests" ||
     pathname === "/addresses" ||
     pathname.startsWith("/projects") ||

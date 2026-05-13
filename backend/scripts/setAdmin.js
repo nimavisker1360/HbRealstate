@@ -24,7 +24,7 @@ async function setAdmin(email) {
 
     const updatedUser = await prisma.user.update({
       where: { email: email },
-      data: { isAdmin: true },
+      data: { isAdmin: true, role: "ADMIN", status: "ACTIVE" },
     });
 
     console.log(`✅ User ${email} is now an admin!`);
@@ -38,7 +38,6 @@ async function setAdmin(email) {
 
 const email = process.argv[2];
 setAdmin(email);
-
 
 
 

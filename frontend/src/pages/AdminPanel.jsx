@@ -2445,6 +2445,26 @@ const AdminPanel = () => {
               </div>
             </Group>
           </Paper>
+
+          <Paper
+            shadow="sm"
+            p="lg"
+            radius="md"
+            className="cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => navigate("/admin/property-reels-agents")}
+          >
+            <Group>
+              <div className="bg-red-100 text-red-600 p-3 rounded-full">
+                <MdPersonAdd size={24} />
+              </div>
+              <div>
+                <Text fw={600}>Property Reels Agents</Text>
+                <Text size="sm" color="dimmed">
+                  Create and activate live agents
+                </Text>
+              </div>
+            </Group>
+          </Paper>
         </div>
 
         {/* Property List Section */}

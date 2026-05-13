@@ -7,13 +7,13 @@ import {
   toFav,
   getAllFav,
   checkAdmin,
-  setAdmin,
   getAllUsersBookings,
   getUserProfile,
   updateUserProfile,
   getAllUsers,
 } from "../controllers/userCntrl.js";
 import jwtCheck from "../config/authOConfig.js";
+import { requireAdminUser } from "../middleware/requireAdminUser.js";
 
 const router = express.Router();
 
@@ -32,14 +32,13 @@ router.post("/removeBooking/:id",jwtCheck, cancelBooking);
 router.post("/toFav/:rid",jwtCheck, toFav);
 router.post("/allFav",jwtCheck, getAllFav);
 router.post("/checkAdmin", jwtCheck, checkAdmin);
-router.post("/setAdmin", setAdmin);
-router.get("/admin/allBookings", jwtCheck, getAllUsersBookings);
+router.get("/admin/allBookings", jwtCheck, requireAdminUser, getAllUsersBookings);
 
 // Profile routes
 router.post("/profile", jwtCheck, getUserProfile);
 router.put("/profile", jwtCheck, updateUserProfile);
 
 // Admin routes
-router.get("/admin/allUsers", jwtCheck, getAllUsers);
+router.get("/admin/allUsers", jwtCheck, requireAdminUser, getAllUsers);
 
 export { router as userRoute }; 

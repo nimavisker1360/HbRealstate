@@ -16,6 +16,7 @@ import { inspectionRoute } from "./routes/inspectionRoute.js";
 import { stagingRoute } from "./routes/stagingRoute.js";
 import { videoEventRouter, videoRoute } from "./routes/videoRoute.js";
 import { liveRoute } from "./routes/liveRoute.js";
+import { propertyReelsAgentRoute } from "./routes/propertyReelsAgentRoute.js";
 import { getSitemapXml } from "./controllers/sitemapCntrl.js";
 import { loadBackendEnv } from "./config/loadEnv.js";
 
@@ -54,5 +55,6 @@ app.use("/api/staging", stagingRoute);
 app.use("/api/videos", videoRoute);
 app.use("/api/video-events", videoEventRouter);
 app.use("/api/live", liveRoute);
+app.use("/api/property-reels-agents", propertyReelsAgentRoute);
 
 export default app;

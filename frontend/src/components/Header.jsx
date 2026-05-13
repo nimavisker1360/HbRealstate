@@ -26,6 +26,10 @@ import {
 } from "../utils/postLoginResume";
 import { getLiveSsoToken, getLiveToken } from "../utils/api";
 
+// Users in this list skip the live app's "/reels" landing and are sent to the
+// live app root instead when they click "Watch Reels".
+const SKIP_REELS_EMAILS = ["f4rz4mkaram@gmail.com"];
+
 const Header = () => {
   const { t } = useTranslation();
   const [active, setActive] = useState(false);
@@ -106,9 +110,22 @@ const Header = () => {
     openLoginRoute();
   };
 
+  const shouldSkipReels = useCallback(() => {
+    const email = (user?.email || "").trim().toLowerCase();
+    return email !== "" && SKIP_REELS_EMAILS.includes(email);
+  }, [user?.email]);
+
   const buildLiveRedirectUrl = useCallback(
-    (token) => `${liveAppUrl}?token=${encodeURIComponent(token)}`,
-    [liveAppUrl]
+    (token) => {
+      const url = new URL(liveAppUrl);
+      url.searchParams.set("token", token);
+      if (shouldSkipReels()) {
+        // Tell the live app to land on its root ("/") instead of "/reels".
+        url.searchParams.set("skipReels", "1");
+      }
+      return url.toString();
+    },
+    [liveAppUrl, shouldSkipReels]
   );
 
   const getLiveCallbackUrl = useCallback(() => {

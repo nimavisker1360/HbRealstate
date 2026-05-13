@@ -1,7 +1,11 @@
 import asyncHandler from "express-async-handler";
 import { prisma } from "../config/prismaConfig.js";
+import { getAuthenticatedEmail } from "../middleware/requireAdminUser.js";
+import {
+  isAdminUser,
+  normalizeEmail,
+} from "../utils/userAccess.js";
 
-const normalizeEmail = (value = "") => String(value || "").trim().toLowerCase();
 const normalizeBookingIdentifier = (value = "") => {
   const raw = String(value || "").trim();
   try {
@@ -36,6 +40,11 @@ const buildUserCreateData = (payload = {}) => ({
   image: payload.image || null,
   phone: payload.phone || null,
   address: payload.address || null,
+  role: null,
+  status: null,
+  passwordHash: null,
+  agencyName: null,
+  isAdmin: false,
   bookedVisits: [],
   favResidenciesID: [],
 });
@@ -245,12 +254,18 @@ export const getAllFav = asyncHandler(async (req, res) => {
 });
 
 export const checkAdmin = asyncHandler(async (req, res) => {
-  const email = normalizeEmail(req.body?.email);
+  const email = getAuthenticatedEmail(req);
 
   try {
+    if (!email) {
+      return res
+        .status(403)
+        .json({ isAdmin: false, message: "Authenticated email is required" });
+    }
+
     const user = await prisma.user.findUnique({
       where: { email },
-      select: { isAdmin: true },
+      select: { isAdmin: true, role: true },
     });
 
     if (!user) {
@@ -259,27 +274,7 @@ export const checkAdmin = asyncHandler(async (req, res) => {
         .json({ isAdmin: false, message: "User not found" });
     }
 
-    return res.status(200).json({ isAdmin: user.isAdmin || false });
-  } catch (err) {
-    throw new Error(err.message);
-  }
-});
-
-export const setAdmin = asyncHandler(async (req, res) => {
-  const email = normalizeEmail(req.body?.email);
-  const { adminSecret } = req.body;
-
-  if (adminSecret !== process.env.ADMIN_SECRET) {
-    return res.status(403).json({ message: "Unauthorized" });
-  }
-
-  try {
-    const user = await prisma.user.update({
-      where: { email },
-      data: { isAdmin: true },
-    });
-
-    return res.status(200).json({ message: "User is now admin", user });
+    return res.status(200).json({ isAdmin: isAdminUser(user) });
   } catch (err) {
     throw new Error(err.message);
   }
@@ -299,6 +294,8 @@ export const getUserProfile = asyncHandler(async (req, res) => {
         phone: true,
         address: true,
         profileComplete: true,
+        role: true,
+        status: true,
         createdAt: true,
       },
     });
@@ -360,6 +357,8 @@ export const getAllUsers = asyncHandler(async (req, res) => {
         address: true,
         profileComplete: true,
         isAdmin: true,
+        role: true,
+        status: true,
         bookedVisits: true,
         favResidenciesID: true,
         createdAt: true,

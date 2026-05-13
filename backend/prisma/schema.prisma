@@ -6,6 +6,18 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
+enum UserRole {
+    ADMIN
+    AGENT
+}
+
+enum UserStatus {
+    PENDING
+    ACTIVE
+    SUSPENDED
+    REJECTED
+}
+
 model User {
     id String @id @default(auto()) @map("_id") @db.ObjectId
     name String?
@@ -13,6 +25,10 @@ model User {
     image String?
     phone String?
     address String?
+    agencyName String?
+    passwordHash String?
+    role UserRole?
+    status UserStatus?
     profileComplete Boolean @default(false)
     isAdmin Boolean @default(false)
     bookedVisits Json[]

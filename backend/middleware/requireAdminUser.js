@@ -1,5 +1,6 @@
 import asyncHandler from "express-async-handler";
 import { prisma } from "../config/prismaConfig.js";
+import { isAdminUser } from "../utils/userAccess.js";
 
 export const getAuthenticatedEmail = (req) => {
   const payload = req?.auth?.payload;
@@ -34,10 +35,12 @@ export const requireAdminUser = asyncHandler(async (req, res, next) => {
       id: true,
       email: true,
       isAdmin: true,
+      role: true,
+      status: true,
     },
   });
 
-  if (!user?.isAdmin) {
+  if (!isAdminUser(user)) {
     return res.status(403).json({
       success: false,
       message: "Admin access required.",
